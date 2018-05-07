@@ -1,0 +1,108 @@
+/* openvr-version.h.in
+ *
+ * Copyright 2018 Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE X CONSORTIUM BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Except as contained in this notice, the name(s) of the above copyright
+ * holders shall not be used in advertising or otherwise to promote the sale,
+ * use or other dealings in this Software without prior written
+ * authorization.
+ */
+
+#ifndef OPENVR_GLIB_VERSION_H
+#define OPENVR_GLIB_VERSION_H
+
+#if !defined(OPENVR_GLIB_INSIDE) && !defined(OPENVR_GLIB_COMPILATION)
+# error "Only <openvr-glib.h> can be included directly."
+#endif
+
+/**
+ * SECTION:openvrversion
+ * @short_description: openvr-glib version checking
+ *
+ * openvr-glib provides macros to check the version of the library
+ * at compile-time
+ */
+
+/**
+ * OPENVR_MAJOR_VERSION:
+ *
+ * openvr-glib major version component (e.g. 1 if %OPENVR_VERSION is 1.2.3)
+ */
+#define OPENVR_MAJOR_VERSION (@MAJOR_VERSION@)
+
+/**
+ * OPENVR_MINOR_VERSION:
+ *
+ * openvr-glib minor version component (e.g. 2 if %OPENVR_VERSION is 1.2.3)
+ */
+#define OPENVR_MINOR_VERSION (@MINOR_VERSION@)
+
+/**
+ * OPENVR_MICRO_VERSION:
+ *
+ * openvr-glib micro version component (e.g. 3 if %OPENVR_VERSION is 1.2.3)
+ */
+#define OPENVR_MICRO_VERSION (@MICRO_VERSION@)
+
+/**
+ * OPENVR_VERSION
+ *
+ * openvr-glib version.
+ */
+#define OPENVR_VERSION (@VERSION@)
+
+/**
+ * OPENVR_VERSION_S:
+ *
+ * openvr-glib version, encoded as a string, useful for printing and
+ * concatenation.
+ */
+#define OPENVR_VERSION_S "@VERSION@"
+
+#define OPENVR_ENCODE_VERSION(major,minor,micro) \
+        ((major) << 24 | (minor) << 16 | (micro) << 8)
+
+/**
+ * OPENVR_VERSION_HEX:
+ *
+ * openvr-glib version, encoded as an hexadecimal number, useful for
+ * integer comparisons.
+ */
+#define OPENVR_VERSION_HEX \
+        (OPENVR_ENCODE_VERSION (OPENVR_MAJOR_VERSION, OPENVR_MINOR_VERSION, OPENVR_MICRO_VERSION))
+
+/**
+ * OPENVR_CHECK_VERSION:
+ * @major: required major version
+ * @minor: required minor version
+ * @micro: required micro version
+ *
+ * Compile-time version checking. Evaluates to %TRUE if the version
+ * of openvr-glib is greater than the required one.
+ */
+#define OPENVR_CHECK_VERSION(major,minor,micro)   \
+        (OPENVR_MAJOR_VERSION > (major) || \
+         (OPENVR_MAJOR_VERSION == (major) && OPENVR_MINOR_VERSION > (minor)) || \
+         (OPENVR_MAJOR_VERSION == (major) && OPENVR_MINOR_VERSION == (minor) && \
+          OPENVR_MICRO_VERSION >= (micro)))
+
+#endif /* OPENVR_GLIB_VERSION_H */
