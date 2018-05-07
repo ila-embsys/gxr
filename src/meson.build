@@ -1,11 +1,12 @@
 api_version = '0.1'
 
 openvr_glib_sources = [
-
+  'openvr-system.c',
 ]
 
 openvr_glib_headers = [
   'openvr-glib.h',
+  'openvr-system.h',
 ]
 
 version_split = meson.project_version().split('.')
