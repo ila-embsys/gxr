@@ -11,7 +11,7 @@
 G_BEGIN_DECLS
 
 #define OPENVR_GLIB_INSIDE
-# include "openvr-version.h"
+# include "openvr-glib-version.h"
 #undef OPENVR_GLIB_INSIDE
 
 G_END_DECLS

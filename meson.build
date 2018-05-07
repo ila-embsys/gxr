@@ -5,7 +5,7 @@ project('openvr-glib', 'c',        version: '0.1.0',
 
 config_h = configuration_data()
 configure_file(
-  output: 'openvr-config.h',
+  output: 'openvr-glib-config.h',
   configuration: config_h,
 )
 add_project_arguments([
