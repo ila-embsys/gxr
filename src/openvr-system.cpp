@@ -88,3 +88,9 @@ openvr_system_is_available (void)
 {
   return vr::VRSystem() != nullptr;
 }
+
+gboolean
+openvr_system_is_compositor_available (void)
+{
+  return vr::VRCompositor() != nullptr;
+}

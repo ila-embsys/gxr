@@ -41,6 +41,8 @@ void openvr_system_print_device_info (OpenVRSystem * self);
 
 gboolean openvr_system_is_available (void);
 
+gboolean openvr_system_is_compositor_available (void);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_SYSTEM_H_ */
