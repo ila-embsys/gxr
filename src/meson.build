@@ -38,6 +38,15 @@ openvr_glib_lib = shared_library('openvr-glib-' + api_version,
   install: true,
 )
 
+openvr_glib_inc = include_directories('.')
+
+openvr_glib_dep = declare_dependency(
+  sources: [],
+  link_with: openvr_glib_lib,
+  include_directories: [ openvr_glib_inc ],
+  dependencies: openvr_glib_deps,
+)
+
 install_headers(openvr_glib_headers, subdir: 'openvr-glib')
 
 pkg = import('pkgconfig')
