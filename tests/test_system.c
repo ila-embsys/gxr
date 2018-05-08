@@ -12,6 +12,8 @@ int main(int argc, char *argv[]) {
 
   g_assert (ret);
 
+  openvr_system_print_device_info (system);
+
   g_object_unref (system);
 
   return 0;
