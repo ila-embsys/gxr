@@ -17,13 +17,13 @@ openvr_system_get_device_string (vr::IVRSystem *system,
 static void
 openvr_system_class_init (OpenVRSystemClass *klass)
 {
-  g_print("init system class\n");
+  g_print ("init system class\n");
 }
 
 static void
 openvr_system_init (OpenVRSystem *self)
 {
-  g_print("init system\n");
+  g_print ("init system\n");
 }
 
 OpenVRSystem *
@@ -68,7 +68,7 @@ openvr_system_get_device_string (vr::IVRSystem *system,
   gchar * string = static_cast<gchar*> (g_malloc (STRING_BUFFER_SIZE));
 
   vr::TrackedPropertyError err;
-  system->GetStringTrackedDeviceProperty(
+  system->GetStringTrackedDeviceProperty (
     device_index, property, string, STRING_BUFFER_SIZE, &err);
 
   if (err != vr::TrackedProp_Success)
