@@ -23,6 +23,14 @@ struct _OpenVRSystem
 
 OpenVRSystem *openvr_system_new (void);
 
+gboolean openvr_system_init_overlay (OpenVRSystem * self);
+
+
+#ifdef __cplusplus
+
+#endif
+
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_SYSTEM_H_ */

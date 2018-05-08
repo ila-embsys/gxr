@@ -28,8 +28,12 @@ configure_file(
   install_dir: join_paths(get_option('includedir'), 'openvr-glib')
 )
 
+cpp = meson.get_compiler('cpp')
+openvr_lib = cpp.find_library('openvr_api')
+
 openvr_glib_deps = [
   dependency('gio-2.0', version: '>= 2.50'),
+  openvr_lib
 ]
 
 openvr_glib_lib = shared_library('openvr-glib-' + api_version,
