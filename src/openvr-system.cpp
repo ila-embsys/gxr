@@ -82,3 +82,9 @@ openvr_system_print_device_info (OpenVRSystem * self)
   g_print ("SerialNumber: %s\n", serial_number);
   g_free (serial_number);
 }
+
+gboolean
+openvr_system_is_available (void)
+{
+  return vr::VRSystem() != nullptr;
+}
