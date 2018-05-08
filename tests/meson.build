@@ -4,6 +4,16 @@ exe = executable('test_system', 'test_system.c',
                  include_directories: openvr_glib_inc,
                  install: false)
 
+test_pixbuf_deps = [
+  dependency('gtk+-3.0', version: '>= 3.22'),
+  openvr_glib_deps
+]
+
+exe = executable('test_pixbuf', ['test_pixbuf.c', '../res/tests.c'],
+                 dependencies:test_pixbuf_deps,
+                 link_with: openvr_glib_lib,
+                 include_directories: openvr_glib_inc,
+                 install: false)
 
 '''
 exe = executable(unit, unit + '.c',
