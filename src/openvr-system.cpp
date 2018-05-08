@@ -49,7 +49,7 @@ openvr_system_init_overlay (OpenVRSystem * self)
 
 #define STRING_BUFFER_SIZE 128
 
-gchar*
+static gchar*
 _get_device_string (OpenVRSystem * self,
                     vr::TrackedDeviceIndex_t device_index,
                     vr::TrackedDeviceProperty property)
