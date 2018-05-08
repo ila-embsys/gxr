@@ -13,4 +13,5 @@ add_project_arguments([
 ], language: ['cpp', 'c'])
 
 subdir('src')
+subdir('res')
 subdir('tests')
