@@ -3,11 +3,19 @@
 
 #include <openvr-glib.h>
 
+#include "openvr-system.h"
+#include "openvr-overlay.h"
+
 #include <GLFW/glfw3.h>
+
+static GdkPixbuf *pixbuf;
+static OpenVROverlay *overlay;
+
 
 gboolean
 timeout_callback (gpointer data)
 {
+  openvr_overlay_query_events (overlay, pixbuf);
   return TRUE;
 }
 
@@ -104,13 +112,13 @@ test_cat_overlay ()
 {
   GMainLoop *loop;
 
-  GdkPixbuf * pixbuf = load_gdk_pixbuf ();
+  pixbuf = load_gdk_pixbuf ();
   print_pixbuf_info (pixbuf);
 
   if (pixbuf == NULL)
     return -1;
 
-  loop = g_main_loop_new (NULL , FALSE);
+  loop = g_main_loop_new (NULL, FALSE);
 
   if (!init_offscreen_gl ())
   {
@@ -120,12 +128,24 @@ test_cat_overlay ()
 
   print_gl_context_info ();
 
+  OpenVRSystem * system = openvr_system_new ();
+  gboolean ret = openvr_system_init_overlay (system);
+
+  g_assert (ret);
+  g_assert (openvr_system_is_available ());
+  g_assert (openvr_system_is_compositor_available ());
+
+  overlay = openvr_overlay_new ();
+  openvr_overlay_create (overlay, "test.cat", "Cat");
+  openvr_overlay_set_mouse_scale (overlay, pixbuf);
+
   g_timeout_add (20, timeout_callback, NULL);
   g_main_loop_run (loop);
   g_main_loop_unref (loop);
 
   g_print ("bye/n");
 
+  g_object_unref (overlay);
   g_object_unref (pixbuf);
 
   return 0;

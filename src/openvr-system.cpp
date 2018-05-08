@@ -94,3 +94,9 @@ openvr_system_is_compositor_available (void)
 {
   return vr::VRCompositor() != nullptr;
 }
+
+void
+openvr_system_shutdown (void)
+{
+  vr::VR_Shutdown();
+}

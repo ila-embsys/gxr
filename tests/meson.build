@@ -6,7 +6,6 @@ exe = executable('test_system', 'test_system.c',
 
 test_overlay_deps = [
   dependency('glfw3'),
-  dependency('GL'),
   openvr_glib_deps
 ]
 
