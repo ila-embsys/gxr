@@ -107,6 +107,12 @@ init_offscreen_gl ()
   return TRUE;
 }
 
+void
+_move_cb ()
+{
+  g_print ("mouse moved\n");
+}
+
 int
 test_cat_overlay ()
 {
@@ -138,6 +144,8 @@ test_cat_overlay ()
   overlay = openvr_overlay_new ();
   openvr_overlay_create (overlay, "test.cat", "Cat");
   openvr_overlay_set_mouse_scale (overlay, pixbuf);
+
+  g_signal_connect (overlay, "mouse-move", (GCallback) _move_cb, NULL);
 
   g_timeout_add (20, timeout_callback, NULL);
   g_main_loop_run (loop);

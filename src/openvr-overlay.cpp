@@ -12,9 +12,28 @@
 
 G_DEFINE_TYPE (OpenVROverlay, openvr_overlay, G_TYPE_OBJECT)
 
+static guint overlay_signals[1];
+
+enum signals {
+  MOUSE_MOVE_SIGNAL
+};
+
 static void
 openvr_overlay_class_init (OpenVROverlayClass *klass)
-{}
+{
+  overlay_signals[MOUSE_MOVE_SIGNAL] =
+    g_signal_newv ("mouse-move",
+                   G_TYPE_FROM_CLASS (klass),
+                   static_cast<GSignalFlags> (
+                     G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS),
+                   NULL /* closure */,
+                   NULL /* accumulator */,
+                   NULL /* accumulator data */,
+                   NULL /* C marshaller */,
+                   G_TYPE_NONE /* return_type */,
+                   0     /* n_params */,
+                   NULL  /* param_types */);
+}
 
 static void
 openvr_overlay_init (OpenVROverlay *self)
@@ -94,6 +113,7 @@ void openvr_overlay_query_events (OpenVROverlay *self, GdkPixbuf * pixbuf)
       {
         g_print("received mouse move event [%f %f]\n",
                 vrEvent.data.mouse.x, vrEvent.data.mouse.y);
+        g_signal_emit (self, overlay_signals[MOUSE_MOVE_SIGNAL], 0 /* details */);
       } break;
 
       case vr::VREvent_MouseButtonDown:
