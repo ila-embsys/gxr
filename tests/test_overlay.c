@@ -35,6 +35,21 @@ print_pixbuf_info (GdkPixbuf * pixbuf)
   g_print ("rowstride %d\n", rowstride);
 }
 
+void
+print_gl_context_info ()
+{
+  const GLubyte *version = glGetString (GL_VERSION);
+  const GLubyte *vendor = glGetString (GL_VENDOR);
+  const GLubyte *renderer = glGetString (GL_RENDERER);
+
+  GLint major;
+  GLint minor;
+  glGetIntegerv (GL_MAJOR_VERSION, &major);
+  glGetIntegerv (GL_MINOR_VERSION, &minor);
+
+  g_print ("%s %s %s (%d.%d)\n", vendor, renderer, version, major, minor);
+}
+
 GdkPixbuf *
 load_gdk_pixbuf ()
 {
@@ -96,6 +111,7 @@ test_cat_overlay ()
   loop = g_main_loop_new (NULL , FALSE);
 
   init_offscreen_gl ();
+  print_gl_context_info ();
 
   g_timeout_add (20, timeout_callback, NULL);
   g_main_loop_run (loop);
