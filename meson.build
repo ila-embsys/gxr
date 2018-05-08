@@ -1,4 +1,4 @@
-project('openvr-glib', 'c',        version: '0.1.0',
+project('openvr-glib', 'c', 'cpp', version: '0.1.0',
   meson_version: '>= 0.40.0',
 )
 
@@ -10,7 +10,7 @@ configure_file(
 )
 add_project_arguments([
   '-I' + meson.build_root(),
-], language: 'c')
+], language: ['cpp', 'c'])
 
 subdir('src')
 subdir('tests')
