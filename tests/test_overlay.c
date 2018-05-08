@@ -74,27 +74,29 @@ glfw_error_callback (int error, const char* description)
   fprintf (stderr, "GLFW Error: %s\n", description);
 }
 
-void
+gboolean
 init_offscreen_gl ()
 {
-  glfwSetErrorCallback(glfw_error_callback);
+  glfwSetErrorCallback (glfw_error_callback);
 
-  if (!glfwInit())
-    exit(EXIT_FAILURE);
+  if (!glfwInit ())
+    return FALSE;
 
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+  glfwWindowHint (GLFW_CONTEXT_VERSION_MAJOR, 4);
+  glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, 5);
 
-  glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-  GLFWwindow* offscreen_context = glfwCreateWindow(640, 480, "", NULL, NULL);
+  glfwWindowHint (GLFW_VISIBLE, GLFW_FALSE);
+  GLFWwindow* offscreen_context = glfwCreateWindow (640, 480, "", NULL, NULL);
 
   if (!offscreen_context)
   {
-    glfwTerminate();
-    exit(EXIT_FAILURE);
+    glfwTerminate ();
+    return FALSE;
   }
 
-  glfwMakeContextCurrent(offscreen_context);
+  glfwMakeContextCurrent (offscreen_context);
+
+  return TRUE;
 }
 
 int
@@ -110,7 +112,12 @@ test_cat_overlay ()
 
   loop = g_main_loop_new (NULL , FALSE);
 
-  init_offscreen_gl ();
+  if (!init_offscreen_gl ())
+  {
+    fprintf (stderr, "Error: Could not create GLFW context.\n");
+    return FALSE;
+  }
+
   print_gl_context_info ();
 
   g_timeout_add (20, timeout_callback, NULL);
