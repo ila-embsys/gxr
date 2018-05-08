@@ -7,7 +7,7 @@
 #ifndef OPENVR_GLIB_SYSTEM_H_
 #define OPENVR_GLIB_SYSTEM_H_
 
-#include <glib-2.0/glib-object.h>
+#include <glib-object.h>
 
 G_BEGIN_DECLS
 
@@ -20,8 +20,6 @@ struct _OpenVRSystem
 
   gboolean test;
 };
-
-G_DEFINE_TYPE (OpenVRSystem, openvr_system, G_TYPE_OBJECT)
 
 OpenVRSystem *openvr_system_new (void);
 

@@ -6,7 +6,8 @@
 
 #include "openvr-system.h"
 
-/* in myobject.c */
+G_DEFINE_TYPE (OpenVRSystem, openvr_system, G_TYPE_OBJECT)
+
 static void
 openvr_system_class_init (OpenVRSystemClass *klass)
 {
@@ -19,8 +20,8 @@ openvr_system_init (OpenVRSystem *self)
   g_print("init system\n");
 }
 
-GObject *
-my_object_new (void)
+OpenVRSystem *
+openvr_system_new (void)
 {
      return g_object_new (OPENVR_TYPE_SYSTEM, 0);
 }
