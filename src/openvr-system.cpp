@@ -11,14 +11,12 @@ G_DEFINE_TYPE (OpenVRSystem, openvr_system, G_TYPE_OBJECT)
 
 static void
 openvr_system_class_init (OpenVRSystemClass *klass)
-{
-  g_print ("init system class\n");
-}
+{}
 
 static void
 openvr_system_init (OpenVRSystem *self)
 {
-  g_print ("init system\n");
+  self->system = nullptr;
 }
 
 OpenVRSystem *

@@ -70,7 +70,10 @@ openvr_overlay_class_init (OpenVROverlayClass *klass)
 
 static void
 openvr_overlay_init (OpenVROverlay *self)
-{}
+{
+  self->overlay_handle = 0;
+  self->thumbnail_handle = 0;
+}
 
 OpenVROverlay *
 openvr_overlay_new (void)
