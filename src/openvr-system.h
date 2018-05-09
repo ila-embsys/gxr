@@ -43,6 +43,8 @@ gboolean openvr_system_is_available (void);
 
 gboolean openvr_system_is_compositor_available (void);
 
+gboolean openvr_system_is_overlay_available (void);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_SYSTEM_H_ */

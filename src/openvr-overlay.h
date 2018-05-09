@@ -39,6 +39,10 @@ void openvr_overlay_set_mouse_scale (OpenVROverlay *self,
                                      float width,
                                      float height);
 
+gboolean openvr_overlay_is_valid (OpenVROverlay *self);
+gboolean openvr_overlay_is_visible (OpenVROverlay *self);
+gboolean openvr_overlay_thumbnail_is_visible (OpenVROverlay *self);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_OVERLAY_H_ */

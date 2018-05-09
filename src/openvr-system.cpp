@@ -93,6 +93,12 @@ openvr_system_is_compositor_available (void)
   return vr::VRCompositor() != nullptr;
 }
 
+gboolean
+openvr_system_is_overlay_available (void)
+{
+  return vr::VROverlay() != nullptr;
+}
+
 void
 openvr_system_shutdown (void)
 {

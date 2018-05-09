@@ -11,6 +11,7 @@
 
 #include <gdk/gdk.h>
 
+#include "openvr-system.h"
 #include "openvr-overlay.h"
 #include <openvr.h>
 
@@ -102,13 +103,31 @@ void openvr_overlay_create (OpenVROverlay *self,
   }
 }
 
+gboolean openvr_overlay_is_valid (OpenVROverlay *self)
+{
+  return self->overlay_handle != vr::k_ulOverlayHandleInvalid;
+}
+
+gboolean openvr_overlay_is_visible (OpenVROverlay *self)
+{
+  return vr::VROverlay()->IsOverlayVisible (self->overlay_handle);
+}
+
+gboolean openvr_overlay_thumbnail_is_visible (OpenVROverlay *self)
+{
+  return vr::VROverlay()->IsOverlayVisible (self->overlay_handle);
+}
+
 void openvr_overlay_upload_gdk_pixbuf (OpenVROverlay *self,
                                        GdkPixbuf * pixbuf)
 {
-  /* skip rendering if the overlay isn't visible */
-  if ((self->overlay_handle == vr::k_ulOverlayHandleInvalid) || !vr::VROverlay () ||
-      (!vr::VROverlay()->IsOverlayVisible (self->overlay_handle) &&
-       !vr::VROverlay()->IsOverlayVisible (self->thumbnail_handle)))
+  /* skip rendering if the overlay isn't available or visible */
+  gboolean is_unavailable = !openvr_overlay_is_valid (self) ||
+                             !openvr_system_is_overlay_available ();
+  gboolean is_invisible = !openvr_overlay_is_visible (self) &&
+                          !openvr_overlay_thumbnail_is_visible (self);
+
+  if (is_unavailable || is_invisible)
     return;
 
   GLuint tex;
@@ -241,10 +260,8 @@ openvr_overlay_poll_event (OpenVROverlay *self)
       } break;
 
       case vr::VREvent_OverlayShown:
-      {
         g_signal_emit (self, overlay_signals[SHOW], 0);
-      } break;
-
+        break;
       case vr::VREvent_Quit:
         g_signal_emit (self, overlay_signals[DESTROY], 0);
         break;
