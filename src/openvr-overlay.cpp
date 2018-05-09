@@ -148,8 +148,9 @@ void openvr_overlay_query_events (OpenVROverlay *self, GdkPixbuf * pixbuf)
   if (self->thumbnail_handle != vr::k_ulOverlayHandleInvalid) {
     while (vr::VROverlay()->PollNextOverlayEvent(self->thumbnail_handle,
                                                  &vrEvent, sizeof (vrEvent)))
+    {
+      switch (vrEvent.eventType)
       {
-      switch (vrEvent.eventType) {
         case vr::VREvent_OverlayShown:
           break;
       }
