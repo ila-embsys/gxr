@@ -1,3 +1,9 @@
+/*
+ * OpenVR GLib
+ * Copyright 2018 Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
+ * SPDX-License-Identifier: MIT
+ */
+
 #include <glib.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gtk/gtk.h>

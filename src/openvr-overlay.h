@@ -33,9 +33,11 @@ void openvr_overlay_create (OpenVROverlay *self,
 void openvr_overlay_upload_gdk_pixbuf (OpenVROverlay *self,
                                        GdkPixbuf * pixbuf);
 
-void openvr_overlay_query_events (OpenVROverlay *self, GdkPixbuf * pixbuf);
+void openvr_overlay_poll_event (OpenVROverlay *self);
 
-void openvr_overlay_set_mouse_scale (OpenVROverlay *self, GdkPixbuf * pixbuf);
+void openvr_overlay_set_mouse_scale (OpenVROverlay *self,
+                                     float width,
+                                     float height);
 
 G_END_DECLS
 

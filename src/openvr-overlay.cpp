@@ -189,7 +189,7 @@ _age_s_to_monotonic_ms (float age)
 }
 
 void
-openvr_overlay_query_events (OpenVROverlay *self, GdkPixbuf * pixbuf)
+openvr_overlay_poll_event (OpenVROverlay *self)
 {
   if (!vr::VRSystem ()) return;
 
@@ -239,8 +239,7 @@ openvr_overlay_query_events (OpenVROverlay *self, GdkPixbuf * pixbuf)
 
       case vr::VREvent_OverlayShown:
       {
-        // g_signal_emit (self, overlay_signals[SHOW], 0);
-        openvr_overlay_upload_gdk_pixbuf (self, pixbuf);
+        g_signal_emit (self, overlay_signals[SHOW], 0);
       } break;
 
       case vr::VREvent_Quit:
@@ -265,13 +264,10 @@ openvr_overlay_query_events (OpenVROverlay *self, GdkPixbuf * pixbuf)
 }
 
 void
-openvr_overlay_set_mouse_scale (OpenVROverlay *self, GdkPixbuf * pixbuf)
+openvr_overlay_set_mouse_scale (OpenVROverlay *self, float width, float height)
 {
   if (vr::VROverlay ()) {
-    vr::HmdVector2_t mouse_scale = {
-      static_cast<float> (gdk_pixbuf_get_width (pixbuf)),
-      static_cast<float> (gdk_pixbuf_get_height (pixbuf))
-    };
+    vr::HmdVector2_t mouse_scale = { width, height };
     vr::VROverlay ()->SetOverlayMouseScale (self->overlay_handle, &mouse_scale);
   }
 }

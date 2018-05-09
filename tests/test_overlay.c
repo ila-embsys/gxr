@@ -1,3 +1,9 @@
+/*
+ * OpenVR GLib
+ * Copyright 2018 Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
+ * SPDX-License-Identifier: MIT
+ */
+
 #include <glib.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gdk/gdk.h>
@@ -9,14 +15,12 @@
 
 #include <GLFW/glfw3.h>
 
-static GdkPixbuf *pixbuf;
-static OpenVROverlay *overlay;
-
 
 gboolean
 timeout_callback (gpointer data)
 {
-  openvr_overlay_query_events (overlay, pixbuf);
+  OpenVROverlay *overlay = (OpenVROverlay*) data;
+  openvr_overlay_poll_event (overlay);
   return TRUE;
 }
 
@@ -141,7 +145,6 @@ _show_cb (OpenVROverlay *ovl,
           gpointer       data)
 {
   g_print ("show\n");
-  //openvr_overlay_upload_gdk_pixbuf (overlay, pixbuf);
 }
 
 static void
@@ -158,7 +161,7 @@ test_cat_overlay ()
 {
   GMainLoop *loop;
 
-  pixbuf = load_gdk_pixbuf ();
+  GdkPixbuf * pixbuf = load_gdk_pixbuf ();
   print_pixbuf_info (pixbuf);
 
   if (pixbuf == NULL)
@@ -181,9 +184,14 @@ test_cat_overlay ()
   g_assert (openvr_system_is_available ());
   g_assert (openvr_system_is_compositor_available ());
 
-  overlay = openvr_overlay_new ();
+  OpenVROverlay *overlay = openvr_overlay_new ();
   openvr_overlay_create (overlay, "test.cat", "Cat");
-  openvr_overlay_set_mouse_scale (overlay, pixbuf);
+
+  openvr_overlay_set_mouse_scale (overlay,
+                                  (float) gdk_pixbuf_get_width (pixbuf),
+                                  (float) gdk_pixbuf_get_height (pixbuf));
+
+  openvr_overlay_upload_gdk_pixbuf (overlay, pixbuf);
 
   g_signal_connect (overlay, "motion-notify-event", (GCallback) _move_cb, NULL);
   g_signal_connect (overlay, "button-press-event", (GCallback) _press_cb, loop);
@@ -192,7 +200,7 @@ test_cat_overlay ()
   g_signal_connect (overlay, "show", (GCallback) _show_cb, NULL);
   g_signal_connect (overlay, "destroy", (GCallback) _destroy_cb, loop);
 
-  g_timeout_add (20, timeout_callback, NULL);
+  g_timeout_add (20, timeout_callback, overlay);
   g_main_loop_run (loop);
   g_main_loop_unref (loop);
 
