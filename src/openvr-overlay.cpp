@@ -19,6 +19,10 @@ G_DEFINE_TYPE (OpenVROverlay, openvr_overlay, G_TYPE_OBJECT)
 
 enum {
   MOTION_NOTIFY_EVENT,
+  BUTTON_PRESS_EVENT,
+  BUTTON_RELEASE_EVENT,
+  SHOW,
+  DESTROY,
   LAST_SIGNAL
 };
 
@@ -31,13 +35,37 @@ openvr_overlay_class_init (OpenVROverlayClass *klass)
     g_signal_new ("motion-notify-event",
                    G_TYPE_FROM_CLASS (klass),
                    G_SIGNAL_RUN_LAST,
-                   0 /* closure */,
-                   NULL /* accumulator */,
-                   NULL /* accumulator data */,
-                   NULL /* C marshaller */,
-                   G_TYPE_NONE /* return_type */,
-                   1     /* n_params */,
-                   GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+                   0, NULL, NULL, NULL, G_TYPE_NONE,
+                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  overlay_signals[BUTTON_PRESS_EVENT] =
+    g_signal_new ("button-press-event",
+                   G_TYPE_FROM_CLASS (klass),
+                   G_SIGNAL_RUN_LAST,
+                   0, NULL, NULL, NULL, G_TYPE_NONE,
+                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  overlay_signals[BUTTON_RELEASE_EVENT] =
+    g_signal_new ("button-release-event",
+                   G_TYPE_FROM_CLASS (klass),
+                   G_SIGNAL_RUN_LAST,
+                   0, NULL, NULL, NULL, G_TYPE_NONE,
+                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  overlay_signals[SHOW] =
+    g_signal_new ("show",
+                   G_TYPE_FROM_CLASS (klass),
+                   G_SIGNAL_RUN_FIRST,
+                   0, NULL, NULL, NULL, G_TYPE_NONE, 0);
+
+  overlay_signals[DESTROY] =
+    g_signal_new ("destroy",
+                   G_TYPE_FROM_CLASS (klass),
+                   static_cast<GSignalFlags>
+                     (G_SIGNAL_RUN_CLEANUP |
+                      G_SIGNAL_NO_RECURSE |
+                      G_SIGNAL_NO_HOOKS),
+                   0, NULL, NULL, NULL, G_TYPE_NONE, 0);
 }
 
 static void
@@ -74,7 +102,7 @@ void openvr_overlay_create (OpenVROverlay *self,
 void openvr_overlay_upload_gdk_pixbuf (OpenVROverlay *self,
                                        GdkPixbuf * pixbuf)
 {
-  // skip rendering if the overlay isn't visible
+  /* skip rendering if the overlay isn't visible */
   if ((self->overlay_handle == vr::k_ulOverlayHandleInvalid) || !vr::VROverlay () ||
       (!vr::VROverlay()->IsOverlayVisible (self->overlay_handle) &&
        !vr::VROverlay()->IsOverlayVisible (self->thumbnail_handle)))
@@ -114,6 +142,7 @@ _float_seconds_to_timespec (float in, struct timespec* out)
   out->tv_nsec = (long) ((in - (float) out->tv_sec) * SEC_IN_NSEC_D);
 }
 
+/* assuming a > b */
 void
 _substract_timespecs (const struct timespec& a,
                       const struct timespec& b,
@@ -159,7 +188,8 @@ _age_s_to_monotonic_ms (float age)
   return (guint32) (time_s * SEC_IN_MSEC_D);
 }
 
-void openvr_overlay_query_events (OpenVROverlay *self, GdkPixbuf * pixbuf)
+void
+openvr_overlay_query_events (OpenVROverlay *self, GdkPixbuf * pixbuf)
 {
   if (!vr::VRSystem ()) return;
 
@@ -185,6 +215,12 @@ void openvr_overlay_query_events (OpenVROverlay *self, GdkPixbuf * pixbuf)
           vrEvent.data.mouse.button == vr::VRMouseButton_Right;
         printf("Event: VREvent_MouseButtonDown %s\n",
           is_right_button ? "Right" : "Left");
+        GdkEvent *event = gdk_event_new (GDK_BUTTON_PRESS);
+        event->button.x = vrEvent.data.mouse.x;
+        event->button.y = vrEvent.data.mouse.y;
+        event->button.time = _age_s_to_monotonic_ms (vrEvent.eventAgeSeconds);
+        event->button.button = vrEvent.data.mouse.button;
+        g_signal_emit (self, overlay_signals[BUTTON_PRESS_EVENT], 0, event);
       } break;
 
       case vr::VREvent_MouseButtonUp:
@@ -193,21 +229,27 @@ void openvr_overlay_query_events (OpenVROverlay *self, GdkPixbuf * pixbuf)
           vrEvent.data.mouse.button == vr::VRMouseButton_Right;
         printf("Event: VREvent_MouseButtonUp %s\n",
           is_right_button ? "Right" : "Left");
+        GdkEvent *event = gdk_event_new (GDK_BUTTON_RELEASE);
+        event->button.x = vrEvent.data.mouse.x;
+        event->button.y = vrEvent.data.mouse.y;
+        event->button.time = _age_s_to_monotonic_ms (vrEvent.eventAgeSeconds);
+        event->button.button = vrEvent.data.mouse.button;
+        g_signal_emit (self, overlay_signals[BUTTON_RELEASE_EVENT], 0, event);
       } break;
 
       case vr::VREvent_OverlayShown:
       {
-        printf("Event: VREvent_OverlayShown\n");
+        // g_signal_emit (self, overlay_signals[SHOW], 0);
         openvr_overlay_upload_gdk_pixbuf (self, pixbuf);
       } break;
 
       case vr::VREvent_Quit:
-        printf("Event: VREvent_Quit\n");
-        // TODO: quit main loop here
+        g_signal_emit (self, overlay_signals[DESTROY], 0);
         break;
     }
   }
 
+  /*
   if (self->thumbnail_handle != vr::k_ulOverlayHandleInvalid) {
     while (vr::VROverlay()->PollNextOverlayEvent(self->thumbnail_handle,
                                                  &vrEvent, sizeof (vrEvent)))
@@ -219,9 +261,11 @@ void openvr_overlay_query_events (OpenVROverlay *self, GdkPixbuf * pixbuf)
       }
     }
   }
+  */
 }
 
-void openvr_overlay_set_mouse_scale (OpenVROverlay *self, GdkPixbuf * pixbuf)
+void
+openvr_overlay_set_mouse_scale (OpenVROverlay *self, GdkPixbuf * pixbuf)
 {
   if (vr::VROverlay ()) {
     vr::HmdVector2_t mouse_scale = {

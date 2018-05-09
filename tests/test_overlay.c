@@ -113,7 +113,44 @@ _move_cb (OpenVROverlay  *overlay,
           GdkEventMotion *event,
           gpointer        data)
 {
-  g_print ("mouse moved: %f %f (%d)\n", event->x, event->y, event->time);
+  g_print ("move: %f %f (%d)\n", event->x, event->y, event->time);
+}
+
+static void
+_press_cb (OpenVROverlay  *overlay,
+           GdkEventButton *event,
+           gpointer        data)
+{
+  g_print ("press: %d %f %f (%d)\n",
+           event->button, event->x, event->y, event->time);
+  GMainLoop *loop = (GMainLoop*) data;
+  g_main_loop_quit (loop);
+}
+
+static void
+_release_cb (OpenVROverlay  *overlay,
+             GdkEventButton *event,
+             gpointer        data)
+{
+  g_print ("release: %d %f %f (%d)\n",
+           event->button, event->x, event->y, event->time);
+}
+
+static void
+_show_cb (OpenVROverlay *ovl,
+          gpointer       data)
+{
+  g_print ("show\n");
+  //openvr_overlay_upload_gdk_pixbuf (overlay, pixbuf);
+}
+
+static void
+_destroy_cb (OpenVROverlay *overlay,
+             gpointer       data)
+{
+  g_print ("destroy\n");
+  GMainLoop *loop = (GMainLoop*) data;
+  g_main_loop_quit (loop);
 }
 
 int
@@ -149,12 +186,17 @@ test_cat_overlay ()
   openvr_overlay_set_mouse_scale (overlay, pixbuf);
 
   g_signal_connect (overlay, "motion-notify-event", (GCallback) _move_cb, NULL);
+  g_signal_connect (overlay, "button-press-event", (GCallback) _press_cb, loop);
+  g_signal_connect (
+    overlay, "button-release-event", (GCallback) _release_cb, NULL);
+  g_signal_connect (overlay, "show", (GCallback) _show_cb, NULL);
+  g_signal_connect (overlay, "destroy", (GCallback) _destroy_cb, loop);
 
   g_timeout_add (20, timeout_callback, NULL);
   g_main_loop_run (loop);
   g_main_loop_unref (loop);
 
-  g_print ("bye/n");
+  g_print ("bye\n");
 
   g_object_unref (overlay);
   g_object_unref (pixbuf);
