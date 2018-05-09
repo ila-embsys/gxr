@@ -141,10 +141,22 @@ _release_cb (OpenVROverlay  *overlay,
 }
 
 static void
-_show_cb (OpenVROverlay *ovl,
+_show_cb (OpenVROverlay *overlay,
           gpointer       data)
 {
   g_print ("show\n");
+
+  /* skip rendering if the overlay isn't available or visible */
+  gboolean is_unavailable = !openvr_overlay_is_valid (overlay) ||
+                            !openvr_system_is_overlay_available ();
+  gboolean is_invisible = !openvr_overlay_is_visible (overlay) &&
+                          !openvr_overlay_thumbnail_is_visible (overlay);
+
+  if (is_unavailable || is_invisible)
+    return;
+
+  GdkPixbuf * pixbuf = (GdkPixbuf*) data;
+  openvr_overlay_upload_gdk_pixbuf (overlay, pixbuf);
 }
 
 static void
@@ -187,17 +199,22 @@ test_cat_overlay ()
   OpenVROverlay *overlay = openvr_overlay_new ();
   openvr_overlay_create (overlay, "test.cat", "Cat");
 
+  if (!openvr_overlay_is_valid (overlay) ||
+      !openvr_system_is_overlay_available ())
+  {
+    fprintf (stderr, "Overlay unavailable.\n");
+    return -1;
+  }
+
   openvr_overlay_set_mouse_scale (overlay,
                                   (float) gdk_pixbuf_get_width (pixbuf),
                                   (float) gdk_pixbuf_get_height (pixbuf));
-
-  openvr_overlay_upload_gdk_pixbuf (overlay, pixbuf);
 
   g_signal_connect (overlay, "motion-notify-event", (GCallback) _move_cb, NULL);
   g_signal_connect (overlay, "button-press-event", (GCallback) _press_cb, loop);
   g_signal_connect (
     overlay, "button-release-event", (GCallback) _release_cb, NULL);
-  g_signal_connect (overlay, "show", (GCallback) _show_cb, NULL);
+  g_signal_connect (overlay, "show", (GCallback) _show_cb, pixbuf);
   g_signal_connect (overlay, "destroy", (GCallback) _destroy_cb, loop);
 
   g_timeout_add (20, timeout_callback, overlay);

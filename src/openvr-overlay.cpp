@@ -121,15 +121,6 @@ gboolean openvr_overlay_thumbnail_is_visible (OpenVROverlay *self)
 void openvr_overlay_upload_gdk_pixbuf (OpenVROverlay *self,
                                        GdkPixbuf * pixbuf)
 {
-  /* skip rendering if the overlay isn't available or visible */
-  gboolean is_unavailable = !openvr_overlay_is_valid (self) ||
-                             !openvr_system_is_overlay_available ();
-  gboolean is_invisible = !openvr_overlay_is_visible (self) &&
-                          !openvr_overlay_thumbnail_is_visible (self);
-
-  if (is_unavailable || is_invisible)
-    return;
-
   GLuint tex;
   glGenTextures (1, &tex);
   glBindTexture (GL_TEXTURE_2D, tex);
