@@ -16,7 +16,6 @@ exe = executable('test_overlay', ['test_overlay.c', '../res/tests.c'],
                  install: false)
 
 test_pixbuf_deps = [
-  dependency('gtk+-3.0', version: '>= 3.22'),
   openvr_glib_deps
 ]
 

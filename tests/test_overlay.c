@@ -1,5 +1,6 @@
 #include <glib.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
+#include <gdk/gdk.h>
 
 #include <openvr-glib.h>
 
@@ -107,10 +108,12 @@ init_offscreen_gl ()
   return TRUE;
 }
 
-void
-_move_cb ()
+static void
+_move_cb (OpenVROverlay  *overlay,
+          GdkEventMotion *event,
+          gpointer        data)
 {
-  g_print ("mouse moved\n");
+  g_print ("mouse moved: %f %f (%d)\n", event->x, event->y, event->time);
 }
 
 int
@@ -145,7 +148,7 @@ test_cat_overlay ()
   openvr_overlay_create (overlay, "test.cat", "Cat");
   openvr_overlay_set_mouse_scale (overlay, pixbuf);
 
-  g_signal_connect (overlay, "mouse-move", (GCallback) _move_cb, NULL);
+  g_signal_connect (overlay, "motion-notify-event", (GCallback) _move_cb, NULL);
 
   g_timeout_add (20, timeout_callback, NULL);
   g_main_loop_run (loop);

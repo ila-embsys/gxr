@@ -4,35 +4,40 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <time.h>
+
 #define GL_GLEXT_PROTOTYPES 1
 #include <GL/glcorearb.h>
+
+#include <gdk/gdk.h>
 
 #include "openvr-overlay.h"
 #include <openvr.h>
 
 G_DEFINE_TYPE (OpenVROverlay, openvr_overlay, G_TYPE_OBJECT)
 
-static guint overlay_signals[1];
 
-enum signals {
-  MOUSE_MOVE_SIGNAL
+enum {
+  MOTION_NOTIFY_EVENT,
+  LAST_SIGNAL
 };
+
+static guint overlay_signals[LAST_SIGNAL] = { 0 };
 
 static void
 openvr_overlay_class_init (OpenVROverlayClass *klass)
 {
-  overlay_signals[MOUSE_MOVE_SIGNAL] =
-    g_signal_newv ("mouse-move",
+  overlay_signals[MOTION_NOTIFY_EVENT] =
+    g_signal_new ("motion-notify-event",
                    G_TYPE_FROM_CLASS (klass),
-                   static_cast<GSignalFlags> (
-                     G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS),
-                   NULL /* closure */,
+                   G_SIGNAL_RUN_LAST,
+                   0 /* closure */,
                    NULL /* accumulator */,
                    NULL /* accumulator data */,
                    NULL /* C marshaller */,
                    G_TYPE_NONE /* return_type */,
-                   0     /* n_params */,
-                   NULL  /* param_types */);
+                   1     /* n_params */,
+                   GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
 }
 
 static void
@@ -98,6 +103,62 @@ void openvr_overlay_upload_gdk_pixbuf (OpenVROverlay *self,
   }
 }
 
+#define SEC_IN_NSEC_D 1000000000.0
+#define SEC_IN_MSEC_D 1000.0
+#define SEC_IN_NSEC_L 1000000000L
+
+void
+_float_seconds_to_timespec (float in, struct timespec* out)
+{
+  out->tv_sec = (time_t) in;
+  out->tv_nsec = (long) ((in - (float) out->tv_sec) * SEC_IN_NSEC_D);
+}
+
+void
+_substract_timespecs (const struct timespec& a,
+                      const struct timespec& b,
+                      struct timespec* out)
+{
+  out->tv_sec = a.tv_sec - b.tv_sec;
+
+  if (a.tv_nsec < b.tv_nsec)
+  {
+    out->tv_nsec = a.tv_nsec + SEC_IN_NSEC_L - b.tv_nsec;
+    out->tv_sec--;
+  }
+  else
+  {
+    out->tv_nsec = a.tv_nsec - b.tv_nsec;
+  }
+}
+
+double
+_timespec_to_double_s (const struct timespec& time)
+{
+  return ((double) time.tv_sec + (time.tv_nsec / SEC_IN_NSEC_D));
+}
+
+guint32
+_age_s_to_monotonic_ms (float age)
+{
+  struct timespec mono_time;
+  if (clock_gettime (CLOCK_MONOTONIC, &mono_time) != 0)
+  {
+    fprintf (stderr, "Cound not read system clock\n");
+    return 0;
+  }
+
+  struct timespec event_age;
+  _float_seconds_to_timespec (age, &event_age);
+
+  struct timespec event_age_on_mono;
+  _substract_timespecs (mono_time, event_age, &event_age_on_mono);
+
+  double time_s = _timespec_to_double_s (event_age_on_mono);
+
+  return (guint32) (time_s * SEC_IN_MSEC_D);
+}
+
 void openvr_overlay_query_events (OpenVROverlay *self, GdkPixbuf * pixbuf)
 {
   if (!vr::VRSystem ()) return;
@@ -111,9 +172,11 @@ void openvr_overlay_query_events (OpenVROverlay *self, GdkPixbuf * pixbuf)
     {
       case vr::VREvent_MouseMove:
       {
-        g_print("received mouse move event [%f %f]\n",
-                vrEvent.data.mouse.x, vrEvent.data.mouse.y);
-        g_signal_emit (self, overlay_signals[MOUSE_MOVE_SIGNAL], 0 /* details */);
+        GdkEvent *event = gdk_event_new (GDK_MOTION_NOTIFY);
+        event->motion.x = vrEvent.data.mouse.x;
+        event->motion.y = vrEvent.data.mouse.y;
+        event->motion.time = _age_s_to_monotonic_ms (vrEvent.eventAgeSeconds);
+        g_signal_emit (self, overlay_signals[MOTION_NOTIFY_EVENT], 0, event);
       } break;
 
       case vr::VREvent_MouseButtonDown:

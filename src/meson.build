@@ -35,6 +35,7 @@ cpp = meson.get_compiler('cpp')
 openvr_glib_deps = [
   dependency('gio-2.0', version: '>= 2.50'),
   dependency('gdk-pixbuf-2.0', version: '>= 2.36'),
+  dependency('gtk+-3.0', version: '>= 3.22'),
   dependency('GL'),
   cpp.find_library('openvr_api')
 ]
