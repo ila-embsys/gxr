@@ -2,19 +2,26 @@
 
 A glib wrapper and utilities for the OpenVR API
 
-## Compilation
+## Build
 
-Configure the project
+#### Configure the project
 ```
 $ meson build
 ```
 
-Build the project:
+#### Compile the project
 ```
 $ ninja -C build
 ```
 
-Run the tests:
+## Run
+
+#### Run the examples
 ```
-ninja -C build test
+$ ./build/examples/overlay_pixbuf
+```
+
+#### Run the tests
+```
+$ ninja -C build test
 ```
