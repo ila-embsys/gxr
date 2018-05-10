@@ -18,3 +18,10 @@ gtk_cairo = executable(
   link_with: openvr_glib_lib,
   include_directories: openvr_glib_inc,
   install: false)
+
+png_cairo = executable(
+  'png_cairo', ['png_cairo.c'],
+  dependencies: dependency('cairo'),
+  link_with: openvr_glib_lib,
+  include_directories: openvr_glib_inc,
+  install: false)
