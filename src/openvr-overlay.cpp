@@ -201,6 +201,22 @@ _age_s_to_monotonic_ms (float age)
   return (guint32) (time_s * SEC_IN_MSEC_D);
 }
 
+static guint
+_vr_to_gdk_mouse_button (uint32_t btn)
+{
+  switch(btn)
+  {
+    case vr::VRMouseButton_Left:
+      return 0;
+    case vr::VRMouseButton_Middle:
+      return 1;
+    case vr::VRMouseButton_Right:
+      return 2;
+    default:
+      return 0;
+  }
+}
+
 void
 openvr_overlay_poll_event (OpenVROverlay *self)
 {
@@ -224,29 +240,23 @@ openvr_overlay_poll_event (OpenVROverlay *self)
 
       case vr::VREvent_MouseButtonDown:
       {
-        gboolean is_right_button =
-          vrEvent.data.mouse.button == vr::VRMouseButton_Right;
-        printf("Event: VREvent_MouseButtonDown %s\n",
-          is_right_button ? "Right" : "Left");
         GdkEvent *event = gdk_event_new (GDK_BUTTON_PRESS);
         event->button.x = vrEvent.data.mouse.x;
         event->button.y = vrEvent.data.mouse.y;
         event->button.time = _age_s_to_monotonic_ms (vrEvent.eventAgeSeconds);
-        event->button.button = vrEvent.data.mouse.button;
+        event->button.button =
+          _vr_to_gdk_mouse_button (vrEvent.data.mouse.button);
         g_signal_emit (self, overlay_signals[BUTTON_PRESS_EVENT], 0, event);
       } break;
 
       case vr::VREvent_MouseButtonUp:
       {
-        gboolean is_right_button =
-          vrEvent.data.mouse.button == vr::VRMouseButton_Right;
-        printf("Event: VREvent_MouseButtonUp %s\n",
-          is_right_button ? "Right" : "Left");
         GdkEvent *event = gdk_event_new (GDK_BUTTON_RELEASE);
         event->button.x = vrEvent.data.mouse.x;
         event->button.y = vrEvent.data.mouse.y;
         event->button.time = _age_s_to_monotonic_ms (vrEvent.eventAgeSeconds);
-        event->button.button = vrEvent.data.mouse.button;
+        event->button.button =
+          _vr_to_gdk_mouse_button (vrEvent.data.mouse.button);
         g_signal_emit (self, overlay_signals[BUTTON_RELEASE_EVENT], 0, event);
       } break;
 
