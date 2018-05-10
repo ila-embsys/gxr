@@ -33,6 +33,9 @@ void openvr_overlay_create (OpenVROverlay *self,
 void openvr_overlay_upload_gdk_pixbuf (OpenVROverlay *self,
                                        GdkPixbuf * pixbuf);
 
+void openvr_overlay_upload_cairo_surface (OpenVROverlay *self,
+                                          cairo_surface_t* surface);
+
 void openvr_overlay_poll_event (OpenVROverlay *self);
 
 void openvr_overlay_set_mouse_scale (OpenVROverlay *self,

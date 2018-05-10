@@ -118,8 +118,9 @@ gboolean openvr_overlay_thumbnail_is_visible (OpenVROverlay *self)
   return vr::VROverlay()->IsOverlayVisible (self->overlay_handle);
 }
 
-void openvr_overlay_upload_gdk_pixbuf (OpenVROverlay *self,
-                                       GdkPixbuf * pixbuf)
+void
+openvr_overlay_upload_gdk_pixbuf (OpenVROverlay *self,
+                                  GdkPixbuf * pixbuf)
 {
   GLuint tex;
   glGenTextures (1, &tex);
@@ -143,6 +144,35 @@ void openvr_overlay_upload_gdk_pixbuf (OpenVROverlay *self,
     vr::VROverlay ()->SetOverlayTexture (self->overlay_handle, &texture);
   }
 }
+
+void
+openvr_overlay_upload_cairo_surface (OpenVROverlay *self,
+                                     cairo_surface_t* surface)
+{
+  GLuint tex;
+  glGenTextures (1, &tex);
+  glBindTexture (GL_TEXTURE_2D, tex);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+  int width = cairo_image_surface_get_width (surface);
+  int height = cairo_image_surface_get_height (surface);
+
+  guchar *pixels = cairo_image_surface_get_data (surface);
+
+  glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, width, height,
+                0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+
+  if (tex != 0) {
+    vr::Texture_t texture = {
+      reinterpret_cast<void*> (tex),
+      vr::TextureType_OpenGL,
+      vr::ColorSpace_Auto
+    };
+    vr::VROverlay ()->SetOverlayTexture (self->overlay_handle, &texture);
+  }
+}
+
 
 #define SEC_IN_NSEC_D 1000000000.0
 #define SEC_IN_MSEC_D 1000.0

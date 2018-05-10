@@ -5,6 +5,13 @@ overlay_pixbuf = executable(
   include_directories: openvr_glib_inc,
   install: false)
 
+overlay_cairo = executable(
+  'overlay_cairo', ['overlay_cairo.c'],
+  dependencies: [dependency('glfw3'), openvr_glib_deps, dependency('cairo')],
+  link_with: openvr_glib_lib,
+  include_directories: openvr_glib_inc,
+  install: false)
+
 gtk_pixbuf = executable(
   'gtk_pixbuf', ['gtk_pixbuf.c', '../res/tests.c'],
   dependencies: openvr_glib_deps,
