@@ -13,3 +13,8 @@ Build the project:
 ```
 $ ninja -C build
 ```
+
+Run the tests:
+```
+ninja -C build test
+```
