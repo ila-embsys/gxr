@@ -9,18 +9,15 @@ test_overlay_deps = [
   openvr_glib_deps
 ]
 
-exe = executable('test_overlay', ['test_overlay.c', '../res/tests.c'],
+exe = executable('test_overlay_pixbuf', ['test_overlay_pixbuf.c', '../res/tests.c'],
                  dependencies: test_overlay_deps,
                  link_with: openvr_glib_lib,
                  include_directories: openvr_glib_inc,
                  install: false)
 
-test_pixbuf_deps = [
-  openvr_glib_deps
-]
 
-exe = executable('test_pixbuf', ['test_pixbuf.c', '../res/tests.c'],
-                 dependencies:test_pixbuf_deps,
+exe = executable('test_gtk_pixbuf', ['test_gtk_pixbuf.c', '../res/tests.c'],
+                 dependencies: openvr_glib_deps,
                  link_with: openvr_glib_lib,
                  include_directories: openvr_glib_inc,
                  install: false)
