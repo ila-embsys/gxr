@@ -15,3 +15,4 @@ add_project_arguments([
 subdir('src')
 subdir('res')
 subdir('tests')
+subdir('examples')
