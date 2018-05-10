@@ -11,3 +11,10 @@ gtk_pixbuf = executable(
   link_with: openvr_glib_lib,
   include_directories: openvr_glib_inc,
   install: false)
+
+gtk_cairo = executable(
+  'gtk_cairo', ['gtk_cairo.c'],
+  dependencies: openvr_glib_deps,
+  link_with: openvr_glib_lib,
+  include_directories: openvr_glib_inc,
+  install: false)
