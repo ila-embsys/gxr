@@ -216,7 +216,7 @@ _age_s_to_monotonic_ms (float age)
   struct timespec mono_time;
   if (clock_gettime (CLOCK_MONOTONIC, &mono_time) != 0)
   {
-    fprintf (stderr, "Cound not read system clock\n");
+    fprintf (stderr, "Could not read system clock\n");
     return 0;
   }
 
