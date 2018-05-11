@@ -62,6 +62,9 @@ create_rotated_quad_stage (ClutterActor* stage)
   /* connect our drawing code */
   g_signal_connect (canvas, "draw", G_CALLBACK (draw_content), NULL);
 
+  // g_signal_connect (actor, "paint", G_CALLBACK (enter_cb), NULL);
+  //g_signal_connect (stage, "paint", G_CALLBACK (enter_cb), NULL);
+
   /* invalidate the canvas, so that we can draw before the main loop starts */
   clutter_content_invalidate (canvas);
 }

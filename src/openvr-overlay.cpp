@@ -286,7 +286,6 @@ openvr_overlay_upload_pixels (OpenVROverlay *self,
   }
 }
 
-
 #define SEC_IN_NSEC_D 1000000000.0
 #define SEC_IN_MSEC_D 1000.0
 #define SEC_IN_NSEC_L 1000000000L

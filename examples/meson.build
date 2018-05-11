@@ -48,6 +48,13 @@ overlay_gtk = executable(
   include_directories: openvr_glib_inc,
   install: false)
 
+overlay_clutter = executable(
+  'overlay_clutter', ['overlay_clutter.c'],
+  dependencies: [openvr_glib_deps, dependency('clutter-1.0')],
+  link_with: openvr_glib_lib,
+  include_directories: openvr_glib_inc,
+  install: false)
+
 # GNOME samples
 
 cogl_triangle = executable(

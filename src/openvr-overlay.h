@@ -49,7 +49,6 @@ void openvr_overlay_set_mouse_scale (OpenVROverlay *self,
                                      float width,
                                      float height);
 
-
 void
 openvr_overlay_upload_pixels (OpenVROverlay *self,
                               guchar *pixels,
