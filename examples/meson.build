@@ -108,6 +108,20 @@ gdk_list_seats = executable(
   include_directories: openvr_glib_inc,
   install: false)
 
+gtk_clutter = executable(
+  'gtk_clutter', ['gtk_clutter.c'],
+  dependencies: [openvr_glib_deps, dependency('clutter-gtk-1.0')],
+  link_with: openvr_glib_lib,
+  include_directories: openvr_glib_inc,
+  install: false)
+
+clutter = executable(
+  'clutter', ['clutter.c'],
+  dependencies: [openvr_glib_deps, dependency('clutter-1.0')],
+  link_with: openvr_glib_lib,
+  include_directories: openvr_glib_inc,
+  install: false)
+
 png_cairo = executable(
   'png_cairo', ['png_cairo.c'],
   dependencies: dependency('cairo'),
