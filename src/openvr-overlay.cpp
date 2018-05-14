@@ -174,6 +174,34 @@ openvr_overlay_upload_cairo_surface (OpenVROverlay *self,
 }
 
 
+void
+openvr_overlay_upload_pixels (OpenVROverlay *self,
+                              guchar *pixels,
+                              int width,
+                              int height)
+{
+  GLuint tex;
+  glGenTextures (1, &tex);
+  glBindTexture (GL_TEXTURE_2D, tex);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+  g_print ("uploading pixels! %dx%d\n", width, height);
+
+  glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, width, height,
+                0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+
+  if (tex != 0) {
+    vr::Texture_t texture = {
+      reinterpret_cast<void*> (tex),
+      vr::TextureType_OpenGL,
+      vr::ColorSpace_Auto
+    };
+    vr::VROverlay ()->SetOverlayTexture (self->overlay_handle, &texture);
+  }
+}
+
+
 #define SEC_IN_NSEC_D 1000000000.0
 #define SEC_IN_MSEC_D 1000.0
 #define SEC_IN_NSEC_L 1000000000L
