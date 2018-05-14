@@ -40,6 +40,13 @@ gtk_offscreen = executable(
   include_directories: openvr_glib_inc,
   install: false)
 
+gtk_offscreen = executable(
+  'gdk_list_devices', ['gdk_list_devices.c'],
+  dependencies: openvr_glib_deps,
+  link_with: openvr_glib_lib,
+  include_directories: openvr_glib_inc,
+  install: false)
+
 png_cairo = executable(
   'png_cairo', ['png_cairo.c'],
   dependencies: dependency('cairo'),
