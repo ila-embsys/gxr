@@ -1,3 +1,9 @@
+/*
+ * OpenVR GLib
+ * Copyright 2018 Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
+ * SPDX-License-Identifier: MIT
+ */
+
 #include <time.h>
 
 #include <glib.h>
@@ -116,8 +122,9 @@ main (int argc, char **argv)
 {
   gtk_init (&argc, &argv);
 
-  // GtkWidget *window = gtk_offscreen_window_new ();
-  GtkWidget *window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+  GtkWidget *window = gtk_offscreen_window_new ();
+  /* this code also works for an onscreen window */
+  // GtkWidget *window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
   struct Labels labels;
 
@@ -143,13 +150,14 @@ main (int argc, char **argv)
 
   gtk_widget_show_all (window);
 
-  //g_signal_connect (window, "damage-event",
-  //                  G_CALLBACK (offscreen_damage), NULL);
+  g_signal_connect (window, "damage-event",
+                    G_CALLBACK (offscreen_damage), NULL);
 
   g_signal_connect (button, "button_press_event", G_CALLBACK (_press_cb), NULL);
 
   g_signal_connect (window, "draw", G_CALLBACK (_draw_cb), &labels);
 
+  /* manually trigger draw */
   // gtk_widget_queue_draw (window);
 
   gtk_main();
