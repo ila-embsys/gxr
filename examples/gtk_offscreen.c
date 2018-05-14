@@ -160,7 +160,7 @@ main (int argc, char **argv)
   /* manually trigger draw */
   // gtk_widget_queue_draw (window);
 
-  gtk_main();
+  gtk_main ();
 
   return 0;
 }

@@ -12,6 +12,13 @@ overlay_cairo = executable(
   include_directories: openvr_glib_inc,
   install: false)
 
+overlay_gtk = executable(
+  'overlay_gtk', ['overlay_gtk.c', '../res/tests.c'],
+  dependencies: [dependency('freeglut'), openvr_glib_deps],
+  link_with: openvr_glib_lib,
+  include_directories: openvr_glib_inc,
+  install: false)
+
 gtk_pixbuf = executable(
   'gtk_pixbuf', ['gtk_pixbuf.c', '../res/tests.c'],
   dependencies: openvr_glib_deps,
@@ -32,7 +39,6 @@ gtk_offscreen = executable(
   link_with: openvr_glib_lib,
   include_directories: openvr_glib_inc,
   install: false)
-
 
 png_cairo = executable(
   'png_cairo', ['png_cairo.c'],

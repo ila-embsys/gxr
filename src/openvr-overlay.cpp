@@ -133,7 +133,7 @@ openvr_overlay_upload_gdk_pixbuf (OpenVROverlay *self,
   guchar *pixels = gdk_pixbuf_get_pixels (pixbuf);
 
   glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, width, height,
-                0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+                0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
   if (tex != 0) {
     vr::Texture_t texture = {
