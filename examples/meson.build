@@ -42,7 +42,7 @@ gtk_offscreen = executable(
 
 gtk_offscreen = executable(
   'gtk_input_synth', ['gtk_input_synth.c'],
-  dependencies: openvr_glib_deps,
+  dependencies: [openvr_glib_deps, dependency('x11')],
   link_with: openvr_glib_lib,
   include_directories: openvr_glib_inc,
   install: false)

@@ -5,11 +5,14 @@
  */
 
 #include <time.h>
+#include <math.h>
+
+#include <X11/Xlib.h>
 
 #include <glib.h>
 #include <glib/gprintf.h>
 #include <gtk/gtk.h>
-
+#include <gdk/gdkx.h>
 
 static gboolean
 _quit_cb (GtkWidget *button, GdkEvent *event, GMainLoop *loop)
@@ -25,6 +28,9 @@ _quit2_cb (GtkWidget *button, GMainLoop *loop)
   return TRUE;
 }
 
+static gdouble last_mouse_x;
+static gdouble last_mouse_y;
+
 gboolean
 _move_cb (GtkWidget      *widget,
           GdkEventMotion *event,
@@ -35,6 +41,10 @@ _move_cb (GtkWidget      *widget,
            event->x, event->y,
            event->time,
            event->x_root, event->y_root);
+
+  /* TODO: lock this */
+  last_mouse_x = event->x;
+  last_mouse_y = event->y;
 
   return TRUE;
 }
@@ -58,7 +68,7 @@ monotonic_time_ms ()
 }
 
 void
-synthesize_motion_event (GdkWindow *window, gdouble x, gdouble y)
+synthesize_gtk_motion_event (GdkWindow *window, gdouble x, gdouble y)
 {
   GdkEvent *event = gdk_event_new (GDK_MOTION_NOTIFY);
   event->motion.x = x;
@@ -94,23 +104,86 @@ struct GdkSimulation
 static struct GdkSimulation gdk_simulation;
 
 gboolean
-timeout_callback (gpointer data)
+_gtk_synth_iteration_cb (gpointer data)
 {
-  g_print ("runs: %d\n", gdk_simulation.runs);
+  GdkWindow *window = GDK_WINDOW (data);
+
+  guint32 now = monotonic_time_ms ();
+  guint32 passed = now - gdk_simulation.start_time_ms;
+
+  gdouble passed_sin = sin (((gdouble) passed) / 500.0);
+
   gdk_simulation.runs += 1;
 
-  if (gdk_simulation.runs > 20)
+  gdouble current_y = gdk_simulation.start_y + passed_sin * 100.0;
+
+  synthesize_gtk_motion_event (window, gdk_simulation.start_x, current_y);
+
+  if (gdk_simulation.runs > 50)
     return FALSE;
   else
     return TRUE;
 }
 
 static gboolean
-_run_gtk_synth_cb (GtkWidget *button, GdkEventButton *event, GMainLoop *loop)
+_run_gtk_synth_cb (GtkWidget *button, GdkEventButton *event, GdkWindow *window)
 {
   gdk_simulation.runs = 0;
+  gdk_simulation.start_time_ms = monotonic_time_ms ();
+
+  /* TODO: lock this */
+  gdk_simulation.start_x = last_mouse_x;
+  gdk_simulation.start_y = last_mouse_y;
+
+  g_timeout_add (100, _gtk_synth_iteration_cb, window);
+  return TRUE;
+}
+
+void
+synthesize_xlib_motion_event (GdkWindow *window, gdouble x, gdouble y)
+{
+  GdkDisplay *display = gdk_window_get_display (window);
+  Display * x_display = gdk_x11_display_get_xdisplay (display);
+  Window x_window = gdk_x11_window_get_xid (window);
+
+  XSelectInput(x_display, x_window, KeyReleaseMask);
+  XWarpPointer(x_display, None, x_window, 0, 0, 0, 0, (int) x, (int) y);
+  XSync(x_display, FALSE);
+}
+
+gboolean
+_xlib_synth_iteration_cb (gpointer data)
+{
+  GdkWindow *window = GDK_WINDOW (data);
+
+  guint32 now = monotonic_time_ms ();
+  guint32 passed = now - gdk_simulation.start_time_ms;
+
+  gdouble passed_sin = sin (((gdouble) passed) / 500.0);
+
+  gdk_simulation.runs += 1;
+
+  gdouble current_y = gdk_simulation.start_y + passed_sin * 100.0;
+
+  synthesize_xlib_motion_event (window, gdk_simulation.start_x, current_y);
+
+  if (gdk_simulation.runs > 50)
+    return FALSE;
+  else
+    return TRUE;
+}
+
+static gboolean
+_run_xlib_synth_cb (GtkWidget *button, GdkEventButton *event, GdkWindow *window)
+{
   gdk_simulation.runs = 0;
-  g_timeout_add (20, timeout_callback, NULL);
+  gdk_simulation.start_time_ms = monotonic_time_ms ();
+
+  /* TODO: lock this */
+  gdk_simulation.start_x = last_mouse_x;
+  gdk_simulation.start_y = last_mouse_y;
+
+  g_timeout_add (100, _xlib_synth_iteration_cb, window);
   return TRUE;
 }
 
@@ -140,7 +213,12 @@ main (int argc, char **argv)
 
   gtk_widget_show_all (window);
 
-  g_signal_connect (button1, "button-press-event", (GCallback) _run_gtk_synth_cb, NULL);
+  GdkWindow *gdk_window = gtk_widget_get_window (window);
+
+  g_signal_connect (button1, "button-press-event",
+                    (GCallback) _run_gtk_synth_cb, gdk_window);
+  g_signal_connect (button2, "button-press-event",
+                    (GCallback) _run_xlib_synth_cb, gdk_window);
   g_signal_connect (button3, "button-press-event", (GCallback) _quit_cb, loop);
   g_signal_connect (window, "destroy", (GCallback) _quit2_cb, loop);
 
@@ -153,8 +231,6 @@ main (int argc, char **argv)
   gtk_widget_add_events (button1, GDK_POINTER_MOTION_MASK);
   gtk_widget_add_events (button2, GDK_POINTER_MOTION_MASK);
   gtk_widget_add_events (button3, GDK_POINTER_MOTION_MASK);
-
-  // GdkWindow *gdk_window = gtk_widget_get_window (window);
 
   g_main_loop_run (loop);
   g_main_loop_unref (loop);
