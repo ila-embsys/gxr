@@ -40,6 +40,13 @@ gtk_offscreen = executable(
   include_directories: openvr_glib_inc,
   install: false)
 
+gtk_offscreen = executable(
+  'gtk_input_synth', ['gtk_input_synth.c'],
+  dependencies: openvr_glib_deps,
+  link_with: openvr_glib_lib,
+  include_directories: openvr_glib_inc,
+  install: false)
+
 gdk_list_devices = executable(
   'gdk_list_devices', ['gdk_list_devices.c'],
   dependencies: openvr_glib_deps,
