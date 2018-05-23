@@ -161,6 +161,32 @@ openvr_overlay_upload_gdk_pixbuf (OpenVROverlay *self,
 }
 
 void
+openvr_overlay_upload_cogl (OpenVROverlay *self, CoglTexture *cogl_texture)
+{
+  GLuint tex;
+  GLenum target;
+
+  CoglBool ret = cogl_texture_get_gl_texture (cogl_texture, &tex, &target);
+
+  if (!ret)
+  {
+    g_printerr("Getting texture handle failed.\n");
+  }
+
+  g_print("Uploading CoglTexture\n");
+
+  if (tex != 0) {
+    vr::Texture_t texture = {
+      reinterpret_cast<void*> (tex),
+      vr::TextureType_OpenGL,
+      vr::ColorSpace_Auto
+    };
+    vr::VROverlay ()->SetOverlayTexture (self->overlay_handle, &texture);
+  }
+}
+
+
+void
 openvr_overlay_upload_cairo_surface (OpenVROverlay *self,
                                      cairo_surface_t* surface)
 {

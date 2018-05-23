@@ -7,6 +7,9 @@
 #ifndef OPENVR_GLIB_OVERLAY_H_
 #define OPENVR_GLIB_OVERLAY_H_
 
+#define COGL_ENABLE_EXPERIMENTAL_API 1
+#include <cogl/cogl.h>
+
 #include <stdint.h>
 #include <glib-object.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
@@ -35,6 +38,10 @@ void openvr_overlay_upload_gdk_pixbuf (OpenVROverlay *self,
 
 void openvr_overlay_upload_cairo_surface (OpenVROverlay *self,
                                           cairo_surface_t* surface);
+
+
+void
+openvr_overlay_upload_cogl (OpenVROverlay *self, CoglTexture *cogl_texture);
 
 void openvr_overlay_poll_event (OpenVROverlay *self);
 

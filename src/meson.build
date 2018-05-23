@@ -37,6 +37,7 @@ openvr_glib_deps = [
   dependency('gdk-pixbuf-2.0', version: '>= 2.36'),
   dependency('gtk+-3.0', version: '>= 3.22'),
   dependency('GL'),
+  dependency('cogl-2.0-experimental'),
   cpp.find_library('openvr_api')
 ]
 
