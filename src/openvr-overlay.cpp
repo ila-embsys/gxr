@@ -132,6 +132,8 @@ openvr_overlay_upload_gdk_pixbuf (OpenVROverlay *self,
   int height = gdk_pixbuf_get_height (pixbuf);
   guchar *pixels = gdk_pixbuf_get_pixels (pixbuf);
 
+  glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
+
   GLenum format;
   switch (gdk_pixbuf_get_n_channels (pixbuf))
   {
