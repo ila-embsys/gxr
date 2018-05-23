@@ -167,18 +167,59 @@ openvr_overlay_upload_cairo_surface (OpenVROverlay *self,
   GLuint tex;
   glGenTextures (1, &tex);
   glBindTexture (GL_TEXTURE_2D, tex);
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  //glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  //glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
   int width = cairo_image_surface_get_width (surface);
   int height = cairo_image_surface_get_height (surface);
 
+  int stride = cairo_image_surface_get_stride (surface);
+
+  cairo_format_t cr_format = cairo_image_surface_get_format (surface);
+
+  GLenum gl_format = GL_RGB;
+  switch (cr_format)
+  {
+  case CAIRO_FORMAT_INVALID:
+    g_print("CAIRO_FORMAT_INVALID\n");
+    break;
+  case CAIRO_FORMAT_ARGB32:
+    g_print("CAIRO_FORMAT_ARGB32\n");
+    gl_format = GL_RGBA;
+    break;
+  case CAIRO_FORMAT_RGB24:
+    g_print("CAIRO_FORMAT_RGB24\n");
+    break;
+  case CAIRO_FORMAT_A8:
+    g_print("CAIRO_FORMAT_A8\n");
+    break;
+  case CAIRO_FORMAT_A1:
+    g_print("CAIRO_FORMAT_A1\n");
+    break;
+  case CAIRO_FORMAT_RGB16_565:
+    g_print("CAIRO_FORMAT_RGB16_565\n");
+    break;
+  case CAIRO_FORMAT_RGB30:
+    g_print("CAIRO_FORMAT_RGB30\n");
+    break;
+  default:
+    g_print("Unknown format\n");
+  }
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
+  glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+  glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+  glPixelStorei(GL_UNPACK_IMAGE_HEIGHT, 0);
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 8);
 
   guchar *pixels = cairo_image_surface_get_data (surface);
 
   glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, width, height,
-                0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+                0, gl_format, GL_UNSIGNED_BYTE, pixels);
+
+  g_print("Uploading cairo surface %dx%d (%d)\n", width, height, stride);
 
   if (tex != 0) {
     vr::Texture_t texture = {
