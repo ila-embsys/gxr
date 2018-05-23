@@ -173,6 +173,8 @@ openvr_overlay_upload_cairo_surface (OpenVROverlay *self,
   int width = cairo_image_surface_get_width (surface);
   int height = cairo_image_surface_get_height (surface);
 
+  glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
+
   guchar *pixels = cairo_image_surface_get_data (surface);
 
   glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, width, height,
@@ -200,6 +202,8 @@ openvr_overlay_upload_pixels (OpenVROverlay *self,
   glBindTexture (GL_TEXTURE_2D, tex);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+  glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
 
   g_print ("uploading pixels! %dx%d\n", width, height);
 
