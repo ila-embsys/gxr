@@ -53,7 +53,8 @@ void
 openvr_overlay_upload_pixels (OpenVROverlay *self,
                               guchar *pixels,
                               int width,
-                              int height);
+                              int height,
+                              unsigned gl_format);
 
 gboolean openvr_overlay_is_valid (OpenVROverlay *self);
 gboolean openvr_overlay_is_visible (OpenVROverlay *self);

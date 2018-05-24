@@ -122,42 +122,24 @@ void
 openvr_overlay_upload_gdk_pixbuf (OpenVROverlay *self,
                                   GdkPixbuf * pixbuf)
 {
-  GLuint tex;
-  glGenTextures (1, &tex);
-  glBindTexture (GL_TEXTURE_2D, tex);
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
   int width = gdk_pixbuf_get_width (pixbuf);
   int height = gdk_pixbuf_get_height (pixbuf);
   guchar *pixels = gdk_pixbuf_get_pixels (pixbuf);
 
-  glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-
-  GLenum format;
+  GLenum gl_format;
   switch (gdk_pixbuf_get_n_channels (pixbuf))
   {
     case 3:
-      format = GL_RGB;
+      gl_format = GL_RGB;
       break;
     case 4:
-      format = GL_RGBA;
+      gl_format = GL_RGBA;
       break;
     default:
-      format = GL_RGBA;
+      gl_format = GL_RGBA;
   }
 
-  glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, width, height,
-                0, format, GL_UNSIGNED_BYTE, pixels);
-
-  if (tex != 0) {
-    vr::Texture_t texture = {
-      reinterpret_cast<void*> (tex),
-      vr::TextureType_OpenGL,
-      vr::ColorSpace_Auto
-    };
-    vr::VROverlay ()->SetOverlayTexture (self->overlay_handle, &texture);
-  }
+  openvr_overlay_upload_pixels (self, pixels, width, height, gl_format);
 }
 
 void
@@ -190,15 +172,8 @@ void
 openvr_overlay_upload_cairo_surface (OpenVROverlay *self,
                                      cairo_surface_t* surface)
 {
-  GLuint tex;
-  glGenTextures (1, &tex);
-  glBindTexture (GL_TEXTURE_2D, tex);
-  //glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  //glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
   int width = cairo_image_surface_get_width (surface);
   int height = cairo_image_surface_get_height (surface);
-  int stride = cairo_image_surface_get_stride (surface);
 
   cairo_format_t cr_format = cairo_image_surface_get_format (surface);
 
@@ -231,50 +206,36 @@ openvr_overlay_upload_cairo_surface (OpenVROverlay *self,
     g_print("Unknown format\n");
   }
 
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-  glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
-  glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
-  glPixelStorei(GL_UNPACK_IMAGE_HEIGHT, 0);
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 8);
-
   guchar *pixels = cairo_image_surface_get_data (surface);
 
-  glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, width, height,
-                0, gl_format, GL_UNSIGNED_BYTE, pixels);
-
-  g_print("Uploading cairo surface %dx%d (%d)\n", width, height, stride);
-
-  if (tex != 0) {
-    vr::Texture_t texture = {
-      reinterpret_cast<void*> (tex),
-      vr::TextureType_OpenGL,
-      vr::ColorSpace_Auto
-    };
-    vr::VROverlay ()->SetOverlayTexture (self->overlay_handle, &texture);
-  }
+  openvr_overlay_upload_pixels (self, pixels, width, height, gl_format);
 }
-
 
 void
 openvr_overlay_upload_pixels (OpenVROverlay *self,
                               guchar *pixels,
                               int width,
-                              int height)
+                              int height,
+                              GLenum gl_format) // GL_RGBA
 {
   GLuint tex;
   glGenTextures (1, &tex);
   glBindTexture (GL_TEXTURE_2D, tex);
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
+  /* cogl context needs GL_UNPACK_ROW_LENGTH */
   glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
 
-  g_print ("uploading pixels! %dx%d\n", width, height);
-
+  /* CoGL Default parameters */
+  /*
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+  glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+  glPixelStorei(GL_UNPACK_IMAGE_HEIGHT, 0);
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 8);
+  */
   glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, width, height,
-                0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+                0, gl_format, GL_UNSIGNED_BYTE, pixels);
 
   if (tex != 0) {
     vr::Texture_t texture = {

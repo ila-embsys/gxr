@@ -169,7 +169,7 @@ repaint_cb (gpointer user_data)
   guchar* pixels = clutter_stage_read_pixels
     (CLUTTER_STAGE(data->stage), 0, 0, 500, 500);
 
-  openvr_overlay_upload_pixels (data->overlay, pixels, 500, 500);
+  openvr_overlay_upload_pixels (data->overlay, pixels, 500, 500, GL_RGBA);
 
   return TRUE;
 }
