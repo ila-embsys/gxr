@@ -6,7 +6,9 @@
 #include <glib.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
+#define GL_GLEXT_PROTOTYPES 1
 #include <GL/gl.h>
+#include <GL/glext.h>
 
 void gl_debug_msg(const char *msg, unsigned length)
 {
