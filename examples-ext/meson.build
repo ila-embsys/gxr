@@ -28,11 +28,6 @@ gtk_offscreen = executable(
   dependencies: gtk3_dep,
   install: false)
 
-gtk_offscreen = executable(
-  'gtk_input_synth', ['gtk_input_synth.c'],
-  dependencies: [gtk3_dep, x11_dep, m_dep],
-  install: false)
-
 gdk_list_devices = executable(
   'gdk_list_devices', ['gdk_list_devices.c'],
   dependencies: gtk3_dep,
@@ -43,20 +38,33 @@ gdk_list_seats = executable(
   dependencies: gtk3_dep,
   install: false)
 
-gtk_clutter = executable(
-  'gtk_clutter', ['gtk_clutter.c'],
-  dependencies: clutter_gtk_dep,
-  include_directories: examples_inc_dir,
-  install: false)
+if clutter_gtk_dep.found()
+  gtk_clutter = executable(
+    'gtk_clutter', ['gtk_clutter.c'],
+    dependencies: clutter_gtk_dep,
+    include_directories: examples_inc_dir,
+    install: false)
+endif
 
-clutter = executable(
-  'clutter', ['clutter.c'],
-  dependencies: clutter_dep,
-  include_directories: examples_inc_dir,
-  install: false)
+if clutter_dep.found()
+  clutter = executable(
+    'clutter', ['clutter.c'],
+    dependencies: clutter_dep,
+    include_directories: examples_inc_dir,
+    install: false)
+endif
 
-png_cairo = executable(
-  'png_cairo', ['png_cairo.c'],
-  dependencies: cairo_dep,
-  include_directories: examples_inc_dir,
-  install: false)
+if cairo_dep.found()
+  png_cairo = executable(
+    'png_cairo', ['png_cairo.c'],
+    dependencies: cairo_dep,
+    include_directories: examples_inc_dir,
+    install: false)
+endif
+
+if x11_dep.found()
+  gtk_input_synth = executable(
+    'gtk_input_synth', ['gtk_input_synth.c'],
+    dependencies: [gtk3_dep, x11_dep, m_dep],
+    install: false)
+endif

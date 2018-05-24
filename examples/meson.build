@@ -7,13 +7,6 @@ overlay_pixbuf = executable(
   include_directories: openvr_glib_inc,
   install: false)
 
-overlay_pixbuf_mutter_cogl = executable(
-  'overlay_pixbuf_mutter', ['overlay_pixbuf.c', '../res/tests.c'],
-  dependencies: [cogl_mutter_dep, gtk3_dep, gl_dep],
-  link_with: openvr_glib_lib,
-  include_directories: openvr_glib_inc,
-  install: false)
-
 overlay_cogl_texture = executable(
   'overlay_cogl_texture', ['overlay_cogl_texture.c', '../res/tests.c'],
   dependencies: [cogl_1_dep, gtk3_dep, gl_dep],
@@ -35,9 +28,20 @@ overlay_gtk = executable(
   include_directories: openvr_glib_inc,
   install: false)
 
-overlay_clutter = executable(
-  'overlay_clutter', ['overlay_clutter.c'],
-  dependencies: [openvr_glib_deps, clutter_dep],
-  link_with: openvr_glib_lib,
-  include_directories: openvr_glib_inc,
-  install: false)
+if clutter_dep.found()
+  overlay_clutter = executable(
+    'overlay_clutter', ['overlay_clutter.c'],
+    dependencies: [openvr_glib_deps, clutter_dep],
+    link_with: openvr_glib_lib,
+    include_directories: openvr_glib_inc,
+    install: false)
+endif
+
+if cogl_mutter_dep.found()
+  overlay_pixbuf_mutter_cogl = executable(
+    'overlay_pixbuf_mutter', ['overlay_pixbuf.c', '../res/tests.c'],
+    dependencies: [cogl_mutter_dep, gtk3_dep, gl_dep],
+    link_with: openvr_glib_lib,
+    include_directories: openvr_glib_inc,
+    install: false)
+endif

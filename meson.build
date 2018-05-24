@@ -14,18 +14,21 @@ add_project_arguments([
 ### Dependencies
 cpp = meson.get_compiler('cpp')
 
+## Required
 openvr_dep = cpp.find_library('openvr_api')
 m_dep = cpp.find_library('m')
 cogl_1_dep = dependency('cogl-1.0')
-cogl_mutter_dep = dependency('mutter-cogl-2')
 gio_dep = dependency('gio-2.0', version: '>= 2.50')
 gl_dep = dependency('GL')
 gtk3_dep = dependency('gtk+-3.0', version: '>= 3.22')
-x11_dep = dependency('x11')
-clutter_gtk_dep = dependency('clutter-gtk-1.0')
-clutter_dep = dependency('clutter-1.0')
-cairo_dep = dependency('cairo')
 gdk_pixbuf_dep = dependency('gdk-pixbuf-2.0', version: '>= 2.36')
+
+## Optional
+cogl_mutter_dep = dependency('mutter-cogl-2', required : false)
+x11_dep = dependency('x11', required : false)
+clutter_gtk_dep = dependency('clutter-gtk-1.0', required : false)
+clutter_dep = dependency('clutter-1.0', required : false)
+cairo_dep = dependency('cairo', required : false)
 ###
 
 subdir('src')
