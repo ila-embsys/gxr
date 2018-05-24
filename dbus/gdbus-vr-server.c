@@ -105,6 +105,7 @@ on_name_acquired (GDBusConnection *connection,
                   const gchar     *name,
                   gpointer         user_data)
 {
+  g_print ("Name %s acquired.\n", name);
 }
 
 static void
@@ -112,6 +113,7 @@ on_name_lost (GDBusConnection *connection,
               const gchar     *name,
               gpointer         user_data)
 {
+  g_print ("Name %s lost. Bye.\n", name);
   exit (1);
 }
 
@@ -128,7 +130,7 @@ main (int argc, char *argv[])
                              "org.gnome.VR",
                              G_BUS_NAME_OWNER_FLAGS_NONE,
                              on_bus_acquired,
-                             NULL,
+                             on_name_acquired,
                              on_name_lost,
                              NULL,
                              NULL);
