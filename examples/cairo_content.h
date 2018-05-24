@@ -40,6 +40,32 @@ draw_gradient_circle (cairo_t *cr, unsigned width, unsigned height)
   cairo_arc (cr, center_x, center_y, radius, 0, 2 * M_PI);
   cairo_fill (cr);
   cairo_pattern_destroy (pat);
+
+  cairo_select_font_face (cr, "Sans",
+      CAIRO_FONT_SLANT_NORMAL,
+      CAIRO_FONT_WEIGHT_NORMAL);
+
+  cairo_set_font_size (cr, 52.0);
+
+  cairo_text_extents_t extents;
+  cairo_text_extents (cr, "R", &extents);
+
+  cairo_move_to (cr, center_x, center_y);
+  cairo_set_source_rgb (cr, 0.8, 0.3, 0.3);
+  cairo_show_text (cr, "R");
+
+  double x_offset = extents.width;
+
+  cairo_move_to (cr, center_x + x_offset, center_y);
+  cairo_set_source_rgb (cr, 0.3, 0.8, 0.3);
+  cairo_show_text (cr, "G");
+
+  cairo_text_extents (cr, "G", &extents);
+  x_offset += extents.width;
+
+  cairo_move_to (cr, center_x + x_offset, center_y);
+  cairo_set_source_rgb (cr, 0.3, 0.3, 0.8);
+  cairo_show_text (cr, "B");
 }
 
 void
