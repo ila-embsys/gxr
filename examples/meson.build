@@ -7,9 +7,20 @@ overlay_pixbuf = executable(
   include_directories: openvr_glib_inc,
   install: false)
 
-overlay_pixbuf = executable(
+overlay_pixbuf_cogl = executable(
   'overlay_pixbuf_cogl', ['overlay_pixbuf_cogl.c', '../res/tests.c'],
-  dependencies: [dependency('cogl-1.0'), dependency('sdl2'), openvr_glib_deps],
+  dependencies: [dependency('cogl-1.0'),
+                 dependency('gtk+-3.0'),
+                 dependency('GL')],
+  link_with: openvr_glib_lib,
+  include_directories: openvr_glib_inc,
+  install: false)
+
+overlay_pixbuf_mutter_cogl = executable(
+  'overlay_pixbuf_mutter_cogl', ['overlay_pixbuf_cogl.c', '../res/tests.c'],
+  dependencies: [dependency('mutter-cogl-2'),
+                 dependency('gtk+-3.0'),
+                 dependency('GL')],
   link_with: openvr_glib_lib,
   include_directories: openvr_glib_inc,
   install: false)
@@ -32,14 +43,16 @@ overlay_gtk = executable(
 
 cogl_triangle = executable(
   'cogl_triangle', ['cogl_triangle.c'],
-  dependencies: [dependency('cogl-2.0-experimental'), openvr_glib_deps],
+  dependencies: [dependency('cogl-1.0')],
   link_with: openvr_glib_lib,
   include_directories: openvr_glib_inc,
   install: false)
 
 cogl_cube = executable(
   'cogl_cube', ['cogl_cube.c', '../res/tests.c'],
-  dependencies: [dependency('cogl-2.0-experimental'), openvr_glib_deps],
+  dependencies: [dependency('cogl-1.0'),
+                 dependency('gio-2.0'),
+                 dependency('GL')],
   link_with: openvr_glib_lib,
   include_directories: openvr_glib_inc,
   install: false)

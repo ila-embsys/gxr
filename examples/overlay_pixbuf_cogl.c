@@ -17,7 +17,6 @@
 
 #define COGL_ENABLE_EXPERIMENTAL_API 1
 #include <cogl/cogl.h>
-#include <cogl/cogl-sdl.h>
 
 gboolean
 timeout_callback (gpointer data)
@@ -88,22 +87,17 @@ gboolean
 init_offscreen_gl ()
 {
   CoglError *error = NULL;
-  //CoglContext *ctx = cogl_context_new (NULL, &error);
-
-  CoglContext *ctx = cogl_sdl_context_new (SDL_USEREVENT, &error);
-
+  CoglContext *ctx = cogl_context_new (NULL, &error);
   if (!ctx)
     {
       fprintf (stderr, "Failed to create context: %s\n", error->message);
       return FALSE;
     }
 
-  // CoglOffscreen
-  CoglOnscreen *onscreen;
-  onscreen = cogl_onscreen_new (ctx, 800, 600);
-  cogl_onscreen_show (onscreen);
+  // TODO: implement CoglOffscreen frameuffer
+  CoglOnscreen *onscreen = cogl_onscreen_new (ctx, 800, 600);
 
-  return ctx != NULL;
+  return ctx != NULL && onscreen != NULL;
 }
 
 static void
@@ -111,7 +105,7 @@ _move_cb (OpenVROverlay  *overlay,
           GdkEventMotion *event,
           gpointer        data)
 {
-  g_print ("move: %f %f (%d)\n", event->x, event->y, event->time);
+  // g_print ("move: %f %f (%d)\n", event->x, event->y, event->time);
 }
 
 static void
