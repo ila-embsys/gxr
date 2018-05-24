@@ -29,6 +29,55 @@ draw_cairo (cairo_t *cr, unsigned width, unsigned height)
   draw_gradient_circle (cr, width, height);
 }
 
+#define OFFSET(channels, stride, x, y) ((x) * channels + (gsize)(y) * stride)
+
+cairo_surface_t *
+cairo_surface_flip (cairo_surface_t *src)
+{
+  int width = cairo_image_surface_get_width (src);
+  int height = cairo_image_surface_get_height (src);
+  int stride = cairo_image_surface_get_stride (src);
+  cairo_format_t format = cairo_image_surface_get_format (src);
+
+  unsigned char *dest_pixels = g_malloc (stride*height * sizeof(unsigned char));
+
+  unsigned n_channels = 3;
+  switch (format)
+  {
+  case CAIRO_FORMAT_ARGB32:
+    n_channels = 4;
+    break;
+  case CAIRO_FORMAT_RGB24:
+  case CAIRO_FORMAT_RGB16_565:
+  case CAIRO_FORMAT_RGB30:
+    n_channels = 3;
+    break;
+  case CAIRO_FORMAT_A8:
+    break;
+  case CAIRO_FORMAT_A1:
+    break;
+  default:
+    break;
+  }
+
+  const guint8 *src_pixels = cairo_image_surface_get_data (src);
+
+  for (gint y = 0; y < height; y++)
+    {
+      const guchar *p = src_pixels + OFFSET (n_channels, stride, 0, y);
+      guchar *q = dest_pixels + OFFSET (n_channels, stride, 0, height - y - 1);
+      memcpy (q, p, stride);
+    }
+
+  cairo_surface_t *dest = cairo_image_surface_create_for_data (dest_pixels,
+                                                               format,
+                                                               width,
+                                                               height,
+                                                               stride);
+
+  return dest;
+}
+
 cairo_surface_t*
 create_cairo_surface (unsigned char *image)
 {
@@ -48,7 +97,11 @@ create_cairo_surface (unsigned char *image)
 
   cairo_destroy (cr);
 
-  return surface;
+  cairo_surface_t *flipped_surface = cairo_surface_flip (surface);
+
+  g_object_unref (surface);
+
+  return flipped_surface;
 }
 
 gboolean
@@ -110,7 +163,7 @@ _move_cb (OpenVROverlay  *overlay,
           GdkEventMotion *event,
           gpointer        data)
 {
-  g_print ("move: %f %f (%d)\n", event->x, event->y, event->time);
+  // g_print ("move: %f %f (%d)\n", event->x, event->y, event->time);
 }
 
 static void

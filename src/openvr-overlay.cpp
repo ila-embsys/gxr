@@ -198,7 +198,6 @@ openvr_overlay_upload_cairo_surface (OpenVROverlay *self,
 
   int width = cairo_image_surface_get_width (surface);
   int height = cairo_image_surface_get_height (surface);
-
   int stride = cairo_image_surface_get_stride (surface);
 
   cairo_format_t cr_format = cairo_image_surface_get_format (surface);
@@ -211,7 +210,7 @@ openvr_overlay_upload_cairo_surface (OpenVROverlay *self,
     break;
   case CAIRO_FORMAT_ARGB32:
     g_print("CAIRO_FORMAT_ARGB32\n");
-    gl_format = GL_RGBA;
+    gl_format = GL_BGRA;
     break;
   case CAIRO_FORMAT_RGB24:
     g_print("CAIRO_FORMAT_RGB24\n");
