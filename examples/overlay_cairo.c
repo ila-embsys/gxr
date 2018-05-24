@@ -6,6 +6,7 @@
 
 #include <math.h>
 #include <glib.h>
+#include <GL/gl.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gdk/gdk.h>
 
@@ -13,8 +14,6 @@
 
 #include "openvr-system.h"
 #include "openvr-overlay.h"
-
-#include <GLFW/glfw3.h>
 
 #define WIDTH 1280
 #define HEIGHT 720
@@ -127,35 +126,21 @@ print_gl_context_info ()
   g_print ("%s %s %s (%d.%d)\n", vendor, renderer, version, major, minor);
 }
 
-static void
-glfw_error_callback (int error, const char* description)
-{
-  fprintf (stderr, "GLFW Error: %s\n", description);
-}
-
 gboolean
 init_offscreen_gl ()
 {
-  glfwSetErrorCallback (glfw_error_callback);
+  CoglError *error = NULL;
+  CoglContext *ctx = cogl_context_new (NULL, &error);
+  if (!ctx)
+    {
+      fprintf (stderr, "Failed to create context: %s\n", error->message);
+      return FALSE;
+    }
 
-  if (!glfwInit ())
-    return FALSE;
+  // TODO: implement CoglOffscreen frameuffer
+  CoglOnscreen *onscreen = cogl_onscreen_new (ctx, 800, 600);
 
-  glfwWindowHint (GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, 5);
-
-  glfwWindowHint (GLFW_VISIBLE, GLFW_FALSE);
-  GLFWwindow* offscreen_context = glfwCreateWindow (640, 480, "", NULL, NULL);
-
-  if (!offscreen_context)
-  {
-    glfwTerminate ();
-    return FALSE;
-  }
-
-  glfwMakeContextCurrent (offscreen_context);
-
-  return TRUE;
+  return ctx != NULL && onscreen != NULL;
 }
 
 static void
@@ -231,7 +216,7 @@ test_cat_overlay ()
 
   if (!init_offscreen_gl ())
   {
-    fprintf (stderr, "Error: Could not create GLFW context.\n");
+    fprintf (stderr, "Error: Could not create GL context.\n");
     return FALSE;
   }
 

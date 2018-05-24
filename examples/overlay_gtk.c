@@ -5,7 +5,7 @@
  */
 
 #include <time.h>
-
+#include <GL/gl.h>
 #include <glib.h>
 #include <glib/gprintf.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
@@ -16,8 +16,6 @@
 
 #include "openvr-system.h"
 #include "openvr-overlay.h"
-
-#include <GL/glut.h>
 
 static gboolean
 _damage_cb (GtkWidget *widget, GdkEventExpose *event, OpenVROverlay *overlay)
@@ -151,17 +149,21 @@ print_gl_context_info ()
   g_print ("%s %s %s (%d.%d)\n", vendor, renderer, version, major, minor);
 }
 
-
 gboolean
-init_offscreen_gl (int argc, char *argv[])
+init_offscreen_gl ()
 {
-  /* TODO: GLFW conflicts here with Gtk, glut works */
-  glutInit (&argc, argv);
-  glutInitDisplayMode (GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
-  glutInitWindowSize (100,  100);
-  glutCreateWindow ("glut");
+  CoglError *error = NULL;
+  CoglContext *ctx = cogl_context_new (NULL, &error);
+  if (!ctx)
+    {
+      fprintf (stderr, "Failed to create context: %s\n", error->message);
+      return FALSE;
+    }
 
-  return TRUE;
+  // TODO: implement CoglOffscreen frameuffer
+  CoglOnscreen *onscreen = cogl_onscreen_new (ctx, 800, 600);
+
+  return ctx != NULL && onscreen != NULL;
 }
 
 static void

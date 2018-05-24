@@ -13,8 +13,10 @@
 #include "openvr-system.h"
 #include "openvr-overlay.h"
 
-#include <GLFW/glfw3.h>
+#include <GL/gl.h>
 
+#define COGL_ENABLE_EXPERIMENTAL_API 1
+#include <cogl/cogl.h>
 
 gboolean
 timeout_callback (gpointer data)
@@ -81,35 +83,21 @@ load_gdk_pixbuf ()
   }
 }
 
-static void
-glfw_error_callback (int error, const char* description)
-{
-  fprintf (stderr, "GLFW Error: %s\n", description);
-}
-
 gboolean
 init_offscreen_gl ()
 {
-  glfwSetErrorCallback (glfw_error_callback);
+  CoglError *error = NULL;
+  CoglContext *ctx = cogl_context_new (NULL, &error);
+  if (!ctx)
+    {
+      fprintf (stderr, "Failed to create context: %s\n", error->message);
+      return FALSE;
+    }
 
-  if (!glfwInit ())
-    return FALSE;
+  // TODO: implement CoglOffscreen frameuffer
+  CoglOnscreen *onscreen = cogl_onscreen_new (ctx, 800, 600);
 
-  glfwWindowHint (GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, 5);
-
-  glfwWindowHint (GLFW_VISIBLE, GLFW_FALSE);
-  GLFWwindow* offscreen_context = glfwCreateWindow (640, 480, "", NULL, NULL);
-
-  if (!offscreen_context)
-  {
-    glfwTerminate ();
-    return FALSE;
-  }
-
-  glfwMakeContextCurrent (offscreen_context);
-
-  return TRUE;
+  return ctx != NULL && onscreen != NULL;
 }
 
 static void
@@ -117,7 +105,7 @@ _move_cb (OpenVROverlay  *overlay,
           GdkEventMotion *event,
           gpointer        data)
 {
-  g_print ("move: %f %f (%d)\n", event->x, event->y, event->time);
+  // g_print ("move: %f %f (%d)\n", event->x, event->y, event->time);
 }
 
 static void
@@ -183,7 +171,7 @@ test_cat_overlay ()
 
   if (!init_offscreen_gl ())
   {
-    fprintf (stderr, "Error: Could not create GLFW context.\n");
+    fprintf (stderr, "Error: Could not create COGL context.\n");
     return FALSE;
   }
 

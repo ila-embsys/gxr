@@ -183,7 +183,7 @@ test_cat_overlay (int argc, char *argv[])
 
   if (!init_offscreen_gl ())
   {
-    fprintf (stderr, "Error: Could not create GLFW context.\n");
+    fprintf (stderr, "Error: Could not create GL context.\n");
     return FALSE;
   }
 /**/

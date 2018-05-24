@@ -13,25 +13,22 @@
 #include "openvr-system.h"
 #include "openvr-overlay.h"
 
-#include <GLFW/glfw3.h>
-
 
 gboolean
 init_offscreen_gl ()
 {
-  g_assert (glfwInit ());
+  CoglError *error = NULL;
+  CoglContext *ctx = cogl_context_new (NULL, &error);
+  if (!ctx)
+    {
+      fprintf (stderr, "Failed to create context: %s\n", error->message);
+      return FALSE;
+    }
 
-  glfwWindowHint (GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, 5);
+  // TODO: implement CoglOffscreen frameuffer
+  CoglOnscreen *onscreen = cogl_onscreen_new (ctx, 800, 600);
 
-  glfwWindowHint (GLFW_VISIBLE, GLFW_FALSE);
-  GLFWwindow* offscreen_context = glfwCreateWindow (640, 480, "", NULL, NULL);
-
-  g_assert_nonnull (offscreen_context);
-
-  glfwMakeContextCurrent (offscreen_context);
-
-  return TRUE;
+  return ctx != NULL && onscreen != NULL;
 }
 
 int
