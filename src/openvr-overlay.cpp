@@ -151,22 +151,27 @@ openvr_overlay_upload_cogl (OpenVROverlay *self, CoglTexture *cogl_texture)
   CoglBool ret = cogl_texture_get_gl_texture (cogl_texture, &tex, &target);
 
   if (!ret)
-  {
-    g_printerr("Getting texture handle failed.\n");
-  }
+    {
+      g_printerr("Getting texture handle failed.\n");
+    }
 
-  g_print("Uploading CoglTexture\n");
-
-  if (tex != 0) {
-    vr::Texture_t texture = {
-      reinterpret_cast<void*> (tex),
-      vr::TextureType_OpenGL,
-      vr::ColorSpace_Auto
-    };
-    vr::VROverlay ()->SetOverlayTexture (self->overlay_handle, &texture);
-  }
+  g_print("Sharing CoglTexture\n");
+  openvr_overlay_set_gl_texture (self, tex);
 }
 
+void
+openvr_overlay_set_gl_texture (OpenVROverlay *self, GLuint tex)
+{
+  if (tex != 0)
+    {
+      vr::Texture_t texture = {
+        reinterpret_cast<void*> (tex),
+        vr::TextureType_OpenGL,
+        vr::ColorSpace_Auto
+      };
+      vr::VROverlay ()->SetOverlayTexture (self->overlay_handle, &texture);
+    }
+}
 
 void
 openvr_overlay_upload_cairo_surface (OpenVROverlay *self,
@@ -237,14 +242,7 @@ openvr_overlay_upload_pixels (OpenVROverlay *self,
   glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, width, height,
                 0, gl_format, GL_UNSIGNED_BYTE, pixels);
 
-  if (tex != 0) {
-    vr::Texture_t texture = {
-      reinterpret_cast<void*> (tex),
-      vr::TextureType_OpenGL,
-      vr::ColorSpace_Auto
-    };
-    vr::VROverlay ()->SetOverlayTexture (self->overlay_handle, &texture);
-  }
+  openvr_overlay_set_gl_texture (self, tex);
 }
 
 #define SEC_IN_NSEC_D 1000000000.0
