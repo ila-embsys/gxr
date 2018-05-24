@@ -38,7 +38,7 @@ overlay_cairo = executable(
   install: false)
 
 overlay_gtk = executable(
-  'overlay_gtk', ['overlay_gtk.c', '../res/tests.c'],
+  'overlay_gtk', ['overlay_gtk.c'],
   dependencies: [dependency('cogl-1.0'),
                  dependency('gtk+-3.0'),
                  dependency('GL')],
