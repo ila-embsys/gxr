@@ -1,6 +1,7 @@
-/* openvr-glib.h
- *
- * Copyright 2018 Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
+/*
+ * OpenVR GLib
+ * Copyright 2018 Collabora Ltd.
+ * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
  * SPDX-License-Identifier: MIT
  */
 

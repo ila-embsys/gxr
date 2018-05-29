@@ -1,6 +1,7 @@
-/* openvr-version.h.in
- *
- * Copyright 2018 Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
+/*
+ * OpenVR GLib
+ * Copyright 2018 Collabora Ltd.
+ * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
  * SPDX-License-Identifier: MIT
  */
 
@@ -83,3 +84,4 @@
           OPENVR_MICRO_VERSION >= (micro)))
 
 #endif /* OPENVR_GLIB_VERSION_H */
+
