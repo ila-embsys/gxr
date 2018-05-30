@@ -1,4 +1,4 @@
-project('openvr-glib', 'c', 'cpp', version: '0.1.0',
+project('openvr-glib', 'c', version: '0.1.0',
   meson_version: '>= 0.40.0',
 )
 
@@ -9,10 +9,10 @@ configure_file(
 )
 add_project_arguments([
   '-I' + meson.build_root(),
-], language: ['cpp', 'c'])
+], language: ['c'])
 
 ### Dependencies
-cpp = meson.get_compiler('cpp')
+cpp = meson.get_compiler('c')
 
 ## Required
 openvr_dep = cpp.find_library('openvr_api')

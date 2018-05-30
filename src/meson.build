@@ -1,8 +1,8 @@
 api_version = '0.1'
 
 openvr_glib_sources = [
-  'openvr-system.cpp',
-  'openvr-overlay.cpp',
+  'openvr-system.c',
+  'openvr-overlay.c',
 ]
 
 openvr_glib_headers = [

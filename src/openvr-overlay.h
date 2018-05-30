@@ -15,6 +15,8 @@
 #include <glib-object.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
+#include <openvr_capi.h>
+
 G_BEGIN_DECLS
 
 #define OPENVR_TYPE_OVERLAY openvr_overlay_get_type()
@@ -24,15 +26,16 @@ struct _OpenVROverlay
 {
   GObjectClass parent_class;
 
-  uint64_t overlay_handle;
-  uint64_t thumbnail_handle;
+  VROverlayHandle_t overlay_handle;
+  VROverlayHandle_t thumbnail_handle;
+  struct VR_IVROverlay_FnTable *functions;
 };
 
 OpenVROverlay *openvr_overlay_new (void);
 
 void openvr_overlay_create (OpenVROverlay *self,
-                            const gchar* key,
-                            const gchar* name);
+                            gchar* key,
+                            gchar* name);
 
 void openvr_overlay_upload_gdk_pixbuf (OpenVROverlay *self,
                                        GdkPixbuf * pixbuf);
@@ -63,6 +66,8 @@ openvr_overlay_set_gl_texture (OpenVROverlay *self, unsigned tex);
 gboolean openvr_overlay_is_valid (OpenVROverlay *self);
 gboolean openvr_overlay_is_visible (OpenVROverlay *self);
 gboolean openvr_overlay_thumbnail_is_visible (OpenVROverlay *self);
+
+gboolean openvr_overlay_is_available (OpenVROverlay * self);
 
 G_END_DECLS
 

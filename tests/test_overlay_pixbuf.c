@@ -46,12 +46,13 @@ test_pixbuf_overlay ()
   g_assert_nonnull (system);
   g_assert (openvr_system_init_overlay (system));
 
-  g_assert (openvr_system_is_available ());
-  g_assert (openvr_system_is_compositor_available ());
-  g_assert (openvr_system_is_overlay_available ());
+  g_assert (openvr_system_is_available (system));
+  g_assert (openvr_system_is_installed ());
+
 
   OpenVROverlay *overlay = openvr_overlay_new ();
   g_assert_nonnull (overlay);
+  g_assert (openvr_overlay_is_available (overlay));
 
   openvr_overlay_create (overlay, "test.pixbuf", "GDK pixbuf");
 
