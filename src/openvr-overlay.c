@@ -177,6 +177,24 @@ openvr_overlay_upload_cogl (OpenVROverlay *self, CoglTexture *cogl_texture)
   g_assert (cogl_is_texture (cogl_texture));
   CoglBool ret = cogl_texture_get_gl_texture (cogl_texture, &tex, &target);
 
+  switch (target)
+    {
+    case GL_TEXTURE_1D:
+      g_print ("GL_TEXTURE_1D texture target\n");
+      break;
+    case GL_TEXTURE_2D:
+      g_print ("GL_TEXTURE_2D texture target\n");
+      break;
+    case GL_TEXTURE_3D:
+      g_print ("GL_TEXTURE_3D texture target\n");
+      break;
+    case GL_TEXTURE_RECTANGLE:
+      g_print ("GL_TEXTURE_RECTANGLE texture target\n");
+      break;
+    default:
+      g_print ("Unknown texture target\n");
+    }
+
   if (!ret)
     {
       g_printerr("Getting texture handle failed.\n");
