@@ -61,6 +61,14 @@ openvr_overlay_upload_pixels (OpenVROverlay *self,
                               unsigned gl_format);
 
 void
+openvr_overlay_set_raw (OpenVROverlay *self, guchar *pixels,
+                        uint32_t width, uint32_t height, uint32_t depth);
+
+void
+openvr_overlay_set_cairo_surface_raw (OpenVROverlay *self,
+                                      cairo_surface_t* surface);
+
+void
 openvr_overlay_set_gl_texture (OpenVROverlay *self, unsigned tex);
 
 gboolean openvr_overlay_is_valid (OpenVROverlay *self);

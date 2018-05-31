@@ -21,6 +21,13 @@ overlay_cairo = executable(
   include_directories: openvr_glib_inc,
   install: false)
 
+overlay_cairo_raw = executable(
+  'overlay_cairo_raw', ['overlay_cairo_raw.c'],
+  dependencies: [cogl_1_dep, gtk3_dep, gl_dep, cairo_dep],
+  link_with: openvr_glib_lib,
+  include_directories: openvr_glib_inc,
+  install: false)
+
 overlay_gtk = executable(
   'overlay_gtk', ['overlay_gtk.c'],
   dependencies: [cogl_1_dep, gtk3_dep, gl_dep],

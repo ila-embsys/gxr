@@ -225,6 +225,21 @@ openvr_overlay_set_gl_texture (OpenVROverlay *self, GLuint tex)
 }
 
 void
+openvr_overlay_set_raw (OpenVROverlay *self, guchar *pixels,
+                        uint32_t width, uint32_t height, uint32_t depth)
+{
+  EVROverlayError err = self->functions->SetOverlayRaw (
+    self->overlay_handle, (void*) pixels, width, height, depth);
+
+  if (err != EVROverlayError_VROverlayError_None)
+    {
+      g_printerr ("Could not set overlay texture: %s\n",
+                  self->functions->GetOverlayErrorNameFromEnum (err));
+    }
+
+}
+
+void
 openvr_overlay_upload_cairo_surface (OpenVROverlay *self,
                                      cairo_surface_t* surface)
 {
@@ -265,6 +280,49 @@ openvr_overlay_upload_cairo_surface (OpenVROverlay *self,
   guchar *pixels = cairo_image_surface_get_data (surface);
 
   openvr_overlay_upload_pixels (self, pixels, width, height, gl_format);
+}
+
+void
+openvr_overlay_set_cairo_surface_raw (OpenVROverlay *self,
+                                      cairo_surface_t* surface)
+{
+  int width = cairo_image_surface_get_width (surface);
+  int height = cairo_image_surface_get_height (surface);
+
+  cairo_format_t cr_format = cairo_image_surface_get_format (surface);
+
+  uint32_t depth = 3;
+  switch (cr_format)
+  {
+  case CAIRO_FORMAT_INVALID:
+    g_print("CAIRO_FORMAT_INVALID\n");
+    break;
+  case CAIRO_FORMAT_ARGB32:
+    g_print("CAIRO_FORMAT_ARGB32\n");
+    depth = 4;
+    break;
+  case CAIRO_FORMAT_RGB24:
+    g_print("CAIRO_FORMAT_RGB24\n");
+    break;
+  case CAIRO_FORMAT_A8:
+    g_print("CAIRO_FORMAT_A8\n");
+    break;
+  case CAIRO_FORMAT_A1:
+    g_print("CAIRO_FORMAT_A1\n");
+    break;
+  case CAIRO_FORMAT_RGB16_565:
+    g_print("CAIRO_FORMAT_RGB16_565\n");
+    break;
+  case CAIRO_FORMAT_RGB30:
+    g_print("CAIRO_FORMAT_RGB30\n");
+    break;
+  default:
+    g_print("Unknown format\n");
+  }
+
+  guchar *pixels = cairo_image_surface_get_data (surface);
+
+  openvr_overlay_set_raw (self, pixels, width, height, depth);
 }
 
 void
