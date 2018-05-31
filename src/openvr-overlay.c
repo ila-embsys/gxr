@@ -174,6 +174,7 @@ openvr_overlay_upload_cogl (OpenVROverlay *self, CoglTexture *cogl_texture)
   GLuint tex;
   GLenum target;
 
+  g_assert (cogl_is_texture (cogl_texture));
   CoglBool ret = cogl_texture_get_gl_texture (cogl_texture, &tex, &target);
 
   if (!ret)
