@@ -2,6 +2,8 @@ project('openvr-glib', 'c', version: '0.1.0',
   meson_version: '>= 0.40.0',
 )
 
+gnome = import('gnome')
+
 config_h = configuration_data()
 configure_file(
   output: 'openvr-glib-config.h',
