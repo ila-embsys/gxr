@@ -7,6 +7,13 @@ overlay_pixbuf = executable(
   include_directories: openvr_glib_inc,
   install: false)
 
+overlay_pixbuf_raw = executable(
+  'overlay_pixbuf_raw', ['overlay_pixbuf_raw.c', '../res/tests.c'],
+  dependencies: [cogl_1_dep, gtk3_dep, gl_dep],
+  link_with: openvr_glib_lib,
+  include_directories: openvr_glib_inc,
+  install: false)
+
 overlay_cogl_texture = executable(
   'overlay_cogl_texture', ['overlay_cogl_texture.c', '../res/tests.c'],
   dependencies: [cogl_1_dep, gtk3_dep, gl_dep],

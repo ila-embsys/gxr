@@ -77,6 +77,10 @@ gboolean openvr_overlay_thumbnail_is_visible (OpenVROverlay *self);
 
 gboolean openvr_overlay_is_available (OpenVROverlay * self);
 
+void
+openvr_overlay_set_gdk_pixbuf_raw (OpenVROverlay *self,
+                                   GdkPixbuf * pixbuf);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_OVERLAY_H_ */

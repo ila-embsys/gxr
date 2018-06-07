@@ -145,6 +145,36 @@ gboolean openvr_overlay_thumbnail_is_visible (OpenVROverlay *self)
 }
 
 void
+openvr_overlay_set_gdk_pixbuf_raw (OpenVROverlay *self,
+                                   GdkPixbuf * pixbuf)
+{
+  int width = gdk_pixbuf_get_width (pixbuf);
+  int height = gdk_pixbuf_get_height (pixbuf);
+  guchar *pixels = gdk_pixbuf_get_pixels (pixbuf);
+
+  uint32_t depth = 3;
+  switch (gdk_pixbuf_get_n_channels (pixbuf))
+  {
+    case 3:
+      depth = 3;
+      break;
+    case 4:
+      depth = 4;
+      break;
+    default:
+      depth = 3;
+  }
+
+  g_print ("openvr_overlay_set_gdk_pixbuf_raw %dx%dx%d\n",
+           width, height, depth);
+
+  openvr_overlay_set_raw (self, pixels,
+                          width,
+                          height,
+                          depth);
+}
+
+void
 openvr_overlay_upload_gdk_pixbuf (OpenVROverlay *self,
                                   GdkPixbuf * pixbuf)
 {
