@@ -141,6 +141,30 @@ init_offscreen_gl ()
   // TODO: implement CoglOffscreen frameuffer
   CoglOnscreen *onscreen = cogl_onscreen_new (ctx, 800, 600);
 
+  CoglDisplay *cogl_display;
+  CoglRenderer *cogl_renderer;
+
+  cogl_display = cogl_context_get_display (ctx);
+  cogl_renderer = cogl_display_get_renderer (cogl_display);
+
+  switch (cogl_renderer_get_driver (cogl_renderer))
+    {
+    case COGL_DRIVER_GL3:
+      {
+        g_print ("COGL_DRIVER_GL3.\n");
+        break;
+      }
+    case COGL_DRIVER_GL:
+      {
+        g_print ("COGL_DRIVER_GL.\n");
+        break;
+      }
+    default:
+      g_print ("Other backend.\n");
+      break;
+    }
+
+
   return ctx != NULL && onscreen != NULL;
 }
 
