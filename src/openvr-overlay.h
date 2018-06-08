@@ -81,6 +81,13 @@ void
 openvr_overlay_set_gdk_pixbuf_raw (OpenVROverlay *self,
                                    GdkPixbuf * pixbuf);
 
+void
+openvr_overlay_upload_pixels_cogl (OpenVROverlay *self,
+                                   guchar *pixels,
+                                   int width,
+                                   int height,
+                                   unsigned gl_format);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_OVERLAY_H_ */

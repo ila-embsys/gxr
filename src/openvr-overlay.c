@@ -309,7 +309,7 @@ openvr_overlay_upload_cairo_surface (OpenVROverlay *self,
 
   guchar *pixels = cairo_image_surface_get_data (surface);
 
-  openvr_overlay_upload_pixels (self, pixels, width, height, gl_format);
+  openvr_overlay_upload_pixels_cogl (self, pixels, width, height, gl_format);
 }
 
 void
@@ -355,12 +355,82 @@ openvr_overlay_set_cairo_surface_raw (OpenVROverlay *self,
   openvr_overlay_set_raw (self, pixels, width, height, depth);
 }
 
+
+
+static gboolean
+load_gl_symbol (const char  *name,
+                void       **func)
+{
+  *func = cogl_get_proc_address (name);
+  if (!*func)
+    {
+      g_printerr ("MetaSyncRing: failed to resolve required GL symbol \"%s\"\n", name);
+      return FALSE;
+    }
+  return TRUE;
+}
+
+
+static void      (*meta_gl_gen_textures) (GLsizei n, GLuint * textures);
+static void      (*meta_gl_bin_texture) (GLenum target, GLuint texture);
+static void      (*meta_gl_pixel_store_i) (GLenum pname, GLint param);
+static void      (*meta_gl_tex_image_2d) (GLenum target,
+                                          GLint level,
+                                          GLint internalFormat,
+                                          GLsizei width,
+                                          GLsizei height,
+                                          GLint border,
+                                          GLenum format,
+                                          GLenum type,
+                                          const GLvoid * data);
+
+void
+openvr_overlay_upload_pixels_cogl (OpenVROverlay *self,
+                                   guchar *pixels,
+                                   int width,
+                                   int height,
+                                   GLenum gl_format)
+{
+  if (!load_gl_symbol ("glGenTextures", (void **) &meta_gl_gen_textures))
+    g_printerr ("Could not load symbol glGenTextures.\n");
+
+  if (!load_gl_symbol ("glBindTexture", (void **) &meta_gl_bin_texture))
+    g_printerr ("Could not load symbol glGenTextures.\n");
+
+  if (!load_gl_symbol ("glPixelStorei", (void **) &meta_gl_pixel_store_i))
+    g_printerr ("Could not load symbol glGenTextures.\n");
+
+  if (!load_gl_symbol ("glTexImage2D", (void **) &meta_gl_tex_image_2d))
+    g_printerr ("Could not load symbol glGenTextures.\n");
+
+  GLuint tex;
+  meta_gl_gen_textures (1, &tex);
+  meta_gl_bin_texture (GL_TEXTURE_2D, tex);
+
+  /* cogl context needs GL_UNPACK_ROW_LENGTH */
+  meta_gl_pixel_store_i (GL_UNPACK_ROW_LENGTH, width);
+
+  /* CoGL Default parameters */
+  /*
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+  glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+  glPixelStorei(GL_UNPACK_IMAGE_HEIGHT, 0);
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 8);
+  */
+  meta_gl_tex_image_2d (GL_TEXTURE_2D, 0, GL_RGB, width, height,
+                        0, gl_format, GL_UNSIGNED_BYTE, pixels);
+
+  openvr_overlay_set_gl_texture (self, tex);
+}
+
 void
 openvr_overlay_upload_pixels (OpenVROverlay *self,
                               guchar *pixels,
                               int width,
                               int height,
-                              GLenum gl_format) // GL_RGBA
+                              GLenum gl_format)
 {
   GLuint tex;
   glGenTextures (1, &tex);
