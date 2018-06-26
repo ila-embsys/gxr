@@ -14,9 +14,11 @@ openvr_init_fn_table (const char *type, intptr_t *ret)
 
   if (error != EVRInitError_VRInitError_None)
     {
-      g_printerr ("VR_GetGenericInterface returned error: %s.\n",
-                  VR_GetVRInitErrorAsSymbol (error));
-      return false;
+      g_printerr ("VR_GetGenericInterface returned error %s: %s\n",
+                  VR_GetVRInitErrorAsSymbol (error),
+                  VR_GetVRInitErrorAsEnglishDescription (error));
+      return FALSE;
     }
-  return true;
+
+  return TRUE;
 }

@@ -18,6 +18,8 @@
 #include <openvr_capi.h>
 #include "openvr_capi_global.h"
 
+#include "openvr-global.h"
+
 G_DEFINE_TYPE (OpenVROverlay, openvr_overlay, G_TYPE_OBJECT)
 
 enum {
@@ -72,26 +74,7 @@ openvr_overlay_class_init (OpenVROverlayClass *klass)
 
 gboolean _overlay_init_fn_table (OpenVROverlay *self)
 {
-  EVRInitError error;
-  char fn_table_name[128];
-  g_sprintf (fn_table_name, "FnTable:%s", IVROverlay_Version);
-
-  self->functions = (struct VR_IVROverlay_FnTable *)
-    VR_GetGenericInterface (fn_table_name, &error);
-
-  if (error != EVRInitError_VRInitError_None)
-    {
-      g_printerr ("overlay: VR_GetGenericInterface returned error: %s.\n",
-                  VR_GetVRInitErrorAsSymbol (error));
-      return FALSE;
-    }
-  if (self->functions == NULL)
-    {
-      g_printerr ("Could not get overlay function pointers.\n");
-      return FALSE;
-    }
-
-  return TRUE;
+  INIT_FN_TABLE (self->functions, Overlay);
 }
 
 static void

@@ -58,35 +58,17 @@ openvr_vulkan_uploader_new (void)
 
 gboolean _system_init_fn_table2 (OpenVRVulkanUploader *self)
 {
-  intptr_t ptr = 0;
-  gboolean ret = openvr_init_fn_table (IVRSystem_Version, &ptr);
-  if (!ret || ptr == 0)
-    return false;
-
-  self->system = (struct VR_IVRSystem_FnTable*) ptr;
-  return true;
+  INIT_FN_TABLE (self->system, System);
 }
 
 gboolean _overlay_init_fn_table2 (OpenVRVulkanUploader *self)
 {
-  intptr_t ptr = 0;
-  gboolean ret = openvr_init_fn_table (IVROverlay_Version, &ptr);
-  if (!ret || ptr == 0)
-    return false;
-
-  self->overlay = (struct VR_IVROverlay_FnTable*) ptr;
-  return true;
+  INIT_FN_TABLE (self->overlay, Overlay);
 }
 
 gboolean _compositor_init_fn_table (OpenVRVulkanUploader *self)
 {
-  intptr_t ptr = 0;
-  gboolean ret = openvr_init_fn_table (IVRCompositor_Version, &ptr);
-  if (!ret || ptr == 0)
-    return false;
-
-  self->compositor = (struct VR_IVRCompositor_FnTable*) ptr;
-  return true;
+  INIT_FN_TABLE (self->compositor, Compositor);
 }
 
 /* Vulkan extension entrypoints */

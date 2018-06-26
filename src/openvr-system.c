@@ -11,6 +11,8 @@
 
 #include "openvr-system.h"
 
+#include "openvr-global.h"
+
 G_DEFINE_TYPE (OpenVRSystem, openvr_system, G_TYPE_OBJECT)
 
 static void
@@ -23,28 +25,10 @@ openvr_system_init (OpenVRSystem *self)
   self->functions = NULL;
 }
 
-gboolean _system_init_fn_table (OpenVRSystem *self)
+gboolean
+_system_init_fn_table (OpenVRSystem *self)
 {
-  EVRInitError error;
-  char fn_table_name[128];
-  g_sprintf (fn_table_name, "FnTable:%s", IVRSystem_Version);
-  self->functions = (struct VR_IVRSystem_FnTable *)
-    VR_GetGenericInterface (fn_table_name, &error);
-
-  if (error != EVRInitError_VRInitError_None)
-    {
-      g_printerr ("system: VR_GetGenericInterface returned error %s: %s\n",
-                  VR_GetVRInitErrorAsSymbol (error),
-                  VR_GetVRInitErrorAsEnglishDescription (error));
-      return FALSE;
-    }
-  if (self->functions == NULL)
-    {
-      g_printerr ("Could not get system function pointers.\n");
-      return FALSE;
-    }
-
-  return TRUE;
+  INIT_FN_TABLE (self->functions, System);
 }
 
 OpenVRSystem *
@@ -60,8 +44,9 @@ _vr_init (OpenVRSystem * self, EVRApplicationType app_type)
   VR_InitInternal(&error, app_type);
 
   if (error != EVRInitError_VRInitError_None) {
-    g_print ("Could not init OpenVR runtime: Error code %s\n",
-             VR_GetVRInitErrorAsSymbol (error));
+    g_printerr ("Could not init OpenVR runtime: %s: %s\n",
+                VR_GetVRInitErrorAsSymbol (error),
+                VR_GetVRInitErrorAsEnglishDescription (error));
     return FALSE;
   }
 
