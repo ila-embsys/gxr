@@ -49,6 +49,36 @@ example_init (OpenVRVulkanUploader *self)
     return false;
   }
 
+  GError *g_error = NULL;
+  GdkPixbuf * pixbuf = gdk_pixbuf_new_from_resource ("/res/cat.jpg", &g_error);
+
+  if (g_error != NULL)
+    {
+      g_printerr ("Could not read texture file.\n");
+      return false;
+    }
+
+  guint width = (guint) gdk_pixbuf_get_width (pixbuf);
+  guint height = (guint) gdk_pixbuf_get_height (pixbuf);
+
+  self->width = width;
+  self->height = height;
+
+  GdkPixbuf *pixbuf_with_alpha = gdk_pixbuf_add_alpha (pixbuf, false, 0, 0, 0);
+  g_object_unref (pixbuf);
+
+  guchar *pixels = gdk_pixbuf_get_pixels (pixbuf_with_alpha);
+
+  gsize pixbuf_alpha_size = gdk_pixbuf_get_byte_length (pixbuf_with_alpha);
+
+  bool ret = openvr_vulkan_uploader_load_texture_raw (
+    self, pixels, width, height, pixbuf_alpha_size);
+
+  g_object_unref (pixbuf_with_alpha);
+
+  if (!ret)
+    return false;
+
   if (_overlay_init_fn_table2 (self))
   {
     EVROverlayError err = self->overlay->CreateDashboardOverlay (

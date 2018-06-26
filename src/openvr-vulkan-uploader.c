@@ -795,36 +795,16 @@ _submit_command_buffer (OpenVRVulkanUploader *self)
 }
 
 bool
-openvr_vulkan_uploader_load_texture_resource (OpenVRVulkanUploader *self)
+openvr_vulkan_uploader_load_texture_raw (OpenVRVulkanUploader *self,
+                                         guchar               *pixels,
+                                         guint                 width,
+                                         guint                 height,
+                                         gsize                 size)
 {
   _begin_command_buffer (self);
 
-  GError *error = NULL;
-  GdkPixbuf * pixbuf = gdk_pixbuf_new_from_resource ("/res/cat.jpg", &error);
-
-  if (error != NULL)
-    {
-      g_printerr ("Could not read texture file.\n");
-      return false;
-    }
-
-  guint width = (guint) gdk_pixbuf_get_width (pixbuf);
-  guint height = (guint) gdk_pixbuf_get_height (pixbuf);
-
-  self->width = width;
-  self->height = height;
-
-  GdkPixbuf *pixbuf_with_alpha = gdk_pixbuf_add_alpha (pixbuf, false, 0, 0, 0);
-  g_object_unref (pixbuf);
-
-  guchar *pixels = gdk_pixbuf_get_pixels (pixbuf_with_alpha);
-
-  gsize pixbuf_alpha_size = gdk_pixbuf_get_byte_length (pixbuf_with_alpha);
-
-  if (!_init_texture (self, pixels, width, height, pixbuf_alpha_size))
+  if (!_init_texture (self, pixels, width, height, size))
     return false;
-
-  g_object_unref (pixbuf_with_alpha);
 
   _submit_command_buffer (self);
 
@@ -841,9 +821,6 @@ openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self)
     return false;
 
   if(!_init_command_pool (self))
-    return false;
-
-  if(!openvr_vulkan_uploader_load_texture_resource (self))
     return false;
 
   return true;
