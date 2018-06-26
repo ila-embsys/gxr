@@ -654,69 +654,68 @@ _get_device_extension_count (OpenVRVulkanUploader *self,
 
 bool
 _init_device_extensions (OpenVRVulkanUploader *self,
-                         const char          **ppDeviceExtensionNames,
-                         uint32_t             *nEnabledDeviceExtensionCount)
+                         const char          **extension_names,
+                         uint32_t             *out_num_enabled)
 {
-  uint32_t nDeviceExtensionCount = 0;
+  uint32_t num_extensions = 0;
   uint32_t num_enabled = 0;
 
-  if (!_get_device_extension_count (self, &nDeviceExtensionCount))
+  if (!_get_device_extension_count (self, &num_extensions))
     return false;
 
   /* Enable required device extensions */
-  VkExtensionProperties *pDeviceExtProperties =
-    g_malloc(sizeof(VkExtensionProperties) * nDeviceExtensionCount);
-  memset (pDeviceExtProperties, 0,
-          sizeof (VkExtensionProperties) * nDeviceExtensionCount);
-  if (nDeviceExtensionCount > 0)
-  {
-    VkResult result =
-      vkEnumerateDeviceExtensionProperties (self->physical_device,
-                                            NULL,
-                                           &nDeviceExtensionCount,
-                                            pDeviceExtProperties);
-    if (result != VK_SUCCESS)
-    {
-      g_printerr ("vkEnumerateDeviceExtensionProperties failed with error %d\n",
-                  result);
-      return false;
-    }
+  VkExtensionProperties *extension_props =
+    g_malloc(sizeof(VkExtensionProperties) * num_extensions);
 
-    /* Query required OpenVR device extensions */
-    GSList *requiredDeviceExtensions = NULL;
-    _get_required_device_extensions (self,
-                                     self->physical_device,
-                                    &requiredDeviceExtensions);
+  memset (extension_props, 0, sizeof (VkExtensionProperties) * num_extensions);
 
-    for (size_t nRequiredDeviceExt = 0;
-         nRequiredDeviceExt < g_slist_length (requiredDeviceExtensions);
-         nRequiredDeviceExt++)
+  if (num_extensions > 0)
     {
-      bool bExtFound = false;
-      for (uint32_t nDeviceExt = 0; nDeviceExt < nDeviceExtensionCount;
-           nDeviceExt++)
-      {
-        GSList* extension_name = g_slist_nth (requiredDeviceExtensions,
-                                              (guint) nRequiredDeviceExt);
-        if (strcmp ((gchar*)extension_name->data,
-                    pDeviceExtProperties[ nDeviceExt ].extensionName) == 0)
+      VkResult result =
+        vkEnumerateDeviceExtensionProperties (self->physical_device,
+                                              NULL,
+                                             &num_extensions,
+                                              extension_props);
+      if (result != VK_SUCCESS)
         {
-          bExtFound = true;
-          break;
+          g_printerr ("vkEnumerateDeviceExtensionProperties"
+                      " failed with error %d\n",
+                      result);
+          return false;
         }
-      }
 
-      if (bExtFound)
-      {
-        GSList* extension_name = g_slist_nth (requiredDeviceExtensions,
-                                              (guint) nRequiredDeviceExt);
-        ppDeviceExtensionNames[num_enabled] = (gchar*)extension_name->data;
-        num_enabled++;
-      }
+      /* Query required OpenVR device extensions */
+      GSList *required_extensions = NULL;
+      _get_required_device_extensions (self,
+                                       self->physical_device,
+                                      &required_extensions);
+
+      for (size_t i = 0; i < g_slist_length (required_extensions); i++)
+        {
+          bool found = false;
+          for (uint32_t j = 0; j < num_extensions; j++)
+            {
+              GSList* extension_name = g_slist_nth (required_extensions,
+                                                    (guint) i);
+              if (strcmp ((gchar*) extension_name->data,
+                          extension_props[j].extensionName) == 0)
+                {
+                  found = true;
+                  break;
+                }
+            }
+
+          if (found)
+            {
+              GSList* extension_name = g_slist_nth (required_extensions,
+                                                    (guint) i);
+              extension_names[num_enabled] = (gchar*) extension_name->data;
+              num_enabled++;
+            }
+        }
     }
-  }
 
-  *nEnabledDeviceExtensionCount = num_enabled;
+  *out_num_enabled = num_enabled;
 
   return true;
 }
