@@ -734,32 +734,28 @@ openvr_vulkan_uploader_init_vulkan_device (OpenVRVulkanUploader *self)
 }
 
 bool
-openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self)
+_init_command_pool (OpenVRVulkanUploader *self)
 {
-  if (!openvr_vulkan_uploader_init_vulkan_instance (self))
-    return false;
-
-  if (!openvr_vulkan_uploader_init_vulkan_device (self))
-    return false;
-
-  /* Create the command pool */
-  {
-    VkCommandPoolCreateInfo command_pool_info =
+  VkCommandPoolCreateInfo command_pool_info =
     {
       .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
       .queueFamilyIndex = self->queue_family_index,
       .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
     };
 
-    VkResult result = vkCreateCommandPool (self->device, &command_pool_info,
-                                           NULL, &self->command_pool);
-    if (result != VK_SUCCESS)
+  VkResult result = vkCreateCommandPool (self->device, &command_pool_info,
+                                         NULL, &self->command_pool);
+  if (result != VK_SUCCESS)
     {
       g_printerr ("vkCreateCommandPool returned error %d.", result);
       return false;
     }
-  }
+  return true;
+}
 
+void
+_begin_command_buffer (OpenVRVulkanUploader *self)
+{
   /* Command buffer used during resource loading */
   self->current_cmd_buffer =
         openvr_vulkan_uploader_get_command_buffer (self);
@@ -770,9 +766,11 @@ openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self)
   };
   vkBeginCommandBuffer (self->current_cmd_buffer->cmd_buffer,
                         &command_buffer_begin_info);
+}
 
-  openvr_vulkan_uploader_init_texture (self);
-
+void
+_submit_command_buffer (OpenVRVulkanUploader *self)
+{
   /* Submit the command buffer used during loading */
   vkEndCommandBuffer (self->current_cmd_buffer->cmd_buffer);
 
@@ -787,6 +785,35 @@ openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self)
 
   /* Wait for the GPU before proceeding */
   vkQueueWaitIdle (self->queue);
+}
+
+bool
+openvr_vulkan_uploader_load_texture_resource (OpenVRVulkanUploader *self)
+{
+  _begin_command_buffer (self);
+
+  if (!openvr_vulkan_uploader_init_texture (self))
+    return false;
+
+  _submit_command_buffer (self);
+
+  return true;
+}
+
+bool
+openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self)
+{
+  if (!openvr_vulkan_uploader_init_vulkan_instance (self))
+    return false;
+
+  if (!openvr_vulkan_uploader_init_vulkan_device (self))
+    return false;
+
+  if(!_init_command_pool (self))
+    return false;
+
+  if(!openvr_vulkan_uploader_load_texture_resource (self))
+    return false;
 
   return true;
 }
