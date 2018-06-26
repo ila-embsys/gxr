@@ -600,6 +600,43 @@ _find_physical_device (OpenVRVulkanUploader *self)
 }
 
 bool
+_find_graphics_queue (OpenVRVulkanUploader *self)
+{
+  /* Find the first graphics queue */
+  uint32_t num_queues = 0;
+  vkGetPhysicalDeviceQueueFamilyProperties (
+    self->physical_device, &num_queues, 0);
+
+  VkQueueFamilyProperties *queue_family_props =
+    g_malloc (sizeof(VkQueueFamilyProperties) * num_queues);
+
+  vkGetPhysicalDeviceQueueFamilyProperties (
+    self->physical_device, &num_queues, queue_family_props);
+
+  if (num_queues == 0)
+    {
+      g_printerr ("Failed to get queue properties.\n");
+      return false;
+    }
+
+  uint32_t i = 0;
+  for (i = 0; i < num_queues; i++)
+      if (queue_family_props[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+          break;
+
+  if (i >= num_queues)
+    {
+      g_printerr ("No graphics queue found\n");
+      return false;
+    }
+  self->queue_family_index = i;
+
+  g_free (queue_family_props);
+
+  return true;
+}
+
+bool
 _init_device (OpenVRVulkanUploader *self)
 {
   if (!_find_physical_device (self))
@@ -618,43 +655,13 @@ _init_device (OpenVRVulkanUploader *self)
                                    self->physical_device,
                                   &requiredDeviceExtensions);
 
-  /* Find the first graphics queue */
-  uint32_t nQueueCount = 0;
-  vkGetPhysicalDeviceQueueFamilyProperties (self->physical_device,
-                                            &nQueueCount, 0);
-  VkQueueFamilyProperties *pQueueFamilyProperties =
-    g_malloc(sizeof(VkQueueFamilyProperties) * nQueueCount);
-  vkGetPhysicalDeviceQueueFamilyProperties (self->physical_device,
-                                            &nQueueCount,
-                                            pQueueFamilyProperties);
-  if (nQueueCount == 0)
-  {
-    printf ("Failed to get queue properties.\n");
+  if (!_find_graphics_queue (self))
     return false;
-  }
-  uint32_t nGraphicsQueueIndex = 0;
-  for (nGraphicsQueueIndex = 0; nGraphicsQueueIndex < nQueueCount;
-       nGraphicsQueueIndex++)
-  {
-    if (pQueueFamilyProperties[nGraphicsQueueIndex].queueFlags &
-        VK_QUEUE_GRAPHICS_BIT)
-    {
-      break;
-    }
-  }
-  if (nGraphicsQueueIndex >= nQueueCount)
-  {
-    printf ("No graphics queue found\n");
-    return false;
-  }
-  self->queue_family_index = nGraphicsQueueIndex;
-  g_free (pQueueFamilyProperties);
 
   uint32_t nDeviceExtensionCount = 0;
-  VkResult result = vkEnumerateDeviceExtensionProperties (self->physical_device,
-                                                          NULL,
-                                                         &nDeviceExtensionCount,
-                                                          NULL);
+  VkResult result =
+    vkEnumerateDeviceExtensionProperties (self->physical_device, NULL,
+                                         &nDeviceExtensionCount, NULL);
   if (result != VK_SUCCESS)
   {
     printf ("vkEnumerateDeviceExtensionProperties failed with error %d\n",
