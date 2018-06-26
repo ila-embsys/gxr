@@ -71,8 +71,6 @@ struct _OpenVRVulkanUploader
 OpenVRVulkanUploader *openvr_vulkan_uploader_new (void);
 
 bool openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self);
-bool openvr_vulkan_uploader_init_vulkan_instance (OpenVRVulkanUploader *self);
-bool openvr_vulkan_uploader_init_vulkan_device (OpenVRVulkanUploader *self);
 void openvr_vulkan_uploader_submit_frame (OpenVRVulkanUploader *self);
 
 bool
@@ -81,9 +79,6 @@ openvr_vulkan_uploader_load_texture_raw (OpenVRVulkanUploader *self,
                                          guint                 width,
                                          guint                 height,
                                          gsize                 size);
-
-VulkanCommandBuffer_t* openvr_vulkan_uploader_get_command_buffer (
-  OpenVRVulkanUploader *self);
 
 G_END_DECLS
 

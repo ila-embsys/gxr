@@ -42,8 +42,18 @@ _init_texture (OpenVRVulkanUploader *self,
                guint                 height,
                gsize                 size);
 
+VulkanCommandBuffer_t*
+_get_command_buffer (OpenVRVulkanUploader *self);
+
+bool
+_init_instance (OpenVRVulkanUploader *self);
+
+bool
+_init_device (OpenVRVulkanUploader *self);
+
 static void
-openvr_vulkan_uploader_class_init (OpenVRVulkanUploaderClass *klass) {
+openvr_vulkan_uploader_class_init (OpenVRVulkanUploaderClass *klass)
+{
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->finalize = openvr_vulkan_uploader_finalize;
@@ -174,15 +184,14 @@ result_string(VkResult code) {
 }
 
 static VkBool32 VKAPI_PTR
-validation_cb (
-  VkDebugReportFlagsEXT      flags,
-  VkDebugReportObjectTypeEXT object_type,
-  uint64_t                   object,
-  size_t                     location,
-  int32_t                    message_code,
-  const char                *layer_prefix,
-  const char                *message,
-  void                      *user_data)
+validation_cb (VkDebugReportFlagsEXT      flags,
+               VkDebugReportObjectTypeEXT object_type,
+               uint64_t                   object,
+               size_t                     location,
+               int32_t                    message_code,
+               const char                *layer_prefix,
+               const char                *message,
+               void                      *user_data)
 {
   g_print ("%s %s %lu:%d: %s\n",
            debug_report_string (flags),
@@ -194,7 +203,7 @@ validation_cb (
  * Determine the memory type index from the memory requirements and type bits
  */
 static bool
-memory_type_from_properties (
+_memory_type_from_properties (
   VkPhysicalDeviceMemoryProperties *memory_properties,
   uint32_t                          memory_type_bits,
   VkMemoryPropertyFlags             memory_property_flags,
@@ -221,14 +230,13 @@ memory_type_from_properties (
 
 /* Helper function to create Vulkan static VB/IBs */
 static bool
-create_vulkan_buffer (
-  VkDevice                          device,
-  VkPhysicalDeviceMemoryProperties *memory_properties,
-  const void                       *buffer_data,
-  VkDeviceSize                      size,
-  VkBufferUsageFlags                usage,
-  VkBuffer                         *buffer_out,
-  VkDeviceMemory                   *device_memory_out)
+_create_buffer (VkDevice                          device,
+                VkPhysicalDeviceMemoryProperties *memory_properties,
+                const void                       *buffer_data,
+                VkDeviceSize                      size,
+                VkBufferUsageFlags                usage,
+                VkBuffer                         *buffer_out,
+                VkDeviceMemory                   *device_memory_out)
 {
   /* Create the vertex buffer and fill with data */
   VkBufferCreateInfo buffer_info =
@@ -251,10 +259,10 @@ create_vulkan_buffer (
     .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
     .allocationSize = memory_requirements.size
   };
-  if (!memory_type_from_properties (memory_properties,
-                                    memory_requirements.memoryTypeBits,
-                                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-                                   &alloc_info.memoryTypeIndex))
+  if (!_memory_type_from_properties (memory_properties,
+                                     memory_requirements.memoryTypeBits,
+                                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+                                    &alloc_info.memoryTypeIndex))
   {
     g_printerr ("Failed to find matching memoryTypeIndex for buffer\n");
     return false;
@@ -477,7 +485,7 @@ _init_validation_callback (OpenVRVulkanUploader *self)
 }
 
 bool
-openvr_vulkan_uploader_init_vulkan_instance (OpenVRVulkanUploader *self)
+_init_instance (OpenVRVulkanUploader *self)
 {
   GSList* required_extensions = NULL;
   _get_required_instance_extensions (self, &required_extensions);
@@ -541,7 +549,7 @@ openvr_vulkan_uploader_init_vulkan_instance (OpenVRVulkanUploader *self)
 }
 
 bool
-openvr_vulkan_uploader_init_vulkan_device (OpenVRVulkanUploader *self)
+_init_device (OpenVRVulkanUploader *self)
 {
   uint32_t nDeviceCount = 0;
   VkResult result = vkEnumeratePhysicalDevices (self->instance,
@@ -764,8 +772,7 @@ void
 _begin_command_buffer (OpenVRVulkanUploader *self)
 {
   /* Command buffer used during resource loading */
-  self->current_cmd_buffer =
-        openvr_vulkan_uploader_get_command_buffer (self);
+  self->current_cmd_buffer = _get_command_buffer (self);
   VkCommandBufferBeginInfo command_buffer_begin_info =
   {
     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -814,10 +821,10 @@ openvr_vulkan_uploader_load_texture_raw (OpenVRVulkanUploader *self,
 bool
 openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self)
 {
-  if (!openvr_vulkan_uploader_init_vulkan_instance (self))
+  if (!_init_instance (self))
     return false;
 
-  if (!openvr_vulkan_uploader_init_vulkan_device (self))
+  if (!_init_device (self))
     return false;
 
   if(!_init_command_pool (self))
@@ -911,7 +918,7 @@ _init_texture (OpenVRVulkanUploader *self,
     .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
     .allocationSize = memory_requirements.size
   };
-  memory_type_from_properties (&self->physical_device_memory_properties,
+  _memory_type_from_properties (&self->physical_device_memory_properties,
                                memory_requirements.memoryTypeBits,
                                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                                &memory_info.memoryTypeIndex);
@@ -942,13 +949,13 @@ _init_texture (OpenVRVulkanUploader *self,
   vkCreateImageView (self->device, &image_view_info, NULL, &self->image_view);
 
   /* Create a staging buffer */
-  if (!create_vulkan_buffer (self->device,
-                             &self->physical_device_memory_properties,
-                             pixels,
-                             size,
-                             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                             &self->staging_buffer,
-                             &self->staging_buffer_memory))
+  if (!_create_buffer (self->device,
+                      &self->physical_device_memory_properties,
+                       pixels,
+                       size,
+                       VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                      &self->staging_buffer,
+                      &self->staging_buffer_memory))
     return false;
 
   /* Transition the image to TRANSFER_DST to receive image */
@@ -1000,7 +1007,7 @@ _init_texture (OpenVRVulkanUploader *self,
  * Associate a fence with the command buffer.
  */
 VulkanCommandBuffer_t*
-openvr_vulkan_uploader_get_command_buffer (OpenVRVulkanUploader *self)
+_get_command_buffer (OpenVRVulkanUploader *self)
 {
   VulkanCommandBuffer_t *command_buffer = g_new (VulkanCommandBuffer_t, 1);
 
