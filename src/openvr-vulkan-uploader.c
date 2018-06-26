@@ -637,45 +637,31 @@ _find_graphics_queue (OpenVRVulkanUploader *self)
 }
 
 bool
-_init_device (OpenVRVulkanUploader *self)
+_get_device_extension_count (OpenVRVulkanUploader *self,
+                             uint32_t             *count)
 {
-  if (!_find_physical_device (self))
-    return false;
-
-  vkGetPhysicalDeviceMemoryProperties (
-    self->physical_device,
-    &self->physical_device_memory_properties);
-  vkGetPhysicalDeviceFeatures (self->physical_device,
-                              &self->physical_device_features);
-
-  /* VkDevice creation */
-  /* Query OpenVR for the required device extensions for this physical device */
-  GSList *requiredDeviceExtensions = NULL;
-  _get_required_device_extensions (self,
-                                   self->physical_device,
-                                  &requiredDeviceExtensions);
-
-  if (!_find_graphics_queue (self))
-    return false;
-
-  uint32_t nDeviceExtensionCount = 0;
   VkResult result =
     vkEnumerateDeviceExtensionProperties (self->physical_device, NULL,
-                                         &nDeviceExtensionCount, NULL);
+                                          count, NULL);
   if (result != VK_SUCCESS)
   {
-    printf ("vkEnumerateDeviceExtensionProperties failed with error %d\n",
-            result);
+    g_printerr ("vkEnumerateDeviceExtensionProperties failed with error %d\n",
+                result);
     return false;
   }
+  return true;
+}
 
-  /*
-   * Allocate enough ExtensionProperties
-   * to support all extensions being enabled
-   */
-  const char **ppDeviceExtensionNames =
-    g_malloc(sizeof(const char *) * nDeviceExtensionCount);
-  uint32_t nEnabledDeviceExtensionCount = 0;
+bool
+_init_device_extensions (OpenVRVulkanUploader *self,
+                         const char          **ppDeviceExtensionNames,
+                         uint32_t             *nEnabledDeviceExtensionCount)
+{
+  uint32_t nDeviceExtensionCount = 0;
+  uint32_t num_enabled = 0;
+
+  if (!_get_device_extension_count (self, &nDeviceExtensionCount))
+    return false;
 
   /* Enable required device extensions */
   VkExtensionProperties *pDeviceExtProperties =
@@ -684,16 +670,23 @@ _init_device (OpenVRVulkanUploader *self)
           sizeof (VkExtensionProperties) * nDeviceExtensionCount);
   if (nDeviceExtensionCount > 0)
   {
-    result = vkEnumerateDeviceExtensionProperties (self->physical_device,
-                                                   NULL,
-                                                  &nDeviceExtensionCount,
-                                                   pDeviceExtProperties);
+    VkResult result =
+      vkEnumerateDeviceExtensionProperties (self->physical_device,
+                                            NULL,
+                                           &nDeviceExtensionCount,
+                                            pDeviceExtProperties);
     if (result != VK_SUCCESS)
     {
-      printf ("vkEnumerateDeviceExtensionProperties failed with error %d\n",
-              result);
+      g_printerr ("vkEnumerateDeviceExtensionProperties failed with error %d\n",
+                  result);
       return false;
     }
+
+    /* Query required OpenVR device extensions */
+    GSList *requiredDeviceExtensions = NULL;
+    _get_required_device_extensions (self,
+                                     self->physical_device,
+                                    &requiredDeviceExtensions);
 
     for (size_t nRequiredDeviceExt = 0;
          nRequiredDeviceExt < g_slist_length (requiredDeviceExtensions);
@@ -717,12 +710,51 @@ _init_device (OpenVRVulkanUploader *self)
       {
         GSList* extension_name = g_slist_nth (requiredDeviceExtensions,
                                               (guint) nRequiredDeviceExt);
-        ppDeviceExtensionNames[nEnabledDeviceExtensionCount] =
-          (gchar*)extension_name->data;
-        nEnabledDeviceExtensionCount++;
+        ppDeviceExtensionNames[num_enabled] = (gchar*)extension_name->data;
+        num_enabled++;
       }
     }
   }
+
+  *nEnabledDeviceExtensionCount = num_enabled;
+
+  return true;
+}
+
+bool
+_init_device (OpenVRVulkanUploader *self)
+{
+  if (!_find_physical_device (self))
+    return false;
+
+  vkGetPhysicalDeviceMemoryProperties (
+    self->physical_device,
+    &self->physical_device_memory_properties);
+  vkGetPhysicalDeviceFeatures (self->physical_device,
+                              &self->physical_device_features);
+
+  /* VkDevice creation */
+
+  if (!_find_graphics_queue (self))
+    return false;
+
+  /*
+  * Allocate enough ExtensionProperties
+  * to support all extensions being enabled
+  */
+
+  uint32_t nDeviceExtensionCount = 0;
+  if (!_get_device_extension_count(self, &nDeviceExtensionCount))
+    return false;
+
+  const char **ppDeviceExtensionNames =
+    g_malloc(sizeof(const char *) * nDeviceExtensionCount);
+  uint32_t nEnabledDeviceExtensionCount = 0;
+
+  if (!_init_device_extensions (self,
+                                ppDeviceExtensionNames,
+                               &nEnabledDeviceExtensionCount))
+    return false;
 
   /* Create the device */
   float queue_priority = 1.0f;
@@ -744,7 +776,7 @@ _init_device (OpenVRVulkanUploader *self)
     .pEnabledFeatures = &self->physical_device_features
   };
 
-  result = vkCreateDevice (self->physical_device,
+  VkResult result = vkCreateDevice (self->physical_device,
                            &device_info, NULL, &self->device);
   if (result != VK_SUCCESS)
   {
@@ -831,13 +863,22 @@ bool
 openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self)
 {
   if (!_init_instance (self))
-    return false;
+    {
+      g_printerr ("Failed to create instance.\n");
+      return false;
+    }
 
   if (!_init_device (self))
-    return false;
+    {
+      g_printerr ("Failed to create device.\n");
+      return false;
+    }
 
   if(!_init_command_pool (self))
-    return false;
+    {
+      g_printerr ("Failed to create command pool.\n");
+      return false;
+    }
 
   return true;
 }
