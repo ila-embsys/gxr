@@ -26,8 +26,6 @@ _compositor_init_fn_table (OpenVRVulkanUploader *self)
 gboolean
 example_init (OpenVRVulkanUploader *self)
 {
-  /* Loading the SteamVR Runtime */
-
   EVRInitError error;
   VR_InitInternal(&error, EVRApplicationType_VRApplication_Overlay);
 
@@ -95,21 +93,13 @@ main(int argc, char *argv[])
   OpenVRVulkanUploader *uploader = openvr_vulkan_uploader_new ();
 
   for (int i = 1; i < argc; i++)
-  {
     if (!strcmp (argv[i], "--validate"))
-    {
       uploader->enable_validation = true;
-    }
-  }
 
-  if (!example_init (uploader))
-  {
-    openvr_vulkan_uploader_shutdown (uploader);
-    return 1;
-  }
+  if (example_init (uploader))
+    _main_loop(uploader);
 
-  _main_loop(uploader);
-  openvr_vulkan_uploader_shutdown (uploader);
+  g_object_unref (uploader);
 
   return 0;
 }

@@ -26,8 +26,21 @@
 
 G_DEFINE_TYPE (OpenVRVulkanUploader, openvr_vulkan_uploader, G_TYPE_OBJECT)
 
+/* Vulkan extension entrypoints */
+static PFN_vkCreateDebugReportCallbackEXT
+  g_pVkCreateDebugReportCallbackEXT = NULL;
+static PFN_vkDestroyDebugReportCallbackEXT
+  g_pVkDestroyDebugReportCallbackEXT = NULL;
+
 static void
-openvr_vulkan_uploader_class_init (OpenVRVulkanUploaderClass *klass) {}
+openvr_vulkan_uploader_finalize (GObject *gobject);
+
+static void
+openvr_vulkan_uploader_class_init (OpenVRVulkanUploaderClass *klass) {
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+
+  object_class->finalize = openvr_vulkan_uploader_finalize;
+}
 
 static void
 openvr_vulkan_uploader_init (OpenVRVulkanUploader *self)
@@ -56,11 +69,53 @@ openvr_vulkan_uploader_new (void)
   return (OpenVRVulkanUploader*) g_object_new (OPENVR_TYPE_VULKAN_UPLOADER, 0);
 }
 
-/* Vulkan extension entrypoints */
-static PFN_vkCreateDebugReportCallbackEXT
-  g_pVkCreateDebugReportCallbackEXT = NULL;
-static PFN_vkDestroyDebugReportCallbackEXT
-  g_pVkDestroyDebugReportCallbackEXT = NULL;
+void
+_cleanup_command_buffer_queue (gpointer item, OpenVRVulkanUploader *self)
+{
+  VulkanCommandBuffer_t *b = (VulkanCommandBuffer_t*) item;
+  vkFreeCommandBuffers (self->device, self->command_pool, 1, &b->cmd_buffer);
+  vkDestroyFence (self->device, b->fence, NULL);
+  // g_object_unref (item);
+}
+
+static void
+openvr_vulkan_uploader_finalize (GObject *gobject)
+{
+  OpenVRVulkanUploader *self = OPENVR_VULKAN_UPLOADER (gobject);
+
+  /* Idle the device to make sure no work is outstanding */
+  if (self->device != VK_NULL_HANDLE)
+    vkDeviceWaitIdle (self->device);
+
+  if (self->system != NULL)
+  {
+    VR_ShutdownInternal();
+    self->system = NULL;
+  }
+
+  if (self->device != VK_NULL_HANDLE)
+  {
+    g_queue_foreach (self->cmd_buffers,
+                     (GFunc) _cleanup_command_buffer_queue, self);
+
+    vkDestroyCommandPool (self->device, self->command_pool, NULL);
+
+    vkDestroyImageView (self->device, self->image_view, NULL);
+    vkDestroyImage (self->device, self->image, NULL);
+    vkFreeMemory (self->device, self->image_memory, NULL);
+    vkDestroyBuffer (self->device, self->staging_buffer, NULL);
+    vkFreeMemory (self->device, self->staging_buffer_memory, NULL);
+
+    if (self->debug_report_cb != VK_NULL_HANDLE)
+      g_pVkDestroyDebugReportCallbackEXT (self->instance,
+                                          self->debug_report_cb, NULL);
+
+    vkDestroyDevice (self->device, NULL);
+    vkDestroyInstance (self->instance, NULL);
+  }
+
+  G_OBJECT_CLASS (openvr_vulkan_uploader_parent_class)->finalize (gobject);
+}
 
 #define ENUM_TO_STR(r) case r: return #r
 
@@ -734,50 +789,6 @@ openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self)
   vkQueueWaitIdle (self->queue);
 
   return true;
-}
-
-void
-_cleanup_command_buffer_queue (gpointer item, OpenVRVulkanUploader *self)
-{
-  VulkanCommandBuffer_t *b = (VulkanCommandBuffer_t*) item;
-  vkFreeCommandBuffers (self->device, self->command_pool, 1, &b->cmd_buffer);
-  vkDestroyFence (self->device, b->fence, NULL);
-  // g_object_unref (item);
-}
-
-void
-openvr_vulkan_uploader_shutdown (OpenVRVulkanUploader *self)
-{
-  /* Idle the device to make sure no work is outstanding */
-  if (self->device != VK_NULL_HANDLE)
-    vkDeviceWaitIdle (self->device);
-
-  if (self->system != NULL)
-  {
-    VR_ShutdownInternal();
-    self->system = NULL;
-  }
-
-  if (self->device != VK_NULL_HANDLE)
-  {
-    g_queue_foreach (self->cmd_buffers,
-                     (GFunc) _cleanup_command_buffer_queue, self);
-
-    vkDestroyCommandPool (self->device, self->command_pool, NULL);
-
-    vkDestroyImageView (self->device, self->image_view, NULL);
-    vkDestroyImage (self->device, self->image, NULL);
-    vkFreeMemory (self->device, self->image_memory, NULL);
-    vkDestroyBuffer (self->device, self->staging_buffer, NULL);
-    vkFreeMemory (self->device, self->staging_buffer_memory, NULL);
-
-    if (self->debug_report_cb != VK_NULL_HANDLE)
-      g_pVkDestroyDebugReportCallbackEXT (self->instance,
-                                          self->debug_report_cb, NULL);
-
-    vkDestroyDevice (self->device, NULL);
-    vkDestroyInstance (self->instance, NULL);
-  }
 }
 
 void
