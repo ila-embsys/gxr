@@ -596,6 +596,9 @@ _find_physical_device (OpenVRVulkanUploader *self)
     }
   g_free (physical_devices);
 
+  vkGetPhysicalDeviceMemoryProperties (
+    self->physical_device, &self->physical_device_memory_properties);
+
   return true;
 }
 
@@ -654,14 +657,11 @@ _get_device_extension_count (OpenVRVulkanUploader *self,
 
 bool
 _init_device_extensions (OpenVRVulkanUploader *self,
+                         uint32_t              num_extensions,
                          const char          **extension_names,
                          uint32_t             *out_num_enabled)
 {
-  uint32_t num_extensions = 0;
   uint32_t num_enabled = 0;
-
-  if (!_get_device_extension_count (self, &num_extensions))
-    return false;
 
   /* Enable required device extensions */
   VkExtensionProperties *extension_props =
@@ -669,49 +669,43 @@ _init_device_extensions (OpenVRVulkanUploader *self,
 
   memset (extension_props, 0, sizeof (VkExtensionProperties) * num_extensions);
 
-  if (num_extensions > 0)
+  VkResult result = vkEnumerateDeviceExtensionProperties (self->physical_device,
+                                                          NULL,
+                                                         &num_extensions,
+                                                          extension_props);
+  if (result != VK_SUCCESS)
     {
-      VkResult result =
-        vkEnumerateDeviceExtensionProperties (self->physical_device,
-                                              NULL,
-                                             &num_extensions,
-                                              extension_props);
-      if (result != VK_SUCCESS)
+      g_printerr ("vkEnumerateDeviceExtensionProperties"
+                  " failed with error %d\n",
+                  result);
+      return false;
+    }
+
+  /* Query required OpenVR device extensions */
+  GSList *required_extensions = NULL;
+  _get_required_device_extensions (self,
+                                   self->physical_device,
+                                  &required_extensions);
+
+  for (uint32_t i = 0; i < g_slist_length (required_extensions); i++)
+    {
+      bool found = false;
+      for (uint32_t j = 0; j < num_extensions; j++)
         {
-          g_printerr ("vkEnumerateDeviceExtensionProperties"
-                      " failed with error %d\n",
-                      result);
-          return false;
+          GSList* extension_name = g_slist_nth (required_extensions, i);
+          if (strcmp ((gchar*) extension_name->data,
+                      extension_props[j].extensionName) == 0)
+            {
+              found = true;
+              break;
+            }
         }
 
-      /* Query required OpenVR device extensions */
-      GSList *required_extensions = NULL;
-      _get_required_device_extensions (self,
-                                       self->physical_device,
-                                      &required_extensions);
-
-      for (size_t i = 0; i < g_slist_length (required_extensions); i++)
+      if (found)
         {
-          bool found = false;
-          for (uint32_t j = 0; j < num_extensions; j++)
-            {
-              GSList* extension_name = g_slist_nth (required_extensions,
-                                                    (guint) i);
-              if (strcmp ((gchar*) extension_name->data,
-                          extension_props[j].extensionName) == 0)
-                {
-                  found = true;
-                  break;
-                }
-            }
-
-          if (found)
-            {
-              GSList* extension_name = g_slist_nth (required_extensions,
-                                                    (guint) i);
-              extension_names[num_enabled] = (gchar*) extension_name->data;
-              num_enabled++;
-            }
+          GSList* extension_name = g_slist_nth (required_extensions, i);
+          extension_names[num_enabled] = (gchar*) extension_name->data;
+          num_enabled++;
         }
     }
 
@@ -726,62 +720,52 @@ _init_device (OpenVRVulkanUploader *self)
   if (!_find_physical_device (self))
     return false;
 
-  vkGetPhysicalDeviceMemoryProperties (
-    self->physical_device,
-    &self->physical_device_memory_properties);
-  vkGetPhysicalDeviceFeatures (self->physical_device,
-                              &self->physical_device_features);
-
-  /* VkDevice creation */
-
   if (!_find_graphics_queue (self))
     return false;
 
-  /*
-  * Allocate enough ExtensionProperties
-  * to support all extensions being enabled
-  */
-
-  uint32_t nDeviceExtensionCount = 0;
-  if (!_get_device_extension_count(self, &nDeviceExtensionCount))
+  uint32_t num_extensions = 0;
+  if (!_get_device_extension_count(self, &num_extensions))
     return false;
 
-  const char **ppDeviceExtensionNames =
-    g_malloc(sizeof(const char *) * nDeviceExtensionCount);
-  uint32_t nEnabledDeviceExtensionCount = 0;
+  const char **extension_names =
+    g_malloc(sizeof(const char *) * num_extensions);
+  uint32_t num_enabled = 0;
 
-  if (!_init_device_extensions (self,
-                                ppDeviceExtensionNames,
-                               &nEnabledDeviceExtensionCount))
-    return false;
+  if (num_extensions > 0)
+    if (!_init_device_extensions (self, num_extensions,
+                                  extension_names, &num_enabled))
+      return false;
 
   /* Create the device */
   float queue_priority = 1.0f;
-  VkDeviceQueueCreateInfo device_queue_info =
-  {
-    .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-    .queueFamilyIndex = self->queue_family_index,
-    .queueCount = 1,
-    .pQueuePriorities = &queue_priority
-  };
+
+  VkPhysicalDeviceFeatures physical_device_features;
+  vkGetPhysicalDeviceFeatures (self->physical_device,
+                              &physical_device_features);
 
   VkDeviceCreateInfo device_info =
-  {
-    .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-    .queueCreateInfoCount = 1,
-    .pQueueCreateInfos = &device_queue_info,
-    .enabledExtensionCount = nEnabledDeviceExtensionCount,
-    .ppEnabledExtensionNames = ppDeviceExtensionNames,
-    .pEnabledFeatures = &self->physical_device_features
-  };
+    {
+      .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+      .queueCreateInfoCount = 1,
+      .pQueueCreateInfos = &(VkDeviceQueueCreateInfo)
+        {
+          .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+          .queueFamilyIndex = self->queue_family_index,
+          .queueCount = 1,
+          .pQueuePriorities = &queue_priority
+        },
+      .enabledExtensionCount = num_enabled,
+      .ppEnabledExtensionNames = extension_names,
+      .pEnabledFeatures = &physical_device_features
+    };
 
   VkResult result = vkCreateDevice (self->physical_device,
-                           &device_info, NULL, &self->device);
+                                   &device_info, NULL, &self->device);
   if (result != VK_SUCCESS)
-  {
-    g_printerr ("vkCreateDevice failed with error %d\n", result);
-    return false;
-  }
+    {
+      g_printerr ("vkCreateDevice failed with error %d\n", result);
+      return false;
+    }
 
   /* Get the device queue */
   vkGetDeviceQueue (self->device, self->queue_family_index, 0, &self->queue);
