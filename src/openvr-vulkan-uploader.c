@@ -549,11 +549,11 @@ _init_instance (OpenVRVulkanUploader *self)
 }
 
 bool
-_init_device (OpenVRVulkanUploader *self)
+_find_physical_device (OpenVRVulkanUploader *self)
 {
   uint32_t nDeviceCount = 0;
   VkResult result = vkEnumeratePhysicalDevices (self->instance,
-                                                 &nDeviceCount, NULL);
+                                               &nDeviceCount, NULL);
   if (result != VK_SUCCESS || nDeviceCount == 0)
   {
     printf ("vkEnumeratePhysicalDevices failed, "
@@ -575,8 +575,8 @@ _init_device (OpenVRVulkanUploader *self)
   /* Query OpenVR for the physical device to use */
   uint64_t pHMDPhysicalDevice = 0;
   self->system->GetOutputDevice (&pHMDPhysicalDevice,
-                                      ETextureType_TextureType_Vulkan,
-                                      (struct VkInstance_T*) self->instance);
+                                  ETextureType_TextureType_Vulkan,
+                                  (struct VkInstance_T*) self->instance);
 
   /* Select the HMD physical device */
   self->physical_device = VK_NULL_HANDLE;
@@ -595,9 +595,18 @@ _init_device (OpenVRVulkanUploader *self)
     /* Fallback: Grab the first physical device */
     printf ("Failed to find GetOutputDevice VkPhysicalDevice, "
             "falling back to choosing first device.\n");
-    self->physical_device = pPhysicalDevices[ 0 ];
+    self->physical_device = pPhysicalDevices[0];
   }
   g_free (pPhysicalDevices);
+
+  return true;
+}
+
+bool
+_init_device (OpenVRVulkanUploader *self)
+{
+  if (!_find_physical_device (self))
+    return false;
 
   vkGetPhysicalDeviceProperties (self->physical_device,
                                  &self->physical_device_properties);
@@ -651,8 +660,10 @@ _init_device (OpenVRVulkanUploader *self)
   g_free (pQueueFamilyProperties);
 
   uint32_t nDeviceExtensionCount = 0;
-  result = vkEnumerateDeviceExtensionProperties (self->physical_device, NULL,
-                                                &nDeviceExtensionCount, NULL);
+  VkResult result = vkEnumerateDeviceExtensionProperties (self->physical_device,
+                                                          NULL,
+                                                         &nDeviceExtensionCount,
+                                                          NULL);
   if (result != VK_SUCCESS)
   {
     printf ("vkEnumerateDeviceExtensionProperties failed with error %d\n",
