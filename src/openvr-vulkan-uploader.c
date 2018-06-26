@@ -358,28 +358,26 @@ _get_required_device_extensions (OpenVRVulkanUploader *self,
 }
 
 bool
-_init_validation_layers (const char **enabled_layer_names,
-                         uint32_t    *num_enabled_layers,
-                         GSList     **required_extensions)
+_init_validation_layers (uint32_t     num_layers,
+                         const char **enabled_layers,
+                         uint32_t    *out_num_enabled)
 {
-  uint32_t num_layers = 0;
-  VkResult result = vkEnumerateInstanceLayerProperties (&num_layers, NULL);
-  if (result == VK_SUCCESS && num_layers > 0)
-  {
-    VkLayerProperties * layer_props =
-      g_malloc(sizeof(VkLayerProperties) * num_layers);
-    enabled_layer_names = g_malloc(sizeof(const char*) * num_layers);
+  uint32_t num_enabled = 0;
 
-    result = vkEnumerateInstanceLayerProperties (&num_layers, layer_props);
+  VkLayerProperties * layer_props =
+    g_malloc(sizeof(VkLayerProperties) * num_layers);
 
-    if (result != VK_SUCCESS)
+  VkResult result =
+    vkEnumerateInstanceLayerProperties (&num_layers, layer_props);
+
+  if (result != VK_SUCCESS)
     {
       printf ("Error vkEnumerateInstanceLayerProperties in %d\n", result);
       return false;
     }
 
     /* OpenVR: no unique_objects when using validation with SteamVR */
-    char const *request_layers[] =
+  char const *request_layers[] =
     {
       "VK_LAYER_GOOGLE_threading",
       "VK_LAYER_LUNARG_parameter_validation",
@@ -388,15 +386,15 @@ _init_validation_layers (const char **enabled_layer_names,
       "VK_LAYER_LUNARG_core_validation",
     };
 
-    for (uint32_t i = 0; i < num_layers; i++)
-      for (uint32_t j = 0; j < _countof (request_layers); j++)
-        if (strstr (layer_props[i].layerName, request_layers[j]) != NULL)
-          enabled_layer_names[*num_enabled_layers++] = layer_props[i].layerName;
+  for (uint32_t i = 0; i < num_layers; i++)
+    for (uint32_t j = 0; j < _countof (request_layers); j++)
+      if (strstr (layer_props[i].layerName, request_layers[j]) != NULL)
+        enabled_layers[num_enabled++] = g_strdup (layer_props[i].layerName);
 
-    *required_extensions = g_slist_append (*required_extensions,
-      (gpointer) VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
-    g_free (layer_props);
-  }
+  *out_num_enabled = num_enabled;
+
+  g_free (layer_props);
+
   return true;
 }
 
@@ -494,10 +492,28 @@ _init_instance (OpenVRVulkanUploader *self)
   const char **enabled_layers = NULL;
 
   if (self->enable_validation)
-    if (!_init_validation_layers (enabled_layers,
-                                 &num_enabled_layers,
-                                 &required_extensions))
-      return false;
+    {
+      uint32_t num_layers = 0;
+      VkResult result = vkEnumerateInstanceLayerProperties (&num_layers, NULL);
+      if (result != VK_SUCCESS)
+        {
+          g_printerr ("vkEnumerateInstanceLayerProperties"
+                      " failed with error %d\n",
+                      result);
+          return false;
+        }
+
+      enabled_layers = g_malloc(sizeof(const char*) * num_layers);
+      if (num_layers > 0)
+        {
+          if (!_init_validation_layers (num_layers,
+                                        enabled_layers,
+                                       &num_enabled_layers))
+              return false;
+          required_extensions = g_slist_append (required_extensions,
+            (gpointer) VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+        }
+    }
 
   const char** enabled_extensions =
     g_malloc(sizeof(const char*) * g_slist_length (required_extensions));
