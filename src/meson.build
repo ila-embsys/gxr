@@ -69,15 +69,17 @@ pkg.generate(
   install_dir: join_paths(get_option('libdir'), 'pkgconfig')
 )
 
-openvr_glib_gir = gnome.generate_gir(
-  openvr_glib_lib,
-  sources: openvr_glib_sources + openvr_glib_headers,
-  namespace: 'OpenVR',
-  nsversion: '0.1',
-  identifier_prefix: 'OpenVR',
-  symbol_prefix: 'openvr',
-  export_packages: 'openvr-glib-0.1',
-  includes: [ 'cairo-1.0', 'GdkPixbuf-2.0', 'Gdk-3.0', 'Cogl-1.0'],
-  header: 'openvr-glib/openvr-glib.h',
-  install: true,
-)
+if get_option('introspection')
+  openvr_glib_gir = gnome.generate_gir(
+    openvr_glib_lib,
+    sources: openvr_glib_sources + openvr_glib_headers,
+    namespace: 'OpenVR',
+    nsversion: '0.1',
+    identifier_prefix: 'OpenVR',
+    symbol_prefix: 'openvr',
+    export_packages: 'openvr-glib-0.1',
+    includes: [ 'cairo-1.0', 'GdkPixbuf-2.0', 'Gdk-3.0', 'Cogl-1.0'],
+    header: 'openvr-glib/openvr-glib.h',
+    install: true,
+  )
+endif
