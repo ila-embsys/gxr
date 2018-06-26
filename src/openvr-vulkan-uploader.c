@@ -56,21 +56,6 @@ openvr_vulkan_uploader_new (void)
   return (OpenVRVulkanUploader*) g_object_new (OPENVR_TYPE_VULKAN_UPLOADER, 0);
 }
 
-gboolean _system_init_fn_table2 (OpenVRVulkanUploader *self)
-{
-  INIT_FN_TABLE (self->system, System);
-}
-
-gboolean _overlay_init_fn_table2 (OpenVRVulkanUploader *self)
-{
-  INIT_FN_TABLE (self->overlay, Overlay);
-}
-
-gboolean _compositor_init_fn_table (OpenVRVulkanUploader *self)
-{
-  INIT_FN_TABLE (self->compositor, Compositor);
-}
-
 /* Vulkan extension entrypoints */
 static PFN_vkCreateDebugReportCallbackEXT
   g_pVkCreateDebugReportCallbackEXT = NULL;
@@ -247,53 +232,6 @@ create_vulkan_buffer (
     };
     vkFlushMappedMemoryRanges (device, 1, &memory_range);
   }
-  return true;
-}
-
-bool
-openvr_vulkan_uploader_init_openvr (OpenVRVulkanUploader *self)
-{
-  /* Loading the SteamVR Runtime */
-
-  EVRInitError error;
-  VR_InitInternal(&error, EVRApplicationType_VRApplication_Overlay);
-
-  if (error != EVRInitError_VRInitError_None) {
-    g_printerr ("Could not init OpenVR runtime: Error code %s\n",
-                VR_GetVRInitErrorAsSymbol (error));
-    return false;
-  }
-
-  _system_init_fn_table2 (self);
-
-  if (!openvr_vulkan_uploader_init_compositor (self))
-  {
-    g_printerr ("Failed to initialize VR Compositor!\n");
-    return false;
-  }
-
-  if (!openvr_vulkan_uploader_init_vulkan (self))
-  {
-    g_printerr ("Unable to initialize Vulkan!\n");
-    return false;
-  }
-
-  if (_overlay_init_fn_table2 (self))
-  {
-    EVROverlayError err = self->overlay->CreateDashboardOverlay (
-      "vulkan-overlay", "vkovl",
-      &self->overlay_handle, &self->thumbnail_handle);
-
-    if (err != EVROverlayError_VROverlayError_None)
-      {
-        g_printerr ("Could not create overlay: %s\n",
-                    self->overlay->GetOverlayErrorNameFromEnum (err));
-        return false;
-      }
-  } else {
-    return false;
-  }
-
   return true;
 }
 
@@ -740,12 +678,6 @@ openvr_vulkan_uploader_init_vulkan_device (OpenVRVulkanUploader *self)
   return true;
 }
 
-/*
- * Initialize Vulkan. Returns true if Vulkan has been successfully initialized,
- * false if shaders could not be created.
- * If failure occurred in a module other than shaders,
- * the function may return true or throw an error.
- */
 bool
 openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self)
 {
@@ -801,21 +733,6 @@ openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self)
   /* Wait for the GPU before proceeding */
   vkQueueWaitIdle (self->queue);
 
-  return true;
-}
-
-/*
- * Initialize Compositor.
- * Returns true if the compositor was successfully initialized, false otherwise.
- */
-bool
-openvr_vulkan_uploader_init_compositor (OpenVRVulkanUploader *self)
-{
-  if (!_compositor_init_fn_table (self))
-  {
-    g_printerr ("Compositor initialization failed.\n");
-    return false;
-  }
   return true;
 }
 

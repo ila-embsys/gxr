@@ -70,13 +70,10 @@ struct _OpenVRVulkanUploader
 
 OpenVRVulkanUploader *openvr_vulkan_uploader_new (void);
 
-bool openvr_vulkan_uploader_init_openvr (OpenVRVulkanUploader *self);
 bool openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self);
 bool openvr_vulkan_uploader_init_vulkan_instance (OpenVRVulkanUploader *self);
 bool openvr_vulkan_uploader_init_vulkan_device (OpenVRVulkanUploader *self);
-bool openvr_vulkan_uploader_init_compositor (OpenVRVulkanUploader *self);
 void openvr_vulkan_uploader_shutdown (OpenVRVulkanUploader *self);
-void openvr_vulkan_uploader_main_loop (OpenVRVulkanUploader *self);
 void openvr_vulkan_uploader_submit_frame (OpenVRVulkanUploader *self);
 bool openvr_vulkan_uploader_init_texture (OpenVRVulkanUploader *self);
 

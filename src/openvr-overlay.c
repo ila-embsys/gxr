@@ -347,7 +347,7 @@ load_gl_symbol (const char  *name,
   *func = cogl_get_proc_address (name);
   if (!*func)
     {
-      g_printerr ("MetaSyncRing: failed to resolve required GL symbol \"%s\"\n", name);
+      g_printerr ("Failed to resolve required GL symbol \"%s\"\n", name);
       return FALSE;
     }
   return TRUE;
