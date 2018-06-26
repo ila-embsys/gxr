@@ -25,6 +25,8 @@ gl_dep = dependency('GL')
 gtk3_dep = dependency('gtk+-3.0', version: '>= 3.22')
 gdk_pixbuf_dep = dependency('gdk-pixbuf-2.0', version: '>= 2.36')
 
+vulkan_dep = cpp.find_library('vulkan')
+
 ## Optional
 cogl_mutter_dep = dependency('mutter-cogl-2', required : false)
 x11_dep = dependency('x11', required : false)

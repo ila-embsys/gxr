@@ -3,12 +3,14 @@ api_version = '0.1'
 openvr_glib_sources = [
   'openvr-system.c',
   'openvr-overlay.c',
+  'openvr-vulkan-uploader.c'
 ]
 
 openvr_glib_headers = [
   'openvr-glib.h',
   'openvr-system.h',
   'openvr-overlay.h',
+  'openvr-vulkan-uploader.h'
 ]
 
 version_split = meson.project_version().split('.')
@@ -36,7 +38,8 @@ openvr_glib_deps = [
   gtk3_dep,
   gl_dep,
   cogl_1_dep,
-  openvr_dep
+  openvr_dep,
+  vulkan_dep
 ]
 
 openvr_glib_lib = shared_library('openvr-glib-' + api_version,
