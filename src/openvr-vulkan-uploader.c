@@ -911,7 +911,7 @@ openvr_vulkan_uploader_submit_frame (OpenVRVulkanUploader *self)
       .m_nQueueFamilyIndex = self->queue_family_index,
       .m_nWidth = self->width,
       .m_nHeight = self->height,
-      .m_nFormat = VK_FORMAT_R8G8B8A8_SRGB,
+      .m_nFormat = VK_FORMAT_B8G8R8A8_UNORM,
       .m_nSampleCount = 1
     };
 
