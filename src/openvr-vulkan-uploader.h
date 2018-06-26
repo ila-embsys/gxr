@@ -50,7 +50,6 @@ struct _OpenVRVulkanUploader
   VROverlayHandle_t overlay_handle;
   VROverlayHandle_t thumbnail_handle;
 
-  VkPhysicalDeviceProperties physical_device_properties;
   VkPhysicalDeviceMemoryProperties physical_device_memory_properties;
   VkPhysicalDeviceFeatures physical_device_features;
 

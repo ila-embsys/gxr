@@ -605,24 +605,18 @@ _init_device (OpenVRVulkanUploader *self)
   if (!_find_physical_device (self))
     return false;
 
-  vkGetPhysicalDeviceProperties (self->physical_device,
-                                 &self->physical_device_properties);
   vkGetPhysicalDeviceMemoryProperties (
     self->physical_device,
     &self->physical_device_memory_properties);
   vkGetPhysicalDeviceFeatures (self->physical_device,
-                               &self->physical_device_features);
+                              &self->physical_device_features);
 
   /* VkDevice creation */
   /* Query OpenVR for the required device extensions for this physical device */
   GSList *requiredDeviceExtensions = NULL;
   _get_required_device_extensions (self,
                                    self->physical_device,
-                                   &requiredDeviceExtensions);
-  /* Add additional required extensions */
-  requiredDeviceExtensions =
-    g_slist_append (requiredDeviceExtensions,
-                    (gpointer) VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+                                  &requiredDeviceExtensions);
 
   /* Find the first graphics queue */
   uint32_t nQueueCount = 0;
