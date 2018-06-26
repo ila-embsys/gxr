@@ -551,53 +551,50 @@ _init_instance (OpenVRVulkanUploader *self)
 bool
 _find_physical_device (OpenVRVulkanUploader *self)
 {
-  uint32_t nDeviceCount = 0;
-  VkResult result = vkEnumeratePhysicalDevices (self->instance,
-                                               &nDeviceCount, NULL);
-  if (result != VK_SUCCESS || nDeviceCount == 0)
-  {
-    printf ("vkEnumeratePhysicalDevices failed, "
-            "unable to init and enumerate GPUs with Vulkan.\n");
-    return false;
-  }
+  uint32_t num_devices = 0;
+  VkResult result =
+    vkEnumeratePhysicalDevices (self->instance, &num_devices, NULL);
+  if (result != VK_SUCCESS || num_devices == 0)
+    {
+      g_printerr ("vkEnumeratePhysicalDevices failed, "
+                  "unable to init and enumerate GPUs with Vulkan.\n");
+      return false;
+    }
 
-  VkPhysicalDevice *pPhysicalDevices =
-    g_malloc(sizeof(VkPhysicalDevice) * nDeviceCount);
-  result = vkEnumeratePhysicalDevices (self->instance, &nDeviceCount,
-                                        pPhysicalDevices);
-  if (result != VK_SUCCESS || nDeviceCount == 0)
-  {
-    printf ("vkEnumeratePhysicalDevices failed, "
-            "unable to init and enumerate GPUs with Vulkan.\n");
-    return false;
-  }
+  VkPhysicalDevice *physical_devices =
+    g_malloc(sizeof(VkPhysicalDevice) * num_devices);
+  result =
+    vkEnumeratePhysicalDevices (self->instance, &num_devices, physical_devices);
+  if (result != VK_SUCCESS || num_devices == 0)
+    {
+      g_printerr ("vkEnumeratePhysicalDevices failed, "
+                  "unable to init and enumerate GPUs with Vulkan.\n");
+      return false;
+    }
 
   /* Query OpenVR for the physical device to use */
-  uint64_t pHMDPhysicalDevice = 0;
-  self->system->GetOutputDevice (&pHMDPhysicalDevice,
+  uint64_t physical_device = 0;
+  self->system->GetOutputDevice (&physical_device,
                                   ETextureType_TextureType_Vulkan,
                                   (struct VkInstance_T*) self->instance);
 
-  /* Select the HMD physical device */
+  /* Select the physical device */
   self->physical_device = VK_NULL_HANDLE;
-  for (uint32_t nPhysicalDevice = 0; nPhysicalDevice < nDeviceCount;
-       nPhysicalDevice++)
-  {
-    if (((VkPhysicalDevice) pHMDPhysicalDevice) ==
-      pPhysicalDevices[nPhysicalDevice])
-    {
-      self->physical_device = (VkPhysicalDevice) pHMDPhysicalDevice;
-      break;
-    }
-  }
+  for (uint32_t i = 0; i < num_devices; i++)
+    if (((VkPhysicalDevice) physical_device) == physical_devices[i])
+      {
+        self->physical_device = (VkPhysicalDevice) physical_device;
+        break;
+      }
+
   if (self->physical_device == VK_NULL_HANDLE)
-  {
-    /* Fallback: Grab the first physical device */
-    printf ("Failed to find GetOutputDevice VkPhysicalDevice, "
-            "falling back to choosing first device.\n");
-    self->physical_device = pPhysicalDevices[0];
-  }
-  g_free (pPhysicalDevices);
+    {
+      /* Fallback: Grab the first physical device */
+      g_printerr ("Failed to find GetOutputDevice VkPhysicalDevice, "
+                  "falling back to choosing first device.\n");
+      self->physical_device = physical_devices[0];
+    }
+  g_free (physical_devices);
 
   return true;
 }
