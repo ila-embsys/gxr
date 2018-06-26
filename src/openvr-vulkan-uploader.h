@@ -74,7 +74,6 @@ bool openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self);
 bool openvr_vulkan_uploader_init_vulkan_instance (OpenVRVulkanUploader *self);
 bool openvr_vulkan_uploader_init_vulkan_device (OpenVRVulkanUploader *self);
 void openvr_vulkan_uploader_submit_frame (OpenVRVulkanUploader *self);
-bool openvr_vulkan_uploader_init_texture (OpenVRVulkanUploader *self);
 
 VulkanCommandBuffer_t* openvr_vulkan_uploader_get_command_buffer (
   OpenVRVulkanUploader *self);

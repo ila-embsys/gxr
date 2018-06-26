@@ -35,6 +35,13 @@ static PFN_vkDestroyDebugReportCallbackEXT
 static void
 openvr_vulkan_uploader_finalize (GObject *gobject);
 
+bool
+_init_texture (OpenVRVulkanUploader *self,
+               guchar               *pixels,
+               guint                 width,
+               guint                 height,
+               gsize                 size);
+
 static void
 openvr_vulkan_uploader_class_init (OpenVRVulkanUploaderClass *klass) {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
@@ -792,8 +799,32 @@ openvr_vulkan_uploader_load_texture_resource (OpenVRVulkanUploader *self)
 {
   _begin_command_buffer (self);
 
-  if (!openvr_vulkan_uploader_init_texture (self))
+  GError *error = NULL;
+  GdkPixbuf * pixbuf = gdk_pixbuf_new_from_resource ("/res/cat.jpg", &error);
+
+  if (error != NULL)
+    {
+      g_printerr ("Could not read texture file.\n");
+      return false;
+    }
+
+  guint width = (guint) gdk_pixbuf_get_width (pixbuf);
+  guint height = (guint) gdk_pixbuf_get_height (pixbuf);
+
+  self->width = width;
+  self->height = height;
+
+  GdkPixbuf *pixbuf_with_alpha = gdk_pixbuf_add_alpha (pixbuf, false, 0, 0, 0);
+  g_object_unref (pixbuf);
+
+  guchar *pixels = gdk_pixbuf_get_pixels (pixbuf_with_alpha);
+
+  gsize pixbuf_alpha_size = gdk_pixbuf_get_byte_length (pixbuf_with_alpha);
+
+  if (!_init_texture (self, pixels, width, height, pixbuf_alpha_size))
     return false;
+
+  g_object_unref (pixbuf_with_alpha);
 
   _submit_command_buffer (self);
 
@@ -847,27 +878,12 @@ openvr_vulkan_uploader_submit_frame (OpenVRVulkanUploader *self)
 }
 
 bool
-openvr_vulkan_uploader_init_texture (OpenVRVulkanUploader *self)
+_init_texture (OpenVRVulkanUploader *self,
+               guchar               *pixels,
+               guint                 width,
+               guint                 height,
+               gsize                 size)
 {
-  GError *error = NULL;
-  GdkPixbuf * pixbuf = gdk_pixbuf_new_from_resource ("/res/cat.jpg", &error);
-
-  if (error != NULL)
-    {
-      g_printerr ("Could not read texture file.\n");
-      return false;
-    }
-
-  self->width = (guint) gdk_pixbuf_get_width (pixbuf);
-  self->height = (guint) gdk_pixbuf_get_height (pixbuf);
-
-  GdkPixbuf *pixbuf_with_alpha = gdk_pixbuf_add_alpha (pixbuf, false, 0, 0, 0);
-  g_object_unref (pixbuf);
-
-  guchar *pixels = gdk_pixbuf_get_pixels (pixbuf_with_alpha);
-
-  gsize pixbuf_alpha_size = gdk_pixbuf_get_byte_length (pixbuf_with_alpha);
-
   VkBufferImageCopy buffer_image_copy = {
     .bufferOffset = 0,
     .bufferRowLength = 0,
@@ -884,8 +900,8 @@ openvr_vulkan_uploader_init_texture (OpenVRVulkanUploader *self)
       .z = 0,
      },
     .imageExtent = {
-      .width = self->width,
-      .height = self->height,
+      .width = width,
+      .height = height,
       .depth = 1,
     }
   };
@@ -894,8 +910,8 @@ openvr_vulkan_uploader_init_texture (OpenVRVulkanUploader *self)
   VkImageCreateInfo image_info = {
     .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
     .imageType = VK_IMAGE_TYPE_2D,
-    .extent.width = self->width,
-    .extent.height = self->height,
+    .extent.width = width,
+    .extent.height = height,
     .extent.depth = 1,
     .mipLevels = 1,
     .arrayLayers = 1,
@@ -952,7 +968,7 @@ openvr_vulkan_uploader_init_texture (OpenVRVulkanUploader *self)
   if (!create_vulkan_buffer (self->device,
                              &self->physical_device_memory_properties,
                              pixels,
-                             pixbuf_alpha_size,
+                             size,
                              VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                              &self->staging_buffer,
                              &self->staging_buffer_memory))
@@ -999,8 +1015,6 @@ openvr_vulkan_uploader_init_texture (OpenVRVulkanUploader *self)
                         VK_PIPELINE_STAGE_TRANSFER_BIT,
                         VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, NULL, 0,
                         NULL, 1, &image_memory_barrier);
-
-  g_object_unref (pixbuf_with_alpha);
   return true;
 }
 
