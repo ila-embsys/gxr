@@ -8,6 +8,7 @@
  */
 
 #include "openvr-vulkan-uploader.h"
+#include "openvr-global.h"
 
 #include "openvr_capi_global.h"
 
@@ -55,27 +56,10 @@ openvr_vulkan_uploader_new (void)
   return (OpenVRVulkanUploader*) g_object_new (OPENVR_TYPE_VULKAN_UPLOADER, 0);
 }
 
-gboolean _init_fn_table (const char *type, intptr_t *ret)
-{
-  EVRInitError error;
-  char fn_table_name[128];
-  g_sprintf (fn_table_name, "FnTable:%s", type);
-
-  *ret = VR_GetGenericInterface (fn_table_name, &error);
-
-  if (error != EVRInitError_VRInitError_None)
-    {
-      g_printerr ("compositor: VR_GetGenericInterface returned error: %s.\n",
-                  VR_GetVRInitErrorAsSymbol (error));
-      return false;
-    }
-  return true;
-}
-
 gboolean _system_init_fn_table2 (OpenVRVulkanUploader *self)
 {
   intptr_t ptr = 0;
-  gboolean ret = _init_fn_table (IVRSystem_Version, &ptr);
+  gboolean ret = openvr_init_fn_table (IVRSystem_Version, &ptr);
   if (!ret || ptr == 0)
     return false;
 
@@ -86,7 +70,7 @@ gboolean _system_init_fn_table2 (OpenVRVulkanUploader *self)
 gboolean _overlay_init_fn_table2 (OpenVRVulkanUploader *self)
 {
   intptr_t ptr = 0;
-  gboolean ret = _init_fn_table (IVROverlay_Version, &ptr);
+  gboolean ret = openvr_init_fn_table (IVROverlay_Version, &ptr);
   if (!ret || ptr == 0)
     return false;
 
@@ -97,7 +81,7 @@ gboolean _overlay_init_fn_table2 (OpenVRVulkanUploader *self)
 gboolean _compositor_init_fn_table (OpenVRVulkanUploader *self)
 {
   intptr_t ptr = 0;
-  gboolean ret = _init_fn_table (IVRCompositor_Version, &ptr);
+  gboolean ret = openvr_init_fn_table (IVRCompositor_Version, &ptr);
   if (!ret || ptr == 0)
     return false;
 
