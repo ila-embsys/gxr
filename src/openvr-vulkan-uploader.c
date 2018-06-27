@@ -1039,14 +1039,14 @@ _init_texture (OpenVRVulkanUploader *self,
                           1,
                           &buffer_image_copy);
 
-  /* Transition the image to SHADER_READ_OPTIMAL for reading */
+  /* Transition the image to TRANSFER_SRC_OPTIMAL for reading */
   image_memory_barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-  image_memory_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+  image_memory_barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
   image_memory_barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
   image_memory_barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
   vkCmdPipelineBarrier (self->current_cmd_buffer->cmd_buffer,
                         VK_PIPELINE_STAGE_TRANSFER_BIT,
-                        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, NULL, 0,
+                        VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 0,
                         NULL, 1, &image_memory_barrier);
   return true;
 }
