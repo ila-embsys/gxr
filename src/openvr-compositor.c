@@ -72,13 +72,14 @@ openvr_compositor_get_instance_extensions (OpenVRCompositor *self,
 {
   uint32_t size =
     self->functions->GetVulkanInstanceExtensionsRequired (NULL, 0);
+
   if (size > 0)
   {
-    gchar *all_extensions = g_malloc(sizeof(gchar) * size);
-    all_extensions[0] = 0;
-    self->functions->GetVulkanInstanceExtensionsRequired (all_extensions, size);
-    _split (all_extensions, out_list);
-    g_free(all_extensions);
+    gchar *extensions = g_malloc(sizeof(gchar) * size);
+    extensions[0] = 0;
+    self->functions->GetVulkanInstanceExtensionsRequired (extensions, size);
+    _split (extensions, out_list);
+    g_free(extensions);
   }
 }
 
@@ -88,17 +89,17 @@ openvr_compositor_get_device_extensions (OpenVRCompositor *self,
                                          VkPhysicalDevice  physical_device,
                                          GSList          **out_list)
 {
-  uint32_t size = self->functions->GetVulkanDeviceExtensionsRequired (
-    (struct VkPhysicalDevice_T*) physical_device, NULL, 0);
+  uint32_t size = self->functions->
+    GetVulkanDeviceExtensionsRequired (physical_device, NULL, 0);
 
   if (size > 0)
   {
-    gchar *all_extensions = g_malloc(sizeof(gchar) * size);
-    all_extensions[0] = 0;
+    gchar *extensions = g_malloc(sizeof(gchar) * size);
+    extensions[0] = 0;
     self->functions->GetVulkanDeviceExtensionsRequired (
-      (struct VkPhysicalDevice_T*) physical_device, all_extensions, size);
+      physical_device, extensions, size);
 
-    _split (all_extensions, out_list);
-    g_free (all_extensions);
+    _split (extensions, out_list);
+    g_free (extensions);
   }
 }
