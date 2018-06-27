@@ -399,12 +399,11 @@ _init_validation_layers (uint32_t     num_layers,
 }
 
 bool
-_init_instance_extensions (GSList                *required_extensions,
-                           VkExtensionProperties *extension_props,
-                           const char           **enabled_extensions,
-                           uint32_t              *out_num_enabled_extensions)
+_init_instance_extensions (GSList      *required_extensions,
+                           const char **enabled_extensions,
+                           uint32_t    *out_num_enabled)
 {
-  uint32_t num_found = 0;
+  uint32_t num_enabled = 0;
   uint32_t num_extensions = 0;
   VkResult result =
     vkEnumerateInstanceExtensionProperties (NULL, &num_extensions, NULL);
@@ -415,7 +414,8 @@ _init_instance_extensions (GSList                *required_extensions,
     return false;
   }
 
-  extension_props = g_malloc(sizeof(VkExtensionProperties) * num_extensions);
+  VkExtensionProperties *extension_props =
+    g_malloc (sizeof(VkExtensionProperties) * num_extensions);
 
   if (num_extensions > 0)
   {
@@ -439,7 +439,8 @@ _init_instance_extensions (GSList                *required_extensions,
                     extension_props[j].extensionName) == 0)
         {
           found = true;
-          enabled_extensions[num_found++] = extension_props[j].extensionName;
+          enabled_extensions[num_enabled++] =
+            g_strdup (extension_props[j].extensionName);
           break;
         }
       }
@@ -452,11 +453,13 @@ _init_instance_extensions (GSList                *required_extensions,
       }
     }
 
-    if (num_found != (uint32_t) g_slist_length (required_extensions))
+    if (num_enabled != (uint32_t) g_slist_length (required_extensions))
       return false;
 
-    *out_num_enabled_extensions = num_found;
+    *out_num_enabled = num_enabled;
   }
+
+  g_free (extension_props);
 
   return true;
 }
@@ -519,10 +522,8 @@ _init_instance (OpenVRVulkanUploader *self)
     g_malloc(sizeof(const char*) * g_slist_length (required_extensions));
 
   uint32_t num_enabled_extensions = 0;
-  VkExtensionProperties *extension_properties = NULL;
 
   if (!_init_instance_extensions (required_extensions,
-                                  extension_properties,
                                   enabled_extensions,
                                  &num_enabled_extensions))
     return false;
@@ -558,7 +559,6 @@ _init_instance (OpenVRVulkanUploader *self)
     _init_validation_callback (self);
 
   g_free (enabled_extensions);
-  g_free (extension_properties);
   g_free (enabled_layers);
 
   return true;
