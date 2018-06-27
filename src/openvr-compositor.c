@@ -15,24 +15,21 @@
 
 G_DEFINE_TYPE (OpenVRCompositor, openvr_compositor, G_TYPE_OBJECT)
 
-static void
-openvr_compositor_class_init (OpenVRCompositorClass *klass)
+gboolean
+_compositor_init_fn_table (OpenVRCompositor *self)
 {
-  GObjectClass *object_class = G_OBJECT_CLASS (klass);
-
-  object_class->finalize = openvr_compositor_finalize;
+  INIT_FN_TABLE (self->functions, Compositor);
 }
 
 static void
 openvr_compositor_init (OpenVRCompositor *self)
 {
   self->functions = NULL;
-}
+  if (!_compositor_init_fn_table (self))
+    g_printerr ("Compositor functions failed to load.\n");
 
-gboolean
-_compositor_init_fn_table (OpenVRCompositor *self)
-{
-  INIT_FN_TABLE (self->functions, Compositor);
+  if (!self->functions)
+    g_printerr ("Compositor functions failed to load.\n");
 }
 
 OpenVRCompositor *
@@ -45,4 +42,63 @@ static void
 openvr_compositor_finalize (GObject *gobject)
 {
   // OpenVRCompositor *self = OPENVR_COMPOSITOR (gobject);
+}
+
+static void
+openvr_compositor_class_init (OpenVRCompositorClass *klass)
+{
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+
+  object_class->finalize = openvr_compositor_finalize;
+}
+
+void
+_split (gchar *str, GSList **out_list)
+{
+  gchar **array = g_strsplit (str, " ", 0);
+  int i = 0;
+  while(array[i] != NULL)
+    {
+      *out_list = g_slist_append (*out_list, g_strdup (array[i]));
+      i++;
+    }
+  g_strfreev (array);
+}
+
+/* Ask OpenVR for the list of instance extensions required */
+void
+openvr_compositor_get_instance_extensions (OpenVRCompositor *self,
+                                           GSList          **out_list)
+{
+  uint32_t size =
+    self->functions->GetVulkanInstanceExtensionsRequired (NULL, 0);
+  if (size > 0)
+  {
+    gchar *all_extensions = g_malloc(sizeof(gchar) * size);
+    all_extensions[0] = 0;
+    self->functions->GetVulkanInstanceExtensionsRequired (all_extensions, size);
+    _split (all_extensions, out_list);
+    g_free(all_extensions);
+  }
+}
+
+/* Ask OpenVR for the list of device extensions required */
+void
+openvr_compositor_get_device_extensions (OpenVRCompositor *self,
+                                         VkPhysicalDevice  physical_device,
+                                         GSList          **out_list)
+{
+  uint32_t size = self->functions->GetVulkanDeviceExtensionsRequired (
+    (struct VkPhysicalDevice_T*) physical_device, NULL, 0);
+
+  if (size > 0)
+  {
+    gchar *all_extensions = g_malloc(sizeof(gchar) * size);
+    all_extensions[0] = 0;
+    self->functions->GetVulkanDeviceExtensionsRequired (
+      (struct VkPhysicalDevice_T*) physical_device, all_extensions, size);
+
+    _split (all_extensions, out_list);
+    g_free (all_extensions);
+  }
 }

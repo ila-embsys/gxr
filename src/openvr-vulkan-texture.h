@@ -9,6 +9,10 @@
 #define OPENVR_GLIB_VULKAN_TEXTURE_H_
 
 #include <glib-object.h>
+#include <vulkan/vulkan.h>
+#include <stdbool.h>
+
+#include "openvr-vulkan-device.h"
 
 G_BEGIN_DECLS
 
@@ -18,13 +22,26 @@ G_DECLARE_FINAL_TYPE (OpenVRVulkanTexture, openvr_vulkan_texture, OPENVR, VULKAN
 struct _OpenVRVulkanTexture
 {
   GObjectClass parent_class;
+
+  VkImage image;
+  VkDeviceMemory image_memory;
+  VkImageView image_view;
+  VkBuffer staging_buffer;
+  VkDeviceMemory staging_buffer_memory;
+
+  OpenVRVulkanDevice  *device;
 };
 
 OpenVRVulkanTexture *openvr_vulkan_texture_new (void);
 
-static void
-openvr_vulkan_texture_finalize (GObject *gobject);
-
+bool
+openvr_vulkan_texture_from_pixels (OpenVRVulkanTexture *self,
+                                   OpenVRVulkanDevice  *device,
+                                   VkCommandBuffer      cmd_buffer,
+                                   guchar              *pixels,
+                                   guint                width,
+                                   guint                height,
+                                   gsize                size);
 
 G_END_DECLS
 

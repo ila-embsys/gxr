@@ -10,6 +10,14 @@
 
 #include <glib-object.h>
 
+#include <stdbool.h>
+#include <vulkan/vulkan.h>
+
+#include "openvr-vulkan-instance.h"
+#include "openvr-compositor.h"
+
+#include <openvr_capi.h>
+
 G_BEGIN_DECLS
 
 #define OPENVR_TYPE_VULKAN_DEVICE openvr_vulkan_device_get_type()
@@ -18,13 +26,39 @@ G_DECLARE_FINAL_TYPE (OpenVRVulkanDevice, openvr_vulkan_device, OPENVR, VULKAN_D
 struct _OpenVRVulkanDevice
 {
   GObjectClass parent_class;
+
+  VkDevice device;
+  VkPhysicalDevice physical_device;
+
+  VkQueue queue;
+
+  uint32_t queue_family_index;
+
+  VkPhysicalDeviceMemoryProperties memory_properties;
 };
 
 OpenVRVulkanDevice *openvr_vulkan_device_new (void);
 
-static void
-openvr_vulkan_device_finalize (GObject *gobject);
+bool
+openvr_vulkan_device_create (OpenVRVulkanDevice          *self,
+                             OpenVRVulkanInstance        *instance,
+                             OpenVRCompositor            *compositor,
+                             struct VR_IVRSystem_FnTable *system);
 
+bool
+openvr_vulkan_device_memory_type_from_properties (
+  OpenVRVulkanDevice   *self,
+  uint32_t              memory_type_bits,
+  VkMemoryPropertyFlags memory_property_flags,
+  uint32_t             *type_index_out);
+
+bool
+openvr_vulkan_device_create_buffer (OpenVRVulkanDevice *self,
+                                    const void         *buffer_data,
+                                    VkDeviceSize        size,
+                                    VkBufferUsageFlags  usage,
+                                    VkBuffer           *buffer_out,
+                                    VkDeviceMemory     *device_memory_out);
 
 G_END_DECLS
 

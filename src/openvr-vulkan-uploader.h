@@ -17,6 +17,11 @@
 
 #include <openvr_capi.h>
 
+#include "openvr-vulkan-instance.h"
+#include "openvr-vulkan-device.h"
+#include "openvr-vulkan-texture.h"
+#include "openvr-compositor.h"
+
 G_BEGIN_DECLS
 
 #define OPENVR_TYPE_VULKAN_UPLOADER openvr_vulkan_uploader_get_type()
@@ -33,26 +38,14 @@ struct _OpenVRVulkanUploader
 {
   GObjectClass parent_class;
 
-  bool enable_validation;
-
-  VkInstance instance;
-  VkDevice device;
-  VkPhysicalDevice physical_device;
-  VkQueue queue;
-  VkDebugReportCallbackEXT debug_report_cb;
   VkCommandPool command_pool;
-  VkImage image;
-  VkDeviceMemory image_memory;
-  VkImageView image_view;
-  VkBuffer staging_buffer;
-  VkDeviceMemory staging_buffer_memory;
 
   VROverlayHandle_t overlay_handle;
   VROverlayHandle_t thumbnail_handle;
 
-  VkPhysicalDeviceMemoryProperties physical_device_memory_properties;
-
-  uint32_t queue_family_index;
+  OpenVRVulkanInstance *instance;
+  OpenVRVulkanDevice *device;
+  OpenVRVulkanTexture *texture;
 
   VulkanCommandBuffer_t *current_cmd_buffer;
 
@@ -68,7 +61,11 @@ struct _OpenVRVulkanUploader
 
 OpenVRVulkanUploader *openvr_vulkan_uploader_new (void);
 
-bool openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self);
+bool
+openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
+                                    bool enable_validation,
+                                    OpenVRCompositor *compositor);
+
 void openvr_vulkan_uploader_submit_frame (OpenVRVulkanUploader *self);
 
 bool

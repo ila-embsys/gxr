@@ -11,6 +11,8 @@
 #include <glib-object.h>
 #include <openvr_capi.h>
 
+#include <vulkan/vulkan.h>
+
 G_BEGIN_DECLS
 
 #define OPENVR_TYPE_COMPOSITOR openvr_compositor_get_type()
@@ -25,9 +27,14 @@ struct _OpenVRCompositor
 
 OpenVRCompositor *openvr_compositor_new (void);
 
-static void
-openvr_compositor_finalize (GObject *gobject);
+void
+openvr_compositor_get_instance_extensions (OpenVRCompositor *self,
+                                           GSList          **out_list);
 
+void
+openvr_compositor_get_device_extensions (OpenVRCompositor *self,
+                                         VkPhysicalDevice  physical_device,
+                                         GSList          **out_list);
 
 G_END_DECLS
 

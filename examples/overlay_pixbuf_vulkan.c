@@ -4,6 +4,9 @@
 #include "openvr-vulkan-uploader.h"
 #include "openvr_capi_global.h"
 #include "openvr-global.h"
+#include "openvr-compositor.h"
+
+bool enable_validation = false;
 
 gboolean
 _system_init_fn_table2 (OpenVRVulkanUploader *self)
@@ -15,12 +18,6 @@ gboolean
 _overlay_init_fn_table2 (OpenVRVulkanUploader *self)
 {
   INIT_FN_TABLE (self->overlay, Overlay);
-}
-
-gboolean
-_compositor_init_fn_table (OpenVRVulkanUploader *self)
-{
-  INIT_FN_TABLE (self->compositor, Compositor);
 }
 
 gboolean
@@ -37,13 +34,9 @@ example_init (OpenVRVulkanUploader *self)
 
   _system_init_fn_table2 (self);
 
-  if (!_compositor_init_fn_table (self))
-  {
-    g_printerr ("Compositor initialization failed.\n");
-    return false;
-  }
+  OpenVRCompositor *compositor = openvr_compositor_new ();
 
-  if (!openvr_vulkan_uploader_init_vulkan (self))
+  if (!openvr_vulkan_uploader_init_vulkan (self, enable_validation, compositor))
   {
     g_printerr ("Unable to initialize Vulkan!\n");
     return false;
@@ -124,7 +117,7 @@ main(int argc, char *argv[])
 
   for (int i = 1; i < argc; i++)
     if (!strcmp (argv[i], "--validate"))
-      uploader->enable_validation = true;
+      enable_validation = true;
 
   if (example_init (uploader))
     _main_loop(uploader);

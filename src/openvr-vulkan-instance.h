@@ -9,6 +9,12 @@
 #define OPENVR_GLIB_VULKAN_INSTANCE_H_
 
 #include <glib-object.h>
+#include <vulkan/vulkan.h>
+#include <stdbool.h>
+
+#include "openvr-compositor.h"
+
+#define ENUM_TO_STR(r) case r: return #r
 
 G_BEGIN_DECLS
 
@@ -18,13 +24,19 @@ G_DECLARE_FINAL_TYPE (OpenVRVulkanInstance, openvr_vulkan_instance, OPENVR, VULK
 struct _OpenVRVulkanInstance
 {
   GObjectClass parent_class;
+
+  bool enable_validation;
+
+  VkInstance instance;
+  VkDebugReportCallbackEXT debug_report_cb;
 };
 
 OpenVRVulkanInstance *openvr_vulkan_instance_new (void);
 
-static void
-openvr_vulkan_instance_finalize (GObject *gobject);
-
+bool
+openvr_vulkan_instance_create (OpenVRVulkanInstance *self,
+                               bool enable_validation,
+                               OpenVRCompositor *compositor);
 
 G_END_DECLS
 
