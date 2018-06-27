@@ -41,7 +41,7 @@ openvr_vulkan_device_class_init (OpenVRVulkanDeviceClass *klass)
 bool
 _find_physical_device (OpenVRVulkanDevice   *self,
                        OpenVRVulkanInstance *instance,
-                       struct VR_IVRSystem_FnTable *system)
+                       OpenVRSystem *system)
 {
   uint32_t num_devices = 0;
   VkResult result =
@@ -67,9 +67,9 @@ _find_physical_device (OpenVRVulkanDevice   *self,
 
   /* Query OpenVR for the physical device to use */
   uint64_t physical_device = 0;
-  system->GetOutputDevice (&physical_device,
-                                  ETextureType_TextureType_Vulkan,
-                                  (struct VkInstance_T*) instance->instance);
+  system->functions->GetOutputDevice (&physical_device,
+                                       ETextureType_TextureType_Vulkan,
+                                       (struct VkInstance_T*) instance->instance);
 
   /* Select the physical device */
   self->physical_device = VK_NULL_HANDLE;
@@ -209,10 +209,10 @@ _init_device_extensions (OpenVRVulkanDevice *self,
 }
 
 bool
-openvr_vulkan_device_create (OpenVRVulkanDevice          *self,
-                             OpenVRVulkanInstance        *instance,
-                             OpenVRCompositor            *compositor,
-                             struct VR_IVRSystem_FnTable *system)
+openvr_vulkan_device_create (OpenVRVulkanDevice   *self,
+                             OpenVRVulkanInstance *instance,
+                             OpenVRSystem         *system,
+                             OpenVRCompositor     *compositor)
 {
   if (!_find_physical_device (self, instance, system))
     return false;

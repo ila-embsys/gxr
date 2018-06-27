@@ -15,6 +15,7 @@
 
 #include "openvr-vulkan-instance.h"
 #include "openvr-compositor.h"
+#include "openvr-system.h"
 
 #include <openvr_capi.h>
 
@@ -40,10 +41,10 @@ struct _OpenVRVulkanDevice
 OpenVRVulkanDevice *openvr_vulkan_device_new (void);
 
 bool
-openvr_vulkan_device_create (OpenVRVulkanDevice          *self,
-                             OpenVRVulkanInstance        *instance,
-                             OpenVRCompositor            *compositor,
-                             struct VR_IVRSystem_FnTable *system);
+openvr_vulkan_device_create (OpenVRVulkanDevice   *self,
+                             OpenVRVulkanInstance *instance,
+                             OpenVRSystem         *system,
+                             OpenVRCompositor     *compositor);
 
 bool
 openvr_vulkan_device_memory_type_from_properties (

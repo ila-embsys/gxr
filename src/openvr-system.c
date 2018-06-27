@@ -16,10 +16,6 @@
 G_DEFINE_TYPE (OpenVRSystem, openvr_system, G_TYPE_OBJECT)
 
 static void
-openvr_system_class_init (OpenVRSystemClass *klass)
-{}
-
-static void
 openvr_system_init (OpenVRSystem *self)
 {
   self->functions = NULL;
@@ -29,6 +25,24 @@ gboolean
 _system_init_fn_table (OpenVRSystem *self)
 {
   INIT_FN_TABLE (self->functions, System);
+}
+
+static void
+openvr_system_finalize (GObject *gobject)
+{
+  // OpenVRSystem *self = OPENVR_VULKAN_UPLOADER (gobject);
+
+  VR_ShutdownInternal();
+
+  G_OBJECT_CLASS (openvr_system_parent_class)->finalize (gobject);
+}
+
+static void
+openvr_system_class_init (OpenVRSystemClass *klass)
+{
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+
+  object_class->finalize = openvr_system_finalize;
 }
 
 OpenVRSystem *

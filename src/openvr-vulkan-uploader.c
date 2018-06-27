@@ -20,6 +20,8 @@
 #include <glib/gprintf.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
+#include "openvr-overlay.h"
+
 G_DEFINE_TYPE (OpenVRVulkanUploader, openvr_vulkan_uploader, G_TYPE_OBJECT)
 
 static void
@@ -48,9 +50,6 @@ openvr_vulkan_uploader_init (OpenVRVulkanUploader *self)
   self->texture = openvr_vulkan_texture_new ();
   self->command_pool = VK_NULL_HANDLE;
   self->cmd_buffers = g_queue_new ();
-  self->system = NULL;
-  self->compositor = NULL;
-  self->overlay = NULL;
 }
 
 OpenVRVulkanUploader *
@@ -77,12 +76,6 @@ openvr_vulkan_uploader_finalize (GObject *gobject)
   /* Idle the device to make sure no work is outstanding */
   if (self->device != VK_NULL_HANDLE)
     vkDeviceWaitIdle (self->device->device);
-
-  if (self->system != NULL)
-  {
-    VR_ShutdownInternal();
-    self->system = NULL;
-  }
 
   if (self->device != VK_NULL_HANDLE)
   {
@@ -178,6 +171,7 @@ openvr_vulkan_uploader_load_texture_raw (OpenVRVulkanUploader *self,
 bool
 openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
                                     bool enable_validation,
+                                    OpenVRSystem *system,
                                     OpenVRCompositor *compositor)
 {
   if (!openvr_vulkan_instance_create (self->instance,
@@ -190,8 +184,8 @@ openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
 
   if (!openvr_vulkan_device_create (self->device,
                                     self->instance,
-                                    compositor,
-                                    self->system))
+                                    system,
+                                    compositor))
     {
       g_printerr ("Failed to create device.\n");
       return false;
@@ -207,7 +201,8 @@ openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
 }
 
 void
-openvr_vulkan_uploader_submit_frame (OpenVRVulkanUploader *self)
+openvr_vulkan_uploader_submit_frame (OpenVRVulkanUploader *self,
+                                     OpenVROverlay        *overlay)
 {
   /* Submit to SteamVR */
   struct VRVulkanTextureData_t texture_data =
@@ -232,7 +227,7 @@ openvr_vulkan_uploader_submit_frame (OpenVRVulkanUploader *self)
       .eColorSpace = EColorSpace_ColorSpace_Auto
     };
 
-  self->overlay->SetOverlayTexture (self->overlay_handle, &texture);
+  overlay->functions->SetOverlayTexture (overlay->overlay_handle, &texture);
 }
 
 /*

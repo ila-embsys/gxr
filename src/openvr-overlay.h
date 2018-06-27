@@ -14,6 +14,7 @@
 #include <stdint.h>
 #include <glib-object.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
+#include <cairo.h>
 
 #include <openvr_capi.h>
 

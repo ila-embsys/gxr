@@ -21,6 +21,7 @@
 #include "openvr-vulkan-device.h"
 #include "openvr-vulkan-texture.h"
 #include "openvr-compositor.h"
+#include "openvr-overlay.h"
 
 G_BEGIN_DECLS
 
@@ -40,9 +41,6 @@ struct _OpenVRVulkanUploader
 
   VkCommandPool command_pool;
 
-  VROverlayHandle_t overlay_handle;
-  VROverlayHandle_t thumbnail_handle;
-
   OpenVRVulkanInstance *instance;
   OpenVRVulkanDevice *device;
   OpenVRVulkanTexture *texture;
@@ -53,10 +51,6 @@ struct _OpenVRVulkanUploader
 
   uint32_t width;
   uint32_t height;
-
-  struct VR_IVRSystem_FnTable *system;
-  struct VR_IVRCompositor_FnTable *compositor;
-  struct VR_IVROverlay_FnTable *overlay;
 };
 
 OpenVRVulkanUploader *openvr_vulkan_uploader_new (void);
@@ -64,9 +58,13 @@ OpenVRVulkanUploader *openvr_vulkan_uploader_new (void);
 bool
 openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
                                     bool enable_validation,
+                                    OpenVRSystem *system,
                                     OpenVRCompositor *compositor);
 
-void openvr_vulkan_uploader_submit_frame (OpenVRVulkanUploader *self);
+
+void
+openvr_vulkan_uploader_submit_frame (OpenVRVulkanUploader *self,
+                                     OpenVROverlay        *overlay);
 
 bool
 openvr_vulkan_uploader_load_texture_raw (OpenVRVulkanUploader *self,
