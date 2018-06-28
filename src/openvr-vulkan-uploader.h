@@ -64,12 +64,17 @@ openvr_vulkan_uploader_submit_frame (OpenVRVulkanUploader *self,
                                      OpenVRVulkanTexture  *texture);
 
 bool
-openvr_vulkan_uploader_load_texture_raw (OpenVRVulkanUploader *self,
-                                         OpenVRVulkanTexture  *texture,
-                                         guchar               *pixels,
-                                         guint                 width,
-                                         guint                 height,
-                                         gsize                 size);
+openvr_vulkan_uploader_load_raw (OpenVRVulkanUploader *self,
+                                 OpenVRVulkanTexture  *texture,
+                                 guchar               *pixels,
+                                 guint                 width,
+                                 guint                 height,
+                                 gsize                 size);
+
+bool
+openvr_vulkan_uploader_load_pixbuf (OpenVRVulkanUploader *self,
+                                    OpenVRVulkanTexture  *texture,
+                                    GdkPixbuf *pixbuf);
 
 G_END_DECLS
 

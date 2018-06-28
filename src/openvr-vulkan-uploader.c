@@ -145,12 +145,12 @@ _submit_command_buffer (OpenVRVulkanUploader *self)
 }
 
 bool
-openvr_vulkan_uploader_load_texture_raw (OpenVRVulkanUploader *self,
-                                         OpenVRVulkanTexture  *texture,
-                                         guchar               *pixels,
-                                         guint                 width,
-                                         guint                 height,
-                                         gsize                 size)
+openvr_vulkan_uploader_load_raw (OpenVRVulkanUploader *self,
+                                 OpenVRVulkanTexture  *texture,
+                                 guchar               *pixels,
+                                 guint                 width,
+                                 guint                 height,
+                                 gsize                 size)
 {
   _begin_command_buffer (self);
 
@@ -164,6 +164,20 @@ openvr_vulkan_uploader_load_texture_raw (OpenVRVulkanUploader *self,
   _submit_command_buffer (self);
 
   return true;
+}
+
+bool
+openvr_vulkan_uploader_load_pixbuf (OpenVRVulkanUploader *self,
+                                    OpenVRVulkanTexture  *texture,
+                                    GdkPixbuf *pixbuf)
+{
+  guint width = (guint) gdk_pixbuf_get_width (pixbuf);
+  guint height = (guint) gdk_pixbuf_get_height (pixbuf);
+  guchar *pixels = gdk_pixbuf_get_pixels (pixbuf);
+  gsize size = gdk_pixbuf_get_byte_length (pixbuf);
+
+  return openvr_vulkan_uploader_load_raw (self, texture, pixels,
+                                          width, height, size);
 }
 
 bool

@@ -156,15 +156,9 @@ test_cat_overlay ()
     return false;
   }
 
-  guint width = (guint) gdk_pixbuf_get_width (pixbuf);
-  guint height = (guint) gdk_pixbuf_get_height (pixbuf);
-  guchar *pixels = gdk_pixbuf_get_pixels (pixbuf);
-  gsize pixbuf_size = gdk_pixbuf_get_byte_length (pixbuf);
-
   texture = openvr_vulkan_texture_new ();
 
-  ret = openvr_vulkan_uploader_load_texture_raw (
-    uploader, texture, pixels, width, height, pixbuf_size);
+  openvr_vulkan_uploader_load_pixbuf (uploader, texture, pixbuf);
 
   OpenVROverlay *overlay = openvr_overlay_new ();
   openvr_overlay_create (overlay, "vulkan.cat", "Vulkan Cat");
