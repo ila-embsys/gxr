@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <glib-object.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
+#include <cairo.h>
 
 #define VK_USE_PLATFORM_XLIB_KHR
 #include <vulkan/vulkan.h>
@@ -75,6 +76,11 @@ bool
 openvr_vulkan_uploader_load_pixbuf (OpenVRVulkanUploader *self,
                                     OpenVRVulkanTexture  *texture,
                                     GdkPixbuf *pixbuf);
+
+bool
+openvr_vulkan_uploader_load_cairo_surface (OpenVRVulkanUploader *self,
+                                           OpenVRVulkanTexture  *texture,
+                                           cairo_surface_t *surface);
 
 G_END_DECLS
 
