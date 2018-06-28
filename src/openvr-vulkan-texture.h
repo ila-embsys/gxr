@@ -29,6 +29,9 @@ struct _OpenVRVulkanTexture
   VkBuffer staging_buffer;
   VkDeviceMemory staging_buffer_memory;
 
+  uint32_t width;
+  uint32_t height;
+
   OpenVRVulkanDevice  *device;
 };
 

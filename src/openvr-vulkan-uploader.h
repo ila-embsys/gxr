@@ -43,14 +43,10 @@ struct _OpenVRVulkanUploader
 
   OpenVRVulkanInstance *instance;
   OpenVRVulkanDevice *device;
-  OpenVRVulkanTexture *texture;
 
   VulkanCommandBuffer_t *current_cmd_buffer;
 
   GQueue * cmd_buffers;
-
-  uint32_t width;
-  uint32_t height;
 };
 
 OpenVRVulkanUploader *openvr_vulkan_uploader_new (void);
@@ -64,10 +60,12 @@ openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
 
 void
 openvr_vulkan_uploader_submit_frame (OpenVRVulkanUploader *self,
-                                     OpenVROverlay        *overlay);
+                                     OpenVROverlay        *overlay,
+                                     OpenVRVulkanTexture  *texture);
 
 bool
 openvr_vulkan_uploader_load_texture_raw (OpenVRVulkanUploader *self,
+                                         OpenVRVulkanTexture  *texture,
                                          guchar               *pixels,
                                          guint                 width,
                                          guint                 height,

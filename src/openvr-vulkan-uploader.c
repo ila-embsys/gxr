@@ -47,7 +47,6 @@ openvr_vulkan_uploader_init (OpenVRVulkanUploader *self)
 {
   self->instance = openvr_vulkan_instance_new ();
   self->device = openvr_vulkan_device_new ();
-  self->texture = openvr_vulkan_texture_new ();
   self->command_pool = VK_NULL_HANDLE;
   self->cmd_buffers = g_queue_new ();
 }
@@ -84,10 +83,7 @@ openvr_vulkan_uploader_finalize (GObject *gobject)
 
     vkDestroyCommandPool (self->device->device, self->command_pool, NULL);
 
-    g_object_unref (self->texture);
-
     g_object_unref (self->device);
-
     g_object_unref (self->instance);
   }
 
@@ -150,6 +146,7 @@ _submit_command_buffer (OpenVRVulkanUploader *self)
 
 bool
 openvr_vulkan_uploader_load_texture_raw (OpenVRVulkanUploader *self,
+                                         OpenVRVulkanTexture  *texture,
                                          guchar               *pixels,
                                          guint                 width,
                                          guint                 height,
@@ -157,7 +154,8 @@ openvr_vulkan_uploader_load_texture_raw (OpenVRVulkanUploader *self,
 {
   _begin_command_buffer (self);
 
-  if (!openvr_vulkan_texture_from_pixels (self->texture,
+
+  if (!openvr_vulkan_texture_from_pixels (texture,
                                           self->device,
                                           self->current_cmd_buffer->cmd_buffer,
                                           pixels, width, height, size))
@@ -202,32 +200,33 @@ openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
 
 void
 openvr_vulkan_uploader_submit_frame (OpenVRVulkanUploader *self,
-                                     OpenVROverlay        *overlay)
+                                     OpenVROverlay        *overlay,
+                                     OpenVRVulkanTexture  *texture)
 {
   /* Submit to SteamVR */
   struct VRVulkanTextureData_t texture_data =
     {
-      .m_nImage = (uint64_t) self->texture->image,
+      .m_nImage = (uint64_t) texture->image,
       .m_pDevice = (struct VkDevice_T*) self->device->device,
       .m_pPhysicalDevice = (struct VkPhysicalDevice_T*)
         self->device->physical_device,
       .m_pInstance = (struct VkInstance_T*) self->instance->instance,
       .m_pQueue = (struct VkQueue_T*) self->device->queue,
       .m_nQueueFamilyIndex = self->device->queue_family_index,
-      .m_nWidth = self->width,
-      .m_nHeight = self->height,
+      .m_nWidth = texture->width,
+      .m_nHeight = texture->height,
       .m_nFormat = VK_FORMAT_B8G8R8A8_UNORM,
       .m_nSampleCount = 1
     };
 
-  struct Texture_t texture =
+  struct Texture_t vr_texture =
     {
       .handle = &texture_data,
       .eType = ETextureType_TextureType_Vulkan,
       .eColorSpace = EColorSpace_ColorSpace_Auto
     };
 
-  overlay->functions->SetOverlayTexture (overlay->overlay_handle, &texture);
+  overlay->functions->SetOverlayTexture (overlay->overlay_handle, &vr_texture);
 }
 
 /*

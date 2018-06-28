@@ -56,6 +56,9 @@ openvr_vulkan_texture_from_pixels (OpenVRVulkanTexture *self,
                                    guint                height,
                                    gsize                size)
 {
+  self->width = width;
+  self->height = height;
+
   self->device = device;
   VkBufferImageCopy buffer_image_copy = {
     .bufferOffset = 0,

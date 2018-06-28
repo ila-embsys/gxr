@@ -16,6 +16,7 @@
 #include "openvr-compositor.h"
 #include "openvr-vulkan-uploader.h"
 
+OpenVRVulkanTexture *texture;
 
 gboolean
 timeout_callback (gpointer data)
@@ -114,7 +115,7 @@ _show_cb (OpenVROverlay *overlay,
 
   OpenVRVulkanUploader * uploader = (OpenVRVulkanUploader*) data;
 
-  openvr_vulkan_uploader_submit_frame (uploader, overlay);
+  openvr_vulkan_uploader_submit_frame (uploader, overlay, texture);
 }
 
 static void
@@ -160,11 +161,10 @@ test_cat_overlay ()
   guchar *pixels = gdk_pixbuf_get_pixels (pixbuf);
   gsize pixbuf_size = gdk_pixbuf_get_byte_length (pixbuf);
 
-  ret = openvr_vulkan_uploader_load_texture_raw (
-    uploader, pixels, width, height, pixbuf_size);
+  texture = openvr_vulkan_texture_new ();
 
-  uploader->width = width;
-  uploader->height = height;
+  ret = openvr_vulkan_uploader_load_texture_raw (
+    uploader, texture, pixels, width, height, pixbuf_size);
 
   OpenVROverlay *overlay = openvr_overlay_new ();
   openvr_overlay_create (overlay, "vulkan.cat", "Vulkan Cat");
@@ -195,6 +195,8 @@ test_cat_overlay ()
 
   g_object_unref (overlay);
   g_object_unref (pixbuf);
+  g_object_unref (texture);
+  g_object_unref (uploader);
 
   return 0;
 }
