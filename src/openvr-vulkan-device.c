@@ -233,6 +233,10 @@ openvr_vulkan_device_create (OpenVRVulkanDevice   *self,
                                   extension_names, &num_enabled))
       return false;
 
+  g_print ("Requesting device extensions:\n");
+  for (int i = 0; i < num_enabled; i++)
+      g_print ("%s\n", extension_names[i]);
+
   /* Create the device */
   float queue_priority = 1.0f;
 

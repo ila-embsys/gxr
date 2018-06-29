@@ -292,6 +292,10 @@ openvr_vulkan_instance_create (OpenVRVulkanInstance *self,
                                  &num_enabled_extensions))
     return false;
 
+  g_print ("Requesting instance extensions:\n");
+  for (int i = 0; i < num_enabled_extensions; i++)
+      g_print ("%s\n", enabled_extensions[i]);
+
   VkResult result =
     vkCreateInstance (&(VkInstanceCreateInfo) {
       .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
