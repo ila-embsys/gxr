@@ -181,6 +181,11 @@ _init_device_extensions (OpenVRVulkanDevice *self,
                                            self->physical_device,
                                           &required_extensions);
 
+  const gchar *dma_buf_ext = VK_EXT_EXTERNAL_MEMORY_DMA_BUF_EXTENSION_NAME;
+  required_extensions =
+    g_slist_append (required_extensions, (gpointer) dma_buf_ext);
+
+
   for (uint32_t i = 0; i < g_slist_length (required_extensions); i++)
     {
       bool found = false;
