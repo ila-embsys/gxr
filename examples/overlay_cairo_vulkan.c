@@ -158,7 +158,7 @@ test_cat_overlay ()
 
   /* create openvr overlay */
   OpenVROverlay *overlay = openvr_overlay_new ();
-  openvr_overlay_create_for_dashboard (overlay, "examples.cairo", "Gradient");
+  openvr_overlay_create (overlay, "examples.cairo", "Gradient");
 
   if (!openvr_overlay_is_valid (overlay) ||
       !openvr_overlay_is_available (overlay))
@@ -168,6 +168,10 @@ test_cat_overlay ()
   }
 
   openvr_overlay_set_mouse_scale (overlay, (float) WIDTH, (float) HEIGHT);
+
+  overlay->functions->ShowOverlay (overlay->overlay_handle);
+
+  openvr_vulkan_uploader_submit_frame (uploader, overlay, texture);
 
   g_signal_connect (overlay, "motion-notify-event", (GCallback) _move_cb, NULL);
   g_signal_connect (overlay, "button-press-event", (GCallback) _press_cb, loop);
