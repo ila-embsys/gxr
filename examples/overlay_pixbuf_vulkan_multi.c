@@ -205,6 +205,33 @@ show_overlay_info (OpenVROverlay *overlay)
     }
 
   print_matrix34 (transform);
+
+  graphene_point3d_t translation_vec;
+  graphene_point3d_init (&translation_vec, 1.0f, 1.5f, 3.0f);
+
+  graphene_matrix_t translation;
+  graphene_matrix_init_translate (&translation, &translation_vec);
+
+  graphene_matrix_print (&translation);
+
+  HmdMatrix34_t translation34;
+
+  translation34.m[0][1] = graphene_matrix_get_value (&translation, 0, 1);
+  translation34.m[0][2] = graphene_matrix_get_value (&translation, 0, 2);
+  translation34.m[0][3] = graphene_matrix_get_value (&translation, 0, 3);
+  translation34.m[0][4] = graphene_matrix_get_value (&translation, 0, 4);
+
+  translation34.m[1][1] = graphene_matrix_get_value (&translation, 1, 1);
+  translation34.m[1][2] = graphene_matrix_get_value (&translation, 1, 2);
+  translation34.m[1][3] = graphene_matrix_get_value (&translation, 1, 3);
+  translation34.m[1][4] = graphene_matrix_get_value (&translation, 1, 4);
+
+  translation34.m[2][1] = graphene_matrix_get_value (&translation, 2, 1);
+  translation34.m[2][2] = graphene_matrix_get_value (&translation, 2, 2);
+  translation34.m[2][3] = graphene_matrix_get_value (&translation, 2, 3);
+  translation34.m[2][4] = graphene_matrix_get_value (&translation, 2, 4);
+
+  print_matrix34 (translation34);
 }
 
 int
