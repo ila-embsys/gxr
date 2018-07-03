@@ -129,6 +129,15 @@ _destroy_cb (OpenVROverlay *overlay,
 }
 
 void
+print_matrix34 (HmdMatrix34_t mat)
+{
+  g_print ("%.2f %.2f %.2f\n", mat.m[0][0], mat.m[1][0], mat.m[2][0]);
+  g_print ("%.2f %.2f %.2f\n", mat.m[0][1], mat.m[1][1], mat.m[2][1]);
+  g_print ("%.2f %.2f %.2f\n", mat.m[0][2], mat.m[1][2], mat.m[2][2]);
+  g_print ("%.2f %.2f %.2f\n", mat.m[0][3], mat.m[1][3], mat.m[2][3]);
+}
+
+void
 show_overlay_info (OpenVROverlay *overlay)
 {
   struct HmdVector2_t center;
@@ -175,12 +184,12 @@ show_overlay_info (OpenVROverlay *overlay)
   g_print ("VROverlayFlags_RGSS4X: %d\n", anti_alias);
 
   TrackingUniverseOrigin tracking_origin;
-  HmdMatrix34_t model;
+  HmdMatrix34_t transform;
 
   err = overlay->functions->GetOverlayTransformAbsolute (
     overlay->overlay_handle,
     &tracking_origin,
-    &model);
+    &transform);
 
   switch (tracking_origin)
     {
@@ -195,10 +204,7 @@ show_overlay_info (OpenVROverlay *overlay)
       break;
     }
 
-  g_print ("%.2f %.2f %.2f\n", model.m[0][0], model.m[1][0], model.m[2][0]);
-  g_print ("%.2f %.2f %.2f\n", model.m[0][1], model.m[1][1], model.m[2][1]);
-  g_print ("%.2f %.2f %.2f\n", model.m[0][2], model.m[1][2], model.m[2][2]);
-  g_print ("%.2f %.2f %.2f\n", model.m[0][3], model.m[1][3], model.m[2][3]);
+  print_matrix34 (transform);
 }
 
 int
