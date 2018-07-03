@@ -8,6 +8,7 @@
 #include <glib.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gdk/gdk.h>
+#include <graphene.h>
 
 #include <openvr-glib.h>
 

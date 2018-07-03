@@ -27,6 +27,8 @@ gdk_pixbuf_dep = dependency('gdk-pixbuf-2.0', version: '>= 2.36')
 
 vulkan_dep = cpp.find_library('vulkan')
 
+graphene_dep = dependency('graphene-1.0')
+
 ## Optional
 cogl_mutter_dep = dependency('mutter-cogl-2', required : false)
 x11_dep = dependency('x11', required : false)

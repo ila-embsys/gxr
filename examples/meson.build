@@ -24,7 +24,7 @@ overlay_pixbuf_vulkan = executable(
 overlay_pixbuf_vulkan_multi = executable(
   'overlay_pixbuf_vulkan_multi',
   ['overlay_pixbuf_vulkan_multi.c', '../res/tests.c'],
-  dependencies: [gtk3_dep, openvr_dep, cogl_1_dep, cairo_dep],
+  dependencies: [gtk3_dep, openvr_dep, cogl_1_dep, cairo_dep, graphene_dep],
   link_with: openvr_glib_lib,
   include_directories: openvr_glib_inc,
   install: false)
