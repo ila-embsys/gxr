@@ -1,5 +1,7 @@
 #pragma once
 
+#include <glib.h>
+
 void
 draw_gradient_quad (cairo_t *cr, unsigned width, unsigned height)
 {
@@ -10,6 +12,36 @@ draw_gradient_quad (cairo_t *cr, unsigned width, unsigned height)
   cairo_set_source (cr, pat);
   cairo_fill (cr);
   cairo_pattern_destroy (pat);
+}
+
+void
+draw_rotated_quad (cairo_t *cr, double width, double rotation)
+{
+  cairo_translate(cr, width/2, width/2);
+  cairo_rotate(cr, rotation);
+
+  cairo_rectangle(cr, -(width/4.0), -(width/4.0), width/2.0, width/2.0);
+  cairo_set_source_rgb(cr, 0.9, 0.3, 0.3);
+  cairo_fill(cr);
+}
+
+void
+draw_fps (cairo_t     *cr,
+          double       width,
+          const gchar *str)
+{
+  cairo_identity_matrix (cr);
+  cairo_select_font_face (cr, "Sans",
+                          CAIRO_FONT_SLANT_NORMAL,
+                          CAIRO_FONT_WEIGHT_NORMAL);
+  cairo_set_font_size(cr, 24);
+
+  cairo_text_extents_t extents;
+  cairo_text_extents (cr, str, &extents);
+
+  cairo_move_to (cr, width/2 - extents.width/2, width/2 - extents.height/2);
+  cairo_set_source_rgb (cr, 1.0, 1.0, 1.0);
+  cairo_show_text (cr, str);
 }
 
 void
