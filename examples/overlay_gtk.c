@@ -256,7 +256,7 @@ int main (int argc, char *argv[]) {
   g_assert (openvr_system_is_installed ());
 
   OpenVROverlay *overlay = openvr_overlay_new ();
-  openvr_overlay_create (overlay, "openvr.example.gtk", "GTK+");
+  openvr_overlay_create_for_dashboard (overlay, "openvr.example.gtk", "GTK+");
 
   if (!openvr_overlay_is_valid (overlay) ||
       !openvr_overlay_is_available (overlay))

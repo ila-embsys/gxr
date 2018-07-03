@@ -255,7 +255,7 @@ test_cat_overlay ()
   g_assert (openvr_system_is_installed ());
 
   OpenVROverlay *overlay = openvr_overlay_new ();
-  openvr_overlay_create (overlay, "examples.cairo", "Gradient");
+  openvr_overlay_create_for_dashboard (overlay, "examples.cairo", "Gradient");
 
   if (!openvr_overlay_is_valid (overlay) ||
       !openvr_overlay_is_available (overlay))
