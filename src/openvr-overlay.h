@@ -38,6 +38,11 @@ void openvr_overlay_create (OpenVROverlay *self,
                             gchar* key,
                             gchar* name);
 
+void
+openvr_overlay_create_for_dashboard (OpenVROverlay *self,
+                                     gchar* key,
+                                     gchar* name);
+
 void openvr_overlay_upload_gdk_pixbuf (OpenVROverlay *self,
                                        GdkPixbuf * pixbuf);
 

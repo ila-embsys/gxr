@@ -92,9 +92,31 @@ openvr_overlay_new (void)
   return (OpenVROverlay*) g_object_new (OPENVR_TYPE_OVERLAY, 0);
 }
 
-void openvr_overlay_create (OpenVROverlay *self,
-                            gchar* key,
-                            gchar* name)
+void
+openvr_overlay_create (OpenVROverlay *self,
+                       gchar* key,
+                       gchar* name)
+{
+  EVROverlayError err = self->functions->CreateOverlay(
+    key, name, &self->overlay_handle);
+
+  if (err != EVROverlayError_VROverlayError_None)
+    {
+      g_printerr ("Could not create overlay: %s\n",
+                  self->functions->GetOverlayErrorNameFromEnum (err));
+    }
+  else
+    {
+      self->functions->SetOverlayWidthInMeters (self->overlay_handle, 1.5f);
+      self->functions->SetOverlayInputMethod (self->overlay_handle,
+                                              VROverlayInputMethod_Mouse);
+    }
+}
+
+void
+openvr_overlay_create_for_dashboard (OpenVROverlay *self,
+                                     gchar* key,
+                                     gchar* name)
 {
   EVROverlayError err = self->functions->CreateDashboardOverlay(
     key, name, &self->overlay_handle, &self->thumbnail_handle);
@@ -107,8 +129,6 @@ void openvr_overlay_create (OpenVROverlay *self,
   else
     {
       self->functions->SetOverlayWidthInMeters (self->overlay_handle, 1.5f);
-      self->functions->SetOverlayInputMethod (self->overlay_handle,
-                                              VROverlayInputMethod_Mouse);
     }
 }
 
