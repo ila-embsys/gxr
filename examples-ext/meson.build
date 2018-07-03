@@ -23,6 +23,12 @@ gtk_cairo = executable(
   include_directories: examples_inc_dir,
   install: false)
 
+gtk_cairo_animation = executable(
+  'gtk_cairo_animation', ['gtk_cairo_animation.c'],
+  dependencies: gtk3_dep,
+  include_directories: examples_inc_dir,
+  install: false)
+
 gtk_offscreen = executable(
   'gtk_offscreen', ['gtk_offscreen.c'],
   dependencies: gtk3_dep,
