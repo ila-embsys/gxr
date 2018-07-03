@@ -226,12 +226,12 @@ show_overlay_info (OpenVROverlay *overlay)
   print_matrix34 (transform);
 
   graphene_point3d_t translation_vec;
-  graphene_point3d_init (&translation_vec, 0.1f, 0.5f, 0.1f);
+  graphene_point3d_init (&translation_vec, 1.1f, 0.5f, 0.1f);
 
   graphene_matrix_t translation;
   graphene_matrix_init_translate (&translation, &translation_vec);
 
-  graphene_matrix_rotate_y (&translation, 30.4f);
+  graphene_matrix_rotate_y (&translation, -30.4f);
 
   graphene_matrix_print (&translation);
 
@@ -289,6 +289,16 @@ test_cat_overlay ()
     return -1;
   }
 
+  OpenVROverlay *overlay2 = openvr_overlay_new ();
+  openvr_overlay_create (overlay2, "vulkan.cat2", "Another Vulkan Cat");
+
+  if (!openvr_overlay_is_valid (overlay2) ||
+      !openvr_overlay_is_available (overlay2))
+  {
+    fprintf (stderr, "Overlay 2 unavailable.\n");
+    return -1;
+  }
+
   openvr_overlay_set_mouse_scale (overlay,
                                   (float) gdk_pixbuf_get_width (pixbuf),
                                   (float) gdk_pixbuf_get_height (pixbuf));
@@ -302,9 +312,19 @@ test_cat_overlay ()
                   overlay->functions->GetOverlayErrorNameFromEnum (err));
     }
 
+  err =
+    overlay->functions->ShowOverlay (overlay2->overlay_handle);
+
+  if (err != EVROverlayError_VROverlayError_None)
+    {
+      g_printerr ("Could not ShowOverlay: %s\n",
+                  overlay->functions->GetOverlayErrorNameFromEnum (err));
+    }
+
   show_overlay_info (overlay);
 
   openvr_vulkan_uploader_submit_frame (uploader, overlay, texture);
+  openvr_vulkan_uploader_submit_frame (uploader, overlay2, texture);
 
   /* connect glib callbacks */
   g_signal_connect (overlay, "motion-notify-event", (GCallback) _move_cb, NULL);
