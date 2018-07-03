@@ -138,6 +138,25 @@ print_matrix34 (HmdMatrix34_t mat)
 }
 
 void
+graphene_to_matrix34 (graphene_matrix_t *mat, HmdMatrix34_t *mat34)
+{
+  mat34->m[0][0] = graphene_matrix_get_value (mat, 0, 0);
+  mat34->m[0][1] = graphene_matrix_get_value (mat, 1, 0);
+  mat34->m[0][2] = graphene_matrix_get_value (mat, 2, 0);
+  mat34->m[0][3] = graphene_matrix_get_value (mat, 3, 0);
+
+  mat34->m[1][0] = graphene_matrix_get_value (mat, 0, 1);
+  mat34->m[1][1] = graphene_matrix_get_value (mat, 1, 1);
+  mat34->m[1][2] = graphene_matrix_get_value (mat, 2, 1);
+  mat34->m[1][3] = graphene_matrix_get_value (mat, 3, 1);
+
+  mat34->m[2][0] = graphene_matrix_get_value (mat, 0, 2);
+  mat34->m[2][1] = graphene_matrix_get_value (mat, 1, 2);
+  mat34->m[2][2] = graphene_matrix_get_value (mat, 2, 2);
+  mat34->m[2][3] = graphene_matrix_get_value (mat, 3, 2);
+}
+
+void
 show_overlay_info (OpenVROverlay *overlay)
 {
   struct HmdVector2_t center;
@@ -215,21 +234,7 @@ show_overlay_info (OpenVROverlay *overlay)
   graphene_matrix_print (&translation);
 
   HmdMatrix34_t translation34;
-
-  translation34.m[0][1] = graphene_matrix_get_value (&translation, 0, 1);
-  translation34.m[0][2] = graphene_matrix_get_value (&translation, 0, 2);
-  translation34.m[0][3] = graphene_matrix_get_value (&translation, 0, 3);
-  translation34.m[0][4] = graphene_matrix_get_value (&translation, 0, 4);
-
-  translation34.m[1][1] = graphene_matrix_get_value (&translation, 1, 1);
-  translation34.m[1][2] = graphene_matrix_get_value (&translation, 1, 2);
-  translation34.m[1][3] = graphene_matrix_get_value (&translation, 1, 3);
-  translation34.m[1][4] = graphene_matrix_get_value (&translation, 1, 4);
-
-  translation34.m[2][1] = graphene_matrix_get_value (&translation, 2, 1);
-  translation34.m[2][2] = graphene_matrix_get_value (&translation, 2, 2);
-  translation34.m[2][3] = graphene_matrix_get_value (&translation, 2, 3);
-  translation34.m[2][4] = graphene_matrix_get_value (&translation, 2, 4);
+  graphene_to_matrix34 (&translation, &translation34);
 
   print_matrix34 (translation34);
 }
