@@ -70,7 +70,8 @@ openvr_vulkan_uploader_load_raw (OpenVRVulkanUploader *self,
                                  guchar               *pixels,
                                  guint                 width,
                                  guint                 height,
-                                 gsize                 size);
+                                 gsize                 size,
+                                 VkFormat              format);
 
 bool
 openvr_vulkan_uploader_load_pixbuf (OpenVRVulkanUploader *self,

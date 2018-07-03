@@ -44,7 +44,8 @@ openvr_vulkan_texture_from_pixels (OpenVRVulkanTexture *self,
                                    guchar              *pixels,
                                    guint                width,
                                    guint                height,
-                                   gsize                size);
+                                   gsize                size,
+                                   VkFormat             format);
 
 G_END_DECLS
 

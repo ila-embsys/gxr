@@ -150,7 +150,8 @@ openvr_vulkan_uploader_load_raw (OpenVRVulkanUploader *self,
                                  guchar               *pixels,
                                  guint                 width,
                                  guint                 height,
-                                 gsize                 size)
+                                 gsize                 size,
+                                 VkFormat              format)
 {
   _begin_command_buffer (self);
 
@@ -158,7 +159,7 @@ openvr_vulkan_uploader_load_raw (OpenVRVulkanUploader *self,
   if (!openvr_vulkan_texture_from_pixels (texture,
                                           self->device,
                                           self->current_cmd_buffer->cmd_buffer,
-                                          pixels, width, height, size))
+                                          pixels, width, height, size, format))
     return false;
 
   _submit_command_buffer (self);
@@ -177,7 +178,8 @@ openvr_vulkan_uploader_load_pixbuf (OpenVRVulkanUploader *self,
   gsize size = gdk_pixbuf_get_byte_length (pixbuf);
 
   return openvr_vulkan_uploader_load_raw (self, texture, pixels,
-                                          width, height, size);
+                                          width, height, size,
+                                          VK_FORMAT_R8G8B8A8_UNORM);
 }
 
 bool
@@ -223,7 +225,8 @@ openvr_vulkan_uploader_load_cairo_surface (OpenVRVulkanUploader *self,
   gsize size = stride * height;
 
   return openvr_vulkan_uploader_load_raw (self, texture, pixels,
-                                          width, height, size);
+                                          width, height, size,
+                                          VK_FORMAT_B8G8R8A8_UNORM);
 }
 
 bool

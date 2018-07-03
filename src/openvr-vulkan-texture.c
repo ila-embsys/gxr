@@ -54,7 +54,8 @@ openvr_vulkan_texture_from_pixels (OpenVRVulkanTexture *self,
                                    guchar              *pixels,
                                    guint                width,
                                    guint                height,
-                                   gsize                size)
+                                   gsize                size,
+                                   VkFormat             format)
 {
   self->width = width;
   self->height = height;
@@ -91,7 +92,7 @@ openvr_vulkan_texture_from_pixels (OpenVRVulkanTexture *self,
     .extent.depth = 1,
     .mipLevels = 1,
     .arrayLayers = 1,
-    .format = VK_FORMAT_R8G8B8A8_UNORM,
+    .format = format,
     .tiling = VK_IMAGE_TILING_OPTIMAL,
     .samples = VK_SAMPLE_COUNT_1_BIT,
     .usage = VK_IMAGE_USAGE_SAMPLED_BIT |
