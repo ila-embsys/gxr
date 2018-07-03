@@ -131,10 +131,10 @@ _destroy_cb (OpenVROverlay *overlay,
 void
 print_matrix34 (HmdMatrix34_t mat)
 {
-  g_print ("%.2f %.2f %.2f\n", mat.m[0][0], mat.m[1][0], mat.m[2][0]);
-  g_print ("%.2f %.2f %.2f\n", mat.m[0][1], mat.m[1][1], mat.m[2][1]);
-  g_print ("%.2f %.2f %.2f\n", mat.m[0][2], mat.m[1][2], mat.m[2][2]);
-  g_print ("%.2f %.2f %.2f\n", mat.m[0][3], mat.m[1][3], mat.m[2][3]);
+  g_print ("%f %f %f\n", mat.m[0][0], mat.m[1][0], mat.m[2][0]);
+  g_print ("%f %f %f\n", mat.m[0][1], mat.m[1][1], mat.m[2][1]);
+  g_print ("%f %f %f\n", mat.m[0][2], mat.m[1][2], mat.m[2][2]);
+  g_print ("%f %f %f\n", mat.m[0][3], mat.m[1][3], mat.m[2][3]);
 }
 
 void
@@ -226,10 +226,12 @@ show_overlay_info (OpenVROverlay *overlay)
   print_matrix34 (transform);
 
   graphene_point3d_t translation_vec;
-  graphene_point3d_init (&translation_vec, 1.0f, 1.5f, 3.0f);
+  graphene_point3d_init (&translation_vec, 0.1f, 0.5f, 0.1f);
 
   graphene_matrix_t translation;
   graphene_matrix_init_translate (&translation, &translation_vec);
+
+  graphene_matrix_rotate_y (&translation, 30.4f);
 
   graphene_matrix_print (&translation);
 
@@ -237,6 +239,11 @@ show_overlay_info (OpenVROverlay *overlay)
   graphene_to_matrix34 (&translation, &translation34);
 
   print_matrix34 (translation34);
+
+  err = overlay->functions->SetOverlayTransformAbsolute (
+    overlay->overlay_handle,
+    tracking_origin,
+    &translation34);
 }
 
 int
