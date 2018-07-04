@@ -10,6 +10,7 @@
 #include <GL/gl.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gdk/gdk.h>
+#include <glib/gprintf.h>
 
 #include <openvr-glib.h>
 
@@ -17,25 +18,42 @@
 #include "openvr-overlay.h"
 #include "openvr-compositor.h"
 #include "openvr-vulkan-uploader.h"
+#include "openvr-time.h"
 
-#define WIDTH 1280
-#define HEIGHT 720
+#define WIDTH 1000
+#define HEIGHT 1000
 #define STRIDE (WIDTH * 4)
 
 #include "cairo_content.h"
 
-OpenVRVulkanTexture *texture;
+struct timespec last_time;
+unsigned frames_without_time_update = 60;
+gchar fps_str [50];
 
 void
-draw_cairo (cairo_t *cr, unsigned width, unsigned height)
+update_fps (struct timespec* now)
 {
-  draw_gradient_quad (cr, width, height);
-  draw_gradient_circle (cr, width, height);
+  struct timespec diff;
+  openvr_time_substract (now, &last_time, &diff);
+  double diff_s = openvr_time_to_double_secs (&diff);
+  double diff_ms = diff_s * SEC_IN_MSEC_D;
+  double fps = SEC_IN_MSEC_D / diff_ms;
+  g_sprintf (fps_str, "FPS %.2f (%.2fms)", fps, diff_ms);
+  frames_without_time_update = 0;
 }
 
 cairo_surface_t*
 create_cairo_surface (unsigned char *image)
 {
+  struct timespec now;
+  if (clock_gettime (CLOCK_REALTIME, &now) != 0)
+  {
+    g_printerr ("Could not read system clock\n");
+    return NULL;
+  }
+
+  double now_secs = openvr_time_to_double_secs (&now);
+
   cairo_surface_t *surface =
     cairo_image_surface_create_for_data (image,
                                          CAIRO_FORMAT_ARGB32,
@@ -44,11 +62,21 @@ create_cairo_surface (unsigned char *image)
 
   cairo_t *cr = cairo_create (surface);
 
-  cairo_rectangle (cr, 0, 0, WIDTH, HEIGHT);
-  cairo_set_source_rgb (cr, 1, 1, 1);
-  cairo_fill (cr);
+  cairo_set_source_rgba (cr, 0, 0, 0, 0);
+  cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
+  cairo_paint (cr);
 
-  draw_cairo (cr, WIDTH, HEIGHT);
+  draw_rotated_quad (cr, WIDTH, now_secs);
+
+  if (frames_without_time_update > 60)
+    update_fps (&now);
+  else
+    frames_without_time_update++;
+
+  last_time.tv_sec = now.tv_sec;
+  last_time.tv_nsec = now.tv_nsec;
+
+  draw_fps (cr, WIDTH, fps_str);
 
   cairo_destroy (cr);
 
@@ -56,19 +84,45 @@ create_cairo_surface (unsigned char *image)
 }
 
 gboolean
-timeout_callback (gpointer data)
+input_callback (gpointer data)
 {
   OpenVROverlay *overlay = (OpenVROverlay*) data;
   openvr_overlay_poll_event (overlay);
   return TRUE;
 }
 
-static void
-_move_cb (OpenVROverlay  *overlay,
-          GdkEventMotion *event,
-          gpointer        data)
+struct RenderContext
 {
-  // g_print ("move: %f %f (%d)\n", event->x, event->y, event->time);
+  OpenVRVulkanUploader *uploader;
+  OpenVROverlay *overlay;
+};
+
+
+gboolean
+render_callback (gpointer data)
+{
+  struct RenderContext *context = (struct RenderContext*) data;
+
+  /* render frame */
+  unsigned char image[STRIDE*HEIGHT];
+  cairo_surface_t* surface = create_cairo_surface (image);
+
+  if (surface == NULL) {
+    g_printerr ("Could not create cairo surface.\n");
+    return FALSE;
+  }
+
+  OpenVRVulkanTexture *texture = openvr_vulkan_texture_new ();
+  openvr_vulkan_uploader_load_cairo_surface (context->uploader,
+                                             texture,
+                                             surface);
+  cairo_surface_destroy (surface);
+  openvr_vulkan_uploader_submit_frame (context->uploader,
+                                       context->overlay,
+                                       texture);
+  g_object_unref (texture);
+
+  return TRUE;
 }
 
 static void
@@ -83,35 +137,6 @@ _press_cb (OpenVROverlay  *overlay,
 }
 
 static void
-_release_cb (OpenVROverlay  *overlay,
-             GdkEventButton *event,
-             gpointer        data)
-{
-  g_print ("release: %d %f %f (%d)\n",
-           event->button, event->x, event->y, event->time);
-}
-
-static void
-_show_cb (OpenVROverlay *overlay,
-          gpointer       data)
-{
-  g_print ("show\n");
-
-  /* skip rendering if the overlay isn't available or visible */
-  gboolean is_unavailable = !openvr_overlay_is_valid (overlay) ||
-                            !openvr_overlay_is_available (overlay);
-  gboolean is_invisible = !openvr_overlay_is_visible (overlay) &&
-                          !openvr_overlay_thumbnail_is_visible (overlay);
-
-  if (is_unavailable || is_invisible)
-    return;
-
-  OpenVRVulkanUploader * uploader = (OpenVRVulkanUploader*) data;
-
-  openvr_vulkan_uploader_submit_frame (uploader, overlay, texture);
-}
-
-static void
 _destroy_cb (OpenVROverlay *overlay,
              gpointer       data)
 {
@@ -121,19 +146,13 @@ _destroy_cb (OpenVROverlay *overlay,
 }
 
 int
-test_cat_overlay ()
+test_overlay ()
 {
   GMainLoop *loop;
 
-  unsigned char image[STRIDE*HEIGHT];
-  cairo_surface_t* surface = create_cairo_surface (image);
-
-  if (surface == NULL) {
-    fprintf (stderr, "Could not create cairo surface.\n");
-    return -1;
-  }
-
   loop = g_main_loop_new (NULL, FALSE);
+
+  struct RenderContext render_context;
 
   /* init openvr */
   OpenVRSystem * system = openvr_system_new ();
@@ -152,10 +171,6 @@ test_cat_overlay ()
     return false;
   }
 
-  texture = openvr_vulkan_texture_new ();
-
-  openvr_vulkan_uploader_load_cairo_surface (uploader, texture, surface);
-
   /* create openvr overlay */
   OpenVROverlay *overlay = openvr_overlay_new ();
   openvr_overlay_create (overlay, "examples.cairo", "Gradient");
@@ -171,27 +186,24 @@ test_cat_overlay ()
 
   overlay->functions->ShowOverlay (overlay->overlay_handle);
 
-  openvr_vulkan_uploader_submit_frame (uploader, overlay, texture);
-
-  g_signal_connect (overlay, "motion-notify-event", (GCallback) _move_cb, NULL);
   g_signal_connect (overlay, "button-press-event", (GCallback) _press_cb, loop);
-  g_signal_connect (
-    overlay, "button-release-event", (GCallback) _release_cb, NULL);
-  g_signal_connect (overlay, "show", (GCallback) _show_cb, uploader);
   g_signal_connect (overlay, "destroy", (GCallback) _destroy_cb, loop);
 
-  g_timeout_add (20, timeout_callback, overlay);
+  render_context.overlay = overlay;
+  render_context.uploader = uploader;
+
+  g_timeout_add (20, input_callback, overlay);
+  g_timeout_add (11, render_callback, &render_context); // sync to 90 hz
+
   g_main_loop_run (loop);
   g_main_loop_unref (loop);
 
   g_object_unref (overlay);
-  cairo_surface_destroy (surface);
-  g_object_unref (texture);
   g_object_unref (uploader);
 
   return 0;
 }
 
 int main (int argc, char *argv[]) {
-  return test_cat_overlay ();
+  return test_overlay ();
 }

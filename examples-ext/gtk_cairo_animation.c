@@ -13,7 +13,7 @@
 #include "openvr-time.h"
 
 struct timespec last_time;
-unsigned frames_without_time_update = 0;
+unsigned frames_without_time_update = 60;
 gchar fps_str [50];
 
 void

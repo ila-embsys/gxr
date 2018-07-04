@@ -190,6 +190,7 @@ openvr_vulkan_uploader_load_cairo_surface (OpenVRVulkanUploader *self,
   guint width = cairo_image_surface_get_width (surface);
   guint height = cairo_image_surface_get_height (surface);
 
+  /*
   cairo_format_t cr_format = cairo_image_surface_get_format (surface);
   switch (cr_format)
   {
@@ -217,6 +218,7 @@ openvr_vulkan_uploader_load_cairo_surface (OpenVRVulkanUploader *self,
   default:
     g_print("Unknown format\n");
   }
+  */
 
   guchar *pixels = cairo_image_surface_get_data (surface);
 
@@ -319,7 +321,8 @@ _get_command_buffer (OpenVRVulkanUploader *self)
                             VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
       vkResetFences (self->device->device, 1, &command_buffer->fence);
       gpointer last = g_queue_pop_tail (self->cmd_buffers);
-      g_object_unref (last);
+      g_free (last);
+
       return command_buffer;
     }
   }
