@@ -16,45 +16,45 @@ struct timespec last_time;
 unsigned frames_without_time_update = 0;
 gchar fps_str [50];
 
+void
+update_fps (struct timespec* now)
+{
+  struct timespec diff;
+  openvr_time_substract (now, &last_time, &diff);
+  double diff_s = openvr_time_to_double_secs (&diff);
+  double diff_ms = diff_s * SEC_IN_MSEC_D;
+  double fps = SEC_IN_MSEC_D / diff_ms;
+  g_sprintf (fps_str, "FPS %.2f (%.2fms)", fps, diff_ms);
+  frames_without_time_update = 0;
+}
+
 gboolean
 draw (GtkWidget *widget, cairo_t *cr, gpointer data)
 {
   struct timespec now;
   if (clock_gettime (CLOCK_REALTIME, &now) != 0)
   {
-    fprintf (stderr, "Could not read system clock\n");
+    g_printerr ("Could not read system clock\n");
     return TRUE;
   }
 
-  struct timespec diff;
-  openvr_time_substract (&now, &last_time, &diff);
-
   double now_secs = openvr_time_to_double_secs (&now);
-
-  double diff_s = openvr_time_to_double_secs (&diff);
-  double diff_ms = diff_s * SEC_IN_MSEC_D;
-  double fps = SEC_IN_MSEC_D / diff_ms;
 
   guint width = gtk_widget_get_allocated_width (widget);
 
   draw_rotated_quad (cr, width, now_secs);
 
   if (frames_without_time_update > 60)
-    {
-      frames_without_time_update = 0;
-      g_sprintf (fps_str, "FPS %.2f (%.2fms)", fps, diff_ms);
-    }
+    update_fps (&now);
   else
-    {
-      frames_without_time_update += 1;
-    }
+    frames_without_time_update++;
 
   draw_fps (cr, width, fps_str);
 
-  gtk_widget_queue_draw (widget);
-
   last_time.tv_sec = now.tv_sec;
   last_time.tv_nsec = now.tv_nsec;
+
+  gtk_widget_queue_draw (widget);
 
   return FALSE;
 }
