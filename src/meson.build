@@ -8,7 +8,8 @@ openvr_glib_sources = [
   'openvr-compositor.c',
   'openvr-vulkan-instance.c',
   'openvr-vulkan-device.c',
-  'openvr-vulkan-texture.c'
+  'openvr-vulkan-texture.c',
+  'openvr-time.c'
 ]
 
 openvr_glib_headers = [
@@ -20,7 +21,8 @@ openvr_glib_headers = [
   'openvr-compositor.h',
   'openvr-vulkan-instance.h',
   'openvr-vulkan-device.h',
-  'openvr-vulkan-texture.h'
+  'openvr-vulkan-texture.h',
+  'openvr-time.h'
 ]
 
 version_split = meson.project_version().split('.')

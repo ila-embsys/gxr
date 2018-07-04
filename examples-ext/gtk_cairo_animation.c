@@ -10,39 +10,11 @@
 #include <gtk/gtk.h>
 #include <glib/gprintf.h>
 #include "cairo_content.h"
+#include "openvr-time.h"
 
 struct timespec last_time;
 unsigned frames_without_time_update = 0;
 gchar fps_str [50];
-
-#define SEC_IN_MSEC_D 1000.0
-#define SEC_IN_NSEC_L 1000000000L
-#define SEC_IN_NSEC_D 1000000000.0
-
-/* assuming a > b */
-void
-_substract_timespecs (struct timespec* a,
-                      struct timespec* b,
-                      struct timespec* out)
-{
-  out->tv_sec = a->tv_sec - b->tv_sec;
-
-  if (a->tv_nsec < b->tv_nsec)
-  {
-    out->tv_nsec = a->tv_nsec + SEC_IN_NSEC_L - b->tv_nsec;
-    out->tv_sec--;
-  }
-  else
-  {
-    out->tv_nsec = a->tv_nsec - b->tv_nsec;
-  }
-}
-
-double
-_timespec_to_double_s (struct timespec* time)
-{
-  return ((double) time->tv_sec + (time->tv_nsec / SEC_IN_NSEC_D));
-}
 
 gboolean
 draw (GtkWidget *widget, cairo_t *cr, gpointer data)
@@ -55,11 +27,11 @@ draw (GtkWidget *widget, cairo_t *cr, gpointer data)
   }
 
   struct timespec diff;
-  _substract_timespecs (&now, &last_time, &diff);
+  openvr_time_substract (&now, &last_time, &diff);
 
-  double now_secs = _timespec_to_double_s (&now);
+  double now_secs = openvr_time_to_double_secs (&now);
 
-  double diff_s = _timespec_to_double_s (&diff);
+  double diff_s = openvr_time_to_double_secs (&diff);
   double diff_ms = diff_s * SEC_IN_MSEC_D;
   double fps = SEC_IN_MSEC_D / diff_ms;
 

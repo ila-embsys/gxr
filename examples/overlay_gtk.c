@@ -17,6 +17,7 @@
 
 #include "openvr-system.h"
 #include "openvr-overlay.h"
+#include "openvr-time.h"
 
 static gboolean
 _damage_cb (GtkWidget *widget, GdkEventExpose *event, OpenVROverlay *overlay)
@@ -64,35 +65,6 @@ struct Labels
   struct timespec last_time;
 };
 
-#define SEC_IN_MSEC_D 1000.0
-#define SEC_IN_NSEC_L 1000000000L
-#define SEC_IN_NSEC_D 1000000000.0
-
-/* assuming a > b */
-void
-_substract_timespecs (struct timespec* a,
-                      struct timespec* b,
-                      struct timespec* out)
-{
-  out->tv_sec = a->tv_sec - b->tv_sec;
-
-  if (a->tv_nsec < b->tv_nsec)
-  {
-    out->tv_nsec = a->tv_nsec + SEC_IN_NSEC_L - b->tv_nsec;
-    out->tv_sec--;
-  }
-  else
-  {
-    out->tv_nsec = a->tv_nsec - b->tv_nsec;
-  }
-}
-
-double
-_timespec_to_double_s (struct timespec* time)
-{
-  return ((double) time->tv_sec + (time->tv_nsec / SEC_IN_NSEC_D));
-}
-
 static gboolean
 _draw_cb (GtkWidget *widget, cairo_t *cr, struct Labels* labels)
 {
@@ -104,9 +76,9 @@ _draw_cb (GtkWidget *widget, cairo_t *cr, struct Labels* labels)
   }
 
   struct timespec diff;
-  _substract_timespecs (&now, &labels->last_time, &diff);
+  openvr_time_substract (&now, &labels->last_time, &diff);
 
-  double diff_s = _timespec_to_double_s (&diff);
+  double diff_s = openvr_time_to_double_secs (&diff);
   double diff_ms = diff_s * SEC_IN_MSEC_D;
   double fps = SEC_IN_MSEC_D / diff_ms;
 

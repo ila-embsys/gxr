@@ -19,6 +19,7 @@
 #include "openvr_capi_global.h"
 
 #include "openvr-global.h"
+#include "openvr-time.h"
 
 G_DEFINE_TYPE (OpenVROverlay, openvr_overlay, G_TYPE_OBJECT)
 
@@ -457,63 +458,6 @@ openvr_overlay_upload_pixels (OpenVROverlay *self,
   openvr_overlay_set_gl_texture (self, tex);
 }
 
-#define SEC_IN_NSEC_D 1000000000.0
-#define SEC_IN_MSEC_D 1000.0
-#define SEC_IN_NSEC_L 1000000000L
-
-void
-_float_seconds_to_timespec (float in, struct timespec* out)
-{
-  out->tv_sec = (time_t) in;
-  out->tv_nsec = (long) ((in - (float) out->tv_sec) * SEC_IN_NSEC_D);
-}
-
-/* assuming a > b */
-void
-_substract_timespecs (struct timespec* a,
-                      struct timespec* b,
-                      struct timespec* out)
-{
-  out->tv_sec = a->tv_sec - b->tv_sec;
-
-  if (a->tv_nsec < b->tv_nsec)
-  {
-    out->tv_nsec = a->tv_nsec + SEC_IN_NSEC_L - b->tv_nsec;
-    out->tv_sec--;
-  }
-  else
-  {
-    out->tv_nsec = a->tv_nsec - b->tv_nsec;
-  }
-}
-
-double
-_timespec_to_double_s (struct timespec* time)
-{
-  return ((double) time->tv_sec + (time->tv_nsec / SEC_IN_NSEC_D));
-}
-
-guint32
-_age_s_to_monotonic_ms (float age)
-{
-  struct timespec mono_time;
-  if (clock_gettime (CLOCK_MONOTONIC, &mono_time) != 0)
-  {
-    fprintf (stderr, "Could not read system clock\n");
-    return 0;
-  }
-
-  struct timespec event_age;
-  _float_seconds_to_timespec (age, &event_age);
-
-  struct timespec event_age_on_mono;
-  _substract_timespecs (&mono_time, &event_age, &event_age_on_mono);
-
-  double time_s = _timespec_to_double_s (&event_age_on_mono);
-
-  return (guint32) (time_s * SEC_IN_MSEC_D);
-}
-
 static guint
 _vr_to_gdk_mouse_button (uint32_t btn)
 {
@@ -546,7 +490,8 @@ openvr_overlay_poll_event (OpenVROverlay *self)
         GdkEvent *event = gdk_event_new (GDK_MOTION_NOTIFY);
         event->motion.x = vr_event.data.mouse.x;
         event->motion.y = vr_event.data.mouse.y;
-        event->motion.time = _age_s_to_monotonic_ms (vr_event.eventAgeSeconds);
+        event->motion.time =
+          openvr_time_age_secs_to_monotonic_msecs (vr_event.eventAgeSeconds);
         g_signal_emit (self, overlay_signals[MOTION_NOTIFY_EVENT], 0, event);
       } break;
 
@@ -555,7 +500,8 @@ openvr_overlay_poll_event (OpenVROverlay *self)
         GdkEvent *event = gdk_event_new (GDK_BUTTON_PRESS);
         event->button.x = vr_event.data.mouse.x;
         event->button.y = vr_event.data.mouse.y;
-        event->button.time = _age_s_to_monotonic_ms (vr_event.eventAgeSeconds);
+        event->button.time =
+          openvr_time_age_secs_to_monotonic_msecs (vr_event.eventAgeSeconds);
         event->button.button =
           _vr_to_gdk_mouse_button (vr_event.data.mouse.button);
         g_signal_emit (self, overlay_signals[BUTTON_PRESS_EVENT], 0, event);
@@ -566,7 +512,8 @@ openvr_overlay_poll_event (OpenVROverlay *self)
         GdkEvent *event = gdk_event_new (GDK_BUTTON_RELEASE);
         event->button.x = vr_event.data.mouse.x;
         event->button.y = vr_event.data.mouse.y;
-        event->button.time = _age_s_to_monotonic_ms (vr_event.eventAgeSeconds);
+        event->button.time =
+          openvr_time_age_secs_to_monotonic_msecs (vr_event.eventAgeSeconds);
         event->button.button =
           _vr_to_gdk_mouse_button (vr_event.data.mouse.button);
         g_signal_emit (self, overlay_signals[BUTTON_RELEASE_EVENT], 0, event);

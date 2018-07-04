@@ -26,7 +26,8 @@ gtk_cairo = executable(
 gtk_cairo_animation = executable(
   'gtk_cairo_animation', ['gtk_cairo_animation.c'],
   dependencies: gtk3_dep,
-  include_directories: examples_inc_dir,
+  link_with: openvr_glib_lib,
+  include_directories: [examples_inc_dir, openvr_glib_inc],
   install: false)
 
 gtk_offscreen = executable(
