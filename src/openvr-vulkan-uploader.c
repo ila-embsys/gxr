@@ -73,10 +73,10 @@ openvr_vulkan_uploader_finalize (GObject *gobject)
   OpenVRVulkanUploader *self = OPENVR_VULKAN_UPLOADER (gobject);
 
   /* Idle the device to make sure no work is outstanding */
-  if (self->device != VK_NULL_HANDLE)
+  if (self->device->device != VK_NULL_HANDLE)
     vkDeviceWaitIdle (self->device->device);
 
-  if (self->device != VK_NULL_HANDLE)
+  if (self->device->device != VK_NULL_HANDLE)
   {
     g_queue_foreach (self->cmd_buffers,
                      (GFunc) _cleanup_command_buffer_queue, self);
