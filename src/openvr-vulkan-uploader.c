@@ -190,35 +190,27 @@ openvr_vulkan_uploader_load_cairo_surface (OpenVRVulkanUploader *self,
   guint width = cairo_image_surface_get_width (surface);
   guint height = cairo_image_surface_get_height (surface);
 
-  /*
+  VkFormat format;
   cairo_format_t cr_format = cairo_image_surface_get_format (surface);
   switch (cr_format)
-  {
-  case CAIRO_FORMAT_INVALID:
-    g_print("CAIRO_FORMAT_INVALID\n");
-    break;
-  case CAIRO_FORMAT_ARGB32:
-    g_print("CAIRO_FORMAT_ARGB32\n");
-    break;
-  case CAIRO_FORMAT_RGB24:
-    g_print("CAIRO_FORMAT_RGB24\n");
-    break;
-  case CAIRO_FORMAT_A8:
-    g_print("CAIRO_FORMAT_A8\n");
-    break;
-  case CAIRO_FORMAT_A1:
-    g_print("CAIRO_FORMAT_A1\n");
-    break;
-  case CAIRO_FORMAT_RGB16_565:
-    g_print("CAIRO_FORMAT_RGB16_565\n");
-    break;
-  case CAIRO_FORMAT_RGB30:
-    g_print("CAIRO_FORMAT_RGB30\n");
-    break;
-  default:
-    g_print("Unknown format\n");
-  }
-  */
+    {
+    case CAIRO_FORMAT_ARGB32:
+      format = VK_FORMAT_B8G8R8A8_UNORM;
+      break;
+    case CAIRO_FORMAT_RGB24:
+    case CAIRO_FORMAT_A8:
+    case CAIRO_FORMAT_A1:
+    case CAIRO_FORMAT_RGB16_565:
+    case CAIRO_FORMAT_RGB30:
+      g_printerr ("Unsupported Cairo format\n");
+      return FALSE;
+    case CAIRO_FORMAT_INVALID:
+      g_printerr ("Invalid Cairo format\n");
+      return FALSE;
+    default:
+      g_printerr ("Unknown Cairo format\n");
+      return FALSE;
+    }
 
   guchar *pixels = cairo_image_surface_get_data (surface);
 
@@ -227,8 +219,7 @@ openvr_vulkan_uploader_load_cairo_surface (OpenVRVulkanUploader *self,
   gsize size = stride * height;
 
   return openvr_vulkan_uploader_load_raw (self, texture, pixels,
-                                          width, height, size,
-                                          VK_FORMAT_B8G8R8A8_UNORM);
+                                          width, height, size, format);
 }
 
 bool
