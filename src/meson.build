@@ -9,7 +9,8 @@ openvr_glib_sources = [
   'openvr-vulkan-instance.c',
   'openvr-vulkan-device.c',
   'openvr-vulkan-texture.c',
-  'openvr-time.c'
+  'openvr-time.c',
+  'openvr-math.c'
 ]
 
 openvr_glib_headers = [
@@ -22,7 +23,8 @@ openvr_glib_headers = [
   'openvr-vulkan-instance.h',
   'openvr-vulkan-device.h',
   'openvr-vulkan-texture.h',
-  'openvr-time.h'
+  'openvr-time.h',
+  'openvr-math.h'
 ]
 
 version_split = meson.project_version().split('.')
@@ -51,7 +53,8 @@ openvr_glib_deps = [
   gl_dep,
   cogl_1_dep,
   openvr_dep,
-  vulkan_dep
+  vulkan_dep,
+  graphene_dep
 ]
 
 openvr_glib_lib = shared_library('openvr-glib-' + api_version,
