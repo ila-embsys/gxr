@@ -52,11 +52,16 @@ configure_file(
   install_dir: join_paths(get_option('includedir'), 'openvr-glib')
 )
 
-openvr_glib_deps = [
+openvr_deps = [
+  openvr_dep,
+  stdcpp_dep,
+  dl_dep,
+]
+
+openvr_glib_deps = openvr_deps + [
   gio_dep,
   gdk_pixbuf_dep,
   gtk3_dep,
-  openvr_dep,
   vulkan_dep,
   graphene_dep
 ]
