@@ -88,3 +88,13 @@ if cogl_mutter_dep.found()
     include_directories: openvr_glib_inc,
     install: false)
 endif
+
+if libdrm_amdgpu_dep.found()
+  overlay_dmabuf_vulkan = executable(
+    'overlay_dmabuf_vulkan', ['overlay_dmabuf_vulkan.c'],
+    dependencies: [cogl_mutter_dep, gtk3_dep,
+                   vulkan_dep, libdrm_dep, libdrm_amdgpu_dep],
+    link_with: openvr_glib_lib,
+    include_directories: openvr_glib_inc,
+    install: false)
+endif
