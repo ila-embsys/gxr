@@ -55,6 +55,15 @@ openvr_vulkan_texture_from_dmabuf (OpenVRVulkanTexture *self,
                                    guint                height,
                                    VkFormat             format);
 
+bool
+openvr_vulkan_texture_from_dmabuf2 (OpenVRVulkanTexture *self,
+                                    OpenVRVulkanDevice  *device,
+                                    VkCommandBuffer      cmd_buffer,
+                                    int                  fd,
+                                    guint                width,
+                                    guint                height,
+                                    VkFormat             format);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_VULKAN_TEXTURE_H_ */

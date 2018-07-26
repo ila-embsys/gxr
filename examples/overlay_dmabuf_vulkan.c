@@ -156,8 +156,8 @@ int main (int argc, char *argv[]) {
   GMainLoop *loop = g_main_loop_new (NULL, FALSE);
 
   /* create dmabuf */
-  uint32_t width = 1920;
-  uint32_t height = 1080;
+  uint32_t width = 512;
+  uint32_t height = 512;
 
   int fd;
   int stride = ALIGN ((int) width, 32) * 4;
@@ -176,17 +176,21 @@ int main (int argc, char *argv[]) {
   g_assert (openvr_system_is_installed ());
 
   OpenVRVulkanUploader *uploader = openvr_vulkan_uploader_new ();
-  if (!openvr_vulkan_uploader_init_vulkan (uploader, false, system, compositor))
+  if (!openvr_vulkan_uploader_init_vulkan (uploader, true, system, compositor))
   {
     g_printerr ("Unable to initialize Vulkan!\n");
     return false;
   }
 
   texture = openvr_vulkan_texture_new ();
-
+/*
   if (!openvr_vulkan_texture_from_dmabuf (texture, uploader->device,
                                           fd, width, height,
                                           VK_FORMAT_B8G8R8A8_UNORM))
+*/
+  if (!openvr_vulkan_uploader_load_dmabuf2 (uploader, texture,
+                                            fd, width, height,
+                                            VK_FORMAT_B8G8R8A8_UNORM))
     {
       g_printerr ("Unable to initialize vulkan dmabuf texture.\n");
       return -1;
@@ -194,7 +198,7 @@ int main (int argc, char *argv[]) {
 
 
   OpenVROverlay *overlay = openvr_overlay_new ();
-  openvr_overlay_create_for_dashboard (overlay, "vulkan.cat", "Vulkan Cat");
+  openvr_overlay_create_for_dashboard (overlay, "vulkan.dmabuf", "Vulkan DMABUF");
 
   if (!openvr_overlay_is_valid (overlay) ||
       !openvr_overlay_is_available (overlay))

@@ -168,6 +168,28 @@ openvr_vulkan_uploader_load_raw (OpenVRVulkanUploader *self,
 }
 
 bool
+openvr_vulkan_uploader_load_dmabuf2 (OpenVRVulkanUploader *self,
+                                     OpenVRVulkanTexture  *texture,
+                                     int                   fd,
+                                     guint                 width,
+                                     guint                 height,
+                                     VkFormat              format)
+{
+  _begin_command_buffer (self);
+
+
+  if (!openvr_vulkan_texture_from_dmabuf2 (texture,
+                                          self->device,
+                                          self->current_cmd_buffer->cmd_buffer,
+                                          fd, width, height, format))
+    return false;
+
+  _submit_command_buffer (self);
+
+  return true;
+}
+
+bool
 openvr_vulkan_uploader_load_pixbuf (OpenVRVulkanUploader *self,
                                     OpenVRVulkanTexture  *texture,
                                     GdkPixbuf *pixbuf)
