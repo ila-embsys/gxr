@@ -14,6 +14,16 @@
 #define _countof(x) (sizeof (x) / sizeof ((x)[0]))
 #endif
 
+/* OpenVR: no unique_objects when using validation with SteamVR */
+static gchar const *validation_layers[] =
+  {
+    "VK_LAYER_GOOGLE_threading",
+    "VK_LAYER_LUNARG_parameter_validation",
+    "VK_LAYER_LUNARG_object_tracker",
+    "VK_LAYER_LUNARG_image",
+    "VK_LAYER_LUNARG_core_validation",
+  };
+
 static const gchar*
 debug_report_string (VkDebugReportFlagBitsEXT code)
 {
@@ -138,19 +148,9 @@ _init_validation_layers (uint32_t     num_layers,
       return false;
     }
 
-    /* OpenVR: no unique_objects when using validation with SteamVR */
-  char const *request_layers[] =
-    {
-      "VK_LAYER_GOOGLE_threading",
-      "VK_LAYER_LUNARG_parameter_validation",
-      "VK_LAYER_LUNARG_object_tracker",
-      "VK_LAYER_LUNARG_image",
-      "VK_LAYER_LUNARG_core_validation",
-    };
-
   for (uint32_t i = 0; i < num_layers; i++)
-    for (uint32_t j = 0; j < _countof (request_layers); j++)
-      if (strstr (layer_props[i].layerName, request_layers[j]) != NULL)
+    for (uint32_t j = 0; j < _countof (validation_layers); j++)
+      if (strstr (layer_props[i].layerName, validation_layers[j]) != NULL)
         enabled_layers[num_enabled++] = g_strdup (layer_props[i].layerName);
 
   *out_num_enabled = num_enabled;
