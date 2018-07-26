@@ -47,6 +47,14 @@ openvr_vulkan_texture_from_pixels (OpenVRVulkanTexture *self,
                                    gsize                size,
                                    VkFormat             format);
 
+bool
+openvr_vulkan_texture_from_dmabuf (OpenVRVulkanTexture *self,
+                                   OpenVRVulkanDevice  *device,
+                                   int                  fd,
+                                   guint                width,
+                                   guint                height,
+                                   VkFormat             format);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_VULKAN_TEXTURE_H_ */

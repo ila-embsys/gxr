@@ -194,3 +194,99 @@ openvr_vulkan_texture_from_pixels (OpenVRVulkanTexture *self,
                         NULL, 1, &image_memory_barrier);
   return true;
 }
+
+bool
+openvr_vulkan_texture_from_dmabuf (OpenVRVulkanTexture *self,
+                                   OpenVRVulkanDevice  *device,
+                                   int                  fd,
+                                   guint                width,
+                                   guint                height,
+                                   VkFormat             format)
+{
+  self->width = width;
+  self->height = height;
+  self->device = device;
+
+  VkImportMemoryFdInfoKHR import_memory_info = {
+    .sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_FD_INFO_KHR,
+    .handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT,
+    .fd = fd
+  };
+
+  /* Create the image */
+  VkImageCreateInfo image_info = {
+    .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+    .imageType = VK_IMAGE_TYPE_2D,
+    .extent = {
+      .width = width,
+      .height = height,
+      .depth = 1,
+    },
+    .mipLevels = 1,
+    .arrayLayers = 1,
+    .format = format,
+    .tiling = VK_IMAGE_TILING_LINEAR,
+    .samples = VK_SAMPLE_COUNT_1_BIT,
+    .usage = VK_IMAGE_USAGE_SAMPLED_BIT,
+    //.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+    .initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED
+    //.flags = 0
+  };
+  if (vkCreateImage (device->device, &image_info, NULL, &self->image)
+      != VK_SUCCESS)
+    {
+      g_printerr ("Could not create Vulkan image.\n");
+      return FALSE;
+    }
+
+  VkMemoryRequirements memory_requirements = {};
+  vkGetImageMemoryRequirements (device->device, self->image,
+                                &memory_requirements);
+
+  VkMemoryAllocateInfo memory_info =
+  {
+    .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+    .pNext = &import_memory_info,
+    .allocationSize = memory_requirements.size
+  };
+
+  openvr_vulkan_device_memory_type_from_properties (
+    device,
+    memory_requirements.memoryTypeBits,
+    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+    &memory_info.memoryTypeIndex);
+
+  if (vkAllocateMemory (device->device, &memory_info, NULL, &self->image_memory)
+      != VK_SUCCESS)
+   {
+     g_printerr ("Could allocate image memory.\n");
+     return FALSE;
+   }
+
+  vkBindImageMemory (device->device, self->image, self->image_memory, 0);
+
+  VkImageViewCreateInfo image_view_info =
+  {
+    .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+    .flags = 0,
+    .image = self->image,
+    .viewType = VK_IMAGE_VIEW_TYPE_2D,
+    .format = image_info.format,
+    .components = {
+      .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+      .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+      .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+      .a = VK_COMPONENT_SWIZZLE_IDENTITY,
+    },
+    .subresourceRange = {
+      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+      .baseMipLevel = 0,
+      .levelCount = image_info.mipLevels,
+      .baseArrayLayer = 0,
+      .layerCount = 1,
+    }
+  };
+  vkCreateImageView (device->device, &image_view_info, NULL, &self->image_view);
+
+  return true;
+}
