@@ -83,7 +83,6 @@ static PFN_vkDestroyDebugReportCallbackEXT
 static void
 openvr_vulkan_instance_init (OpenVRVulkanInstance *self)
 {
-  self->enable_validation = false;
   self->instance = VK_NULL_HANDLE;
   self->debug_report_cb = VK_NULL_HANDLE;
 }
@@ -258,7 +257,7 @@ openvr_vulkan_instance_create (OpenVRVulkanInstance *self,
   uint32_t num_enabled_layers = 0;
   const char **enabled_layers = NULL;
 
-  if (self->enable_validation)
+  if (enable_validation)
     {
       uint32_t num_layers = 0;
       VkResult result = vkEnumerateInstanceLayerProperties (&num_layers, NULL);
@@ -323,7 +322,7 @@ openvr_vulkan_instance_create (OpenVRVulkanInstance *self,
     return false;
   }
 
-  if (self->enable_validation)
+  if (enable_validation)
     _init_validation_callback (self);
 
   g_free (enabled_extensions);

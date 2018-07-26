@@ -25,8 +25,6 @@ struct _OpenVRVulkanInstance
 {
   GObjectClass parent_class;
 
-  bool enable_validation;
-
   VkInstance instance;
   VkDebugReportCallbackEXT debug_report_cb;
 };
