@@ -1,5 +1,5 @@
 project('openvr-glib', 'c', version: '0.4.0',
-  meson_version: '>= 0.40.0',
+  meson_version: '>= 0.42.0',
 )
 
 gnome = import('gnome')
@@ -25,8 +25,7 @@ gl_dep = dependency('GL')
 gtk3_dep = dependency('gtk+-3.0', version: '>= 3.22')
 gdk_pixbuf_dep = dependency('gdk-pixbuf-2.0', version: '>= 2.36')
 
-vulkan_dep = cpp.find_library('vulkan')
-
+vulkan_dep = dependency('vulkan')
 graphene_dep = dependency('graphene-1.0')
 
 ## Optional
