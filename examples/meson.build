@@ -98,3 +98,13 @@ if libdrm_amdgpu_dep.found()
     include_directories: openvr_glib_inc,
     install: false)
 endif
+
+if glfw_dep.found()
+  glfw_pixbuf_vulkan = executable(
+    'glfw_pixbuf_vulkan', ['glfw_pixbuf_vulkan.c'],
+    dependencies: [cogl_1_dep, gtk3_dep,
+                   vulkan_dep, glfw_dep],
+    link_with: openvr_glib_lib,
+    include_directories: openvr_glib_inc,
+    install: false)
+endif

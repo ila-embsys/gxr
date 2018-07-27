@@ -9,6 +9,7 @@ openvr_glib_sources = [
   'openvr-vulkan-instance.c',
   'openvr-vulkan-device.c',
   'openvr-vulkan-texture.c',
+  'openvr-vulkan-renderer.c',
   'openvr-time.c',
   'openvr-math.c'
 ]
@@ -23,6 +24,7 @@ openvr_glib_headers = [
   'openvr-vulkan-instance.h',
   'openvr-vulkan-device.h',
   'openvr-vulkan-texture.h',
+  'openvr-vulkan-renderer.h',
   'openvr-time.h',
   'openvr-math.h'
 ]

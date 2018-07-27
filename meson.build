@@ -38,6 +38,7 @@ clutter_dep = dependency('clutter-1.0', required : false)
 cairo_dep = dependency('cairo', required : false)
 libdrm_dep = dependency('libdrm', required : false)
 libdrm_amdgpu_dep = dependency('libdrm_amdgpu', required : false)
+glfw_dep = dependency('glfw3', required : false)
 ###
 
 subdir('src')
