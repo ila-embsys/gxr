@@ -14,10 +14,6 @@
 #include <vulkan/vulkan.h>
 
 #include "openvr-vulkan-instance.h"
-#include "openvr-compositor.h"
-#include "openvr-system.h"
-
-#include <openvr_capi.h>
 
 G_BEGIN_DECLS
 

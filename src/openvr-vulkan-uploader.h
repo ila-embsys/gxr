@@ -23,6 +23,7 @@
 #include "openvr-vulkan-texture.h"
 #include "openvr-compositor.h"
 #include "openvr-overlay.h"
+#include "openvr-system.h"
 
 G_BEGIN_DECLS
 

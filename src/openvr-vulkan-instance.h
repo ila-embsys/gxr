@@ -12,8 +12,6 @@
 #include <vulkan/vulkan.h>
 #include <stdbool.h>
 
-#include "openvr-compositor.h"
-
 #define ENUM_TO_STR(r) case r: return #r
 
 G_BEGIN_DECLS
