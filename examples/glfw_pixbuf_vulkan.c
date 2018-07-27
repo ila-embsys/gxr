@@ -9,6 +9,9 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gdk/gdk.h>
 
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
+
 #include <openvr-glib.h>
 
 #include "openvr-system.h"
@@ -16,7 +19,15 @@
 #include "openvr-compositor.h"
 #include "openvr-vulkan-renderer.h"
 
-OpenVRVulkanTexture *texture;
+#define WIDTH 1280
+#define HEIGHT 720
+
+typedef struct Example
+{
+  OpenVRVulkanTexture *texture;
+  GLFWwindow* window;
+  GMainLoop *loop;
+} Example;
 
 GdkPixbuf *
 load_gdk_pixbuf ()
@@ -36,28 +47,39 @@ load_gdk_pixbuf ()
   }
 }
 
-/*
-static void
-_destroy_cb (OpenVROverlay *overlay,
-             gpointer       data)
+void
+init_glfw (Example *self)
 {
-  g_print ("destroy\n");
-  GMainLoop *loop = (GMainLoop*) data;
-  g_main_loop_quit (loop);
-}
-*/
+  glfwInit();
 
-int
-test_cat_overlay ()
+  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+  self->window = glfwCreateWindow(WIDTH, HEIGHT, "Pixbuf", NULL, NULL);
+}
+
+gboolean
+draw_cb (gpointer data)
 {
-  GMainLoop *loop;
+  Example *self = (Example*) data;
+
+  glfwPollEvents();
+  if (glfwWindowShouldClose(self->window))
+    g_main_loop_quit (self->loop);
+
+  return TRUE;
+}
+
+int main (int argc, char *argv[]) {
+  Example example = {};
+
+  init_glfw (&example);
 
   GdkPixbuf * pixbuf = load_gdk_pixbuf ();
 
   if (pixbuf == NULL)
     return -1;
 
-  loop = g_main_loop_new (NULL, FALSE);
+  example.loop = g_main_loop_new (NULL, FALSE);
 
   OpenVRVulkanRenderer *renderer = openvr_vulkan_renderer_new ();
   if (!openvr_vulkan_renderer_init_vulkan (renderer, true))
@@ -66,22 +88,20 @@ test_cat_overlay ()
     return false;
   }
 
-  texture = openvr_vulkan_texture_new ();
+  example.texture = openvr_vulkan_texture_new ();
 
-  openvr_vulkan_renderer_load_pixbuf (renderer, texture, pixbuf);
+  openvr_vulkan_renderer_load_pixbuf (renderer, example.texture, pixbuf);
 
-  g_main_loop_run (loop);
-  g_main_loop_unref (loop);
-
-  g_print ("bye\n");
+  g_timeout_add (20, draw_cb, &example);
+  g_main_loop_run (example.loop);
+  g_main_loop_unref (example.loop);
 
   g_object_unref (pixbuf);
-  g_object_unref (texture);
+  g_object_unref (example.texture);
   g_object_unref (renderer);
 
-  return 0;
-}
+  glfwDestroyWindow(example.window);
+  glfwTerminate();
 
-int main (int argc, char *argv[]) {
-  return test_cat_overlay ();
+  return 0;
 }
