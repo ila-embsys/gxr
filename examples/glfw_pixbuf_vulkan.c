@@ -36,6 +36,7 @@ load_gdk_pixbuf ()
   }
 }
 
+/*
 static void
 _destroy_cb (OpenVROverlay *overlay,
              gpointer       data)
@@ -44,6 +45,7 @@ _destroy_cb (OpenVROverlay *overlay,
   GMainLoop *loop = (GMainLoop*) data;
   g_main_loop_quit (loop);
 }
+*/
 
 int
 test_cat_overlay ()
