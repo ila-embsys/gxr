@@ -250,9 +250,13 @@ openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
                                     OpenVRSystem *system,
                                     OpenVRCompositor *compositor)
 {
+
+  GSList* required_extensions = NULL;
+  openvr_compositor_get_instance_extensions (compositor, &required_extensions);
+
   if (!openvr_vulkan_instance_create (self->instance,
                                       enable_validation,
-                                      compositor))
+                                      required_extensions))
     {
       g_printerr ("Failed to create instance.\n");
       return false;

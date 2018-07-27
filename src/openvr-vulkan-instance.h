@@ -34,7 +34,7 @@ OpenVRVulkanInstance *openvr_vulkan_instance_new (void);
 bool
 openvr_vulkan_instance_create (OpenVRVulkanInstance *self,
                                bool enable_validation,
-                               OpenVRCompositor *compositor);
+                               GSList* requested_extensions);
 
 G_END_DECLS
 
