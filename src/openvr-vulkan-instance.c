@@ -251,12 +251,6 @@ openvr_vulkan_instance_create (OpenVRVulkanInstance *self,
                                bool enable_validation,
                                GSList* required_extensions)
 {
-  if (required_extensions == NULL)
-    {
-      g_printerr ("required_extensions is NULL.\n");
-      return false;
-    }
-
   uint32_t num_enabled_layers = 0;
   const char **enabled_layers = NULL;
 

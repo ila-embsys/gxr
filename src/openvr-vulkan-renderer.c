@@ -256,8 +256,21 @@ openvr_vulkan_renderer_init_vulkan (OpenVRVulkanRenderer *self,
       return false;
     }
 
-  if (!openvr_vulkan_device_create (self->device,
-                                    self->instance, NULL, NULL))
+  const gchar *device_extensions[] =
+  {
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+    VK_EXT_EXTERNAL_MEMORY_DMA_BUF_EXTENSION_NAME
+  };
+
+  GSList *device_ext_list = NULL;
+  for (int i = 0; i < G_N_ELEMENTS (device_extensions); i++)
+    {
+      device_ext_list = g_slist_append (device_ext_list,
+                                        g_strdup (device_extensions[i]));
+    }
+
+  if (!openvr_vulkan_device_create (self->device, self->instance,
+                                    VK_NULL_HANDLE, device_ext_list))
     {
       g_printerr ("Failed to create device.\n");
       return false;

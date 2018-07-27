@@ -160,12 +160,6 @@ _init_device_extensions (OpenVRVulkanDevice *self,
 {
   uint32_t num_enabled = 0;
 
-  if (required_extensions == NULL)
-    {
-      g_printerr ("_init_device_extensions: required_extensions is NULL.");
-      return false;
-    }
-
   /* Enable required device extensions */
   VkExtensionProperties *extension_props =
     g_malloc(sizeof(VkExtensionProperties) * num_extensions);
@@ -183,11 +177,6 @@ _init_device_extensions (OpenVRVulkanDevice *self,
                   result);
       return false;
     }
-
-  const gchar *dma_buf_ext = VK_EXT_EXTERNAL_MEMORY_DMA_BUF_EXTENSION_NAME;
-  required_extensions =
-    g_slist_append (required_extensions, (gpointer) dma_buf_ext);
-
 
   for (uint32_t i = 0; i < g_slist_length (required_extensions); i++)
     {
