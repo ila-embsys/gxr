@@ -153,12 +153,18 @@ _get_device_extension_count (OpenVRVulkanDevice *self,
 
 bool
 _init_device_extensions (OpenVRVulkanDevice *self,
-                         OpenVRCompositor   *compositor,
+                         GSList             *required_extensions,
                          uint32_t            num_extensions,
                          const char        **extension_names,
                          uint32_t           *out_num_enabled)
 {
   uint32_t num_enabled = 0;
+
+  if (required_extensions == NULL)
+    {
+      g_printerr ("_init_device_extensions: required_extensions is NULL.");
+      return false;
+    }
 
   /* Enable required device extensions */
   VkExtensionProperties *extension_props =
@@ -177,12 +183,6 @@ _init_device_extensions (OpenVRVulkanDevice *self,
                   result);
       return false;
     }
-
-  /* Query required OpenVR device extensions */
-  GSList *required_extensions = NULL;
-  openvr_compositor_get_device_extensions (compositor,
-                                           self->physical_device,
-                                          &required_extensions);
 
   const gchar *dma_buf_ext = VK_EXT_EXTERNAL_MEMORY_DMA_BUF_EXTENSION_NAME;
   required_extensions =
@@ -219,10 +219,10 @@ _init_device_extensions (OpenVRVulkanDevice *self,
 bool
 openvr_vulkan_device_create (OpenVRVulkanDevice   *self,
                              OpenVRVulkanInstance *instance,
-                             VkPhysicalDevice      requested_device,
-                             OpenVRCompositor     *compositor)
+                             VkPhysicalDevice      device,
+                             GSList               *extensions)
 {
-  if (!_find_physical_device (self, instance, requested_device))
+  if (!_find_physical_device (self, instance, device))
     return false;
 
   if (!_find_graphics_queue (self))
@@ -237,7 +237,7 @@ openvr_vulkan_device_create (OpenVRVulkanDevice   *self,
   uint32_t num_enabled = 0;
 
   if (num_extensions > 0)
-    if (!_init_device_extensions (self, compositor, num_extensions,
+    if (!_init_device_extensions (self, extensions, num_extensions,
                                   extension_names, &num_enabled))
       return false;
 

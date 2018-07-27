@@ -251,12 +251,13 @@ openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
                                     OpenVRCompositor *compositor)
 {
 
-  GSList* required_extensions = NULL;
-  openvr_compositor_get_instance_extensions (compositor, &required_extensions);
+  GSList* openvr_instance_extensions = NULL;
+  openvr_compositor_get_instance_extensions (compositor,
+                                             &openvr_instance_extensions);
 
   if (!openvr_vulkan_instance_create (self->instance,
                                       enable_validation,
-                                      required_extensions))
+                                      openvr_instance_extensions))
     {
       g_printerr ("Failed to create instance.\n");
       return false;
@@ -270,10 +271,16 @@ openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
 
   g_print ("OpenVR requests device %ld.\n", physical_device);
 
+  /* Query required OpenVR device extensions */
+  GSList *openvr_device_extensions = NULL;
+  openvr_compositor_get_device_extensions (compositor,
+                                           (VkPhysicalDevice) physical_device,
+                                          &openvr_device_extensions);
+
   if (!openvr_vulkan_device_create (self->device,
                                     self->instance,
-                                    physical_device,
-                                    compositor))
+                                    (VkPhysicalDevice) physical_device,
+                                    openvr_device_extensions))
     {
       g_printerr ("Failed to create device.\n");
       return false;
