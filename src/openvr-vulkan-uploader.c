@@ -262,9 +262,17 @@ openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
       return false;
     }
 
+  /* Query OpenVR for the physical device to use */
+  uint64_t physical_device = 0;
+  system->functions->GetOutputDevice (
+    &physical_device, ETextureType_TextureType_Vulkan,
+    (struct VkInstance_T*) self->instance->instance);
+
+  g_print ("OpenVR requests device %ld.\n", physical_device);
+
   if (!openvr_vulkan_device_create (self->device,
                                     self->instance,
-                                    system,
+                                    physical_device,
                                     compositor))
     {
       g_printerr ("Failed to create device.\n");

@@ -43,7 +43,7 @@ OpenVRVulkanDevice *openvr_vulkan_device_new (void);
 bool
 openvr_vulkan_device_create (OpenVRVulkanDevice   *self,
                              OpenVRVulkanInstance *instance,
-                             OpenVRSystem         *system,
+                             VkPhysicalDevice      requested_device,
                              OpenVRCompositor     *compositor);
 
 bool

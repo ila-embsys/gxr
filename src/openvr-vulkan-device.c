@@ -41,7 +41,7 @@ openvr_vulkan_device_class_init (OpenVRVulkanDeviceClass *klass)
 bool
 _find_physical_device (OpenVRVulkanDevice   *self,
                        OpenVRVulkanInstance *instance,
-                       OpenVRSystem *system)
+                       VkPhysicalDevice requested_device)
 {
   uint32_t num_devices = 0;
   VkResult result =
@@ -65,32 +65,35 @@ _find_physical_device (OpenVRVulkanDevice   *self,
       return false;
     }
 
-  /* Query OpenVR for the physical device to use */
-  uint64_t physical_device = 0;
-  system->functions->GetOutputDevice (&physical_device,
-                                       ETextureType_TextureType_Vulkan,
-                                       (struct VkInstance_T*) instance->instance);
-
-  /* Select the physical device */
-  self->physical_device = VK_NULL_HANDLE;
-  for (uint32_t i = 0; i < num_devices; i++)
-    if (((VkPhysicalDevice) physical_device) == physical_devices[i])
-      {
-        self->physical_device = (VkPhysicalDevice) physical_device;
-        break;
-      }
-
-  if (self->physical_device == VK_NULL_HANDLE)
+  if (requested_device == VK_NULL_HANDLE)
     {
-      /* Fallback: Grab the first physical device */
-      g_printerr ("Failed to find GetOutputDevice VkPhysicalDevice, "
-                  "falling back to choosing first device.\n");
+      /* No device requested. Using first one */
       self->physical_device = physical_devices[0];
     }
+  else
+    {
+      /* Find requested device */
+      self->physical_device = VK_NULL_HANDLE;
+      for (uint32_t i = 0; i < num_devices; i++)
+        if (physical_devices[i] == requested_device)
+          {
+            self->physical_device = requested_device;
+            break;
+          }
+
+      if (self->physical_device == VK_NULL_HANDLE)
+        {
+          /* Requested device not found. Using first one */
+          g_printerr ("Failed to find requested VkPhysicalDevice, "
+                      "falling back to the first one.\n");
+          self->physical_device = physical_devices[0];
+        }
+    }
+
   g_free (physical_devices);
 
   vkGetPhysicalDeviceMemoryProperties (self->physical_device,
-                                       &self->memory_properties);
+                                      &self->memory_properties);
 
   return true;
 }
@@ -216,10 +219,10 @@ _init_device_extensions (OpenVRVulkanDevice *self,
 bool
 openvr_vulkan_device_create (OpenVRVulkanDevice   *self,
                              OpenVRVulkanInstance *instance,
-                             OpenVRSystem         *system,
+                             VkPhysicalDevice      requested_device,
                              OpenVRCompositor     *compositor)
 {
-  if (!_find_physical_device (self, instance, system))
+  if (!_find_physical_device (self, instance, requested_device))
     return false;
 
   if (!_find_graphics_queue (self))
