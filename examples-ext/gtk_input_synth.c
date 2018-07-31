@@ -15,6 +15,10 @@
 #include <gtk/gtk.h>
 #include <gdk/gdkx.h>
 
+#ifdef XDO
+#include <xdo.h>
+#endif
+
 static gboolean
 _quit_cb (GtkWidget *button, GdkEvent *event, GMainLoop *loop)
 {
@@ -188,6 +192,58 @@ _run_xlib_synth_cb (GtkWidget *button, GdkEventButton *event, GdkWindow *window)
   return TRUE;
 }
 
+#ifdef XDO
+gboolean
+_xdo_synth_iteration_cb (gpointer data)
+{
+  xdo_t* xdo = data;
+  Window window;
+  xdo_get_active_window(xdo, &window);
+  //g_print("xdo xurrent active window: %lu\n", window);
+  int pid = xdo_get_pid_window(xdo, window);
+  //g_print("xdo xurrent active window PID: %d\n", pid);
+
+  int originalx;
+  int originaly;
+  int screennum;
+  xdo_get_mouse_location(xdo, &originalx, &originaly, &screennum);
+  g_print("Original Mouse pos (%d, %d) on screen %d\n", originalx, originaly, screennum);
+
+  guint32 now = monotonic_time_ms ();
+  guint32 passed = now - gdk_simulation.start_time_ms;
+
+  gdouble passed_sin = sin (((gdouble) passed) / 500.0);
+
+  gdk_simulation.runs += 1;
+
+  gdouble current_y = gdk_simulation.start_y + passed_sin * 100.0;
+  xdo_move_mouse_relative_to_window(xdo, window, 50, current_y);
+  g_print("Move mouse to pos (%d, %f) relative to window %d\n", 50, current_y, screennum);
+
+  xdo_click_window(xdo, window, 1);
+  g_print("click!\n");
+
+  xdo_move_mouse(xdo, originalx, originaly, screennum);
+  g_print("Mve Mouse to original pos (%d, %d) on screen %d\n", originalx, originaly, screennum);
+
+  if (gdk_simulation.runs > 50)
+    return FALSE;
+  else
+    return TRUE;
+}
+
+static gboolean
+_run_xdo_synth_cb (GtkWidget *button, GdkEventButton *event, GdkWindow *window)
+{
+  gdk_simulation.runs = 0;
+  gdk_simulation.start_time_ms = monotonic_time_ms ();
+
+  xdo_t* xdo = xdo_new(NULL);
+  g_timeout_add (100, _xdo_synth_iteration_cb, xdo);
+  return TRUE;
+}
+#endif
+
 int
 main (int argc, char **argv)
 {
@@ -201,11 +257,17 @@ main (int argc, char **argv)
 
   GtkWidget *button1 = gtk_button_new_with_label ("Synth Gtk");
   GtkWidget *button2 = gtk_button_new_with_label ("Synth Xlib");
+#ifdef XDO
+  GtkWidget *button4 = gtk_button_new_with_label ("Synth xdo");
+#endif
   GtkWidget *button3 = gtk_button_new_with_label ("Quit");
 
   gtk_box_pack_start (GTK_BOX (box), button1, FALSE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (box), button2, TRUE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (box), button3, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (box), button2, FALSE, FALSE, 0);
+#ifdef XDO
+  gtk_box_pack_start (GTK_BOX (box), button4, FALSE, FALSE, 0);
+#endif
+  gtk_box_pack_start (GTK_BOX (box), button3, TRUE, FALSE, 0);
 
   g_object_set (G_OBJECT (box), "margin", 20, NULL);
 
@@ -220,17 +282,28 @@ main (int argc, char **argv)
                     (GCallback) _run_gtk_synth_cb, gdk_window);
   g_signal_connect (button2, "button-press-event",
                     (GCallback) _run_xlib_synth_cb, gdk_window);
+#ifdef XDO
+  g_signal_connect (button4, "button-press-event",
+                    (GCallback) _run_xdo_synth_cb, gdk_window);
+#endif
   g_signal_connect (button3, "button-press-event", (GCallback) _quit_cb, loop);
   g_signal_connect (window, "destroy", (GCallback) _quit2_cb, loop);
 
   g_signal_connect (window, "motion-notify-event", (GCallback) _move_cb, NULL);
   g_signal_connect (button1, "motion-notify-event", (GCallback) _move_cb, NULL);
   g_signal_connect (button2, "motion-notify-event", (GCallback) _move_cb, NULL);
+#ifdef XDO
+  g_signal_connect (button4, "motion-notify-event", (GCallback) _move_cb, NULL);
+#endif
   g_signal_connect (button3, "motion-notify-event", (GCallback) _move_cb, NULL);
+
 
   gtk_widget_add_events (window, GDK_POINTER_MOTION_MASK);
   gtk_widget_add_events (button1, GDK_POINTER_MOTION_MASK);
   gtk_widget_add_events (button2, GDK_POINTER_MOTION_MASK);
+#ifdef XDO
+  gtk_widget_add_events (button4, GDK_POINTER_MOTION_MASK);
+#endif
   gtk_widget_add_events (button3, GDK_POINTER_MOTION_MASK);
 
   g_main_loop_run (loop);
