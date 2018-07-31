@@ -32,6 +32,7 @@ graphene_dep = dependency('graphene-1.0')
 ## Optional
 cogl_mutter_dep = dependency('mutter-cogl-2', required : false)
 x11_dep = dependency('x11', required : false)
+xi_dep = dependency('xi', required : false)
 clutter_gtk_dep = dependency('clutter-gtk-1.0', required : false)
 clutter_dep = dependency('clutter-1.0', required : false)
 cairo_dep = dependency('cairo', required : false)

@@ -75,3 +75,10 @@ if x11_dep.found()
     dependencies: [gtk3_dep, x11_dep, m_dep],
     install: false)
 endif
+
+if x11_dep.found() and xi_dep.found()
+  gtk_input_synth = executable(
+    'uinput-vrpointer', ['uinput-vrpointer.c'],
+    dependencies: [x11_dep, xi_dep],
+    install: false)
+endif
