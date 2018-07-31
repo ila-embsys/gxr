@@ -248,9 +248,23 @@ bool
 openvr_vulkan_renderer_init_vulkan (OpenVRVulkanRenderer *self,
                                     bool enable_validation)
 {
+
+  const gchar *instance_extensions[] =
+  {
+    VK_KHR_SURFACE_EXTENSION_NAME,
+    "VK_KHR_xcb_surface" // VK_KHR_XCB_SURFACE_EXTENSION_NAME
+  };
+
+  GSList *instance_ext_list = NULL;
+  for (int i = 0; i < G_N_ELEMENTS (instance_extensions); i++)
+    {
+      instance_ext_list = g_slist_append (instance_ext_list,
+                                          g_strdup (instance_extensions[i]));
+    }
+
   if (!openvr_vulkan_instance_create (self->instance,
                                       enable_validation,
-                                      NULL))
+                                      instance_ext_list))
     {
       g_printerr ("Failed to create instance.\n");
       return false;
@@ -259,7 +273,8 @@ openvr_vulkan_renderer_init_vulkan (OpenVRVulkanRenderer *self,
   const gchar *device_extensions[] =
   {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-    VK_EXT_EXTERNAL_MEMORY_DMA_BUF_EXTENSION_NAME
+    VK_EXT_EXTERNAL_MEMORY_DMA_BUF_EXTENSION_NAME,
+    VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME
   };
 
   GSList *device_ext_list = NULL;

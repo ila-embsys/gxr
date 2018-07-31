@@ -82,6 +82,16 @@ int main (int argc, char *argv[]) {
 
   example.loop = g_main_loop_new (NULL, FALSE);
 
+  uint32_t num_glfw_extensions = 0;
+  const char** glfw_extensions;
+  glfw_extensions = glfwGetRequiredInstanceExtensions(&num_glfw_extensions);
+
+  g_print ("GLFW requires %d instance extensions.\n", num_glfw_extensions);
+  for (int i = 0; i < num_glfw_extensions; i++)
+    {
+      g_print ("%s\n", glfw_extensions[i]);
+    }
+
   OpenVRVulkanRenderer *renderer = openvr_vulkan_renderer_new ();
   if (!openvr_vulkan_renderer_init_vulkan (renderer, true))
   {
