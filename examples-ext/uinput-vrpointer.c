@@ -138,38 +138,24 @@ int main(void)
   printf("\n");
 
   if (vrPointerSlaveId != -1) {
-    printf("Found VR Pointer slave!\n");
+    printf("Found VR Pointer slave %d!\n", vrPointerSlaveId);
   } else {
     printf("Error, could not find VR Pointer. Did uinput create it without errors?\n");
   }
 
   vrPointerMasterId = getMasterPointerDev(display, VRPOINTERMASTERNAME);
   if (vrPointerMasterId == -1) {
-    printf("Creating master %s\n", VRPOINTERMASTERNAME);
     vrPointerMasterId = addXiMaster(display, VRPOINTERMASTERCREATENAME, VRPOINTERMASTERNAME);
     if (vrPointerMasterId != -1) {
       printf("Created master %s: %d\n", VRPOINTERMASTERNAME, vrPointerMasterId);
     } else {
-      printf("ERROR!\n");
+      printf("Could not create master pointer %s!\n", VRPOINTERMASTERNAME);
     }
   }
 
   sleep(1);
 
-  /*
-  {
-    XIDetachSlaveInfo c;
-    c.type = XIDetachSlave;
-    c.deviceid = vrPointerSlaveId;
-    int ret = XIChangeHierarchy(display, (XIAnyHierarchyChangeInfo*)&c, 1);
-    if (ret == 0) {
-      printf("Detached %s %d!\n", VRPOINTERNAME, vrPointerSlaveId);
-    } else {
-      printf("Failed to detach %s %d: %d!\n", VRPOINTERNAME, vrPointerSlaveId, ret);
-    }
-  }
-  */
-
+  XSync(display, False); // make sure the x commands creating the master device have finished before we reattach the slave device
   {
     XIAttachSlaveInfo c;
     c.type = XIAttachSlave;
@@ -177,17 +163,12 @@ int main(void)
     c.new_master = vrPointerMasterId;
     int ret = XIChangeHierarchy(display, (XIAnyHierarchyChangeInfo*)&c, 1);
     if (ret == Success) {
-      printf("Attached %s %d to %s %d!\n", VRPOINTERNAME, vrPointerSlaveId, VRPOINTERMASTERNAME, vrPointerMasterId);
+      printf("Attached %d to %d!\n", vrPointerSlaveId, vrPointerMasterId);
     } else {
-      printf("Failed to attach %s %d to %s %d: %d!\n", VRPOINTERNAME, vrPointerSlaveId, VRPOINTERMASTERNAME, vrPointerMasterId, ret);
+      printf("Failed to attach %d to %d: %d!\n", vrPointerSlaveId, vrPointerMasterId, ret);
     }
   }
-
-  //TODO: Why does the above not work?
-  char command[1000];
-  sprintf(command, "xinput reattach %d %d", vrPointerSlaveId, vrPointerMasterId);
-  printf("Running command %s\n", command);
-  system(command);
+  XSync(display, False);
 
   {
     int i = 100;
