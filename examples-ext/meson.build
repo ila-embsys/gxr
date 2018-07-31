@@ -79,6 +79,6 @@ endif
 if x11_dep.found() and xi_dep.found()
   gtk_input_synth = executable(
     'uinput-vrpointer', ['uinput-vrpointer.c'],
-    dependencies: [x11_dep, xi_dep],
+    dependencies: [x11_dep, xi_dep, m_dep],
     install: false)
 endif

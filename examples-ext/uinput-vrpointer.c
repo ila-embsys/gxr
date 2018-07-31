@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
+#include <math.h>
 
 #include <X11/extensions/XInput2.h>
 #include <stdbool.h>
@@ -25,10 +26,21 @@ void writevalue(int fd,
   write(fd, &ev, sizeof(ev));
 }
 
+void moveMouseRel(int fd, int x, int y) {
+  writevalue(fd, EV_REL, REL_X, x);
+  writevalue(fd, EV_REL, REL_Y, y);
+  writevalue(fd, EV_SYN, SYN_REPORT, 0);
+}
+
+void moveMouseAbs(int fd, int x, int y) {
+  moveMouseRel(fd, -100000, -100000); // hack because X has no absolute mouse positioning??
+  moveMouseRel(fd, x, y);
+}
+
 int getMasterPointerDev(Display* dpy, char* name) {
   int ndevices;
   XIDeviceInfo *info, *dev;
-  info = XIQueryDevice(dpy, XIAllDevices, &ndevices);
+  info = XIQueryDevice(dpy, XIAllMasterDevices, &ndevices);
   for(int i = 0; i < ndevices; i++)
   {
     dev = &info[i];
@@ -157,11 +169,9 @@ int main(void)
    */
   sleep(1);
 
-  int ndevices;
-
   Display* display = XOpenDisplay(NULL);
 
-  printXiInfo(display);
+  //printXiInfo(display);
 
   int vrPointerSlaveId = getSlavePointerDev(display, UINPUTVRPOINTERNAME);
   if (vrPointerSlaveId != -1) {
@@ -191,15 +201,13 @@ int main(void)
   }
   XSync(display, False); // makes sure the reattaching is finished
 
-  {
-    int i = 100;
-    /* Move the mouse diagonally, 5 units per axis */
-    while (i--) {
-      writevalue(fd, EV_REL, REL_X, 5);
-      writevalue(fd, EV_REL, REL_Y, 5);
-      writevalue(fd, EV_SYN, SYN_REPORT, 0);
-      usleep(15000);
-    }
+
+  moveMouseAbs(fd, 200, 200);
+  for (int i = 0; i < 1000; i++) {
+    int offset = sin(i/100.) * 3;
+    //printf("x offset %d\n", offset);
+    moveMouseRel(fd, offset, 0);
+    usleep(15000);
   }
 
   /*
