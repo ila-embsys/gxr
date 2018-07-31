@@ -54,8 +54,13 @@ OpenVRVulkanRenderer *openvr_vulkan_renderer_new (void);
 
 bool
 openvr_vulkan_renderer_init_vulkan (OpenVRVulkanRenderer *self,
+                                    VkSurfaceKHR surface,
                                     bool enable_validation);
 
+bool
+openvr_vulkan_renderer_init_swapchain (VkDevice device,
+                                       VkPhysicalDevice physical_device,
+                                       VkSurfaceKHR surface);
 
 void
 openvr_vulkan_renderer_submit_frame (OpenVRVulkanRenderer *self,

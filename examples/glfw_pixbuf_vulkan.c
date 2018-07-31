@@ -93,7 +93,7 @@ int main (int argc, char *argv[]) {
     }
 
   OpenVRVulkanRenderer *renderer = openvr_vulkan_renderer_new ();
-  if (!openvr_vulkan_renderer_init_vulkan (renderer, true))
+  if (!openvr_vulkan_renderer_init_vulkan (renderer, example.surface, true))
   {
     g_printerr ("Unable to initialize Vulkan!\n");
     return -1;
@@ -105,6 +105,18 @@ int main (int argc, char *argv[]) {
     {
       g_printerr ("Unable to create surface.\n");
       return -1;
+    }
+
+  g_print ("Device surface support: %d\n",
+           openvr_vulkan_device_queue_supports_surface (renderer->device,
+                                                        example.surface));
+
+  if (!openvr_vulkan_renderer_init_swapchain (renderer->device->device,
+                                              renderer->device->physical_device,
+                                              example.surface))
+    {
+      g_printerr ("Failed to create swapchain.\n");
+      return false;
     }
 
   example.texture = openvr_vulkan_texture_new ();

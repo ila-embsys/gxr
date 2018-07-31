@@ -57,6 +57,10 @@ openvr_vulkan_device_create_buffer (OpenVRVulkanDevice *self,
                                     VkBuffer           *buffer_out,
                                     VkDeviceMemory     *device_memory_out);
 
+bool
+openvr_vulkan_device_queue_supports_surface (OpenVRVulkanDevice *self,
+                                             VkSurfaceKHR surface);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_VULKAN_DEVICE_H_ */

@@ -136,6 +136,17 @@ _find_graphics_queue (OpenVRVulkanDevice *self)
 }
 
 bool
+openvr_vulkan_device_queue_supports_surface (OpenVRVulkanDevice *self,
+                                             VkSurfaceKHR surface)
+{
+  VkBool32 surface_support = false;
+  vkGetPhysicalDeviceSurfaceSupportKHR(self->physical_device,
+                                       self->queue_family_index,
+                                       surface, &surface_support);
+  return surface_support;
+}
+
+bool
 _get_device_extension_count (OpenVRVulkanDevice *self,
                              uint32_t           *count)
 {

@@ -245,7 +245,128 @@ openvr_vulkan_renderer_load_cairo_surface (OpenVRVulkanRenderer *self,
 }
 
 bool
+_query_surface_present_modes (VkPhysicalDevice device,
+                              VkSurfaceKHR surface,
+                              VkPresentModeKHR *present_modes)
+{
+  uint32_t num_present_modes;
+  vkGetPhysicalDeviceSurfacePresentModesKHR (device, surface,
+                                            &num_present_modes, NULL);
+
+  if (num_present_modes != 0)
+    {
+      present_modes = g_malloc (sizeof(VkPresentModeKHR) * num_present_modes);
+      vkGetPhysicalDeviceSurfacePresentModesKHR (device, surface,
+                                                &num_present_modes,
+                                                 present_modes);
+    }
+  else
+    {
+      g_printerr ("Could enumerate present modes.\n");
+      return false;
+    }
+
+  return true;
+}
+
+bool
+_query_surface_formats (VkPhysicalDevice device,
+                        VkSurfaceKHR surface,
+                        VkSurfaceFormatKHR *formats)
+{
+  uint32_t num_formats;
+  vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &num_formats, NULL);
+
+  if (num_formats != 0)
+    {
+      formats = g_malloc (sizeof(VkSurfaceFormatKHR) * num_formats);
+      vkGetPhysicalDeviceSurfaceFormatsKHR (device, surface,
+                                           &num_formats, formats);
+    }
+  else
+    {
+      g_printerr ("Could enumerate surface formats.\n");
+      return false;
+    }
+
+  return true;
+}
+
+bool
+openvr_vulkan_renderer_init_swapchain (VkDevice device,
+                                       VkPhysicalDevice physical_device,
+                                       VkSurfaceKHR surface)
+{
+  VkSurfaceCapabilitiesKHR surface_caps;
+
+  VkSurfaceFormatKHR surface_format = {
+    .format = VK_FORMAT_B8G8R8A8_UNORM,
+    .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+  };
+
+  VkSurfaceFormatKHR *formats = NULL;
+  _query_surface_formats (physical_device, surface, formats);
+
+  VkPresentModeKHR *present_modes = NULL;
+  _query_surface_present_modes (physical_device, surface, present_modes);
+
+  vkGetPhysicalDeviceSurfaceCapabilitiesKHR (physical_device,
+                                             surface, &surface_caps);
+
+  VkSwapchainCreateInfoKHR swapchain_info = {
+    .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+    .surface = surface,
+    .minImageCount = surface_caps.minImageCount,
+    .imageFormat = surface_format.format,
+    .imageColorSpace = surface_format.colorSpace,
+    .imageExtent = surface_caps.currentExtent,
+    .imageArrayLayers = 1,
+    .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+    .preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
+    .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+    .presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR,
+    .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
+    .clipped = VK_TRUE
+  };
+
+  VkSwapchainKHR swap_chain;
+
+  VkResult res =
+    vkCreateSwapchainKHR (device, &swapchain_info, NULL, &swap_chain);
+
+  if (res != VK_SUCCESS)
+    {
+      g_printerr ("Unable to create swap chain.\n");
+      return false;
+    }
+  else
+    {
+      g_print ("Created swapchain successfully.\n");
+    }
+
+  uint32_t image_count;
+  res = vkGetSwapchainImagesKHR (device, swap_chain, &image_count, NULL);
+
+  g_print ("The swapchain has %d images\n", image_count);
+
+  VkImage swap_chain_images = g_malloc (sizeof(VkImage) * image_count);
+  res = vkGetSwapchainImagesKHR (device, swap_chain,
+                                &image_count, &swap_chain_images);
+
+  if (res != VK_SUCCESS)
+    {
+      g_printerr ("Unable to get swapchain images.\n");
+      return false;
+    }
+
+  vkDestroySwapchainKHR(device, swap_chain, NULL);
+
+  return true;
+}
+
+bool
 openvr_vulkan_renderer_init_vulkan (OpenVRVulkanRenderer *self,
+                                    VkSurfaceKHR surface,
                                     bool enable_validation)
 {
 
