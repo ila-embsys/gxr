@@ -27,6 +27,7 @@ typedef struct Example
   OpenVRVulkanTexture *texture;
   GLFWwindow* window;
   GMainLoop *loop;
+  VkSurfaceKHR surface;
 } Example;
 
 GdkPixbuf *
@@ -85,8 +86,16 @@ int main (int argc, char *argv[]) {
   if (!openvr_vulkan_renderer_init_vulkan (renderer, true))
   {
     g_printerr ("Unable to initialize Vulkan!\n");
-    return false;
+    return -1;
   }
+
+  if (glfwCreateWindowSurface(renderer->instance->instance,
+                              example.window, NULL,
+                              &example.surface) != VK_SUCCESS)
+    {
+      g_printerr ("Unable to create surface.\n");
+      return -1;
+    }
 
   example.texture = openvr_vulkan_texture_new ();
 
