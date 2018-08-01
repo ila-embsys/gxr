@@ -1,4 +1,16 @@
-// https://www.kernel.org/doc/html/v4.12/input/uinput.html
+/*
+ * OpenVR GLib
+ * Copyright 2018 Collabora Ltd.
+ * Author: Christoph Haag <christoph.haag@collabora.com>
+ * SPDX-License-Identifier: MIT
+ *
+ * Some uinput handling code was taken from an example at
+ * https://www.kernel.org/doc/html/v4.12/input/uinput.html
+ *
+ * uinput touchpad code from clutter test:
+ *  clutter/tests/conform/events-touch.c
+ */
+
 
 #include <linux/uinput.h>
 #include <stdlib.h>
@@ -16,31 +28,6 @@
 #define VRPOINTERMASTERCREATENAME "VRPointer"
 #define VRPOINTERMASTERNAME "VRPointer pointer"
 #define UINPUTVRPOINTERNAME "VR Pointer"
-
-void
-write_value(int fd,
-           unsigned int type,
-           unsigned int code,
-           int value) {
-  struct input_event ev = { {0,0}, type, code, value};
-  write(fd, &ev, sizeof(ev));
-}
-
-void
-move_mouse_rel(int fd, int x, int y)
-{
-  write_value(fd, EV_REL, REL_X, x);
-  write_value(fd, EV_REL, REL_Y, y);
-  write_value(fd, EV_SYN, SYN_REPORT, 0);
-}
-
-void
-moveMouseAbs(int fd, int x, int y)
-{
-  // hack because X has no absolute mouse positioning (?)
-  move_mouse_rel(fd, -100000, -100000);
-  move_mouse_rel(fd, x, y);
-}
 
 int
 get_master_pointer_dev(Display* dpy, char* name)
@@ -154,29 +141,199 @@ print_Xi_info(Display* dpy)
   printf("\n");
 }
 
+#define ABS_MAX_X 32768
+#define ABS_MAX_Y 32768
+static int
+setup (struct uinput_user_dev *dev, int fd)
+{
+  strcpy (dev->name, UINPUTVRPOINTERNAME);
+  dev->id.bustype = BUS_USB;
+  dev->id.vendor = 0x1;
+  dev->id.product = 0x1;
+  dev->id.version = 0x1;
+
+  if (ioctl (fd, UI_SET_EVBIT, EV_SYN) == -1)
+    goto error;
+
+  if (ioctl (fd, UI_SET_EVBIT, EV_KEY) == -1)
+    goto error;
+
+  if (ioctl (fd, UI_SET_KEYBIT, BTN_TOUCH) == -1)
+    goto error;
+
+  if (ioctl (fd, UI_SET_EVBIT, EV_ABS) == -1)
+    goto error;
+
+  if (ioctl (fd, UI_SET_ABSBIT, ABS_X) == -1)
+    goto error;
+  else
+  {
+    int idx = ABS_X;
+    dev->absmin[idx] = 0;
+    dev->absmax[idx] = ABS_MAX_X;
+    dev->absfuzz[idx] = 1;
+    dev->absflat[idx] = 0;
+
+    if (dev->absmin[idx] == dev->absmax[idx])
+      dev->absmax[idx]++;
+  }
+
+  if (ioctl (fd, UI_SET_ABSBIT, ABS_Y) == -1)
+    goto error;
+  else
+  {
+    int idx = ABS_Y;
+    dev->absmin[idx] = 0;
+    dev->absmax[idx] = ABS_MAX_Y;
+    dev->absfuzz[idx] = 1;
+    dev->absflat[idx] = 0;
+
+    if (dev->absmin[idx] == dev->absmax[idx])
+      dev->absmax[idx]++;
+  }
+
+  if (ioctl (fd, UI_SET_ABSBIT, ABS_PRESSURE) == -1)
+    goto error;
+  else
+  {
+    int idx = ABS_PRESSURE;
+    dev->absmin[idx] = 0;
+    dev->absmax[idx] = 0;
+    dev->absfuzz[idx] = 0;
+    dev->absflat[idx] = 0;
+
+    if (dev->absmin[idx] == dev->absmax[idx])
+      dev->absmax[idx]++;
+  }
+
+  if (ioctl (fd, UI_SET_ABSBIT, ABS_MT_TOUCH_MAJOR) == -1)
+    goto error;
+  else
+  {
+    int idx = ABS_MT_TOUCH_MAJOR;
+    dev->absmin[idx] = 0;
+    dev->absmax[idx] = 255;
+    dev->absfuzz[idx] = 1;
+    dev->absflat[idx] = 0;
+
+    if (dev->absmin[idx] == dev->absmax[idx])
+      dev->absmax[idx]++;
+  }
+
+  if (ioctl (fd, UI_SET_ABSBIT, ABS_MT_WIDTH_MAJOR) == -1)
+    goto error;
+  else
+  {
+    int idx = ABS_MT_WIDTH_MAJOR;
+    dev->absmin[idx] = 0;
+    dev->absmax[idx] = 255;
+    dev->absfuzz[idx] = 1;
+    dev->absflat[idx] = 0;
+
+    if (dev->absmin[idx] == dev->absmax[idx])
+      dev->absmax[idx]++;
+  }
+
+  if (ioctl (fd, UI_SET_ABSBIT, ABS_MT_POSITION_X) == -1)
+    goto error;
+  else
+  {
+    int idx = ABS_MT_POSITION_X;
+    dev->absmin[idx] = 0;
+    dev->absmax[idx] = ABS_MAX_X;
+    dev->absfuzz[idx] = 1;
+    dev->absflat[idx] = 0;
+
+    if (dev->absmin[idx] == dev->absmax[idx])
+      dev->absmax[idx]++;
+  }
+
+  if (ioctl (fd, UI_SET_ABSBIT, ABS_MT_POSITION_Y) == -1)
+    goto error;
+  else
+  {
+    int idx = ABS_MT_POSITION_Y;
+    dev->absmin[idx] = 0;
+    dev->absmax[idx] = ABS_MAX_Y;
+    dev->absfuzz[idx] = 1;
+    dev->absflat[idx] = 0;
+
+    if (dev->absmin[idx] == dev->absmax[idx])
+      dev->absmax[idx]++;
+  }
+
+  if (ioctl (fd, UI_SET_ABSBIT, ABS_MT_TRACKING_ID) == -1)
+    goto error;
+  else
+  {
+    int idx = ABS_MT_TRACKING_ID;
+    dev->absmin[idx] = 0;
+    dev->absmax[idx] = 5;
+    dev->absfuzz[idx] = 0;
+    dev->absflat[idx] = 0;
+
+    if (dev->absmin[idx] == dev->absmax[idx])
+      dev->absmax[idx]++;
+  }
+
+  return 0;
+  error:
+  return -1;
+}
+
+static void
+screen_coords_to_device (int screen_x, int screen_y,
+                         int *device_x, int *device_y)
+{
+  int display_width = 1920;
+  int display_height = 1080;
+
+  *device_x = (screen_x * ABS_MAX_X) / display_width;
+  *device_y = (screen_y * ABS_MAX_Y) / display_height;
+}
+
+
+static void send_event(int fd, int type, int code, int value)
+{
+  struct input_event event;
+
+  event.type  = type;
+  event.code  = code;
+  event.value = value;
+
+  if (write(fd, &event, sizeof(event)) < sizeof(event))
+    perror("Send event failed.");
+
+}
+
 int
 main(void)
 {
-  struct uinput_setup usetup;
+  struct uinput_user_dev dev;
 
-  int fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
+  int fd = open ("/dev/uinput", O_RDWR);
+  if (fd < 0)
+    fd = open ("/dev/input/uinput", O_RDWR);
+  if (fd < 0)
+  {
+    return 0;
+  };
 
-  /* enable mouse button left and relative events */
-  ioctl(fd, UI_SET_EVBIT, EV_KEY);
-  ioctl(fd, UI_SET_KEYBIT, BTN_LEFT);
+  memset (&dev, 0, sizeof (dev));
+  setup (&dev, fd);
 
-  ioctl(fd, UI_SET_EVBIT, EV_REL);
-  ioctl(fd, UI_SET_RELBIT, REL_X);
-  ioctl(fd, UI_SET_RELBIT, REL_Y);
+  if (write (fd, &dev, sizeof (dev)) < sizeof (dev))
+  {
+    printf("WRITE!\n");
+    goto error;
 
-  memset(&usetup, 0, sizeof(usetup));
-  usetup.id.bustype = BUS_USB;
-  usetup.id.vendor = 0x1234; /* sample vendor */
-  usetup.id.product = 0x5678; /* sample product */
-  strcpy(usetup.name, UINPUTVRPOINTERNAME);
+  }
 
-  ioctl(fd, UI_DEV_SETUP, &usetup);
-  ioctl(fd, UI_DEV_CREATE);
+  if (ioctl (fd, UI_DEV_CREATE, NULL) == -1)
+  {
+    printf("CREATE!\n");
+    goto error;
+  }
 
   /*
    * On UI_DEV_CREATE the kernel will create the device node for this
@@ -219,15 +376,35 @@ main(void)
   }
   XSync(display, False); // makes sure the reattaching is finished
 
+  int rel = 1;
+  int currentx = 1;
+  for (int i = 0; i < 10000; i++)
+  {
+    if (currentx % 1920 == 0 || currentx == 0) {
+      rel *= -1;
+    }
+    currentx += rel;
+    int x = currentx;
+    int y = 100;
 
-  moveMouseAbs(fd, 200, 200);
-  for (int i = 0; i < 1000; i++) {
-    int offset = sin(i/100.) * 3;
-    //printf("x offset %d\n", offset);
-    move_mouse_rel(fd, offset, 0);
+    screen_coords_to_device (x, y, &x, &y);
+    printf("x coordinate: %d, virtual device x: %d virtual device y: %d\n", currentx, x, y);
+
+    send_event(fd, EV_ABS, ABS_MT_SLOT, 0);
+    send_event(fd, EV_ABS, ABS_MT_TRACKING_ID, 1);
+
+    send_event(fd, EV_ABS, ABS_MT_POSITION_X, x);
+    send_event(fd, EV_ABS, ABS_MT_POSITION_Y, y);
+    send_event(fd, EV_SYN, SYN_MT_REPORT, 0);
+    send_event(fd, EV_SYN, SYN_REPORT, 0);
     XSync(display, False);
-    usleep(15000);
+    usleep(500);
   }
+
+  send_event(fd, EV_ABS, ABS_MT_TRACKING_ID, -1);
+  send_event(fd, EV_SYN, SYN_MT_REPORT, 0);
+  send_event(fd, EV_SYN, SYN_REPORT, 0);
+
 
   /*
    * Give userspace some time to read the events before we destroy the
@@ -236,6 +413,8 @@ main(void)
   sleep(1);
 
   delete_Xi_masters(display, VRPOINTERMASTERNAME);
+
+  error:
 
   ioctl(fd, UI_DEV_DESTROY);
   close(fd);
