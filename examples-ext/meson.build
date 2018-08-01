@@ -66,8 +66,15 @@ if x11_dep.found()
     install: false)
 endif
 
+if x11_dep.found()
+  xsendevent_demo = executable(
+    'xsendevent_demo', ['xsendevent_demo.c'],
+    dependencies: [x11_dep],
+    install: false)
+endif
+
 if x11_dep.found() and xi_dep.found()
-  gtk_input_synth = executable(
+  uinput_vrpointer = executable(
     'uinput-vrpointer', ['uinput-vrpointer.c'],
     dependencies: [x11_dep, xi_dep, m_dep],
     install: false)
