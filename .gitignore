@@ -1,4 +1,4 @@
 .buildconfig
 build/
 res/tests.c
-
+shaders/*.spv
