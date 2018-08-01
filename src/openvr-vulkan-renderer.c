@@ -318,6 +318,52 @@ _create_image_view (VkDevice device, VkImage image, VkFormat format)
   return image_view;
 }
 
+void
+_create_render_pass (VkDevice device, VkFormat format)
+{
+  VkRenderPassCreateInfo info = {
+    .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+    .attachmentCount = 1,
+    .pAttachments = &(VkAttachmentDescription) {
+      .format = format,
+      .samples = VK_SAMPLE_COUNT_1_BIT,
+      .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+      .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+      .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+      .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+      .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+      .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+    },
+    .subpassCount = 1,
+    .pSubpasses = &(VkSubpassDescription) {
+      .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+      .colorAttachmentCount = 1,
+      .pColorAttachments = &(VkAttachmentReference) {
+        .attachment = 0,
+        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+      }
+    },
+    .dependencyCount = 1,
+    .pDependencies = &(VkSubpassDependency) {
+      .srcSubpass = VK_SUBPASS_EXTERNAL,
+      .dstSubpass = 0,
+      .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+      .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+      .srcAccessMask = 0,
+      .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
+                       VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT
+    }
+  };
+
+  VkRenderPass render_pass;
+  if (vkCreateRenderPass (device, &info, NULL, &render_pass) != VK_SUCCESS)
+    {
+      g_printerr ("Failed to create render pass.");
+    }
+
+  vkDestroyRenderPass (device, render_pass, NULL);
+}
+
 bool
 openvr_vulkan_renderer_init_swapchain (VkDevice device,
                                        VkPhysicalDevice physical_device,
@@ -392,6 +438,8 @@ openvr_vulkan_renderer_init_swapchain (VkDevice device,
     swapchain_image_views[i] = _create_image_view (device,
                                                    swap_chain_images[i],
                                                    swapchain_image_format);
+
+  _create_render_pass (device, swapchain_image_format);
 
   for (int i = 0; i < image_count; i++)
     vkDestroyImageView (device, swapchain_image_views[i], NULL);
