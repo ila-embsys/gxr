@@ -70,7 +70,27 @@ draw_cb (gpointer data)
   return TRUE;
 }
 
-int main (int argc, char *argv[]) {
+bool
+_load_resource (const gchar* path, GBytes **res)
+{
+  GError *error = NULL;
+
+  *res = g_resources_lookup_data ("/shaders/texture.frag.spv",
+                                  G_RESOURCE_FLAGS_NONE,
+                                 &error);
+
+  if (error != NULL)
+    {
+      g_printerr ("Unable to read file: %s\n", error->message);
+      g_error_free (error);
+      return false;
+    }
+
+  return true;
+}
+
+int
+main (int argc, char *argv[]) {
   Example example = {};
 
   init_glfw (&example);
@@ -81,6 +101,17 @@ int main (int argc, char *argv[]) {
     return -1;
 
   example.loop = g_main_loop_new (NULL, FALSE);
+
+  GBytes *fragment_shader;
+  GBytes *vertex_shader;
+
+  if (!_load_resource ("/shaders/texture.frag.spv", &fragment_shader))
+    return -1;
+  if (!_load_resource ("/shaders/texture.vert.spv", &vertex_shader))
+    return -1;
+
+  g_bytes_unref (fragment_shader);
+  g_bytes_unref (vertex_shader);
 
   uint32_t num_glfw_extensions = 0;
   const char** glfw_extensions;
