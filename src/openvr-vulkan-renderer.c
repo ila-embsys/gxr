@@ -292,6 +292,32 @@ _query_surface_formats (VkPhysicalDevice device,
   return true;
 }
 
+VkImageView
+_create_image_view (VkDevice device, VkImage image, VkFormat format)
+{
+  VkImageViewCreateInfo info = {
+    .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+    .image = image,
+    .viewType = VK_IMAGE_VIEW_TYPE_2D,
+    .format = format,
+    .subresourceRange = {
+      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+      .baseMipLevel = 0,
+      .levelCount = 1,
+      .baseArrayLayer = 0,
+      .layerCount = 1
+    }
+  };
+
+  VkImageView image_view;
+  if (vkCreateImageView (device, &info, NULL, &image_view) != VK_SUCCESS)
+    {
+      g_printerr ("Cound not create texture image view.\n");
+    }
+
+  return image_view;
+}
+
 bool
 openvr_vulkan_renderer_init_swapchain (VkDevice device,
                                        VkPhysicalDevice physical_device,
@@ -313,11 +339,13 @@ openvr_vulkan_renderer_init_swapchain (VkDevice device,
   vkGetPhysicalDeviceSurfaceCapabilitiesKHR (physical_device,
                                              surface, &surface_caps);
 
+  VkFormat swapchain_image_format = surface_format.format;
+
   VkSwapchainCreateInfoKHR swapchain_info = {
     .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
     .surface = surface,
     .minImageCount = surface_caps.minImageCount,
-    .imageFormat = surface_format.format,
+    .imageFormat = swapchain_image_format,
     .imageColorSpace = surface_format.colorSpace,
     .imageExtent = surface_caps.currentExtent,
     .imageArrayLayers = 1,
@@ -349,15 +377,24 @@ openvr_vulkan_renderer_init_swapchain (VkDevice device,
 
   g_print ("The swapchain has %d images\n", image_count);
 
-  VkImage swap_chain_images = g_malloc (sizeof(VkImage) * image_count);
+  VkImage *swap_chain_images = g_malloc (sizeof(VkImage) * image_count);
   res = vkGetSwapchainImagesKHR (device, swap_chain,
-                                &image_count, &swap_chain_images);
+                                &image_count, swap_chain_images);
 
   if (res != VK_SUCCESS)
     {
       g_printerr ("Unable to get swapchain images.\n");
       return false;
     }
+
+  VkImageView *swapchain_image_views = g_malloc (sizeof(VkImage) * image_count);
+  for (int i = 0; i < image_count; i++)
+    swapchain_image_views[i] = _create_image_view (device,
+                                                   swap_chain_images[i],
+                                                   swapchain_image_format);
+
+  for (int i = 0; i < image_count; i++)
+    vkDestroyImageView (device, swapchain_image_views[i], NULL);
 
   vkDestroySwapchainKHR(device, swap_chain, NULL);
 
