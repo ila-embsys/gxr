@@ -2,3 +2,4 @@
 build/
 res/tests.c
 shaders/*.spv
+shaders/shaders.c
