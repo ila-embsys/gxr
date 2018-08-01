@@ -42,6 +42,7 @@ glfw_dep = dependency('glfw3', required : false)
 ###
 
 subdir('src')
+subdir('shaders')
 subdir('res')
 subdir('tests')
 subdir('examples')
