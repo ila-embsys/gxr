@@ -364,6 +364,39 @@ _create_render_pass (VkDevice device, VkFormat format)
   vkDestroyRenderPass (device, render_pass, NULL);
 }
 
+void
+_create_descriptor_set_layout (VkDevice device)
+{
+  VkDescriptorSetLayoutCreateInfo info = {
+    .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+    .bindingCount = 2,
+    .pBindings = (VkDescriptorSetLayoutBinding[]) {
+      {
+        .binding = 0,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount = 1,
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+      },
+      {
+        .binding = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .descriptorCount = 1,
+        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+      }
+    }
+  };
+
+  VkDescriptorSetLayout descriptor_set_layout;
+
+  if (vkCreateDescriptorSetLayout (device, &info,
+                                   NULL, &descriptor_set_layout) != VK_SUCCESS)
+    {
+      g_printerr ("Failed to create descriptor set layout.");
+    }
+
+  vkDestroyDescriptorSetLayout (device, descriptor_set_layout, NULL);
+}
+
 bool
 openvr_vulkan_renderer_init_swapchain (VkDevice device,
                                        VkPhysicalDevice physical_device,
@@ -440,6 +473,8 @@ openvr_vulkan_renderer_init_swapchain (VkDevice device,
                                                    swapchain_image_format);
 
   _create_render_pass (device, swapchain_image_format);
+
+  _create_descriptor_set_layout (device);
 
   for (int i = 0; i < image_count; i++)
     vkDestroyImageView (device, swapchain_image_views[i], NULL);
