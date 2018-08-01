@@ -17,8 +17,8 @@
 #define VRPOINTERMASTERNAME "VRPointer pointer"
 #define UINPUTVRPOINTERNAME "VR Pointer"
 
-/* emit function is identical to of the first example */
-void writevalue(int fd,
+void
+write_value(int fd,
            unsigned int type,
            unsigned int code,
            int value) {
@@ -26,18 +26,25 @@ void writevalue(int fd,
   write(fd, &ev, sizeof(ev));
 }
 
-void moveMouseRel(int fd, int x, int y) {
-  writevalue(fd, EV_REL, REL_X, x);
-  writevalue(fd, EV_REL, REL_Y, y);
-  writevalue(fd, EV_SYN, SYN_REPORT, 0);
+void
+move_mouse_rel(int fd, int x, int y)
+{
+  write_value(fd, EV_REL, REL_X, x);
+  write_value(fd, EV_REL, REL_Y, y);
+  write_value(fd, EV_SYN, SYN_REPORT, 0);
 }
 
-void moveMouseAbs(int fd, int x, int y) {
-  moveMouseRel(fd, -100000, -100000); // hack because X has no absolute mouse positioning??
-  moveMouseRel(fd, x, y);
+void
+moveMouseAbs(int fd, int x, int y)
+{
+  // hack because X has no absolute mouse positioning (?)
+  move_mouse_rel(fd, -100000, -100000);
+  move_mouse_rel(fd, x, y);
 }
 
-int getMasterPointerDev(Display* dpy, char* name) {
+int
+get_master_pointer_dev(Display* dpy, char* name)
+{
   int ndevices;
   XIDeviceInfo *info, *dev;
   info = XIQueryDevice(dpy, XIAllMasterDevices, &ndevices);
@@ -45,7 +52,6 @@ int getMasterPointerDev(Display* dpy, char* name) {
   {
     dev = &info[i];
     if (dev->use == XIMasterPointer) {
-      //printf("compare %s, %s: %d\n", dev->name, name, strcmp(dev->name, name));
       if (strcmp(dev->name, name) == 0) {
         return dev->deviceid;
       }
@@ -54,7 +60,9 @@ int getMasterPointerDev(Display* dpy, char* name) {
   return -1;
 }
 
-int getSlavePointerDev(Display* dpy, char* name) {
+int
+get_slave_pointer_dev(Display* dpy, char* name)
+{
   int ndevices;
   XIDeviceInfo *info, *dev;
   info = XIQueryDevice(dpy, XIAllDevices, &ndevices);
@@ -62,7 +70,6 @@ int getSlavePointerDev(Display* dpy, char* name) {
   {
     dev = &info[i];
     if (dev->use == XISlavePointer) {
-      //printf("compare %s, %s: %d\n", dev->name, name, strcmp(dev->name, name));
       if (strcmp(dev->name, name) == 0) {
         return dev->deviceid;
       }
@@ -71,14 +78,16 @@ int getSlavePointerDev(Display* dpy, char* name) {
   return -1;
 }
 
-int addXiMaster(Display* dpy, char* createname, char* name) {
+int
+add_Xi_master(Display* dpy, char* createname, char* name)
+{
   XIAddMasterInfo c;
   c.type = XIAddMaster;
   c.name = createname;
   c.send_core = 1;
   c.enable = 1;
   int ret = XIChangeHierarchy(dpy, (XIAnyHierarchyChangeInfo*)&c, 1);
-  int masterid = getMasterPointerDev(dpy, name);
+  int masterid = get_master_pointer_dev(dpy, name);
   if (ret == 0) {
     //printf("Created Master %d\n", masterid);
   } else {
@@ -88,25 +97,31 @@ int addXiMaster(Display* dpy, char* createname, char* name) {
   return masterid;
 }
 
-int deleteXiMasters(Display* dpy, char* name) {
+int
+delete_Xi_masters(Display* dpy, char* name)
+{
   XIRemoveMasterInfo r;
   r.type = XIRemoveMaster;
-  int deviceId = getMasterPointerDev(dpy, name);
+  int deviceId = get_master_pointer_dev(dpy, name);
   while (deviceId != -1) {
     r.deviceid = deviceId;
-    r.return_mode = XIFloating; // do not attach vr pointers to master
+    // do not attach vr pointers to master
+    r.return_mode = XIFloating;
     int ret = XIChangeHierarchy(dpy, (XIAnyHierarchyChangeInfo*)&r, 1);
     if (ret == 0) {
       printf("Deleted master %s: %d\n", name, deviceId);
     } else {
       printf("Error while deleting master pointer %s, %d\n", name, deviceId);
     }
-    deviceId = getMasterPointerDev(dpy, name); // returns -1 when there are no more
+    // returns -1 when there are no more
+    deviceId = get_master_pointer_dev(dpy, name);
   }
   return 0;
 }
 
-int reattachXi(Display* dpy, int slave, int master) {
+int
+reattach_Xi(Display* dpy, int slave, int master)
+{
   XIAttachSlaveInfo c;
   c.type = XIAttachSlave;
   c.deviceid = slave;
@@ -114,7 +129,9 @@ int reattachXi(Display* dpy, int slave, int master) {
   return XIChangeHierarchy(dpy, (XIAnyHierarchyChangeInfo*)&c, 1);
 }
 
-void printXiInfo(Display* dpy) {
+void
+print_Xi_info(Display* dpy)
+{
   int ndevices;
   XIDeviceInfo *info, *dev;
   info = XIQueryDevice(dpy, XIAllDevices, &ndevices);
@@ -137,7 +154,8 @@ void printXiInfo(Display* dpy) {
   printf("\n");
 }
 
-int main(void)
+int
+main(void)
 {
   struct uinput_setup usetup;
 
@@ -173,18 +191,18 @@ int main(void)
 
   //printXiInfo(display);
 
-  int vrPointerSlaveId = getSlavePointerDev(display, UINPUTVRPOINTERNAME);
-  if (vrPointerSlaveId != -1) {
-    printf("Found VR Pointer slave %d!\n", vrPointerSlaveId);
+  int vrpointer_slave_id = get_slave_pointer_dev(display, UINPUTVRPOINTERNAME);
+  if (vrpointer_slave_id != -1) {
+    printf("Found VR Pointer slave %d!\n", vrpointer_slave_id);
   } else {
     printf("Error, could not find VR Pointer. Did uinput create it without errors?\n");
   }
 
-  int vrPointerMasterId = getMasterPointerDev(display, VRPOINTERMASTERNAME);
-  if (vrPointerMasterId == -1) {
-    vrPointerMasterId = addXiMaster(display, VRPOINTERMASTERCREATENAME, VRPOINTERMASTERNAME);
-    if (vrPointerMasterId != -1) {
-      printf("Created master %s: %d\n", VRPOINTERMASTERNAME, vrPointerMasterId);
+  int vrpointer_master_id = get_master_pointer_dev(display, VRPOINTERMASTERNAME);
+  if (vrpointer_master_id == -1) {
+    vrpointer_master_id = add_Xi_master(display, VRPOINTERMASTERCREATENAME, VRPOINTERMASTERNAME);
+    if (vrpointer_master_id != -1) {
+      printf("Created master %s: %d\n", VRPOINTERMASTERNAME, vrpointer_master_id);
     } else {
       printf("Could not create master pointer %s!\n", VRPOINTERMASTERNAME);
     }
@@ -194,10 +212,10 @@ int main(void)
 
   // do not remove the XSync() here, or you will get wrong behavior
   XSync(display, False); // makes sure the master pointer isfinished being created
-  if (reattachXi(display, vrPointerSlaveId, vrPointerMasterId) == Success) {
-    printf("Attached %d to %d!\n", vrPointerSlaveId, vrPointerMasterId);
+  if (reattach_Xi(display, vrpointer_slave_id, vrpointer_master_id) == Success) {
+    printf("Attached %d to %d!\n", vrpointer_slave_id, vrpointer_master_id);
   } else {
-    printf("Failed to attach %d to %d!\n", vrPointerSlaveId, vrPointerMasterId);
+    printf("Failed to attach %d to %d!\n", vrpointer_slave_id, vrpointer_master_id);
   }
   XSync(display, False); // makes sure the reattaching is finished
 
@@ -206,7 +224,8 @@ int main(void)
   for (int i = 0; i < 1000; i++) {
     int offset = sin(i/100.) * 3;
     //printf("x offset %d\n", offset);
-    moveMouseRel(fd, offset, 0);
+    move_mouse_rel(fd, offset, 0);
+    XSync(display, False);
     usleep(15000);
   }
 
@@ -216,7 +235,7 @@ int main(void)
    */
   sleep(1);
 
-  deleteXiMasters(display, VRPOINTERMASTERNAME);
+  delete_Xi_masters(display, VRPOINTERMASTERNAME);
 
   ioctl(fd, UI_DEV_DESTROY);
   close(fd);
