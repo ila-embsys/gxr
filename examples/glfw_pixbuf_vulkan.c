@@ -89,6 +89,29 @@ _load_resource (const gchar* path, GBytes **res)
   return true;
 }
 
+VkShaderModule
+_create_shader_module (VkDevice device, GBytes *shader)
+{
+  gsize shader_size = 0;
+  const uint32_t *shader_buffer = g_bytes_get_data (shader, &shader_size);
+
+  g_print ("Shader buffer size: %ld", shader_size);
+
+  VkShaderModuleCreateInfo info = {
+    .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+    .codeSize = shader_size,
+    .pCode = shader_buffer,
+  };
+
+  VkShaderModule shader_module;
+  if (vkCreateShaderModule (device, &info, NULL, &shader_module) != VK_SUCCESS)
+    {
+      g_printerr ("Failed to create shader module.\n");
+    }
+
+  return shader_module;
+}
+
 int
 main (int argc, char *argv[]) {
   Example example = {};
@@ -109,9 +132,6 @@ main (int argc, char *argv[]) {
     return -1;
   if (!_load_resource ("/shaders/texture.vert.spv", &vertex_shader))
     return -1;
-
-  g_bytes_unref (fragment_shader);
-  g_bytes_unref (vertex_shader);
 
   uint32_t num_glfw_extensions = 0;
   const char** glfw_extensions;
@@ -149,6 +169,18 @@ main (int argc, char *argv[]) {
       g_printerr ("Failed to create swapchain.\n");
       return false;
     }
+
+  VkShaderModule fragment_shader_module =
+    _create_shader_module (renderer->device->device, fragment_shader);
+
+  VkShaderModule vertex_shader_module =
+    _create_shader_module (renderer->device->device, vertex_shader);
+
+  vkDestroyShaderModule(renderer->device->device, fragment_shader_module, NULL);
+  vkDestroyShaderModule(renderer->device->device, vertex_shader_module, NULL);
+
+  g_bytes_unref (fragment_shader);
+  g_bytes_unref (vertex_shader);
 
   example.texture = openvr_vulkan_texture_new ();
 
