@@ -169,7 +169,7 @@ openvr_overlay_poll_event (OpenVROverlay *self)
 {
   struct VREvent_t vr_event;
 
-  while (self->functions->PollNextOverlayEvent (self->overlay_handle,
+  while (self->functions && self->functions->PollNextOverlayEvent (self->overlay_handle,
                                                 &vr_event,
                                                 sizeof (vr_event)))
   {
