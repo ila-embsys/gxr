@@ -3,14 +3,7 @@
  * Copyright 2018 Collabora Ltd.
  * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
  * SPDX-License-Identifier: MIT
- *
- * Based on openvr hellovr example.
  */
-
-#include "openvr-vulkan-renderer.h"
-#include "openvr-global.h"
-
-#include "openvr_capi_global.h"
 
 #define VK_USE_PLATFORM_XLIB_KHR
 #include <vulkan/vulkan.h>
@@ -19,14 +12,34 @@
 #include <glib.h>
 #include <glib/gprintf.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
+#include <graphene.h>
 
-#include "openvr-overlay.h"
+#include "openvr-vulkan-renderer.h"
+
+#define MAX_FRAMES_IN_FLIGHT 2
+
+typedef struct Vertex {
+  float position[2];
+  float uv[2];
+} Vertex;
+
+const Vertex vertices[4] = {
+    {{-1.f, -1.f}, {1.f, 0.f}},
+    {{ 1.f, -1.f}, {0.f, 0.f}},
+    {{ 1.f,  1.f}, {0.f, 1.f}},
+    {{-1.f,  1.f}, {1.f, 1.f}}
+};
+
+const uint16_t indices[6] = {0, 1, 2, 2, 3, 0};
+
+typedef struct Transformation {
+  float mvp[16];
+} Transformation;
 
 G_DEFINE_TYPE (OpenVRVulkanRenderer, openvr_vulkan_renderer, G_TYPE_OBJECT)
 
 static void
 openvr_vulkan_renderer_finalize (GObject *gobject);
-
 
 VulkanCommandBuffer_t*
 _get_command_buffer2 (OpenVRVulkanRenderer *self);
@@ -49,6 +62,7 @@ openvr_vulkan_renderer_init (OpenVRVulkanRenderer *self)
   self->device = openvr_vulkan_device_new ();
   self->command_pool = VK_NULL_HANDLE;
   self->cmd_buffers = g_queue_new ();
+  self->current_frame = 0;
 }
 
 OpenVRVulkanRenderer *
@@ -72,10 +86,52 @@ openvr_vulkan_renderer_finalize (GObject *gobject)
 {
   OpenVRVulkanRenderer *self = OPENVR_VULKAN_RENDERER (gobject);
 
-  /* Idle the device to make sure no work is outstanding */
-  if (self->device->device != VK_NULL_HANDLE)
-    vkDeviceWaitIdle (self->device->device);
+  VkDevice device = self->device->device;
 
+  /* Idle the device to make sure no work is outstanding */
+  if (device != VK_NULL_HANDLE)
+    vkDeviceWaitIdle (device);
+
+  /* Rendering */
+  for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+      vkDestroySemaphore (device, self->render_finished_semaphores[i], NULL);
+      vkDestroySemaphore (device, self->image_available_semaphores[i], NULL);
+      vkDestroyFence (device, self->in_flight_fences[i], NULL);
+    }
+
+  vkDestroyDescriptorPool (device, self->descriptor_pool, NULL);
+
+  vkDestroySampler (device, self->sampler, NULL);
+
+  vkDestroyBuffer (device, self->vertex_buffer, NULL);
+  vkFreeMemory (device, self->vertex_buffer_memory, NULL);
+
+  vkDestroyBuffer (device, self->index_buffer, NULL);
+  vkFreeMemory (device, self->index_buffer_memory, NULL);
+
+  for (size_t i = 0; i < self->swapchain_image_count; i++)
+    {
+      vkDestroyBuffer (device, self->uniform_buffers[i], NULL);
+      vkFreeMemory (device, self->uniform_buffers_memory[i], NULL);
+    }
+
+  for (int i = 0; i < self->swapchain_image_count; i++)
+    vkDestroyFramebuffer(device, self->framebuffers[i], NULL);
+
+  vkDestroyPipeline (device, self->graphics_pipeline, NULL);
+  vkDestroyPipelineLayout (device, self->pipeline_layout, NULL);
+
+  vkDestroyDescriptorSetLayout (device, self->descriptor_set_layout, NULL);
+
+  vkDestroyRenderPass (device, self->render_pass, NULL);
+
+  for (int i = 0; i < self->swapchain_image_count; i++)
+    vkDestroyImageView (device, self->swapchain_image_views[i], NULL);
+
+  vkDestroySwapchainKHR(device, self->swap_chain, NULL);
+
+  /* Instance and devices */
   if (self->device->device != VK_NULL_HANDLE)
   {
     g_queue_foreach (self->cmd_buffers,
@@ -255,7 +311,7 @@ _query_surface_present_modes (VkPhysicalDevice device,
 
   if (num_present_modes != 0)
     {
-      present_modes = g_malloc (sizeof(VkPresentModeKHR) * num_present_modes);
+      present_modes = g_malloc (sizeof (VkPresentModeKHR) * num_present_modes);
       vkGetPhysicalDeviceSurfacePresentModesKHR (device, surface,
                                                 &num_present_modes,
                                                  present_modes);
@@ -318,8 +374,10 @@ _create_image_view (VkDevice device, VkImage image, VkFormat format)
   return image_view;
 }
 
-void
-_create_render_pass (VkDevice device, VkFormat format)
+bool
+_create_render_pass (VkDevice device,
+                     VkFormat format,
+                     VkRenderPass *render_pass)
 {
   VkRenderPassCreateInfo info = {
     .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
@@ -355,17 +413,18 @@ _create_render_pass (VkDevice device, VkFormat format)
     }
   };
 
-  VkRenderPass render_pass;
-  if (vkCreateRenderPass (device, &info, NULL, &render_pass) != VK_SUCCESS)
+  if (vkCreateRenderPass (device, &info, NULL, render_pass) != VK_SUCCESS)
     {
       g_printerr ("Failed to create render pass.");
+      return false;
     }
 
-  vkDestroyRenderPass (device, render_pass, NULL);
+  return true;
 }
 
-void
-_create_descriptor_set_layout (VkDevice device)
+bool
+_create_descriptor_set_layout (VkDevice device,
+                               VkDescriptorSetLayout *descriptor_set_layout)
 {
   VkDescriptorSetLayoutCreateInfo info = {
     .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
@@ -386,21 +445,159 @@ _create_descriptor_set_layout (VkDevice device)
     }
   };
 
-  VkDescriptorSetLayout descriptor_set_layout;
-
   if (vkCreateDescriptorSetLayout (device, &info,
-                                   NULL, &descriptor_set_layout) != VK_SUCCESS)
+                                   NULL, descriptor_set_layout) != VK_SUCCESS)
     {
       g_printerr ("Failed to create descriptor set layout.");
+      return false;
     }
 
-  vkDestroyDescriptorSetLayout (device, descriptor_set_layout, NULL);
+  return true;
 }
 
 bool
-openvr_vulkan_renderer_init_swapchain (VkDevice device,
-                                       VkPhysicalDevice physical_device,
-                                       VkSurfaceKHR surface)
+_create_graphics_pipeline (VkDevice device,
+                           VkShaderModule vert_shader,
+                           VkShaderModule frag_shader,
+                           VkExtent2D swapchain_extent,
+                           VkDescriptorSetLayout descriptor_set_layout,
+                           VkRenderPass render_pass,
+                           VkPipeline *graphics_pipeline,
+                           VkPipelineLayout *pipeline_layout)
+{
+  VkPipelineLayoutCreateInfo layout_info = {
+    .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+    .setLayoutCount = 1,
+    .pSetLayouts = &descriptor_set_layout
+  };
+
+  VkResult res;
+  res = vkCreatePipelineLayout (device, &layout_info, NULL, pipeline_layout);
+
+  if (res != VK_SUCCESS)
+    {
+      g_printerr ("Failed to create pipeline layout.\n");
+      return false;
+    }
+
+  VkGraphicsPipelineCreateInfo pipeline_info = {
+    .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+    .stageCount = 2,
+    .pStages = (VkPipelineShaderStageCreateInfo[]) {
+      {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .stage = VK_SHADER_STAGE_VERTEX_BIT,
+        .module = vert_shader,
+        .pName = "main"
+      },
+      {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .module = frag_shader,
+        .pName = "main"
+      }
+    },
+    .pVertexInputState = &(VkPipelineVertexInputStateCreateInfo) {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+      .vertexBindingDescriptionCount = 1,
+      .pVertexBindingDescriptions = &(VkVertexInputBindingDescription) {
+        .binding = 0,
+        .stride = sizeof(Vertex),
+        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+      },
+      .vertexAttributeDescriptionCount = 2,
+      .pVertexAttributeDescriptions = (VkVertexInputAttributeDescription[]) {
+        {
+          .location = 0,
+          .binding = 0,
+          .format = VK_FORMAT_R32G32_SFLOAT,
+          .offset = offsetof(Vertex, position)
+        },
+        {
+          .location = 1,
+          .binding = 0,
+          .format = VK_FORMAT_R32G32_SFLOAT,
+          .offset = offsetof(Vertex, uv)
+        }
+      },
+    },
+    .pInputAssemblyState = &(VkPipelineInputAssemblyStateCreateInfo) {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+      .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+      .primitiveRestartEnable = VK_FALSE
+    },
+    .pViewportState = &(VkPipelineViewportStateCreateInfo) {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+      .viewportCount = 1,
+      .pViewports = &(VkViewport) {
+        .x = 0.0f,
+        .y = 0.0f,
+        .width = (float)swapchain_extent.width,
+        .height = (float)swapchain_extent.height,
+        .minDepth = 0.0f,
+        .maxDepth = 1.0f
+      },
+      .scissorCount = 1,
+      .pScissors = &(VkRect2D) {
+        .offset = {0, 0},
+        .extent = swapchain_extent
+      }
+    },
+    .pRasterizationState = &(VkPipelineRasterizationStateCreateInfo) {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+      .depthClampEnable = VK_FALSE,
+      .rasterizerDiscardEnable = VK_FALSE,
+      .polygonMode = VK_POLYGON_MODE_FILL,
+      .cullMode = VK_CULL_MODE_NONE,
+      .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+      .depthBiasEnable = VK_FALSE,
+      .lineWidth = 1.0f
+    },
+    .pMultisampleState = &(VkPipelineMultisampleStateCreateInfo) {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+      .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+      .sampleShadingEnable = VK_FALSE
+    },
+    .pColorBlendState = &(VkPipelineColorBlendStateCreateInfo) {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+      .logicOpEnable = VK_FALSE,
+      .logicOp = VK_LOGIC_OP_COPY,
+      .attachmentCount = 1,
+      .pAttachments = &(VkPipelineColorBlendAttachmentState) {
+        .blendEnable = VK_FALSE,
+        .colorWriteMask =
+          VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+          VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
+      },
+      .blendConstants = {0.0f, 0.0f, 0.0f, 0.0f}
+    },
+    .layout = *pipeline_layout,
+    .renderPass = render_pass,
+    .subpass = 0,
+    .basePipelineHandle = VK_NULL_HANDLE
+  };
+
+  res = vkCreateGraphicsPipelines (device, VK_NULL_HANDLE, 1,
+                                  &pipeline_info, NULL, graphics_pipeline);
+
+  if (res != VK_SUCCESS)
+    {
+      g_printerr ("Failed to create graphics pipeline.\n");
+      return false;
+    }
+
+  return true;
+}
+
+bool
+_init_swapchain (VkDevice device,
+                 VkPhysicalDevice physical_device,
+                 VkSurfaceKHR surface,
+                 VkSwapchainKHR *swap_chain,
+                 VkImageView **swapchain_image_views,
+                 VkFormat *swapchain_image_format,
+                 uint32_t *image_count,
+                 VkExtent2D *swapchain_extent)
 {
   VkSurfaceCapabilitiesKHR surface_caps;
 
@@ -418,15 +615,16 @@ openvr_vulkan_renderer_init_swapchain (VkDevice device,
   vkGetPhysicalDeviceSurfaceCapabilitiesKHR (physical_device,
                                              surface, &surface_caps);
 
-  VkFormat swapchain_image_format = surface_format.format;
+  *swapchain_image_format = surface_format.format;
+  *swapchain_extent = surface_caps.currentExtent;
 
   VkSwapchainCreateInfoKHR swapchain_info = {
     .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
     .surface = surface,
     .minImageCount = surface_caps.minImageCount,
-    .imageFormat = swapchain_image_format,
+    .imageFormat = *swapchain_image_format,
     .imageColorSpace = surface_format.colorSpace,
-    .imageExtent = surface_caps.currentExtent,
+    .imageExtent = *swapchain_extent,
     .imageArrayLayers = 1,
     .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
     .preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
@@ -436,10 +634,8 @@ openvr_vulkan_renderer_init_swapchain (VkDevice device,
     .clipped = VK_TRUE
   };
 
-  VkSwapchainKHR swap_chain;
-
   VkResult res =
-    vkCreateSwapchainKHR (device, &swapchain_info, NULL, &swap_chain);
+    vkCreateSwapchainKHR (device, &swapchain_info, NULL, swap_chain);
 
   if (res != VK_SUCCESS)
     {
@@ -451,14 +647,13 @@ openvr_vulkan_renderer_init_swapchain (VkDevice device,
       g_print ("Created swapchain successfully.\n");
     }
 
-  uint32_t image_count;
-  res = vkGetSwapchainImagesKHR (device, swap_chain, &image_count, NULL);
+  res = vkGetSwapchainImagesKHR (device, *swap_chain, image_count, NULL);
 
-  g_print ("The swapchain has %d images\n", image_count);
+  g_print ("The swapchain has %d images\n", *image_count);
 
-  VkImage *swap_chain_images = g_malloc (sizeof(VkImage) * image_count);
-  res = vkGetSwapchainImagesKHR (device, swap_chain,
-                                &image_count, swap_chain_images);
+  VkImage *swap_chain_images = g_malloc (sizeof(VkImage) * *image_count);
+  res = vkGetSwapchainImagesKHR (device, *swap_chain,
+                                 image_count, swap_chain_images);
 
   if (res != VK_SUCCESS)
     {
@@ -466,20 +661,752 @@ openvr_vulkan_renderer_init_swapchain (VkDevice device,
       return false;
     }
 
-  VkImageView *swapchain_image_views = g_malloc (sizeof(VkImage) * image_count);
-  for (int i = 0; i < image_count; i++)
-    swapchain_image_views[i] = _create_image_view (device,
-                                                   swap_chain_images[i],
-                                                   swapchain_image_format);
+  *swapchain_image_views = g_malloc (sizeof(VkImage) * *image_count);
+  for (int i = 0; i < *image_count; i++)
+    (*swapchain_image_views)[i] = _create_image_view (device,
+                                                      swap_chain_images[i],
+                                                     *swapchain_image_format);
+  return true;
+}
 
-  _create_render_pass (device, swapchain_image_format);
+bool
+_load_resource (const gchar* path, GBytes **res)
+{
+  GError *error = NULL;
 
-  _create_descriptor_set_layout (device);
+  *res = g_resources_lookup_data (path, G_RESOURCE_FLAGS_NONE, &error);
 
-  for (int i = 0; i < image_count; i++)
-    vkDestroyImageView (device, swapchain_image_views[i], NULL);
+  if (error != NULL)
+    {
+      g_printerr ("Unable to read file: %s\n", error->message);
+      g_error_free (error);
+      return false;
+    }
 
-  vkDestroySwapchainKHR(device, swap_chain, NULL);
+  return true;
+}
+
+VkShaderModule
+_create_shader_module (VkDevice device, GBytes *shader)
+{
+  gsize shader_size = 0;
+  const uint32_t *shader_buffer = g_bytes_get_data (shader, &shader_size);
+
+  g_print ("Shader buffer size: %ld\n", shader_size);
+
+  VkShaderModuleCreateInfo info = {
+    .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+    .codeSize = shader_size,
+    .pCode = shader_buffer,
+  };
+
+  VkShaderModule shader_module;
+  if (vkCreateShaderModule (device, &info, NULL, &shader_module) != VK_SUCCESS)
+    {
+      g_printerr ("Failed to create shader module.\n");
+    }
+
+  return shader_module;
+}
+
+bool
+_init_framebuffers (VkDevice device,
+                    VkRenderPass render_pass,
+                    VkExtent2D swapchain_extent,
+                    uint32_t swapchain_image_count,
+                    VkImageView *swapchain_image_views,
+                    VkFramebuffer **framebuffers)
+{
+  *framebuffers = g_malloc (sizeof(VkFramebuffer) * swapchain_image_count);
+
+  for (size_t i = 0; i < swapchain_image_count; i++)
+    {
+      VkFramebufferCreateInfo info = {
+        .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+        .renderPass = render_pass,
+        .attachmentCount = 1,
+        .pAttachments = &swapchain_image_views[i],
+        .width = swapchain_extent.width,
+        .height = swapchain_extent.height,
+        .layers = 1
+        };
+
+      VkResult ret =
+        vkCreateFramebuffer(device, &info, NULL, &((*framebuffers)[i]));
+      if (ret != VK_SUCCESS)
+        {
+          g_printerr ("Failed to create framebuffer.\n");
+          return false;
+        }
+    }
+  return true;
+}
+
+bool
+_create_buffer (VkDevice device,
+                OpenVRVulkanDevice *vr_device,
+                VkDeviceSize size,
+                VkBufferUsageFlags usage,
+                VkMemoryPropertyFlags properties,
+                VkBuffer *buffer,
+                VkDeviceMemory *memory)
+{
+  VkBufferCreateInfo buffer_info = {
+    .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+    .size = size,
+    .usage = usage,
+    .sharingMode = VK_SHARING_MODE_EXCLUSIVE
+  };
+
+  if (vkCreateBuffer (device, &buffer_info, NULL, buffer) != VK_SUCCESS)
+    {
+      g_printerr ("Failed to create buffer.\n");
+      return false;
+    }
+
+  VkMemoryRequirements requirements;
+  vkGetBufferMemoryRequirements (device, *buffer, &requirements);
+
+  VkMemoryAllocateInfo alloc_info = {
+    .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+    .allocationSize = requirements.size,
+    //.memoryTypeIndex = findMemoryType (requirements.memoryTypeBits, properties)
+  };
+
+  if (!openvr_vulkan_device_memory_type_from_properties (
+        vr_device,
+        requirements.memoryTypeBits,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+       &alloc_info.memoryTypeIndex))
+  {
+    g_printerr ("Failed to find matching memoryTypeIndex for buffer\n");
+    return false;
+  }
+
+  if (vkAllocateMemory (device, &alloc_info, NULL, memory) != VK_SUCCESS)
+    {
+      g_printerr ("Failed to allocate memory.\n");
+      return false;
+    }
+
+  vkBindBufferMemory (device, *buffer, *memory, 0);
+
+  return true;
+}
+
+void
+_copy_buffer (VkCommandBuffer cmd_buffer,
+              VkBuffer src_buffer,
+              VkBuffer dst_buffer,
+              VkDeviceSize size)
+{
+  VkBufferCopy copy_region = {
+    .size = size
+  };
+
+  vkCmdCopyBuffer (cmd_buffer, src_buffer, dst_buffer, 1, &copy_region);
+}
+
+bool
+_init_vertex_buffer (OpenVRVulkanRenderer *self)
+{
+  VkDeviceSize buffer_size = sizeof (vertices[0]) * 4;
+
+  VkDevice device = self->device->device;
+
+  VkBuffer staging_buffer;
+  VkDeviceMemory staging_buffer_memory;
+  if (!_create_buffer (device, self->device, buffer_size,
+                       VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                       VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                      &staging_buffer, &staging_buffer_memory))
+    return false;
+
+  void* data;
+  vkMapMemory (device, staging_buffer_memory, 0, buffer_size, 0, &data);
+  memcpy (data, vertices, (size_t) buffer_size);
+  vkUnmapMemory (device, staging_buffer_memory);
+
+  if (!_create_buffer (device, self->device, buffer_size,
+                       VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+                       VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                      &self->vertex_buffer, &self->vertex_buffer_memory))
+    return false;
+
+  _begin_command_buffer2 (self);
+
+  _copy_buffer (self->current_cmd_buffer->cmd_buffer,
+                staging_buffer, self->vertex_buffer, buffer_size);
+
+  _submit_command_buffer2 (self);
+
+  vkDestroyBuffer (device, staging_buffer, NULL);
+  vkFreeMemory (device, staging_buffer_memory, NULL);
+
+  return true;
+}
+
+bool
+_init_index_buffer (OpenVRVulkanRenderer *self)
+{
+  VkDeviceSize buffer_size = sizeof (indices[0]) * 6;
+
+  VkDevice device = self->device->device;
+
+  VkBuffer staging_buffer;
+  VkDeviceMemory staging_buffer_memory;
+  if (!_create_buffer (device, self->device, buffer_size,
+                       VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                       VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                      &staging_buffer, &staging_buffer_memory))
+    return false;
+
+  void* data;
+  vkMapMemory (device, staging_buffer_memory, 0, buffer_size, 0, &data);
+  memcpy(data, indices, (size_t) buffer_size);
+  vkUnmapMemory (device, staging_buffer_memory);
+
+  if (!_create_buffer (device, self->device, buffer_size,
+                       VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                      &self->index_buffer, &self->index_buffer_memory))
+    return false;
+
+  _begin_command_buffer2 (self);
+
+  _copy_buffer (self->current_cmd_buffer->cmd_buffer,
+                staging_buffer, self->index_buffer, buffer_size);
+
+  _submit_command_buffer2 (self);
+
+  vkDestroyBuffer (device, staging_buffer, NULL);
+  vkFreeMemory (device, staging_buffer_memory, NULL);
+
+  return true;
+}
+
+bool
+_init_uniform_buffers (OpenVRVulkanRenderer *self)
+{
+  VkDeviceSize buffer_size = sizeof(Transformation);
+
+  uint32_t count = self->swapchain_image_count;
+
+  self->uniform_buffers = g_malloc (sizeof (VkBuffer) * count);
+  self->uniform_buffers_memory = g_malloc (sizeof (VkDeviceMemory) * count);
+
+  for (size_t i = 0; i < count; i++)
+    if (!_create_buffer (self->device->device, self->device,
+                         buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                         VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                        &self->uniform_buffers[i],
+                        &self->uniform_buffers_memory[i]))
+      return false;
+
+  return true;
+}
+
+bool
+_init_descriptor_pool (VkDevice device,
+                       uint32_t image_count,
+                       VkDescriptorPool *descriptor_pool)
+{
+  VkDescriptorPoolCreateInfo info = {
+    .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+    .maxSets = image_count,
+    .poolSizeCount = 2,
+    .pPoolSizes = (VkDescriptorPoolSize[]) {
+      {
+        .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount = image_count
+      },
+      {
+        .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .descriptorCount = image_count
+      }
+    }
+  };
+
+  VkResult res = vkCreateDescriptorPool (device, &info, NULL, descriptor_pool);
+  if (res != VK_SUCCESS)
+    {
+      g_printerr ("Failed to create descriptor pool.\n");
+      return false;
+    }
+
+  return true;
+}
+
+bool
+_init_descriptor_sets (VkDevice device,
+                       VkDescriptorSetLayout descriptor_set_layout,
+                       VkDescriptorPool descriptor_pool,
+                       uint32_t count,
+                       VkBuffer *uniform_buffers,
+                       VkSampler texture_sampler,
+                       VkImageView texture_image_view,
+                       VkDescriptorSet **descriptor_sets)
+{
+  VkDescriptorSetLayout* layouts = g_malloc (sizeof (VkBuffer) * count);
+  for (int i = 0; i < count; i++)
+    layouts[i] = descriptor_set_layout;
+
+  VkDescriptorSetAllocateInfo alloc_info = {
+    .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+    .descriptorPool = descriptor_pool,
+    .descriptorSetCount = count,
+    .pSetLayouts = layouts
+  };
+
+  *descriptor_sets = g_malloc (sizeof (VkDescriptorSet) * count);
+
+  VkResult res =
+    vkAllocateDescriptorSets (device, &alloc_info, &((*descriptor_sets)[0]));
+
+  if (res != VK_SUCCESS)
+    {
+      g_printerr ("Failed to allocate descriptor sets.\n");
+      return false;
+    }
+
+  for (size_t i = 0; i < count; i++)
+    {
+      VkWriteDescriptorSet *descriptor_writes = (VkWriteDescriptorSet [])
+      {
+        {
+          .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+          .dstSet = (*descriptor_sets)[i],
+          .dstBinding = 0,
+          .dstArrayElement = 0,
+          .descriptorCount = 1,
+          .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+          .pBufferInfo = &(VkDescriptorBufferInfo) {
+            .buffer = uniform_buffers[i],
+            .offset = 0,
+            .range = sizeof (Transformation),
+          }
+        },
+        {
+          .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+          .dstSet = (*descriptor_sets)[i],
+          .dstBinding = 1,
+          .dstArrayElement = 0,
+          .descriptorCount = 1,
+          .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+          .pImageInfo = &(VkDescriptorImageInfo) {
+            .sampler = texture_sampler,
+            .imageView = texture_image_view,
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+          }
+        }
+      };
+
+      vkUpdateDescriptorSets (device, 2, descriptor_writes, 0, NULL);
+    }
+
+  return true;
+}
+
+bool
+_init_texture_sampler (VkDevice device, VkSampler *sampler)
+{
+  VkSamplerCreateInfo info = {
+    .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+    .magFilter = VK_FILTER_LINEAR,
+    .minFilter = VK_FILTER_LINEAR,
+    .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+    .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+    .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+    .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+    .anisotropyEnable = VK_TRUE,
+    .maxAnisotropy = 16,
+    .compareEnable = VK_FALSE,
+    .compareOp = VK_COMPARE_OP_ALWAYS,
+    .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+    .unnormalizedCoordinates = VK_FALSE
+    };
+
+  if (vkCreateSampler(device, &info, NULL, sampler) != VK_SUCCESS)
+    {
+      g_printerr ("Failed to create sampler.\n");
+      return false;
+    }
+
+  return true;
+}
+
+bool
+_init_draw_cmd_buffers (VkDevice device,
+                        VkCommandPool command_pool,
+                        VkRenderPass render_pass,
+                        VkFramebuffer *framebuffers,
+                        VkExtent2D swapchain_extent,
+                        VkPipeline pipeline,
+                        VkBuffer vertex_buffer,
+                        VkBuffer index_buffer,
+                        VkPipelineLayout pipeline_layout,
+                        VkDescriptorSet *descriptor_sets,
+                        uint32_t count,
+                        VkCommandBuffer **cmd_buffers)
+{
+  *cmd_buffers = g_malloc (sizeof (VkCommandBuffer) * count);
+
+  VkCommandBufferAllocateInfo alloc_info = {
+    .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+    .commandPool = command_pool,
+    .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+    .commandBufferCount = count
+  };
+
+  VkResult ret = vkAllocateCommandBuffers (device, &alloc_info, *cmd_buffers);
+  if (ret != VK_SUCCESS)
+    {
+      g_printerr ("Failed to allocate command buffers.\n");
+      return false;
+    }
+
+  for (size_t i = 0; i < count; i++)
+    {
+      VkCommandBufferBeginInfo begin_info = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT
+      };
+
+      VkCommandBuffer cmd_buffer = (*cmd_buffers)[i];
+
+      if (vkBeginCommandBuffer (cmd_buffer, &begin_info) != VK_SUCCESS)
+        {
+          g_printerr ("Failed to begin command buffer.\n");
+          return false;
+        }
+
+      VkClearValue clear_color = {
+        .color = {
+          .float32 = {0.0f, 0.0f, 0.0f, 1.0f}
+        }
+      };
+
+      VkRenderPassBeginInfo render_pass_info = {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+        .renderPass = render_pass,
+        .framebuffer = framebuffers[i],
+        .renderArea = {
+          .offset = {0, 0},
+          .extent = swapchain_extent
+        },
+        .clearValueCount = 1,
+        .pClearValues = &clear_color
+      };
+
+      vkCmdBeginRenderPass (cmd_buffer, &render_pass_info,
+                            VK_SUBPASS_CONTENTS_INLINE);
+
+      vkCmdBindPipeline (cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                         pipeline);
+
+      VkBuffer vertex_buffers[] = { vertex_buffer };
+      VkDeviceSize offsets[] = {0};
+      vkCmdBindVertexBuffers (cmd_buffer, 0, 1, vertex_buffers, offsets);
+
+      vkCmdBindIndexBuffer (cmd_buffer, index_buffer, 0,
+                            VK_INDEX_TYPE_UINT16);
+
+      vkCmdBindDescriptorSets (cmd_buffer,
+                               VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout,
+                               0, 1, &descriptor_sets[i], 0, NULL);
+
+      vkCmdDrawIndexed (cmd_buffer, G_N_ELEMENTS (indices), 1, 0, 0, 0);
+
+      vkCmdEndRenderPass (cmd_buffer);
+
+      if (vkEndCommandBuffer (cmd_buffer) != VK_SUCCESS)
+        {
+          g_printerr ("Failed to end command buffer.\n");
+          return false;
+        }
+    }
+
+  return true;
+}
+
+bool
+_init_synchronization (VkDevice device,
+                       VkSemaphore **image_available_semaphores,
+                       VkSemaphore **render_finished_semaphores,
+                       VkFence **in_flight_fences)
+{
+  *image_available_semaphores =
+    g_malloc (sizeof(VkSemaphore) * MAX_FRAMES_IN_FLIGHT);
+  *render_finished_semaphores =
+    g_malloc (sizeof(VkSemaphore) * MAX_FRAMES_IN_FLIGHT);
+  *in_flight_fences = g_malloc (sizeof(VkFence) * MAX_FRAMES_IN_FLIGHT);
+
+  VkSemaphoreCreateInfo semaphore_info = {
+    .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
+  };
+
+  VkFenceCreateInfo fence_info = {
+    .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+    .flags = VK_FENCE_CREATE_SIGNALED_BIT
+  };
+
+  VkResult ret;
+  for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+      ret = vkCreateSemaphore (device, &semaphore_info,
+                               NULL, &((*image_available_semaphores)[i]));
+      if (ret != VK_SUCCESS)
+        {
+          g_printerr ("Failed to create semaphore.\n");
+          return false;
+        }
+
+      ret = vkCreateSemaphore (device, &semaphore_info,
+                               NULL, &((*render_finished_semaphores)[i]));
+      if (ret != VK_SUCCESS)
+        {
+          g_printerr ("Failed to create semaphore.\n");
+          return false;
+        }
+
+      ret = vkCreateFence (device, &fence_info,
+                           NULL, &((*in_flight_fences)[i]));
+      if (ret != VK_SUCCESS)
+        {
+          g_printerr ("Failed to create fence.\n");
+          return false;
+        }
+    }
+
+  return true;
+}
+
+bool
+openvr_vulkan_renderer_init_rendering (OpenVRVulkanRenderer *self,
+                                       VkSurfaceKHR surface,
+                                       OpenVRVulkanTexture *texture)
+{
+  VkDevice device = self->device->device;
+
+  g_print ("Device surface support: %d\n",
+           openvr_vulkan_device_queue_supports_surface (self->device,
+                                                        surface));
+
+  if (!_init_swapchain (device,
+                        self->device->physical_device,
+                        surface,
+                       &self->swap_chain,
+                       &self->swapchain_image_views,
+                       &self->swapchain_image_format,
+                       &self->swapchain_image_count,
+                       &self->swapchain_extent))
+      return false;
+
+  _create_render_pass (device,
+                       self->swapchain_image_format,
+                       &self->render_pass);
+
+  _create_descriptor_set_layout (device, &self->descriptor_set_layout);
+
+  GBytes *fragment_shader;
+  GBytes *vertex_shader;
+
+  if (!_load_resource ("/shaders/texture.frag.spv", &fragment_shader))
+    return false;
+  if (!_load_resource ("/shaders/texture.vert.spv", &vertex_shader))
+    return false;
+
+  VkShaderModule fragment_shader_module =
+    _create_shader_module (device, fragment_shader);
+
+  VkShaderModule vertex_shader_module =
+    _create_shader_module (device, vertex_shader);
+
+  g_bytes_unref (fragment_shader);
+  g_bytes_unref (vertex_shader);
+
+  if (!_create_graphics_pipeline (device,
+                                  vertex_shader_module,
+                                  fragment_shader_module,
+                                  self->swapchain_extent,
+                                  self->descriptor_set_layout,
+                                  self->render_pass,
+                                 &self->graphics_pipeline,
+                                 &self->pipeline_layout))
+    return false;
+
+  vkDestroyShaderModule (device, fragment_shader_module, NULL);
+  vkDestroyShaderModule (device, vertex_shader_module, NULL);
+
+  if (!_init_framebuffers (device,
+                           self->render_pass,
+                           self->swapchain_extent,
+                           self->swapchain_image_count,
+                           self->swapchain_image_views,
+                          &self->framebuffers))
+    return false;
+
+  if (!_init_vertex_buffer (self))
+    return false;
+
+  if (!_init_index_buffer (self))
+    return false;
+
+  if (!_init_uniform_buffers (self))
+    return false;
+
+  if (!_init_descriptor_pool (device,
+                              self->swapchain_image_count,
+                             &self->descriptor_pool))
+    return false;
+
+  if (!_init_texture_sampler (device, &self->sampler))
+    return false;
+
+  if (!_init_descriptor_sets (device,
+                             self->descriptor_set_layout,
+                             self->descriptor_pool,
+                             self->swapchain_image_count,
+                             self->uniform_buffers,
+                             self->sampler,
+                             texture->image_view,
+                            &self->descriptor_sets))
+    return false;
+
+  if (!_init_draw_cmd_buffers (device,
+                               self->command_pool,
+                               self->render_pass,
+                               self->framebuffers,
+                               self->swapchain_extent,
+                               self->graphics_pipeline,
+                               self->vertex_buffer,
+                               self->index_buffer,
+                               self->pipeline_layout,
+                               self->descriptor_sets,
+                               self->swapchain_image_count,
+                              &self->draw_cmd_buffers))
+    return false;
+
+  if (!_init_synchronization (device,
+                             &self->image_available_semaphores,
+                             &self->render_finished_semaphores,
+                             &self->in_flight_fences))
+    return false;
+
+  return true;
+}
+
+bool
+_update_uniform_buffer (VkDevice device,
+                        VkDeviceMemory uniform_buffer_memory)
+{
+  graphene_vec3_t eye;
+  graphene_vec3_init (&eye, 0.0f, 0.0f, -1.0f);
+
+  graphene_vec3_t center;
+  graphene_vec3_init (&center, 0.0f, 0.0f, 0.0f);
+
+  graphene_matrix_t view;
+  graphene_matrix_init_look_at (&view, &eye, &center, graphene_vec3_y_axis());
+
+  graphene_matrix_t ortho;
+  graphene_matrix_init_ortho (&ortho, -1.f, 1.f, -1.f, 1.f, 1.f, -1.f);
+
+  graphene_matrix_t mvp;
+  graphene_matrix_multiply (&view, &ortho, &mvp);
+
+  Transformation ubo = {};
+  graphene_matrix_to_float (&mvp, ubo.mvp);
+
+  void* data;
+  vkMapMemory (device, uniform_buffer_memory, 0, sizeof(ubo), 0, &data);
+  memcpy (data, &ubo, sizeof(ubo));
+  vkUnmapMemory (device, uniform_buffer_memory);
+
+  return true;
+}
+
+bool
+openvr_vulkan_renderer_draw (OpenVRVulkanRenderer *self)
+{
+  VkDevice device = self->device->device;
+
+  vkWaitForFences (device, 1,
+                   &self->in_flight_fences[self->current_frame],
+                   VK_TRUE, UINT64_MAX);
+
+  uint32_t image_index;
+  VkResult result =
+    vkAcquireNextImageKHR (device, self->swap_chain, UINT64_MAX,
+                           self->image_available_semaphores[self->current_frame],
+                           VK_NULL_HANDLE, &image_index);
+
+  if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+    {
+      g_printerr ("Failed to acquire swap chain image.\n");
+      return false;
+    }
+
+  _update_uniform_buffer (device, self->uniform_buffers_memory[image_index]);
+
+  VkPipelineStageFlags wait_stages[] = {
+    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+  };
+
+  VkSemaphore wait_semaphores[] = {self->image_available_semaphores[self->current_frame]};
+  VkSemaphore signal_semaphores[] = {self->render_finished_semaphores[self->current_frame]};
+
+  VkSubmitInfo submit_info = {
+    .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+    .waitSemaphoreCount = 1,
+    .pWaitSemaphores = wait_semaphores,
+    .pWaitDstStageMask = wait_stages,
+    .commandBufferCount = 1,
+    .pCommandBuffers = &self->draw_cmd_buffers[image_index],
+    .signalSemaphoreCount = 1,
+    .pSignalSemaphores = signal_semaphores
+  };
+
+  vkResetFences (device, 1, &self->in_flight_fences[self->current_frame]);
+
+  if (vkQueueSubmit (self->device->queue, 1, &submit_info,
+                     self->in_flight_fences[self->current_frame]) != VK_SUCCESS)
+    {
+      g_printerr ("Failed to submit draw command buffer.\n");
+      return false;
+    }
+
+  VkSwapchainKHR swapchains[] = { self->swap_chain };
+
+  VkPresentInfoKHR present_info = {
+    .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+    .waitSemaphoreCount = 1,
+    .pWaitSemaphores = signal_semaphores,
+    .swapchainCount = 1,
+    .pSwapchains = swapchains,
+    .pImageIndices = &image_index,
+  };
+
+  result = vkQueuePresentKHR (self->device->present_queue, &present_info);
+  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) // || framebuffer_resized
+    {
+      // framebuffer_resized = false;
+      // _recreate_swapchain ();
+      g_printerr ("VK_ERROR_OUT_OF_DATE_KHR or VK_SUBOPTIMAL_KHR.\n");
+      return false;
+    }
+  else if (result != VK_SUCCESS)
+    {
+      g_printerr ("Failed to present swapchain image.\n");
+      return false;
+    }
+
+  self->current_frame = (self->current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
 
   return true;
 }
@@ -532,44 +1459,13 @@ openvr_vulkan_renderer_init_vulkan (OpenVRVulkanRenderer *self,
       return false;
     }
 
-  if(!_init_command_pool2 (self))
+  if (!_init_command_pool2 (self))
     {
       g_printerr ("Failed to create command pool.\n");
       return false;
     }
 
   return true;
-}
-
-void
-openvr_vulkan_renderer_submit_frame (OpenVRVulkanRenderer *self,
-                                     OpenVROverlay        *overlay,
-                                     OpenVRVulkanTexture  *texture)
-{
-  /* Submit to SteamVR */
-  struct VRVulkanTextureData_t texture_data =
-    {
-      .m_nImage = (uint64_t) texture->image,
-      .m_pDevice = (struct VkDevice_T*) self->device->device,
-      .m_pPhysicalDevice = (struct VkPhysicalDevice_T*)
-        self->device->physical_device,
-      .m_pInstance = (struct VkInstance_T*) self->instance->instance,
-      .m_pQueue = (struct VkQueue_T*) self->device->queue,
-      .m_nQueueFamilyIndex = self->device->queue_family_index,
-      .m_nWidth = texture->width,
-      .m_nHeight = texture->height,
-      .m_nFormat = VK_FORMAT_B8G8R8A8_UNORM,
-      .m_nSampleCount = 1
-    };
-
-  struct Texture_t vr_texture =
-    {
-      .handle = &texture_data,
-      .eType = ETextureType_TextureType_Vulkan,
-      .eColorSpace = EColorSpace_ColorSpace_Auto
-    };
-
-  overlay->functions->SetOverlayTexture (overlay->overlay_handle, &vr_texture);
 }
 
 /*

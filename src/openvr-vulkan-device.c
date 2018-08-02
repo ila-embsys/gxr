@@ -140,9 +140,9 @@ openvr_vulkan_device_queue_supports_surface (OpenVRVulkanDevice *self,
                                              VkSurfaceKHR surface)
 {
   VkBool32 surface_support = false;
-  vkGetPhysicalDeviceSurfaceSupportKHR(self->physical_device,
-                                       self->queue_family_index,
-                                       surface, &surface_support);
+  vkGetPhysicalDeviceSurfaceSupportKHR (self->physical_device,
+                                        self->queue_family_index,
+                                        surface, &surface_support);
   return surface_support;
 }
 
@@ -278,6 +278,7 @@ openvr_vulkan_device_create (OpenVRVulkanDevice   *self,
 
   /* Get the device queue */
   vkGetDeviceQueue (self->device, self->queue_family_index, 0, &self->queue);
+  vkGetDeviceQueue (self->device, self->queue_family_index, 0, &self->present_queue);
   return true;
 }
 

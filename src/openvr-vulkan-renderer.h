@@ -16,13 +16,9 @@
 #define VK_USE_PLATFORM_XLIB_KHR
 #include <vulkan/vulkan.h>
 
-#include <openvr_capi.h>
-
 #include "openvr-vulkan-instance.h"
 #include "openvr-vulkan-device.h"
 #include "openvr-vulkan-texture.h"
-#include "openvr-compositor.h"
-#include "openvr-overlay.h"
 
 G_BEGIN_DECLS
 
@@ -47,7 +43,44 @@ struct _OpenVRVulkanRenderer
 
   VulkanCommandBuffer_t *current_cmd_buffer;
 
-  GQueue * cmd_buffers;
+  GQueue *cmd_buffers;
+
+  /* Rendering */
+  VkSwapchainKHR swap_chain;
+  VkImageView *swapchain_image_views;
+  VkFormat swapchain_image_format;
+  uint32_t swapchain_image_count;
+  VkExtent2D swapchain_extent;
+
+  VkRenderPass render_pass;
+  VkDescriptorSetLayout descriptor_set_layout;
+
+  VkPipeline graphics_pipeline;
+  VkPipelineLayout pipeline_layout;
+
+  VkFramebuffer *framebuffers;
+
+  VkBuffer *uniform_buffers;
+  VkDeviceMemory *uniform_buffers_memory;
+
+  VkDescriptorPool descriptor_pool;
+
+  VkDescriptorSet *descriptor_sets;
+
+  VkBuffer vertex_buffer;
+  VkDeviceMemory vertex_buffer_memory;
+  VkBuffer index_buffer;
+  VkDeviceMemory index_buffer_memory;
+
+  VkSemaphore *image_available_semaphores;
+  VkSemaphore *render_finished_semaphores;
+  VkFence *in_flight_fences;
+
+  VkCommandBuffer *draw_cmd_buffers;
+
+  VkSampler sampler;
+
+  size_t current_frame;
 };
 
 OpenVRVulkanRenderer *openvr_vulkan_renderer_new (void);
@@ -58,14 +91,9 @@ openvr_vulkan_renderer_init_vulkan (OpenVRVulkanRenderer *self,
                                     bool enable_validation);
 
 bool
-openvr_vulkan_renderer_init_swapchain (VkDevice device,
-                                       VkPhysicalDevice physical_device,
-                                       VkSurfaceKHR surface);
-
-void
-openvr_vulkan_renderer_submit_frame (OpenVRVulkanRenderer *self,
-                                     OpenVROverlay        *overlay,
-                                     OpenVRVulkanTexture  *texture);
+openvr_vulkan_renderer_init_rendering (OpenVRVulkanRenderer *self,
+                                       VkSurfaceKHR surface,
+                                       OpenVRVulkanTexture *texture);
 
 bool
 openvr_vulkan_renderer_load_raw (OpenVRVulkanRenderer *self,
@@ -93,6 +121,9 @@ openvr_vulkan_renderer_load_dmabuf2 (OpenVRVulkanRenderer *self,
                                      guint                 width,
                                      guint                 height,
                                      VkFormat              format);
+
+bool
+openvr_vulkan_renderer_draw (OpenVRVulkanRenderer *self);
 
 G_END_DECLS
 

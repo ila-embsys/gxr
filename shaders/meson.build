@@ -8,6 +8,7 @@ if glslang.found()
     if r.returncode() != 0
       message('Could not compile shaders:')
       message(r.stderr().strip())
+      message(r.stdout().strip())
     endif
   endforeach
 

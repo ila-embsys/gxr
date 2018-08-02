@@ -28,6 +28,7 @@ struct _OpenVRVulkanDevice
   VkPhysicalDevice physical_device;
 
   VkQueue queue;
+  VkQueue present_queue;
 
   uint32_t queue_family_index;
 

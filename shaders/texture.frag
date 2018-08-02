@@ -18,3 +18,4 @@ void main ()
 {
   out_color = texture (image, uv);
 }
+
