@@ -302,7 +302,7 @@ openvr_vulkan_instance_create (OpenVRVulkanInstance *self,
         .applicationVersion = 1,
         .pEngineName = NULL,
         .engineVersion = 1,
-        .apiVersion = VK_MAKE_VERSION (1, 1, 70)
+        .apiVersion = VK_MAKE_VERSION (1, 0, 0)
       },
       .enabledExtensionCount = num_enabled_extensions,
       .ppEnabledExtensionNames = enabled_extensions,
