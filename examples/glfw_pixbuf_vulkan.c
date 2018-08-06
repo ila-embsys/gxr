@@ -29,6 +29,7 @@ typedef struct Example
   GMainLoop *loop;
   VkSurfaceKHR surface;
   OpenVRVulkanRenderer *renderer;
+  bool should_quit;
 } Example;
 
 GdkPixbuf *
@@ -49,14 +50,28 @@ load_gdk_pixbuf ()
   }
 }
 
+void key_callback (GLFWwindow* window, int key,
+                   int scancode, int action, int mods)
+{
+  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+    {
+      Example *self = (Example*) glfwGetWindowUserPointer (window);
+      self->should_quit = true;
+    }
+}
+
 void
 init_glfw (Example *self)
 {
   glfwInit();
 
-  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+  glfwWindowHint (GLFW_CLIENT_API, GLFW_NO_API);
 
-  self->window = glfwCreateWindow(WIDTH, HEIGHT, "Pixbuf", NULL, NULL);
+  self->window = glfwCreateWindow (WIDTH, HEIGHT, "Vulkan Pixbuf", NULL, NULL);
+
+  glfwSetKeyCallback (self->window, key_callback);
+
+  glfwSetWindowUserPointer (self->window, self);
 }
 
 gboolean
@@ -65,8 +80,11 @@ draw_cb (gpointer data)
   Example *self = (Example*) data;
 
   glfwPollEvents ();
-  if (glfwWindowShouldClose (self->window))
-    g_main_loop_quit (self->loop);
+  if (glfwWindowShouldClose (self->window) || self->should_quit)
+    {
+      g_main_loop_quit (self->loop);
+      return FALSE;
+    }
 
   openvr_vulkan_renderer_draw (self->renderer);
 
@@ -77,7 +95,9 @@ draw_cb (gpointer data)
 
 int
 main (int argc, char *argv[]) {
-  Example example = {};
+  Example example = {
+    .should_quit = false
+  };
 
   init_glfw (&example);
 
