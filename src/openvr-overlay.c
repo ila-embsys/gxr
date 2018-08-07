@@ -23,16 +23,7 @@
 
 G_DEFINE_TYPE (OpenVROverlay, openvr_overlay, G_TYPE_OBJECT)
 
-enum {
-  MOTION_NOTIFY_EVENT,
-  BUTTON_PRESS_EVENT,
-  BUTTON_RELEASE_EVENT,
-  SHOW,
-  DESTROY,
-  LAST_SIGNAL
-};
-
-static guint overlay_signals[LAST_SIGNAL] = { 0 };
+guint overlay_signals[LAST_SIGNAL] = { 0 };
 
 static void
 openvr_overlay_class_init (OpenVROverlayClass *klass)
@@ -71,6 +62,21 @@ openvr_overlay_class_init (OpenVROverlayClass *klass)
                       G_SIGNAL_NO_RECURSE |
                       G_SIGNAL_NO_HOOKS,
                    0, NULL, NULL, NULL, G_TYPE_NONE, 0);
+
+  overlay_signals[MOTION_NOTIFY_EVENT3D] =
+    g_signal_new ("motion-notify-event-3d",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_LAST,
+                  0, NULL, NULL, NULL, G_TYPE_NONE,
+                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  overlay_signals[SCROLL_EVENT] =
+    g_signal_new ("scroll-event",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_LAST,
+                  0, NULL, NULL, NULL, G_TYPE_NONE,
+                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+
 }
 
 gboolean _overlay_init_fn_table (OpenVROverlay *self)
@@ -94,10 +100,13 @@ openvr_overlay_new (void)
 }
 
 void
-openvr_overlay_create (OpenVROverlay *self,
+openvr_overlay_create_width (OpenVROverlay *self,
                        gchar* key,
-                       gchar* name)
+                       gchar* name,
+                       float width,
+                       ETrackingUniverseOrigin openvr_tracking_universe)
 {
+  self->openvr_tracking_universe = openvr_tracking_universe;
   EVROverlayError err = self->functions->CreateOverlay(
     key, name, &self->overlay_handle);
 
@@ -108,10 +117,19 @@ openvr_overlay_create (OpenVROverlay *self,
     }
   else
     {
-      self->functions->SetOverlayWidthInMeters (self->overlay_handle, 1.5f);
+      self->functions->SetOverlayWidthInMeters (self->overlay_handle, width);
       self->functions->SetOverlayInputMethod (self->overlay_handle,
                                               VROverlayInputMethod_Mouse);
     }
+}
+
+void
+openvr_overlay_create (OpenVROverlay *self,
+                       gchar* key,
+                       gchar* name,
+                       ETrackingUniverseOrigin openvr_tracking_universe)
+{
+  openvr_overlay_create_width(self, key, name, 1.5, openvr_tracking_universe);
 }
 
 void
@@ -169,7 +187,8 @@ openvr_overlay_poll_event (OpenVROverlay *self)
 {
   struct VREvent_t vr_event;
 
-  while (self->functions && self->functions->PollNextOverlayEvent (self->overlay_handle,
+  while (self->functions &&
+         self->functions->PollNextOverlayEvent (self->overlay_handle,
                                                 &vr_event,
                                                 sizeof (vr_event)))
   {

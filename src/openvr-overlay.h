@@ -14,11 +14,33 @@
 #include <cairo.h>
 
 #include <openvr_capi.h>
+#include <graphene.h>
 
 G_BEGIN_DECLS
 
 #define OPENVR_TYPE_OVERLAY openvr_overlay_get_type()
 G_DECLARE_FINAL_TYPE (OpenVROverlay, openvr_overlay, OPENVR, OVERLAY, GObject)
+
+struct _motion_event_3d {
+  graphene_matrix_t transform;
+  gboolean has_intersection;
+  graphene_point3d_t intersection_point;
+};
+
+enum {
+  MOTION_NOTIFY_EVENT,
+  BUTTON_PRESS_EVENT,
+  BUTTON_RELEASE_EVENT,
+  SHOW,
+  DESTROY,
+  MOTION_NOTIFY_EVENT3D,
+  BUTTON_PRESS_EVENT3D,
+  BUTTON_RELEASE_EVENT3D,
+  SCROLL_EVENT,
+  LAST_SIGNAL
+};
+
+extern guint overlay_signals[LAST_SIGNAL];
 
 struct _OpenVROverlay
 {
@@ -26,14 +48,29 @@ struct _OpenVROverlay
 
   VROverlayHandle_t overlay_handle;
   VROverlayHandle_t thumbnail_handle;
+
+  ETrackingUniverseOrigin openvr_tracking_universe;
+
+  // describes where the overlay is displayed in VR
+  // needs to be updated by the application when the overlay is moved
+  graphene_matrix_t transform;
+
   struct VR_IVROverlay_FnTable *functions;
 };
 
 OpenVROverlay *openvr_overlay_new (void);
 
+void
+openvr_overlay_create_width (OpenVROverlay *self,
+                             gchar* key,
+                             gchar* name,
+                             float width_meters,
+                             ETrackingUniverseOrigin openvr_tracking_universe);
+
 void openvr_overlay_create (OpenVROverlay *self,
                             gchar* key,
-                            gchar* name);
+                            gchar* name,
+                            ETrackingUniverseOrigin openvr_tracking_universe);
 
 void
 openvr_overlay_create_for_dashboard (OpenVROverlay *self,

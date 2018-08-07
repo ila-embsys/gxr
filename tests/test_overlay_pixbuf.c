@@ -70,7 +70,8 @@ test_overlay_opengl_pixbuf ()
   g_assert_nonnull (overlay);
   g_assert (openvr_overlay_is_available (overlay));
 
-  openvr_overlay_create (overlay, "test.pixbuf", "GDK pixbuf");
+  openvr_overlay_create (overlay, "test.pixbuf", "GDK pixbuf",
+                         ETrackingUniverseOrigin_TrackingUniverseStanding);
 
   g_assert (openvr_overlay_is_valid (overlay));
 

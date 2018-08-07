@@ -3,6 +3,8 @@
 
 #include <glib/gprintf.h>
 
+uint64_t ButtonMaskFromId( EVRButtonId id ) { return 1ull << id; }
+
 gboolean
 openvr_init_fn_table (const char *type, intptr_t *ret)
 {

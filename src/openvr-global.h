@@ -6,6 +6,9 @@
 gboolean
 openvr_init_fn_table (const char *type, intptr_t *ret);
 
+// missing from openvr_capi.h
+uint64_t ButtonMaskFromId( EVRButtonId id );
+
 #define INIT_FN_TABLE(target, type) \
 { \
   intptr_t ptr = 0; \
