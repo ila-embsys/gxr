@@ -10,8 +10,6 @@
 
 #include <stdint.h>
 #include <glib-object.h>
-#include <gdk-pixbuf/gdk-pixbuf.h>
-#include <cairo.h>
 
 #include "openvr-vulkan-client.h"
 #include "openvr-vulkan-texture.h"
@@ -20,20 +18,11 @@ G_BEGIN_DECLS
 
 #define OPENVR_TYPE_VULKAN_RENDERER openvr_vulkan_renderer_get_type()
 G_DECLARE_FINAL_TYPE (OpenVRVulkanRenderer, openvr_vulkan_renderer,
-                      OPENVR, VULKAN_RENDERER, GObject)
+                      OPENVR, VULKAN_RENDERER, OpenVRVulkanClient)
 
 struct _OpenVRVulkanRenderer
 {
-  GObjectClass parent_class;
-
-  VkCommandPool command_pool;
-
-  OpenVRVulkanInstance *instance;
-  OpenVRVulkanDevice *device;
-
-  VulkanCommandBuffer_t *current_cmd_buffer;
-
-  GQueue *cmd_buffers;
+  OpenVRVulkanClient parent_type;
 
   /* Rendering */
   VkSwapchainKHR swap_chain;
@@ -73,45 +62,18 @@ struct _OpenVRVulkanRenderer
   size_t current_frame;
 };
 
+struct _OpenVRVulkanRendererClass
+{
+  OpenVRVulkanClientClass parent_class;
+};
+
 OpenVRVulkanRenderer *openvr_vulkan_renderer_new (void);
 
-bool
-openvr_vulkan_renderer_init_vulkan (OpenVRVulkanRenderer *self,
-                                    GSList *instance_extensions,
-                                    GSList *device_extensions,
-                                    bool enable_validation);
 
 bool
 openvr_vulkan_renderer_init_rendering (OpenVRVulkanRenderer *self,
                                        VkSurfaceKHR surface,
                                        OpenVRVulkanTexture *texture);
-
-bool
-openvr_vulkan_renderer_load_raw (OpenVRVulkanRenderer *self,
-                                 OpenVRVulkanTexture  *texture,
-                                 guchar               *pixels,
-                                 guint                 width,
-                                 guint                 height,
-                                 gsize                 size,
-                                 VkFormat              format);
-
-bool
-openvr_vulkan_renderer_load_pixbuf (OpenVRVulkanRenderer *self,
-                                    OpenVRVulkanTexture  *texture,
-                                    GdkPixbuf *pixbuf);
-
-bool
-openvr_vulkan_renderer_load_cairo_surface (OpenVRVulkanRenderer *self,
-                                           OpenVRVulkanTexture  *texture,
-                                           cairo_surface_t *surface);
-
-bool
-openvr_vulkan_renderer_load_dmabuf (OpenVRVulkanRenderer *self,
-                                    OpenVRVulkanTexture  *texture,
-                                    int                   fd,
-                                    guint                 width,
-                                    guint                 height,
-                                    VkFormat              format);
 
 bool
 openvr_vulkan_renderer_draw (OpenVRVulkanRenderer *self);

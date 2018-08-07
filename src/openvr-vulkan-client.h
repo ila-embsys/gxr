@@ -9,18 +9,29 @@
 #define OPENVR_GLIB_VULKAN_CLIENT_H_
 
 #include <glib-object.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
+#include <cairo.h>
 
 #define VK_USE_PLATFORM_XLIB_KHR
 #include <vulkan/vulkan.h>
 
 #include "openvr-vulkan-instance.h"
 #include "openvr-vulkan-device.h"
+#include "openvr-vulkan-texture.h"
 
 G_BEGIN_DECLS
 
-#define OPENVR_TYPE_VULKAN_CLIENT openvr_vulkan_client_get_type()
-G_DECLARE_FINAL_TYPE (OpenVRVulkanClient, openvr_vulkan_client,
-                      OPENVR, VULKAN_CLIENT, GObject)
+#define OPENVR_TYPE_VULKAN_CLIENT            (openvr_vulkan_client_get_type())
+#define OPENVR_VULKAN_CLIENT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), OPENVR_TYPE_VULKAN_CLIENT, OpenVRVulkanClient))
+#define OPENVR_VULKAN_CLIENT_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), OPENVR_TYPE_VULKAN_CLIENT, OpenVRVulkanClientClass))
+#define OPENVR_IS_VULKAN_CLIENT(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), OPENVR_TYPE_VULKAN_CLIENT))
+#define OPENVR_IS_VULKAN_CLIENT_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), OPENVR_TYPE_VULKAN_CLIENT))
+#define OPENVR_VULKAN_CLIENT_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), OPENVR_TYPE_VULKAN_CLIENT, OpenVRVulkanClientClass))
+
+typedef struct _OpenVRVulkanClient             OpenVRVulkanClient;
+typedef struct _OpenVRVulkanClientClass        OpenVRVulkanClientClass;
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(OpenVRVulkanClient, g_object_unref)
 
 typedef struct
 {
@@ -30,7 +41,7 @@ typedef struct
 
 struct _OpenVRVulkanClient
 {
-  GObjectClass parent_class;
+  GObject object;
 
   VkCommandPool command_pool;
 
@@ -42,8 +53,53 @@ struct _OpenVRVulkanClient
   GQueue *cmd_buffers;
 };
 
-OpenVRVulkanClient *openvr_vulkan_client_new (void);
+struct _OpenVRVulkanClientClass
+{
+  GObjectClass parent_class;
+};
 
+GType      openvr_vulkan_client_get_type                 (void) G_GNUC_CONST;
+
+OpenVRVulkanClient * openvr_vulkan_client_new (void);
+
+void
+openvr_vulkan_client_begin_res_cmd_buffer (OpenVRVulkanClient *self);
+
+void
+openvr_vulkan_client_submit_res_cmd_buffer (OpenVRVulkanClient *self);
+
+bool
+openvr_vulkan_client_load_raw (OpenVRVulkanClient   *self,
+                               OpenVRVulkanTexture  *texture,
+                               guchar               *pixels,
+                               guint                 width,
+                               guint                 height,
+                               gsize                 size,
+                               VkFormat              format);
+
+bool
+openvr_vulkan_client_load_dmabuf (OpenVRVulkanClient   *self,
+                                  OpenVRVulkanTexture  *texture,
+                                  int                   fd,
+                                  guint                 width,
+                                  guint                 height,
+                                  VkFormat              format);
+
+bool
+openvr_vulkan_client_load_pixbuf (OpenVRVulkanClient   *self,
+                                  OpenVRVulkanTexture  *texture,
+                                  GdkPixbuf            *pixbuf);
+
+bool
+openvr_vulkan_client_load_cairo_surface (OpenVRVulkanClient  *self,
+                                         OpenVRVulkanTexture *texture,
+                                         cairo_surface_t     *surface);
+
+bool
+openvr_vulkan_client_init_vulkan (OpenVRVulkanClient *self,
+                                  GSList             *instance_extensions,
+                                  GSList             *device_extensions,
+                                  bool                enable_validation);
 
 G_END_DECLS
 

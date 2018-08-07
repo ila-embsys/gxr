@@ -29,10 +29,7 @@ openvr_vulkan_uploader_finalize (GObject *gobject);
 
 
 VulkanCommandBuffer_t*
-_get_command_buffer (OpenVRVulkanUploader *self);
-
-bool
-_init_device (OpenVRVulkanUploader *self);
+_get_command_buffer2 (OpenVRVulkanUploader *self);
 
 static void
 openvr_vulkan_uploader_class_init (OpenVRVulkanUploaderClass *klass)
@@ -58,7 +55,7 @@ openvr_vulkan_uploader_new (void)
 }
 
 void
-_cleanup_command_buffer_queue (gpointer item, OpenVRVulkanUploader *self)
+_cleanup_command_buffer_queue2 (gpointer item, OpenVRVulkanUploader *self)
 {
   VulkanCommandBuffer_t *b = (VulkanCommandBuffer_t*) item;
   vkFreeCommandBuffers (self->device->device,
@@ -79,7 +76,7 @@ openvr_vulkan_uploader_finalize (GObject *gobject)
   if (self->device->device != VK_NULL_HANDLE)
   {
     g_queue_foreach (self->cmd_buffers,
-                     (GFunc) _cleanup_command_buffer_queue, self);
+                     (GFunc) _cleanup_command_buffer_queue2, self);
 
     vkDestroyCommandPool (self->device->device, self->command_pool, NULL);
 
@@ -91,7 +88,7 @@ openvr_vulkan_uploader_finalize (GObject *gobject)
 }
 
 bool
-_init_command_pool (OpenVRVulkanUploader *self)
+_init_command_pool2 (OpenVRVulkanUploader *self)
 {
   VkCommandPoolCreateInfo command_pool_info =
     {
@@ -112,10 +109,10 @@ _init_command_pool (OpenVRVulkanUploader *self)
 }
 
 void
-_begin_command_buffer (OpenVRVulkanUploader *self)
+_begin_command_buffer2 (OpenVRVulkanUploader *self)
 {
   /* Command buffer used during resource loading */
-  self->current_cmd_buffer = _get_command_buffer (self);
+  self->current_cmd_buffer = _get_command_buffer2 (self);
   VkCommandBufferBeginInfo command_buffer_begin_info =
   {
     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -126,7 +123,7 @@ _begin_command_buffer (OpenVRVulkanUploader *self)
 }
 
 void
-_submit_command_buffer (OpenVRVulkanUploader *self)
+_submit_command_buffer2 (OpenVRVulkanUploader *self)
 {
   /* Submit the command buffer used during loading */
   vkEndCommandBuffer (self->current_cmd_buffer->cmd_buffer);
@@ -153,7 +150,7 @@ openvr_vulkan_uploader_load_raw (OpenVRVulkanUploader *self,
                                  gsize                 size,
                                  VkFormat              format)
 {
-  _begin_command_buffer (self);
+  _begin_command_buffer2 (self);
 
 
   if (!openvr_vulkan_texture_from_pixels (texture,
@@ -162,7 +159,7 @@ openvr_vulkan_uploader_load_raw (OpenVRVulkanUploader *self,
                                           pixels, width, height, size, format))
     return false;
 
-  _submit_command_buffer (self);
+  _submit_command_buffer2 (self);
 
   return true;
 }
@@ -175,7 +172,7 @@ openvr_vulkan_uploader_load_dmabuf (OpenVRVulkanUploader *self,
                                     guint                 height,
                                     VkFormat              format)
 {
-  _begin_command_buffer (self);
+  _begin_command_buffer2 (self);
 
   if (!openvr_vulkan_texture_from_dmabuf (texture,
                                           self->device,
@@ -187,7 +184,7 @@ openvr_vulkan_uploader_load_dmabuf (OpenVRVulkanUploader *self,
                                          VK_IMAGE_LAYOUT_PREINITIALIZED,
                                          VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
-  _submit_command_buffer (self);
+  _submit_command_buffer2 (self);
 
   return true;
 }
@@ -289,7 +286,7 @@ openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
       return false;
     }
 
-  if(!_init_command_pool (self))
+  if(!_init_command_pool2 (self))
     {
       g_printerr ("Failed to create command pool.\n");
       return false;
@@ -334,7 +331,7 @@ openvr_vulkan_uploader_submit_frame (OpenVRVulkanUploader *self,
  * Associate a fence with the command buffer.
  */
 VulkanCommandBuffer_t*
-_get_command_buffer (OpenVRVulkanUploader *self)
+_get_command_buffer2 (OpenVRVulkanUploader *self)
 {
   VulkanCommandBuffer_t *command_buffer = g_new (VulkanCommandBuffer_t, 1);
 

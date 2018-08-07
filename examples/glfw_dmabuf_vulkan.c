@@ -130,7 +130,8 @@ draw_cb (gpointer data)
 
   openvr_vulkan_renderer_draw (self->renderer);
 
-  vkDeviceWaitIdle (self->renderer->device->device);
+  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (self->renderer);
+  vkDeviceWaitIdle (client->device->device);
 
   return TRUE;
 }
@@ -185,16 +186,18 @@ main (int argc, char *argv[]) {
                                         g_strdup (device_extensions[i]));
     }
 
-  if (!openvr_vulkan_renderer_init_vulkan (example.renderer,
-                                           instance_ext_list,
-                                           device_ext_list,
-                                           true))
+  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (example.renderer);
+
+  if (!openvr_vulkan_client_init_vulkan (client,
+                                         instance_ext_list,
+                                         device_ext_list,
+                                         true))
   {
     g_printerr ("Unable to initialize Vulkan!\n");
     return -1;
   }
 
-  if (glfwCreateWindowSurface (example.renderer->instance->instance,
+  if (glfwCreateWindowSurface (client->instance->instance,
                                example.window, NULL,
                               &example.surface) != VK_SUCCESS)
     {
@@ -204,9 +207,9 @@ main (int argc, char *argv[]) {
 
   example.texture = openvr_vulkan_texture_new ();
 
-  if (!openvr_vulkan_renderer_load_dmabuf (example.renderer, example.texture,
-                                           fd, width, height,
-                                           VK_FORMAT_B8G8R8A8_UNORM))
+  if (!openvr_vulkan_client_load_dmabuf (client, example.texture,
+                                         fd, width, height,
+                                         VK_FORMAT_B8G8R8A8_UNORM))
     {
       g_printerr ("Unable to initialize vulkan dmabuf texture.\n");
       return -1;
