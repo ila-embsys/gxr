@@ -13,11 +13,7 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <cairo.h>
 
-#define VK_USE_PLATFORM_XLIB_KHR
-#include <vulkan/vulkan.h>
-
-#include "openvr-vulkan-instance.h"
-#include "openvr-vulkan-device.h"
+#include "openvr-vulkan-client.h"
 #include "openvr-vulkan-texture.h"
 
 G_BEGIN_DECLS
@@ -25,12 +21,6 @@ G_BEGIN_DECLS
 #define OPENVR_TYPE_VULKAN_RENDERER openvr_vulkan_renderer_get_type()
 G_DECLARE_FINAL_TYPE (OpenVRVulkanRenderer, openvr_vulkan_renderer,
                       OPENVR, VULKAN_RENDERER, GObject)
-
-typedef struct
-{
-  VkCommandBuffer cmd_buffer;
-  VkFence fence;
-} VulkanCommandBuffer_t;
 
 struct _OpenVRVulkanRenderer
 {

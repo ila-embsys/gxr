@@ -36,7 +36,8 @@ typedef struct Transformation {
   float mvp[16];
 } Transformation;
 
-G_DEFINE_TYPE (OpenVRVulkanRenderer, openvr_vulkan_renderer, G_TYPE_OBJECT)
+G_DEFINE_TYPE (OpenVRVulkanRenderer, openvr_vulkan_renderer,
+               OPENVR_TYPE_VULKAN_CLIENT)
 
 static void
 openvr_vulkan_renderer_finalize (GObject *gobject);
