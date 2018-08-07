@@ -1413,47 +1413,21 @@ openvr_vulkan_renderer_draw (OpenVRVulkanRenderer *self)
 
 bool
 openvr_vulkan_renderer_init_vulkan (OpenVRVulkanRenderer *self,
-                                    VkSurfaceKHR surface,
+                                    GSList *instance_extensions,
+                                    GSList *device_extensions,
                                     bool enable_validation)
 {
 
-  const gchar *instance_extensions[] =
-  {
-    VK_KHR_SURFACE_EXTENSION_NAME,
-    "VK_KHR_xcb_surface" // VK_KHR_XCB_SURFACE_EXTENSION_NAME
-  };
-
-  GSList *instance_ext_list = NULL;
-  for (int i = 0; i < G_N_ELEMENTS (instance_extensions); i++)
-    {
-      instance_ext_list = g_slist_append (instance_ext_list,
-                                          g_strdup (instance_extensions[i]));
-    }
-
   if (!openvr_vulkan_instance_create (self->instance,
                                       enable_validation,
-                                      instance_ext_list))
+                                      instance_extensions))
     {
       g_printerr ("Failed to create instance.\n");
       return false;
     }
 
-  const gchar *device_extensions[] =
-  {
-    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-    VK_EXT_EXTERNAL_MEMORY_DMA_BUF_EXTENSION_NAME,
-    VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME
-  };
-
-  GSList *device_ext_list = NULL;
-  for (int i = 0; i < G_N_ELEMENTS (device_extensions); i++)
-    {
-      device_ext_list = g_slist_append (device_ext_list,
-                                        g_strdup (device_extensions[i]));
-    }
-
   if (!openvr_vulkan_device_create (self->device, self->instance,
-                                    VK_NULL_HANDLE, device_ext_list))
+                                    VK_NULL_HANDLE, device_extensions))
     {
       g_printerr ("Failed to create device.\n");
       return false;

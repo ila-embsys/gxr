@@ -108,19 +108,36 @@ main (int argc, char *argv[]) {
 
   example.loop = g_main_loop_new (NULL, FALSE);
 
+  example.renderer = openvr_vulkan_renderer_new ();
+
   uint32_t num_glfw_extensions = 0;
   const char** glfw_extensions;
   glfw_extensions = glfwGetRequiredInstanceExtensions (&num_glfw_extensions);
 
-  g_print ("GLFW requires %d instance extensions.\n", num_glfw_extensions);
+  GSList *instance_ext_list = NULL;
   for (int i = 0; i < num_glfw_extensions; i++)
     {
-      g_print ("%s\n", glfw_extensions[i]);
+      instance_ext_list = g_slist_append (instance_ext_list,
+                                          g_strdup (glfw_extensions[i]));
     }
 
-  example.renderer = openvr_vulkan_renderer_new ();
+  const gchar *device_extensions[] =
+  {
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+    VK_EXT_EXTERNAL_MEMORY_DMA_BUF_EXTENSION_NAME,
+    VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME
+  };
+
+  GSList *device_ext_list = NULL;
+  for (int i = 0; i < G_N_ELEMENTS (device_extensions); i++)
+    {
+      device_ext_list = g_slist_append (device_ext_list,
+                                        g_strdup (device_extensions[i]));
+    }
+
   if (!openvr_vulkan_renderer_init_vulkan (example.renderer,
-                                           example.surface,
+                                           instance_ext_list,
+                                           device_ext_list,
                                            true))
   {
     g_printerr ("Unable to initialize Vulkan!\n");
@@ -148,6 +165,9 @@ main (int argc, char *argv[]) {
   g_timeout_add (20, draw_cb, &example);
   g_main_loop_run (example.loop);
   g_main_loop_unref (example.loop);
+
+  g_slist_free (instance_ext_list);
+  g_slist_free (device_ext_list);
 
   g_object_unref (pixbuf);
   g_object_unref (example.texture);

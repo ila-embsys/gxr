@@ -87,7 +87,8 @@ OpenVRVulkanRenderer *openvr_vulkan_renderer_new (void);
 
 bool
 openvr_vulkan_renderer_init_vulkan (OpenVRVulkanRenderer *self,
-                                    VkSurfaceKHR surface,
+                                    GSList *instance_extensions,
+                                    GSList *device_extensions,
                                     bool enable_validation);
 
 bool
