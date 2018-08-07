@@ -24,10 +24,10 @@ typedef struct Vertex {
 } Vertex;
 
 const Vertex vertices[4] = {
-    {{-1.f, -1.f}, {1.f, 0.f}},
-    {{ 1.f, -1.f}, {0.f, 0.f}},
-    {{ 1.f,  1.f}, {0.f, 1.f}},
-    {{-1.f,  1.f}, {1.f, 1.f}}
+  {{-1.f, -1.f}, {1.f, 0.f}},
+  {{ 1.f, -1.f}, {0.f, 0.f}},
+  {{ 1.f,  1.f}, {0.f, 1.f}},
+  {{-1.f,  1.f}, {1.f, 1.f}}
 };
 
 const uint16_t indices[6] = {0, 1, 2, 2, 3, 0};
@@ -677,9 +677,13 @@ _load_resource (const gchar* path, GBytes **res)
 
 bool
 _create_shader_module (VkDevice device,
-                       GBytes *bytes,
+                       const gchar* resource_name,
                        VkShaderModule *module)
 {
+  GBytes *bytes;
+  if (!_load_resource (resource_name, &bytes))
+    return false;
+
   gsize size = 0;
   const uint32_t *buffer = g_bytes_get_data (bytes, &size);
 
@@ -692,8 +696,11 @@ _create_shader_module (VkDevice device,
   if (vkCreateShaderModule (device, &info, NULL, module) != VK_SUCCESS)
     {
       g_printerr ("Failed to create shader module.\n");
+      g_bytes_unref (bytes);
       return false;
     }
+
+  g_bytes_unref (bytes);
 
   return true;
 }
@@ -718,7 +725,7 @@ _init_framebuffers (VkDevice device,
         .width = swapchain_extent.width,
         .height = swapchain_extent.height,
         .layers = 1
-        };
+      };
 
       VkResult ret =
         vkCreateFramebuffer(device, &info, NULL, &((*framebuffers)[i]));
@@ -759,7 +766,6 @@ _create_buffer (VkDevice device,
   VkMemoryAllocateInfo alloc_info = {
     .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
     .allocationSize = requirements.size,
-    //.memoryTypeIndex = findMemoryType (requirements.memoryTypeBits, properties)
   };
 
   if (!openvr_vulkan_device_memory_type_from_properties (
@@ -1018,7 +1024,7 @@ _init_texture_sampler (VkDevice device, VkSampler *sampler)
     .compareOp = VK_COMPARE_OP_ALWAYS,
     .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
     .unnormalizedCoordinates = VK_FALSE
-    };
+  };
 
   if (vkCreateSampler(device, &info, NULL, sampler) != VK_SUCCESS)
     {
@@ -1095,15 +1101,13 @@ _init_draw_cmd_buffers (VkDevice device,
       vkCmdBeginRenderPass (cmd_buffer, &render_pass_info,
                             VK_SUBPASS_CONTENTS_INLINE);
 
-      vkCmdBindPipeline (cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                         pipeline);
+      vkCmdBindPipeline (cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-      VkBuffer vertex_buffers[] = { vertex_buffer };
-      VkDeviceSize offsets[] = {0};
-      vkCmdBindVertexBuffers (cmd_buffer, 0, 1, vertex_buffers, offsets);
+      vkCmdBindVertexBuffers (cmd_buffer, 0, 1,
+                              (VkBuffer[]){ vertex_buffer },
+                              (VkDeviceSize[]){ 0 });
 
-      vkCmdBindIndexBuffer (cmd_buffer, index_buffer, 0,
-                            VK_INDEX_TYPE_UINT16);
+      vkCmdBindIndexBuffer (cmd_buffer, index_buffer, 0, VK_INDEX_TYPE_UINT16);
 
       vkCmdBindDescriptorSets (cmd_buffer,
                                VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout,
@@ -1202,28 +1206,21 @@ openvr_vulkan_renderer_init_rendering (OpenVRVulkanRenderer *self,
 
   _create_descriptor_set_layout (device, &self->descriptor_set_layout);
 
-  GBytes *fragment_shader;
-  GBytes *vertex_shader;
-
-  if (!_load_resource ("/shaders/texture.frag.spv", &fragment_shader))
-    return false;
-  if (!_load_resource ("/shaders/texture.vert.spv", &vertex_shader))
+  VkShaderModule fragment_module;
+  if (!_create_shader_module (device,
+                              "/shaders/texture.frag.spv",
+                              &fragment_module))
     return false;
 
-  VkShaderModule fragment_shader_module;
-  if (!_create_shader_module (device, fragment_shader, &fragment_shader_module))
+  VkShaderModule vertex_module;
+  if (!_create_shader_module (device,
+                              "/shaders/texture.vert.spv",
+                              &vertex_module))
     return false;
-
-  VkShaderModule vertex_shader_module;
-  if (!_create_shader_module (device, vertex_shader, &vertex_shader_module))
-    return false;
-
-  g_bytes_unref (fragment_shader);
-  g_bytes_unref (vertex_shader);
 
   if (!_create_graphics_pipeline (device,
-                                  vertex_shader_module,
-                                  fragment_shader_module,
+                                  vertex_module,
+                                  fragment_module,
                                   self->swapchain_extent,
                                   self->descriptor_set_layout,
                                   self->render_pass,
@@ -1231,8 +1228,8 @@ openvr_vulkan_renderer_init_rendering (OpenVRVulkanRenderer *self,
                                  &self->pipeline_layout))
     return false;
 
-  vkDestroyShaderModule (device, fragment_shader_module, NULL);
-  vkDestroyShaderModule (device, vertex_shader_module, NULL);
+  vkDestroyShaderModule (device, fragment_module, NULL);
+  vkDestroyShaderModule (device, vertex_module, NULL);
 
   if (!_init_framebuffers (device,
                            self->render_pass,
@@ -1314,8 +1311,15 @@ _update_uniform_buffer (VkDevice device,
   Transformation ubo = {};
   graphene_matrix_to_float (&mvp, ubo.mvp);
 
-  void* data;
-  vkMapMemory (device, uniform_buffer_memory, 0, sizeof(ubo), 0, &data);
+  void *data;
+  VkResult res;
+  res = vkMapMemory (device, uniform_buffer_memory, 0, sizeof(ubo), 0, &data);
+  if (res != VK_SUCCESS)
+    {
+      g_printerr ("Unable to map memory.\n");
+      return false;
+    }
+
   memcpy (data, &ubo, sizeof(ubo));
   vkUnmapMemory (device, uniform_buffer_memory);
 
@@ -1327,6 +1331,12 @@ openvr_vulkan_renderer_draw (OpenVRVulkanRenderer *self)
 {
   VkDevice device = self->device->device;
 
+  VkSemaphore image_available_semaphore =
+    self->image_available_semaphores[self->current_frame];
+
+  VkSemaphore render_finished_semaphore =
+    self->render_finished_semaphores[self->current_frame];
+
   vkWaitForFences (device, 1,
                    &self->in_flight_fences[self->current_frame],
                    VK_TRUE, UINT64_MAX);
@@ -1334,10 +1344,10 @@ openvr_vulkan_renderer_draw (OpenVRVulkanRenderer *self)
   uint32_t image_index;
   VkResult result =
     vkAcquireNextImageKHR (device, self->swap_chain, UINT64_MAX,
-                           self->image_available_semaphores[self->current_frame],
+                           image_available_semaphore,
                            VK_NULL_HANDLE, &image_index);
 
-  if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+  if (result != VK_SUCCESS)
     {
       g_printerr ("Failed to acquire swap chain image.\n");
       return false;
@@ -1345,26 +1355,17 @@ openvr_vulkan_renderer_draw (OpenVRVulkanRenderer *self)
 
   _update_uniform_buffer (device, self->uniform_buffers_memory[image_index]);
 
-  VkPipelineStageFlags wait_stages[] = {
-    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
-  };
-
-  VkSemaphore wait_semaphores[] = {
-    self->image_available_semaphores[self->current_frame]
-  };
-  VkSemaphore signal_semaphores[] = {
-    self->render_finished_semaphores[self->current_frame]
-  };
-
   VkSubmitInfo submit_info = {
     .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
     .waitSemaphoreCount = 1,
-    .pWaitSemaphores = wait_semaphores,
-    .pWaitDstStageMask = wait_stages,
+    .pWaitSemaphores = (VkSemaphore[]) { image_available_semaphore },
+    .pWaitDstStageMask = (VkPipelineStageFlags[]) {
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+    },
     .commandBufferCount = 1,
     .pCommandBuffers = &self->draw_cmd_buffers[image_index],
     .signalSemaphoreCount = 1,
-    .pSignalSemaphores = signal_semaphores
+    .pSignalSemaphores = (VkSemaphore[]) { render_finished_semaphore }
   };
 
   vkResetFences (device, 1, &self->in_flight_fences[self->current_frame]);
@@ -1376,14 +1377,12 @@ openvr_vulkan_renderer_draw (OpenVRVulkanRenderer *self)
       return false;
     }
 
-  VkSwapchainKHR swapchains[] = { self->swap_chain };
-
   VkPresentInfoKHR present_info = {
     .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
     .waitSemaphoreCount = 1,
-    .pWaitSemaphores = signal_semaphores,
+    .pWaitSemaphores = (VkSemaphore[]) { render_finished_semaphore },
     .swapchainCount = 1,
-    .pSwapchains = swapchains,
+    .pSwapchains = (VkSwapchainKHR[]) { self->swap_chain },
     .pImageIndices = &image_index,
   };
 
