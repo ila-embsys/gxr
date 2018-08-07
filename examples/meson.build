@@ -97,6 +97,16 @@ if libdrm_amdgpu_dep.found()
     link_with: openvr_glib_lib,
     include_directories: openvr_glib_inc,
     install: false)
+
+  if glfw_dep.found()
+    glfw_dmabuf_vulkan = executable(
+      'glfw_dmabuf_vulkan', ['glfw_dmabuf_vulkan.c', '../shaders/shaders.c'],
+      dependencies: [gtk3_dep, vulkan_dep, libdrm_dep,
+                     libdrm_amdgpu_dep, glfw_dep],
+      link_with: openvr_glib_lib,
+      include_directories: openvr_glib_inc,
+      install: false)
+  endif
 endif
 
 if glfw_dep.found()

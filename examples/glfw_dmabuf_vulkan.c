@@ -9,12 +9,16 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gdk/gdk.h>
 
+#include <amdgpu_drm.h>
+#include <amdgpu.h>
+#include <fcntl.h>
+
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-#include <openvr-glib.h>
-
 #include "openvr-vulkan-renderer.h"
+
+#include "dmabuf_content.h"
 
 typedef struct Example
 {
@@ -26,22 +30,65 @@ typedef struct Example
   bool should_quit;
 } Example;
 
-GdkPixbuf *
-load_gdk_pixbuf ()
+void*
+allocate_dmabuf_amd (int size, int *fd)
 {
-  GError *error = NULL;
-  GdkPixbuf * pixbuf_no_alpha =
-    gdk_pixbuf_new_from_resource ("/res/cat.jpg", &error);
+  amdgpu_device_handle amd_dev;
+  amdgpu_bo_handle amd_bo;
 
-  if (error != NULL) {
-    g_printerr ("Unable to read file: %s\n", error->message);
-    g_error_free (error);
-    return NULL;
-  } else {
-    GdkPixbuf *pixbuf = gdk_pixbuf_add_alpha (pixbuf_no_alpha, false, 0, 0, 0);
-    g_object_unref (pixbuf_no_alpha);
-    return pixbuf;
-  }
+  /* use render node to avoid needing to authenticate: */
+  int dev_fd = open ("/dev/dri/renderD128", 02, 0);
+
+  uint32_t major_version;
+  uint32_t minor_version;
+  int ret = amdgpu_device_initialize (dev_fd,
+                                     &major_version,
+                                     &minor_version,
+                                     &amd_dev);
+  if (ret < 0)
+    {
+      g_printerr ("Could not create amdgpu device: %s\n", strerror (-ret));
+      return NULL;
+    }
+
+  g_print ("Initialized amdgpu drm device with fd %d. Version %d.%d\n",
+           dev_fd, major_version, minor_version);
+
+  struct amdgpu_bo_alloc_request alloc_buffer =
+  {
+    .alloc_size = (uint64_t) size,
+    .preferred_heap = AMDGPU_GEM_DOMAIN_GTT,
+  };
+
+  ret = amdgpu_bo_alloc (amd_dev, &alloc_buffer, &amd_bo);
+  if (ret < 0)
+    {
+      g_printerr ("amdgpu_bo_alloc failed: %s\n", strerror(-ret));
+      return NULL;
+    }
+
+  uint32_t shared_handle;
+  ret = amdgpu_bo_export (amd_bo,
+                          amdgpu_bo_handle_type_dma_buf_fd,
+                         &shared_handle);
+
+  if (ret < 0)
+    {
+      g_printerr ("amdgpu_bo_export failed: %s\n", strerror (-ret));
+      return NULL;
+    }
+
+  *fd = (int) shared_handle;
+  void *cpu_buffer;
+  ret = amdgpu_bo_cpu_map (amd_bo, &cpu_buffer);
+
+  if (ret < 0)
+    {
+      g_printerr ("amdgpu_bo_cpu_map failed: %s\n", strerror (-ret));
+      return NULL;
+    }
+
+  return cpu_buffer;
 }
 
 void key_callback (GLFWwindow* window, int key,
@@ -62,7 +109,7 @@ init_glfw (Example *self, int width, int height)
   glfwWindowHint (GLFW_CLIENT_API, GLFW_NO_API);
   glfwWindowHint (GLFW_RESIZABLE, false);
 
-  self->window = glfwCreateWindow (width, height, "Vulkan Pixbuf", NULL, NULL);
+  self->window = glfwCreateWindow (width, height, "Vulkan Dmabuf", NULL, NULL);
 
   glfwSetKeyCallback (self->window, key_callback);
 
@@ -88,20 +135,26 @@ draw_cb (gpointer data)
   return TRUE;
 }
 
+#define ALIGN(_v, _d) (((_v) + ((_d) - 1)) & ~((_d) - 1))
+
 int
 main (int argc, char *argv[]) {
   Example example = {
     .should_quit = false
   };
 
-  GdkPixbuf * pixbuf = load_gdk_pixbuf ();
-  if (pixbuf == NULL)
-    return -1;
+  /* create dmabuf */
+  uint32_t width = 1280;
+  uint32_t height = 720;
 
-  gint width = gdk_pixbuf_get_width (pixbuf);
-  gint height = gdk_pixbuf_get_height (pixbuf);
+  int fd;
+  int stride = ALIGN ((int) width, 32) * 4;
+  uint64_t size = (uint64_t) stride * height;
+  char* map = (char*) allocate_dmabuf_amd (size, &fd);
 
-  init_glfw (&example, width / 2, height / 2);
+  dma_buf_fill (map, width, height, stride);
+
+  init_glfw (&example, width, height);
 
   example.loop = g_main_loop_new (NULL, FALSE);
 
@@ -151,8 +204,13 @@ main (int argc, char *argv[]) {
 
   example.texture = openvr_vulkan_texture_new ();
 
-  openvr_vulkan_renderer_load_pixbuf (example.renderer,
-                                      example.texture, pixbuf);
+  if (!openvr_vulkan_renderer_load_dmabuf2 (example.renderer, example.texture,
+                                            fd, width, height,
+                                            VK_FORMAT_B8G8R8A8_UNORM))
+    {
+      g_printerr ("Unable to initialize vulkan dmabuf texture.\n");
+      return -1;
+    }
 
   if (!openvr_vulkan_renderer_init_rendering (example.renderer,
                                               example.surface,
@@ -166,7 +224,6 @@ main (int argc, char *argv[]) {
   g_slist_free (instance_ext_list);
   g_slist_free (device_ext_list);
 
-  g_object_unref (pixbuf);
   g_object_unref (example.texture);
   g_object_unref (example.renderer);
 
