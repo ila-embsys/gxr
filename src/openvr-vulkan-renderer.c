@@ -298,54 +298,6 @@ openvr_vulkan_renderer_load_cairo_surface (OpenVRVulkanRenderer *self,
                                           width, height, size, format);
 }
 
-bool
-_query_surface_present_modes (VkPhysicalDevice device,
-                              VkSurfaceKHR surface,
-                              VkPresentModeKHR *present_modes)
-{
-  uint32_t num_present_modes;
-  vkGetPhysicalDeviceSurfacePresentModesKHR (device, surface,
-                                            &num_present_modes, NULL);
-
-  if (num_present_modes != 0)
-    {
-      present_modes = g_malloc (sizeof (VkPresentModeKHR) * num_present_modes);
-      vkGetPhysicalDeviceSurfacePresentModesKHR (device, surface,
-                                                &num_present_modes,
-                                                 present_modes);
-    }
-  else
-    {
-      g_printerr ("Could enumerate present modes.\n");
-      return false;
-    }
-
-  return true;
-}
-
-bool
-_query_surface_formats (VkPhysicalDevice device,
-                        VkSurfaceKHR surface,
-                        VkSurfaceFormatKHR *formats)
-{
-  uint32_t num_formats;
-  vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &num_formats, NULL);
-
-  if (num_formats != 0)
-    {
-      formats = g_malloc (sizeof(VkSurfaceFormatKHR) * num_formats);
-      vkGetPhysicalDeviceSurfaceFormatsKHR (device, surface,
-                                           &num_formats, formats);
-    }
-  else
-    {
-      g_printerr ("Could enumerate surface formats.\n");
-      return false;
-    }
-
-  return true;
-}
-
 VkImageView
 _create_image_view (VkDevice device, VkImage image, VkFormat format)
 {
@@ -577,6 +529,74 @@ _create_graphics_pipeline (VkDevice device,
 }
 
 bool
+_find_surface_format (VkPhysicalDevice device,
+                      VkSurfaceKHR surface,
+                      VkSurfaceFormatKHR *format)
+{
+  uint32_t num_formats;
+  VkSurfaceFormatKHR *formats = NULL;
+  vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &num_formats, NULL);
+
+  if (num_formats != 0)
+    {
+      formats = g_malloc (sizeof(VkSurfaceFormatKHR) * num_formats);
+      vkGetPhysicalDeviceSurfaceFormatsKHR (device, surface,
+                                           &num_formats, formats);
+    }
+  else
+    {
+      g_printerr ("Could enumerate surface formats.\n");
+      return false;
+    }
+
+  for (int i = 0; i < num_formats; i++)
+    if (formats[i].format == VK_FORMAT_B8G8R8A8_UNORM &&
+        formats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+      {
+        format->format = formats[i].format;
+        format->colorSpace = formats[i].colorSpace;
+        return true;
+      }
+
+  g_printerr ("Requested format not supported.\n");
+  return false;
+}
+
+bool
+_find_surface_present_mode (VkPhysicalDevice device,
+                            VkSurfaceKHR surface,
+                            VkPresentModeKHR *present_mode)
+{
+  uint32_t num_present_modes;
+  VkPresentModeKHR *present_modes;
+  vkGetPhysicalDeviceSurfacePresentModesKHR (device, surface,
+                                            &num_present_modes, NULL);
+
+  if (num_present_modes != 0)
+    {
+      present_modes = g_malloc (sizeof (VkPresentModeKHR) * num_present_modes);
+      vkGetPhysicalDeviceSurfacePresentModesKHR (device, surface,
+                                                &num_present_modes,
+                                                 present_modes);
+    }
+  else
+    {
+      g_printerr ("Could enumerate present modes.\n");
+      return false;
+    }
+
+  for (int i = 0; i < num_present_modes; i++)
+    if (present_modes[i] == VK_PRESENT_MODE_IMMEDIATE_KHR)
+      {
+        *present_mode = present_modes[i];
+        return true;
+      }
+
+  g_printerr ("Requested present mode not supported.\n");
+  return false;
+}
+
+bool
 _init_swapchain (VkDevice device,
                  VkPhysicalDevice physical_device,
                  VkSurfaceKHR surface,
@@ -586,19 +606,15 @@ _init_swapchain (VkDevice device,
                  uint32_t *image_count,
                  VkExtent2D *extent)
 {
+  VkSurfaceFormatKHR surface_format = {};
+  if (!_find_surface_format(physical_device, surface, &surface_format))
+    return false;
+
+  VkPresentModeKHR present_mode;
+  if (!_find_surface_present_mode (physical_device, surface, &present_mode))
+    return false;
+
   VkSurfaceCapabilitiesKHR surface_caps;
-
-  VkSurfaceFormatKHR surface_format = {
-    .format = VK_FORMAT_B8G8R8A8_UNORM,
-    .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
-  };
-
-  VkSurfaceFormatKHR *formats = NULL;
-  _query_surface_formats (physical_device, surface, formats);
-
-  VkPresentModeKHR *present_modes = NULL;
-  _query_surface_present_modes (physical_device, surface, present_modes);
-
   vkGetPhysicalDeviceSurfaceCapabilitiesKHR (physical_device,
                                              surface, &surface_caps);
 
@@ -616,7 +632,7 @@ _init_swapchain (VkDevice device,
     .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
     .preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
     .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
-    .presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR,
+    .presentMode = present_mode,
     .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
     .clipped = VK_TRUE
   };
