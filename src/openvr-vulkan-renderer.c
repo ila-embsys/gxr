@@ -231,14 +231,9 @@ openvr_vulkan_renderer_load_dmabuf (OpenVRVulkanRenderer *self,
                                     guint                 height,
                                     VkFormat              format)
 {
-  _begin_command_buffer2 (self);
-
-
   if (!openvr_vulkan_texture_from_dmabuf (texture, self->device,
                                           fd, width, height, format))
     return false;
-
-  _submit_command_buffer2 (self);
 
   return true;
 }
@@ -1354,8 +1349,12 @@ openvr_vulkan_renderer_draw (OpenVRVulkanRenderer *self)
     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
   };
 
-  VkSemaphore wait_semaphores[] = {self->image_available_semaphores[self->current_frame]};
-  VkSemaphore signal_semaphores[] = {self->render_finished_semaphores[self->current_frame]};
+  VkSemaphore wait_semaphores[] = {
+    self->image_available_semaphores[self->current_frame]
+  };
+  VkSemaphore signal_semaphores[] = {
+    self->render_finished_semaphores[self->current_frame]
+  };
 
   VkSubmitInfo submit_info = {
     .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -1389,14 +1388,7 @@ openvr_vulkan_renderer_draw (OpenVRVulkanRenderer *self)
   };
 
   result = vkQueuePresentKHR (self->device->present_queue, &present_info);
-  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) // || framebuffer_resized
-    {
-      // framebuffer_resized = false;
-      // _recreate_swapchain ();
-      g_printerr ("VK_ERROR_OUT_OF_DATE_KHR or VK_SUBOPTIMAL_KHR.\n");
-      return false;
-    }
-  else if (result != VK_SUCCESS)
+  if (result != VK_SUCCESS)
     {
       g_printerr ("Failed to present swapchain image.\n");
       return false;
