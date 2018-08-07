@@ -19,13 +19,10 @@
 #include "openvr-compositor.h"
 #include "openvr-vulkan-renderer.h"
 
-#define WIDTH 1280
-#define HEIGHT 720
-
 typedef struct Example
 {
   OpenVRVulkanTexture *texture;
-  GLFWwindow* window;
+  GLFWwindow *window;
   GMainLoop *loop;
   VkSurfaceKHR surface;
   OpenVRVulkanRenderer *renderer;
@@ -36,16 +33,16 @@ GdkPixbuf *
 load_gdk_pixbuf ()
 {
   GError *error = NULL;
-  GdkPixbuf * pixbuf_unflipped =
+  GdkPixbuf * pixbuf_no_alpha =
     gdk_pixbuf_new_from_resource ("/res/cat.jpg", &error);
 
   if (error != NULL) {
-    fprintf (stderr, "Unable to read file: %s\n", error->message);
+    g_printerr ("Unable to read file: %s\n", error->message);
     g_error_free (error);
     return NULL;
   } else {
-    GdkPixbuf *pixbuf = gdk_pixbuf_add_alpha (pixbuf_unflipped, false, 0, 0, 0);
-    g_object_unref (pixbuf_unflipped);
+    GdkPixbuf *pixbuf = gdk_pixbuf_add_alpha (pixbuf_no_alpha, false, 0, 0, 0);
+    g_object_unref (pixbuf_no_alpha);
     return pixbuf;
   }
 }
@@ -61,13 +58,14 @@ void key_callback (GLFWwindow* window, int key,
 }
 
 void
-init_glfw (Example *self)
+init_glfw (Example *self, int width, int height)
 {
   glfwInit();
 
   glfwWindowHint (GLFW_CLIENT_API, GLFW_NO_API);
+  glfwWindowHint (GLFW_RESIZABLE, false);
 
-  self->window = glfwCreateWindow (WIDTH, HEIGHT, "Vulkan Pixbuf", NULL, NULL);
+  self->window = glfwCreateWindow (width, height, "Vulkan Pixbuf", NULL, NULL);
 
   glfwSetKeyCallback (self->window, key_callback);
 
@@ -99,18 +97,20 @@ main (int argc, char *argv[]) {
     .should_quit = false
   };
 
-  init_glfw (&example);
-
   GdkPixbuf * pixbuf = load_gdk_pixbuf ();
-
   if (pixbuf == NULL)
     return -1;
+
+  gint width = gdk_pixbuf_get_width (pixbuf);
+  gint height = gdk_pixbuf_get_height (pixbuf);
+
+  init_glfw (&example, width / 2, height / 2);
 
   example.loop = g_main_loop_new (NULL, FALSE);
 
   uint32_t num_glfw_extensions = 0;
   const char** glfw_extensions;
-  glfw_extensions = glfwGetRequiredInstanceExtensions(&num_glfw_extensions);
+  glfw_extensions = glfwGetRequiredInstanceExtensions (&num_glfw_extensions);
 
   g_print ("GLFW requires %d instance extensions.\n", num_glfw_extensions);
   for (int i = 0; i < num_glfw_extensions; i++)
@@ -119,7 +119,9 @@ main (int argc, char *argv[]) {
     }
 
   example.renderer = openvr_vulkan_renderer_new ();
-  if (!openvr_vulkan_renderer_init_vulkan (example.renderer, example.surface, true))
+  if (!openvr_vulkan_renderer_init_vulkan (example.renderer,
+                                           example.surface,
+                                           true))
   {
     g_printerr ("Unable to initialize Vulkan!\n");
     return -1;
@@ -135,7 +137,8 @@ main (int argc, char *argv[]) {
 
   example.texture = openvr_vulkan_texture_new ();
 
-  openvr_vulkan_renderer_load_pixbuf (example.renderer, example.texture, pixbuf);
+  openvr_vulkan_renderer_load_pixbuf (example.renderer,
+                                      example.texture, pixbuf);
 
   if (!openvr_vulkan_renderer_init_rendering (example.renderer,
                                               example.surface,
@@ -150,8 +153,8 @@ main (int argc, char *argv[]) {
   g_object_unref (example.texture);
   g_object_unref (example.renderer);
 
-  glfwDestroyWindow(example.window);
-  glfwTerminate();
+  glfwDestroyWindow (example.window);
+  glfwTerminate ();
 
   return 0;
 }
