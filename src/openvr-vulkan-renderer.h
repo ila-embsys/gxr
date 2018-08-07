@@ -116,12 +116,12 @@ openvr_vulkan_renderer_load_cairo_surface (OpenVRVulkanRenderer *self,
                                            cairo_surface_t *surface);
 
 bool
-openvr_vulkan_renderer_load_dmabuf2 (OpenVRVulkanRenderer *self,
-                                     OpenVRVulkanTexture  *texture,
-                                     int                   fd,
-                                     guint                 width,
-                                     guint                 height,
-                                     VkFormat              format);
+openvr_vulkan_renderer_load_dmabuf (OpenVRVulkanRenderer *self,
+                                    OpenVRVulkanTexture  *texture,
+                                    int                   fd,
+                                    guint                 width,
+                                    guint                 height,
+                                    VkFormat              format);
 
 bool
 openvr_vulkan_renderer_draw (OpenVRVulkanRenderer *self);

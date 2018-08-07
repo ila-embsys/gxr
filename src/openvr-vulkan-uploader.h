@@ -85,12 +85,12 @@ openvr_vulkan_uploader_load_cairo_surface (OpenVRVulkanUploader *self,
                                            cairo_surface_t *surface);
 
 bool
-openvr_vulkan_uploader_load_dmabuf2 (OpenVRVulkanUploader *self,
-                                     OpenVRVulkanTexture  *texture,
-                                     int                   fd,
-                                     guint                 width,
-                                     guint                 height,
-                                     VkFormat              format);
+openvr_vulkan_uploader_load_dmabuf (OpenVRVulkanUploader *self,
+                                    OpenVRVulkanTexture  *texture,
+                                    int                   fd,
+                                    guint                 width,
+                                    guint                 height,
+                                    VkFormat              format);
 
 G_END_DECLS
 

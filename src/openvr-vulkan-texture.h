@@ -17,7 +17,8 @@
 G_BEGIN_DECLS
 
 #define OPENVR_TYPE_VULKAN_TEXTURE openvr_vulkan_texture_get_type()
-G_DECLARE_FINAL_TYPE (OpenVRVulkanTexture, openvr_vulkan_texture, OPENVR, VULKAN_TEXTURE, GObject)
+G_DECLARE_FINAL_TYPE (OpenVRVulkanTexture, openvr_vulkan_texture,
+                      OPENVR, VULKAN_TEXTURE, GObject)
 
 struct _OpenVRVulkanTexture
 {
@@ -55,14 +56,12 @@ openvr_vulkan_texture_from_dmabuf (OpenVRVulkanTexture *self,
                                    guint                height,
                                    VkFormat             format);
 
-bool
-openvr_vulkan_texture_from_dmabuf2 (OpenVRVulkanTexture *self,
-                                    OpenVRVulkanDevice  *device,
-                                    VkCommandBuffer      cmd_buffer,
-                                    int                  fd,
-                                    guint                width,
-                                    guint                height,
-                                    VkFormat             format);
+void
+openvr_vulkan_texture_transfer_layout (OpenVRVulkanTexture *self,
+                                       OpenVRVulkanDevice  *device,
+                                       VkCommandBuffer      cmd_buffer,
+                                       VkImageLayout        old,
+                                       VkImageLayout        new);
 
 G_END_DECLS
 

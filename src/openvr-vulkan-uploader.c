@@ -168,21 +168,24 @@ openvr_vulkan_uploader_load_raw (OpenVRVulkanUploader *self,
 }
 
 bool
-openvr_vulkan_uploader_load_dmabuf2 (OpenVRVulkanUploader *self,
-                                     OpenVRVulkanTexture  *texture,
-                                     int                   fd,
-                                     guint                 width,
-                                     guint                 height,
-                                     VkFormat              format)
+openvr_vulkan_uploader_load_dmabuf (OpenVRVulkanUploader *self,
+                                    OpenVRVulkanTexture  *texture,
+                                    int                   fd,
+                                    guint                 width,
+                                    guint                 height,
+                                    VkFormat              format)
 {
   _begin_command_buffer (self);
 
-
-  if (!openvr_vulkan_texture_from_dmabuf2 (texture,
+  if (!openvr_vulkan_texture_from_dmabuf (texture,
                                           self->device,
-                                          self->current_cmd_buffer->cmd_buffer,
                                           fd, width, height, format))
     return false;
+
+  openvr_vulkan_texture_transfer_layout (texture, self->device,
+                                         self->current_cmd_buffer->cmd_buffer,
+                                         VK_IMAGE_LAYOUT_PREINITIALIZED,
+                                         VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
   _submit_command_buffer (self);
 

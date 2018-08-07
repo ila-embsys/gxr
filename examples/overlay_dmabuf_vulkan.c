@@ -183,14 +183,9 @@ int main (int argc, char *argv[]) {
   }
 
   texture = openvr_vulkan_texture_new ();
-/*
-  if (!openvr_vulkan_texture_from_dmabuf (texture, uploader->device,
-                                          fd, width, height,
-                                          VK_FORMAT_B8G8R8A8_UNORM))
-*/
-  if (!openvr_vulkan_uploader_load_dmabuf2 (uploader, texture,
-                                            fd, width, height,
-                                            VK_FORMAT_B8G8R8A8_UNORM))
+  if (!openvr_vulkan_uploader_load_dmabuf (uploader, texture,
+                                           fd, width, height,
+                                           VK_FORMAT_B8G8R8A8_UNORM))
     {
       g_printerr ("Unable to initialize vulkan dmabuf texture.\n");
       return -1;
