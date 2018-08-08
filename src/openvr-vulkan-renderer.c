@@ -100,7 +100,7 @@ openvr_vulkan_renderer_finalize (GObject *gobject)
     }
 
   for (int i = 0; i < self->swapchain_image_count; i++)
-    vkDestroyFramebuffer(device, self->framebuffers[i], NULL);
+    vkDestroyFramebuffer (device, self->framebuffers[i], NULL);
 
   vkDestroyPipeline (device, self->graphics_pipeline, NULL);
   vkDestroyPipelineLayout (device, self->pipeline_layout, NULL);
@@ -112,7 +112,7 @@ openvr_vulkan_renderer_finalize (GObject *gobject)
   for (int i = 0; i < self->swapchain_image_count; i++)
     vkDestroyImageView (device, self->swapchain_image_views[i], NULL);
 
-  vkDestroySwapchainKHR(device, self->swap_chain, NULL);
+  vkDestroySwapchainKHR (device, self->swap_chain, NULL);
 
   G_OBJECT_CLASS (openvr_vulkan_renderer_parent_class)->finalize (gobject);
 }

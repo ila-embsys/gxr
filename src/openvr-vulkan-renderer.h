@@ -24,7 +24,6 @@ struct _OpenVRVulkanRenderer
 {
   OpenVRVulkanClient parent_type;
 
-  /* Rendering */
   VkSwapchainKHR swap_chain;
   VkImageView *swapchain_image_views;
   VkFormat swapchain_image_format;
