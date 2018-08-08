@@ -134,11 +134,15 @@ openvr_vulkan_texture_from_pixels (OpenVRVulkanTexture *self,
   vkCreateImageView (device->device, &image_view_info, NULL, &self->image_view);
 
   if (!openvr_vulkan_device_create_buffer (device,
-                                           pixels,
                                            size,
                                            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                           VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
                                           &self->staging_buffer,
                                           &self->staging_buffer_memory))
+    return false;
+
+  if (!openvr_vulkan_device_map_memory (device, pixels, size,
+                                        self->staging_buffer_memory))
     return false;
 
   VkImageMemoryBarrier image_memory_barrier =

@@ -562,62 +562,6 @@ _init_framebuffers (VkDevice device,
   return true;
 }
 
-bool
-_create_buffer (OpenVRVulkanDevice *vk_device,
-                VkDeviceSize size,
-                VkBufferUsageFlags usage,
-                VkMemoryPropertyFlags properties,
-                VkBuffer *buffer,
-                VkDeviceMemory *memory)
-{
-  VkBufferCreateInfo buffer_info = {
-    .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-    .size = size,
-    .usage = usage,
-    .sharingMode = VK_SHARING_MODE_EXCLUSIVE
-  };
-
-  VkDevice device = vk_device->device;
-
-  if (vkCreateBuffer (device, &buffer_info, NULL, buffer) != VK_SUCCESS)
-    {
-      g_printerr ("Failed to create buffer.\n");
-      return false;
-    }
-
-  VkMemoryRequirements requirements;
-  vkGetBufferMemoryRequirements (device, *buffer, &requirements);
-
-  VkMemoryAllocateInfo alloc_info = {
-    .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-    .allocationSize = requirements.size,
-  };
-
-  if (!openvr_vulkan_device_memory_type_from_properties (
-        vk_device,
-        requirements.memoryTypeBits,
-        properties,
-       &alloc_info.memoryTypeIndex))
-    {
-      g_printerr ("Failed to find matching memoryTypeIndex for buffer.\n");
-      return false;
-    }
-
-  if (vkAllocateMemory (device, &alloc_info, NULL, memory) != VK_SUCCESS)
-    {
-      g_printerr ("Failed to allocate memory.\n");
-      return false;
-    }
-
-  if (vkBindBufferMemory (device, *buffer, *memory, 0) != VK_SUCCESS)
-    {
-      g_printerr ("Failed to bind memory.\n");
-      return false;
-    }
-
-  return true;
-}
-
 void
 _copy_buffer (VkCommandBuffer cmd_buffer,
               VkBuffer src_buffer,
@@ -641,11 +585,12 @@ _init_vertex_buffer (OpenVRVulkanRenderer *self)
 
   VkBuffer staging_buffer;
   VkDeviceMemory staging_buffer_memory;
-  if (!_create_buffer (client->device, buffer_size,
-                       VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                       VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                      &staging_buffer, &staging_buffer_memory))
+  if (!openvr_vulkan_device_create_buffer (
+      client->device, buffer_size,
+      VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+      VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+     &staging_buffer, &staging_buffer_memory))
     return false;
 
   void* data;
@@ -653,11 +598,11 @@ _init_vertex_buffer (OpenVRVulkanRenderer *self)
   memcpy (data, vertices, (size_t) buffer_size);
   vkUnmapMemory (device, staging_buffer_memory);
 
-  if (!_create_buffer (client->device, buffer_size,
-                       VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-                       VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                      &self->vertex_buffer, &self->vertex_buffer_memory))
+  if (!openvr_vulkan_device_create_buffer (
+      client->device, buffer_size,
+      VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+     &self->vertex_buffer, &self->vertex_buffer_memory))
     return false;
 
   openvr_vulkan_client_begin_res_cmd_buffer (client);
@@ -683,11 +628,12 @@ _init_index_buffer (OpenVRVulkanRenderer *self)
 
   VkBuffer staging_buffer;
   VkDeviceMemory staging_buffer_memory;
-  if (!_create_buffer (client->device, buffer_size,
-                       VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                       VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                      &staging_buffer, &staging_buffer_memory))
+  if (!openvr_vulkan_device_create_buffer (
+      client->device, buffer_size,
+      VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+      VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+     &staging_buffer, &staging_buffer_memory))
     return false;
 
   void* data;
@@ -695,11 +641,11 @@ _init_index_buffer (OpenVRVulkanRenderer *self)
   memcpy(data, indices, (size_t) buffer_size);
   vkUnmapMemory (device, staging_buffer_memory);
 
-  if (!_create_buffer (client->device, buffer_size,
-                       VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-                       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                      &self->index_buffer, &self->index_buffer_memory))
+  if (!openvr_vulkan_device_create_buffer (
+      client->device, buffer_size,
+      VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+     &self->index_buffer, &self->index_buffer_memory))
     return false;
 
   openvr_vulkan_client_begin_res_cmd_buffer (client);
@@ -728,13 +674,13 @@ _init_uniform_buffers (OpenVRVulkanRenderer *self)
   self->uniform_buffers_memory = g_malloc (sizeof (VkDeviceMemory) * count);
 
   for (size_t i = 0; i < count; i++)
-    if (!_create_buffer (client->device,
-                         buffer_size,
-                         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                         VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                        &self->uniform_buffers[i],
-                        &self->uniform_buffers_memory[i]))
+    if (!openvr_vulkan_device_create_buffer (
+        client->device, buffer_size,
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+       &self->uniform_buffers[i],
+       &self->uniform_buffers_memory[i]))
       return false;
 
   return true;

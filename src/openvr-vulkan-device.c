@@ -311,85 +311,95 @@ openvr_vulkan_device_memory_type_from_properties (
   return false;
 }
 
-/* Helper function to create Vulkan static VB/IBs */
 bool
-openvr_vulkan_device_create_buffer (OpenVRVulkanDevice *self,
-                                    const void         *buffer_data,
-                                    VkDeviceSize        size,
-                                    VkBufferUsageFlags  usage,
-                                    VkBuffer           *buffer_out,
-                                    VkDeviceMemory     *device_memory_out)
+openvr_vulkan_device_create_buffer (OpenVRVulkanDevice   *self,
+                                    VkDeviceSize          size,
+                                    VkBufferUsageFlags    usage,
+                                    VkMemoryPropertyFlags properties,
+                                    VkBuffer             *buffer,
+                                    VkDeviceMemory       *memory)
 {
-  /* Create the vertex buffer and fill with data */
   VkBufferCreateInfo buffer_info =
   {
     .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
     .size = size,
     .usage = usage,
   };
-  VkResult result =
-    vkCreateBuffer (self->device, &buffer_info, NULL, buffer_out);
-  if (result != VK_SUCCESS)
+  VkResult res = vkCreateBuffer (self->device, &buffer_info, NULL, buffer);
+  if (res != VK_SUCCESS)
   {
-    g_printerr ("vkCreateBuffer failed with error %d\n", result);
+    g_printerr ("vkCreateBuffer failed with error %d\n", res);
     return false;
   }
 
-  VkMemoryRequirements memory_requirements = {};
-  vkGetBufferMemoryRequirements (self->device,
-                                *buffer_out,
-                                 &memory_requirements);
+  VkMemoryRequirements requirements = {};
+  vkGetBufferMemoryRequirements (self->device, *buffer, &requirements);
 
   VkMemoryAllocateInfo alloc_info = {
     .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-    .allocationSize = memory_requirements.size
+    .allocationSize = requirements.size
   };
+
   if (!openvr_vulkan_device_memory_type_from_properties (
         self,
-        memory_requirements.memoryTypeBits,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+        requirements.memoryTypeBits,
+        properties,
         &alloc_info.memoryTypeIndex))
   {
     g_printerr ("Failed to find matching memoryTypeIndex for buffer\n");
     return false;
   }
 
-  result =
-    vkAllocateMemory (self->device, &alloc_info, NULL, device_memory_out);
-  if (result != VK_SUCCESS)
+  res = vkAllocateMemory (self->device, &alloc_info, NULL, memory);
+  if (res != VK_SUCCESS)
   {
-    g_printerr ("vkCreateBuffer failed with error %d\n", result);
+    g_printerr ("vkCreateBuffer failed with error %d\n", res);
     return false;
   }
 
-  result =
-    vkBindBufferMemory (self->device, *buffer_out, *device_memory_out, 0);
-  if (result != VK_SUCCESS)
+  res = vkBindBufferMemory (self->device, *buffer, *memory, 0);
+  if (res != VK_SUCCESS)
   {
-    g_printerr ("vkBindBufferMemory failed with error %d\n", result);
+    g_printerr ("vkBindBufferMemory failed with error %d\n", res);
     return false;
   }
 
-  if (buffer_data != NULL)
-  {
-    void *data;
-    result = vkMapMemory (self->device,
-                          *device_memory_out,
-                          0, VK_WHOLE_SIZE, 0, &data);
-    if (result != VK_SUCCESS)
+  return true;
+}
+
+bool
+openvr_vulkan_device_map_memory (OpenVRVulkanDevice *self,
+                                 const void         *data,
+                                 VkDeviceSize        size,
+                                 VkDeviceMemory      memory)
+{
+  if (data == NULL)
     {
-      g_printerr ("vkMapMemory returned error %d\n", result);
+      g_printerr ("Trying to map NULL memory.\n");
       return false;
     }
-    memcpy (data, buffer_data, size);
-    vkUnmapMemory (self->device, *device_memory_out);
 
-    VkMappedMemoryRange memory_range = {
-      .sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
-      .memory = *device_memory_out,
-      .size = VK_WHOLE_SIZE
-    };
-    vkFlushMappedMemoryRanges (self->device, 1, &memory_range);
+  void *tmp;
+  VkResult res = vkMapMemory (self->device, memory, 0, VK_WHOLE_SIZE, 0, &tmp);
+  if (res != VK_SUCCESS)
+  {
+    g_printerr ("vkMapMemory returned error %d\n", res);
+    return false;
   }
+
+  memcpy (tmp, data, size);
+  vkUnmapMemory (self->device, memory);
+
+  VkMappedMemoryRange memory_range = {
+    .sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
+    .memory = memory,
+    .size = VK_WHOLE_SIZE
+  };
+  if (vkFlushMappedMemoryRanges (self->device, 1, &memory_range) != VK_SUCCESS)
+  {
+    g_printerr ("vkFlushMappedMemoryRanges returned error %d\n", res);
+    return false;
+  }
+
   return true;
 }

@@ -51,12 +51,18 @@ openvr_vulkan_device_memory_type_from_properties (
   uint32_t             *type_index_out);
 
 bool
-openvr_vulkan_device_create_buffer (OpenVRVulkanDevice *self,
-                                    const void         *buffer_data,
-                                    VkDeviceSize        size,
-                                    VkBufferUsageFlags  usage,
-                                    VkBuffer           *buffer_out,
-                                    VkDeviceMemory     *device_memory_out);
+openvr_vulkan_device_create_buffer (OpenVRVulkanDevice   *self,
+                                    VkDeviceSize          size,
+                                    VkBufferUsageFlags    usage,
+                                    VkMemoryPropertyFlags properties,
+                                    VkBuffer             *buffer,
+                                    VkDeviceMemory       *memory);
+
+bool
+openvr_vulkan_device_map_memory (OpenVRVulkanDevice *self,
+                                 const void         *data,
+                                 VkDeviceSize        size,
+                                 VkDeviceMemory      memory);
 
 bool
 openvr_vulkan_device_queue_supports_surface (OpenVRVulkanDevice *self,
