@@ -101,6 +101,9 @@ openvr_vulkan_client_init_vulkan (OpenVRVulkanClient *self,
                                   GSList             *device_extensions,
                                   bool                enable_validation);
 
+bool
+openvr_vulkan_client_init_command_pool (OpenVRVulkanClient *self);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_VULKAN_CLIENT_H_ */

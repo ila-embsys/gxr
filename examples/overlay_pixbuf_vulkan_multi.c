@@ -250,7 +250,8 @@ test_cat_overlay ()
 
   texture = openvr_vulkan_texture_new ();
 
-  openvr_vulkan_uploader_load_pixbuf (uploader, texture, pixbuf);
+  openvr_vulkan_client_load_pixbuf (OPENVR_VULKAN_CLIENT (uploader),
+                                    texture, pixbuf);
 
   OpenVROverlay *overlay = openvr_overlay_new ();
   openvr_overlay_create (overlay, "vulkan.cat", "Vulkan Cat");

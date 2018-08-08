@@ -10,16 +10,13 @@
 
 #include <stdint.h>
 #include <glib-object.h>
-#include <gdk-pixbuf/gdk-pixbuf.h>
-#include <cairo.h>
 
 #define VK_USE_PLATFORM_XLIB_KHR
 #include <vulkan/vulkan.h>
 
 #include <openvr_capi.h>
 
-#include "openvr-vulkan-instance.h"
-#include "openvr-vulkan-device.h"
+#include "openvr-vulkan-client.h"
 #include "openvr-vulkan-texture.h"
 #include "openvr-compositor.h"
 #include "openvr-overlay.h"
@@ -29,26 +26,16 @@ G_BEGIN_DECLS
 
 #define OPENVR_TYPE_VULKAN_UPLOADER openvr_vulkan_uploader_get_type()
 G_DECLARE_FINAL_TYPE (OpenVRVulkanUploader, openvr_vulkan_uploader,
-                      OPENVR, VULKAN_UPLOADER, GObject)
-
-typedef struct
-{
-  VkCommandBuffer cmd_buffer;
-  VkFence fence;
-} VulkanCommandBuffer_t;
+                      OPENVR, VULKAN_UPLOADER, OpenVRVulkanClient)
 
 struct _OpenVRVulkanUploader
 {
+  OpenVRVulkanClient parent_type;
+};
+
+struct _OpenVRVulkanUploaderClass
+{
   GObjectClass parent_class;
-
-  VkCommandPool command_pool;
-
-  OpenVRVulkanInstance *instance;
-  OpenVRVulkanDevice *device;
-
-  VulkanCommandBuffer_t *current_cmd_buffer;
-
-  GQueue * cmd_buffers;
 };
 
 OpenVRVulkanUploader *openvr_vulkan_uploader_new (void);
@@ -59,30 +46,10 @@ openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
                                     OpenVRSystem *system,
                                     OpenVRCompositor *compositor);
 
-
 void
 openvr_vulkan_uploader_submit_frame (OpenVRVulkanUploader *self,
                                      OpenVROverlay        *overlay,
                                      OpenVRVulkanTexture  *texture);
-
-bool
-openvr_vulkan_uploader_load_raw (OpenVRVulkanUploader *self,
-                                 OpenVRVulkanTexture  *texture,
-                                 guchar               *pixels,
-                                 guint                 width,
-                                 guint                 height,
-                                 gsize                 size,
-                                 VkFormat              format);
-
-bool
-openvr_vulkan_uploader_load_pixbuf (OpenVRVulkanUploader *self,
-                                    OpenVRVulkanTexture  *texture,
-                                    GdkPixbuf *pixbuf);
-
-bool
-openvr_vulkan_uploader_load_cairo_surface (OpenVRVulkanUploader *self,
-                                           OpenVRVulkanTexture  *texture,
-                                           cairo_surface_t *surface);
 
 bool
 openvr_vulkan_uploader_load_dmabuf (OpenVRVulkanUploader *self,

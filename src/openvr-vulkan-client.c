@@ -66,7 +66,7 @@ openvr_vulkan_client_finalize (GObject *gobject)
 }
 
 bool
-_init_command_pool (OpenVRVulkanClient *self)
+openvr_vulkan_client_init_command_pool (OpenVRVulkanClient *self)
 {
   VkCommandPoolCreateInfo command_pool_info =
     {
@@ -231,7 +231,7 @@ openvr_vulkan_client_init_vulkan (OpenVRVulkanClient *self,
       return false;
     }
 
-  if (!_init_command_pool (self))
+  if (!openvr_vulkan_client_init_command_pool (self))
     {
       g_printerr ("Failed to create command pool.\n");
       return false;

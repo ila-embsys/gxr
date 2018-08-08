@@ -113,9 +113,10 @@ render_callback (gpointer data)
   }
 
   OpenVRVulkanTexture *texture = openvr_vulkan_texture_new ();
-  openvr_vulkan_uploader_load_cairo_surface (context->uploader,
-                                             texture,
-                                             surface);
+  openvr_vulkan_client_load_cairo_surface (
+    OPENVR_VULKAN_CLIENT (context->uploader),
+    texture,
+    surface);
   cairo_surface_destroy (surface);
   openvr_vulkan_uploader_submit_frame (context->uploader,
                                        context->overlay,

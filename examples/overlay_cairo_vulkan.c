@@ -154,7 +154,8 @@ test_cat_overlay ()
 
   texture = openvr_vulkan_texture_new ();
 
-  openvr_vulkan_uploader_load_cairo_surface (uploader, texture, surface);
+  openvr_vulkan_client_load_cairo_surface (OPENVR_VULKAN_CLIENT (uploader),
+                                           texture, surface);
 
   /* create openvr overlay */
   OpenVROverlay *overlay = openvr_overlay_new ();
