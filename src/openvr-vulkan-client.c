@@ -45,7 +45,7 @@ _cleanup_command_buffer_queue (gpointer item, OpenVRVulkanClient *self)
   vkFreeCommandBuffers (self->device->device,
                         self->command_pool, 1, &b->cmd_buffer);
   vkDestroyFence (self->device->device, b->fence, NULL);
-  // g_object_unref (item);
+  g_free (item);
 }
 
 static void
