@@ -63,6 +63,9 @@ openvr_vulkan_texture_transfer_layout (OpenVRVulkanTexture *self,
                                        VkImageLayout        old,
                                        VkImageLayout        new);
 
+void
+openvr_vulkan_texture_free_staging_memory (OpenVRVulkanTexture *self);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_VULKAN_TEXTURE_H_ */

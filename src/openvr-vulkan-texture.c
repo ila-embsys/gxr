@@ -32,11 +32,18 @@ static void
 openvr_vulkan_texture_finalize (GObject *gobject)
 {
   OpenVRVulkanTexture *self = OPENVR_VULKAN_TEXTURE (gobject);
-  vkDestroyImageView (self->device->device, self->image_view, NULL);
-  vkDestroyImage (self->device->device, self->image, NULL);
-  vkFreeMemory (self->device->device, self->image_memory, NULL);
-  vkDestroyBuffer (self->device->device, self->staging_buffer, NULL);
-  vkFreeMemory (self->device->device, self->staging_buffer_memory, NULL);
+  VkDevice device = self->device->device;
+  vkDestroyImageView (device, self->image_view, NULL);
+  vkDestroyImage (device, self->image, NULL);
+  vkFreeMemory (device, self->image_memory, NULL);
+}
+
+void
+openvr_vulkan_texture_free_staging_memory (OpenVRVulkanTexture *self)
+{
+  VkDevice device = self->device->device;
+  vkDestroyBuffer (device, self->staging_buffer, NULL);
+  vkFreeMemory (device, self->staging_buffer_memory, NULL);
 }
 
 static void
@@ -62,20 +69,12 @@ openvr_vulkan_texture_from_pixels (OpenVRVulkanTexture *self,
 
   self->device = device;
   VkBufferImageCopy buffer_image_copy = {
-    .bufferOffset = 0,
-    .bufferRowLength = 0,
-    .bufferImageHeight = 0,
     .imageSubresource = {
       .baseArrayLayer = 0,
       .layerCount = 1,
       .mipLevel = 0,
       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
     },
-    .imageOffset = {
-      .x = 0,
-      .y = 0,
-      .z = 0,
-     },
     .imageExtent = {
       .width = width,
       .height = height,
@@ -121,16 +120,9 @@ openvr_vulkan_texture_from_pixels (OpenVRVulkanTexture *self,
   VkImageViewCreateInfo image_view_info =
   {
     .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-    .flags = 0,
     .image = self->image,
     .viewType = VK_IMAGE_VIEW_TYPE_2D,
     .format = image_info.format,
-    .components = {
-      .r = VK_COMPONENT_SWIZZLE_IDENTITY,
-      .g = VK_COMPONENT_SWIZZLE_IDENTITY,
-      .b = VK_COMPONENT_SWIZZLE_IDENTITY,
-      .a = VK_COMPONENT_SWIZZLE_IDENTITY,
-    },
     .subresourceRange = {
       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
       .baseMipLevel = 0,
