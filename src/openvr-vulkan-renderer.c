@@ -75,7 +75,6 @@ openvr_vulkan_renderer_finalize (GObject *gobject)
   if (device != VK_NULL_HANDLE)
     vkDeviceWaitIdle (device);
 
-  /* Rendering */
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
       vkDestroySemaphore (device, self->render_finished_semaphores[i], NULL);

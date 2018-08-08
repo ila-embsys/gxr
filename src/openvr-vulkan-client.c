@@ -258,7 +258,7 @@ _get_command_buffer (OpenVRVulkanClient *self)
      * reset it and return it
      */
     VulkanCommandBuffer_t *tail =
-      (VulkanCommandBuffer_t*) g_queue_peek_tail(self->cmd_buffers);
+      (VulkanCommandBuffer_t*) g_queue_peek_tail (self->cmd_buffers);
 
     if (vkGetFenceStatus (self->device->device, tail->fence) == VK_SUCCESS)
     {
