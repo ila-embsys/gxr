@@ -245,7 +245,6 @@ openvr_vulkan_device_create (OpenVRVulkanDevice   *self,
   for (int i = 0; i < num_enabled; i++)
       g_print ("%s\n", extension_names[i]);
 
-  /* Create the device */
   float queue_priority = 1.0f;
 
   VkPhysicalDeviceFeatures physical_device_features;
@@ -276,15 +275,10 @@ openvr_vulkan_device_create (OpenVRVulkanDevice   *self,
       return false;
     }
 
-  /* Get the device queue */
   vkGetDeviceQueue (self->device, self->queue_family_index, 0, &self->queue);
-  vkGetDeviceQueue (self->device, self->queue_family_index, 0, &self->present_queue);
   return true;
 }
 
-/*
- * Determine the memory type index from the memory requirements and type bits
- */
 bool
 openvr_vulkan_device_memory_type_from_properties (
   OpenVRVulkanDevice   *self,
@@ -296,7 +290,6 @@ openvr_vulkan_device_memory_type_from_properties (
   {
     if ((memory_type_bits & 1) == 1)
     {
-      /* Type is available, does it match user properties? */
       if ((self->memory_properties.memoryTypes[i].propertyFlags
            & memory_property_flags) == memory_property_flags)
       {
@@ -307,7 +300,7 @@ openvr_vulkan_device_memory_type_from_properties (
     memory_type_bits >>= 1;
   }
 
-  /* No memory types matched, return failure */
+  g_printerr ("Could not find matching memory type.\n");
   return false;
 }
 

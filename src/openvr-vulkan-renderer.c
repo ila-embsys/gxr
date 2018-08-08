@@ -1157,7 +1157,7 @@ openvr_vulkan_renderer_draw (OpenVRVulkanRenderer *self)
     .pImageIndices = &image_index,
   };
 
-  result = vkQueuePresentKHR (client->device->present_queue, &present_info);
+  result = vkQueuePresentKHR (client->device->queue, &present_info);
   if (result != VK_SUCCESS)
     {
       g_printerr ("Failed to present swapchain image.\n");
