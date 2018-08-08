@@ -593,10 +593,9 @@ _init_vertex_buffer (OpenVRVulkanRenderer *self)
      &staging_buffer, &staging_buffer_memory))
     return false;
 
-  void* data;
-  vkMapMemory (device, staging_buffer_memory, 0, buffer_size, 0, &data);
-  memcpy (data, vertices, (size_t) buffer_size);
-  vkUnmapMemory (device, staging_buffer_memory);
+  if (!openvr_vulkan_device_map_memory (client->device, vertices,
+                                        buffer_size, staging_buffer_memory))
+    return false;
 
   if (!openvr_vulkan_device_create_buffer (
       client->device, buffer_size,
@@ -636,10 +635,9 @@ _init_index_buffer (OpenVRVulkanRenderer *self)
      &staging_buffer, &staging_buffer_memory))
     return false;
 
-  void* data;
-  vkMapMemory (device, staging_buffer_memory, 0, buffer_size, 0, &data);
-  memcpy(data, indices, (size_t) buffer_size);
-  vkUnmapMemory (device, staging_buffer_memory);
+  if (!openvr_vulkan_device_map_memory (client->device, indices,
+                                        buffer_size, staging_buffer_memory))
+    return false;
 
   if (!openvr_vulkan_device_create_buffer (
       client->device, buffer_size,
@@ -664,8 +662,6 @@ _init_index_buffer (OpenVRVulkanRenderer *self)
 bool
 _init_uniform_buffers (OpenVRVulkanRenderer *self)
 {
-  VkDeviceSize buffer_size = sizeof(Transformation);
-
   OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (self);
 
   uint32_t count = self->swapchain_image_count;
@@ -675,7 +671,7 @@ _init_uniform_buffers (OpenVRVulkanRenderer *self)
 
   for (size_t i = 0; i < count; i++)
     if (!openvr_vulkan_device_create_buffer (
-        client->device, buffer_size,
+        client->device, sizeof (Transformation),
         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
         VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -1071,7 +1067,7 @@ openvr_vulkan_renderer_init_rendering (OpenVRVulkanRenderer *self,
 }
 
 bool
-_update_uniform_buffer (VkDevice device,
+_update_uniform_buffer (OpenVRVulkanDevice *device,
                         VkDeviceMemory uniform_buffer_memory)
 {
   graphene_vec3_t eye;
@@ -1092,17 +1088,9 @@ _update_uniform_buffer (VkDevice device,
   Transformation ubo = {};
   graphene_matrix_to_float (&mvp, ubo.mvp);
 
-  void *data;
-  VkResult res;
-  res = vkMapMemory (device, uniform_buffer_memory, 0, sizeof(ubo), 0, &data);
-  if (res != VK_SUCCESS)
-    {
-      g_printerr ("Unable to map memory.\n");
-      return false;
-    }
-
-  memcpy (data, &ubo, sizeof(ubo));
-  vkUnmapMemory (device, uniform_buffer_memory);
+  if (!openvr_vulkan_device_map_memory (device, &ubo,
+                                        sizeof(ubo), uniform_buffer_memory))
+    return false;
 
   return true;
 }
@@ -1135,7 +1123,8 @@ openvr_vulkan_renderer_draw (OpenVRVulkanRenderer *self)
       return false;
     }
 
-  _update_uniform_buffer (device, self->uniform_buffers_memory[image_index]);
+  _update_uniform_buffer (client->device,
+                          self->uniform_buffers_memory[image_index]);
 
   VkSubmitInfo submit_info = {
     .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
