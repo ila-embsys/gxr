@@ -50,9 +50,9 @@ struct _OpenVRVulkanRenderer
   VkBuffer index_buffer;
   VkDeviceMemory index_buffer_memory;
 
-  VkSemaphore *image_available_semaphores;
-  VkSemaphore *render_finished_semaphores;
-  VkFence *in_flight_fences;
+  VkSemaphore *submit_semaphores;
+  VkSemaphore *present_semaphores;
+  VkFence *fences;
 
   VkCommandBuffer *draw_cmd_buffers;
 

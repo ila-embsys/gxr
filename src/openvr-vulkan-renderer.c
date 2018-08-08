@@ -16,7 +16,7 @@
 
 #include "openvr-vulkan-renderer.h"
 
-#define MAX_FRAMES_IN_FLIGHT 2
+#define FRAMES_IN_FLIGHT 2
 
 typedef struct Vertex {
   float position[2];
@@ -75,11 +75,11 @@ openvr_vulkan_renderer_finalize (GObject *gobject)
   if (device != VK_NULL_HANDLE)
     vkDeviceWaitIdle (device);
 
-  for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+  for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
     {
-      vkDestroySemaphore (device, self->render_finished_semaphores[i], NULL);
-      vkDestroySemaphore (device, self->image_available_semaphores[i], NULL);
-      vkDestroyFence (device, self->in_flight_fences[i], NULL);
+      vkDestroySemaphore (device, self->present_semaphores[i], NULL);
+      vkDestroySemaphore (device, self->submit_semaphores[i], NULL);
+      vkDestroyFence (device, self->fences[i], NULL);
     }
 
   vkDestroyDescriptorPool (device, self->descriptor_pool, NULL);
@@ -904,15 +904,13 @@ _init_draw_cmd_buffers (VkDevice device,
 
 bool
 _init_synchronization (VkDevice device,
-                       VkSemaphore **image_available_semaphores,
-                       VkSemaphore **render_finished_semaphores,
-                       VkFence **in_flight_fences)
+                       VkSemaphore **submit_semaphores,
+                       VkSemaphore **present_semaphores,
+                       VkFence **fences)
 {
-  *image_available_semaphores =
-    g_malloc (sizeof(VkSemaphore) * MAX_FRAMES_IN_FLIGHT);
-  *render_finished_semaphores =
-    g_malloc (sizeof(VkSemaphore) * MAX_FRAMES_IN_FLIGHT);
-  *in_flight_fences = g_malloc (sizeof(VkFence) * MAX_FRAMES_IN_FLIGHT);
+  *submit_semaphores = g_malloc (sizeof(VkSemaphore) * FRAMES_IN_FLIGHT);
+  *present_semaphores = g_malloc (sizeof(VkSemaphore) * FRAMES_IN_FLIGHT);
+  *fences = g_malloc (sizeof(VkFence) * FRAMES_IN_FLIGHT);
 
   VkSemaphoreCreateInfo semaphore_info = {
     .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
@@ -924,10 +922,10 @@ _init_synchronization (VkDevice device,
   };
 
   VkResult ret;
-  for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+  for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
     {
       ret = vkCreateSemaphore (device, &semaphore_info,
-                               NULL, &((*image_available_semaphores)[i]));
+                               NULL, &((*submit_semaphores)[i]));
       if (ret != VK_SUCCESS)
         {
           g_printerr ("Failed to create semaphore.\n");
@@ -935,15 +933,14 @@ _init_synchronization (VkDevice device,
         }
 
       ret = vkCreateSemaphore (device, &semaphore_info,
-                               NULL, &((*render_finished_semaphores)[i]));
+                               NULL, &((*present_semaphores)[i]));
       if (ret != VK_SUCCESS)
         {
           g_printerr ("Failed to create semaphore.\n");
           return false;
         }
 
-      ret = vkCreateFence (device, &fence_info,
-                           NULL, &((*in_flight_fences)[i]));
+      ret = vkCreateFence (device, &fence_info, NULL, &((*fences)[i]));
       if (ret != VK_SUCCESS)
         {
           g_printerr ("Failed to create fence.\n");
@@ -1057,9 +1054,9 @@ openvr_vulkan_renderer_init_rendering (OpenVRVulkanRenderer *self,
     return false;
 
   if (!_init_synchronization (device,
-                             &self->image_available_semaphores,
-                             &self->render_finished_semaphores,
-                             &self->in_flight_fences))
+                             &self->submit_semaphores,
+                             &self->present_semaphores,
+                             &self->fences))
     return false;
 
   return true;
@@ -1100,23 +1097,18 @@ openvr_vulkan_renderer_draw (OpenVRVulkanRenderer *self)
   OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (self);
   VkDevice device = client->device->device;
 
-  VkSemaphore image_available_semaphore =
-    self->image_available_semaphores[self->current_frame];
+  VkSemaphore submit_semaphore = self->submit_semaphores[self->current_frame];
+  VkSemaphore present_semaphore = self->present_semaphores[self->current_frame];
 
-  VkSemaphore render_finished_semaphore =
-    self->render_finished_semaphores[self->current_frame];
-
-  vkWaitForFences (device, 1,
-                   &self->in_flight_fences[self->current_frame],
+  vkWaitForFences (device, 1, &self->fences[self->current_frame],
                    VK_TRUE, UINT64_MAX);
 
   uint32_t image_index;
-  VkResult result =
-    vkAcquireNextImageKHR (device, self->swap_chain, UINT64_MAX,
-                           image_available_semaphore,
-                           VK_NULL_HANDLE, &image_index);
-
-  if (result != VK_SUCCESS)
+  VkResult res;
+  res = vkAcquireNextImageKHR (device, self->swap_chain, UINT64_MAX,
+                               submit_semaphore,
+                               VK_NULL_HANDLE, &image_index);
+  if (res != VK_SUCCESS)
     {
       g_printerr ("Failed to acquire swap chain image.\n");
       return false;
@@ -1128,20 +1120,20 @@ openvr_vulkan_renderer_draw (OpenVRVulkanRenderer *self)
   VkSubmitInfo submit_info = {
     .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
     .waitSemaphoreCount = 1,
-    .pWaitSemaphores = (VkSemaphore[]) { image_available_semaphore },
+    .pWaitSemaphores = (VkSemaphore[]) { submit_semaphore },
     .pWaitDstStageMask = (VkPipelineStageFlags[]) {
       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
     },
     .commandBufferCount = 1,
     .pCommandBuffers = &self->draw_cmd_buffers[image_index],
     .signalSemaphoreCount = 1,
-    .pSignalSemaphores = (VkSemaphore[]) { render_finished_semaphore }
+    .pSignalSemaphores = (VkSemaphore[]) { present_semaphore }
   };
 
-  vkResetFences (device, 1, &self->in_flight_fences[self->current_frame]);
+  vkResetFences (device, 1, &self->fences[self->current_frame]);
 
   if (vkQueueSubmit (client->device->queue, 1, &submit_info,
-                     self->in_flight_fences[self->current_frame]) != VK_SUCCESS)
+                     self->fences[self->current_frame]) != VK_SUCCESS)
     {
       g_printerr ("Failed to submit draw command buffer.\n");
       return false;
@@ -1150,20 +1142,19 @@ openvr_vulkan_renderer_draw (OpenVRVulkanRenderer *self)
   VkPresentInfoKHR present_info = {
     .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
     .waitSemaphoreCount = 1,
-    .pWaitSemaphores = (VkSemaphore[]) { render_finished_semaphore },
+    .pWaitSemaphores = (VkSemaphore[]) { present_semaphore },
     .swapchainCount = 1,
     .pSwapchains = (VkSwapchainKHR[]) { self->swap_chain },
     .pImageIndices = &image_index,
   };
 
-  result = vkQueuePresentKHR (client->device->queue, &present_info);
-  if (result != VK_SUCCESS)
+  if (vkQueuePresentKHR (client->device->queue, &present_info) != VK_SUCCESS)
     {
       g_printerr ("Failed to present swapchain image.\n");
       return false;
     }
 
-  self->current_frame = (self->current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
+  self->current_frame = (self->current_frame + 1) % FRAMES_IN_FLIGHT;
 
   return true;
 }
