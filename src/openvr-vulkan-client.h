@@ -37,7 +37,7 @@ typedef struct
 {
   VkCommandBuffer cmd_buffer;
   VkFence fence;
-} VulkanCommandBuffer_t;
+} FencedCommandBuffer;
 
 struct _OpenVRVulkanClient
 {
@@ -47,10 +47,6 @@ struct _OpenVRVulkanClient
 
   OpenVRVulkanInstance *instance;
   OpenVRVulkanDevice *device;
-
-  VulkanCommandBuffer_t *current_cmd_buffer;
-
-  GQueue *cmd_buffers;
 };
 
 struct _OpenVRVulkanClientClass
@@ -62,11 +58,13 @@ GType      openvr_vulkan_client_get_type                 (void) G_GNUC_CONST;
 
 OpenVRVulkanClient * openvr_vulkan_client_new (void);
 
-void
-openvr_vulkan_client_begin_res_cmd_buffer (OpenVRVulkanClient *self);
+bool
+openvr_vulkan_client_begin_res_cmd_buffer (OpenVRVulkanClient  *self,
+                                           FencedCommandBuffer *buffer);
 
-void
-openvr_vulkan_client_submit_res_cmd_buffer (OpenVRVulkanClient *self);
+bool
+openvr_vulkan_client_submit_res_cmd_buffer (OpenVRVulkanClient  *self,
+                                            FencedCommandBuffer *buffer);
 
 bool
 openvr_vulkan_client_load_raw (OpenVRVulkanClient   *self,

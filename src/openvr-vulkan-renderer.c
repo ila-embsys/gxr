@@ -603,12 +603,15 @@ _init_vertex_buffer (OpenVRVulkanRenderer *self)
      &self->vertex_buffer, &self->vertex_buffer_memory))
     return false;
 
-  openvr_vulkan_client_begin_res_cmd_buffer (client);
+  FencedCommandBuffer cmd_buffer = {};
+  if (!openvr_vulkan_client_begin_res_cmd_buffer (client, &cmd_buffer))
+    return false;
 
-  _copy_buffer (client->current_cmd_buffer->cmd_buffer,
+  _copy_buffer (cmd_buffer.cmd_buffer,
                 staging_buffer, self->vertex_buffer, buffer_size);
 
-  openvr_vulkan_client_submit_res_cmd_buffer (client);
+  if (!openvr_vulkan_client_submit_res_cmd_buffer (client, &cmd_buffer))
+    return false;
 
   vkDestroyBuffer (device, staging_buffer, NULL);
   vkFreeMemory (device, staging_buffer_memory, NULL);
@@ -645,12 +648,15 @@ _init_index_buffer (OpenVRVulkanRenderer *self)
      &self->index_buffer, &self->index_buffer_memory))
     return false;
 
-  openvr_vulkan_client_begin_res_cmd_buffer (client);
+  FencedCommandBuffer cmd_buffer = {};
+  if (!openvr_vulkan_client_begin_res_cmd_buffer (client, &cmd_buffer))
+    return false;
 
-  _copy_buffer (client->current_cmd_buffer->cmd_buffer,
+  _copy_buffer (cmd_buffer.cmd_buffer,
                 staging_buffer, self->index_buffer, buffer_size);
 
-  openvr_vulkan_client_submit_res_cmd_buffer (client);
+  if (!openvr_vulkan_client_submit_res_cmd_buffer (client, &cmd_buffer))
+    return false;
 
   vkDestroyBuffer (device, staging_buffer, NULL);
   vkFreeMemory (device, staging_buffer_memory, NULL);

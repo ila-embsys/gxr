@@ -12,9 +12,6 @@ G_DEFINE_TYPE (OpenVRVulkanClient, openvr_vulkan_client, G_TYPE_OBJECT)
 static void
 openvr_vulkan_client_finalize (GObject *gobject);
 
-VulkanCommandBuffer_t*
-_get_command_buffer (OpenVRVulkanClient *self);
-
 static void
 openvr_vulkan_client_class_init (OpenVRVulkanClientClass *klass)
 {
@@ -29,7 +26,6 @@ openvr_vulkan_client_init (OpenVRVulkanClient *self)
   self->instance = openvr_vulkan_instance_new ();
   self->device = openvr_vulkan_device_new ();
   self->command_pool = VK_NULL_HANDLE;
-  self->cmd_buffers = g_queue_new ();
 }
 
 OpenVRVulkanClient *
@@ -38,31 +34,15 @@ openvr_vulkan_client_new (void)
   return (OpenVRVulkanClient*) g_object_new (OPENVR_TYPE_VULKAN_CLIENT, 0);
 }
 
-void
-_cleanup_command_buffer_queue (gpointer item, OpenVRVulkanClient *self)
-{
-  VulkanCommandBuffer_t *b = (VulkanCommandBuffer_t*) item;
-  vkFreeCommandBuffers (self->device->device,
-                        self->command_pool, 1, &b->cmd_buffer);
-  vkDestroyFence (self->device->device, b->fence, NULL);
-  g_free (item);
-}
-
 static void
 openvr_vulkan_client_finalize (GObject *gobject)
 {
   OpenVRVulkanClient *self = OPENVR_VULKAN_CLIENT (gobject);
 
-  if (self->device->device != VK_NULL_HANDLE)
-  {
-    g_queue_foreach (self->cmd_buffers,
-                     (GFunc) _cleanup_command_buffer_queue, self);
+  vkDestroyCommandPool (self->device->device, self->command_pool, NULL);
 
-    vkDestroyCommandPool (self->device->device, self->command_pool, NULL);
-
-    g_object_unref (self->device);
-    g_object_unref (self->instance);
-  }
+  g_object_unref (self->device);
+  g_object_unref (self->instance);
 }
 
 bool
@@ -86,35 +66,86 @@ openvr_vulkan_client_init_command_pool (OpenVRVulkanClient *self)
   return true;
 }
 
-void
-openvr_vulkan_client_begin_res_cmd_buffer (OpenVRVulkanClient *self)
+bool
+openvr_vulkan_client_begin_res_cmd_buffer (OpenVRVulkanClient  *self,
+                                           FencedCommandBuffer *buffer)
 {
-  self->current_cmd_buffer = _get_command_buffer (self);
+  VkCommandBufferAllocateInfo command_buffer_info =
+  {
+    .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+    .commandBufferCount = 1,
+    .commandPool = self->command_pool,
+  };
+
+  VkResult res;
+  res = vkAllocateCommandBuffers (self->device->device, &command_buffer_info,
+                                 &buffer->cmd_buffer);
+
+  if (res != VK_SUCCESS)
+    {
+      g_printerr ("Unable to vkAllocateCommandBuffers: %d\n", res);
+      return false;
+    }
+
+  VkFenceCreateInfo fence_info = {
+    .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO
+  };
+  res = vkCreateFence (self->device->device, &fence_info,
+                       NULL, &buffer->fence);
+  if (res != VK_SUCCESS)
+    {
+      g_printerr ("Unable to vkCreateFence: %d\n", res);
+      return false;
+    }
+
   VkCommandBufferBeginInfo command_buffer_begin_info =
   {
     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
     .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
   };
-  vkBeginCommandBuffer (self->current_cmd_buffer->cmd_buffer,
-                        &command_buffer_begin_info);
+  res = vkBeginCommandBuffer (buffer->cmd_buffer,
+                             &command_buffer_begin_info);
+  if (res != VK_SUCCESS)
+    {
+      g_printerr ("Unable to vkBeginCommandBuffer: %d\n", res);
+      return false;
+    }
+
+  return true;
 }
 
-void
-openvr_vulkan_client_submit_res_cmd_buffer (OpenVRVulkanClient *self)
+bool
+openvr_vulkan_client_submit_res_cmd_buffer (OpenVRVulkanClient  *self,
+                                            FencedCommandBuffer *buffer)
 {
-  vkEndCommandBuffer (self->current_cmd_buffer->cmd_buffer);
+  VkResult res = vkEndCommandBuffer (buffer->cmd_buffer);
+  if (res != VK_SUCCESS)
+    {
+      g_printerr ("Unable to vkEndCommandBuffer: %d\n", res);
+      return false;
+    }
 
   VkSubmitInfo submit_info = {
     .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
     .commandBufferCount = 1,
-    .pCommandBuffers = &self->current_cmd_buffer->cmd_buffer
+    .pCommandBuffers = &buffer->cmd_buffer
   };
 
-  vkQueueSubmit (self->device->queue, 1,
-                 &submit_info, self->current_cmd_buffer->fence);
-  g_queue_push_head (self->cmd_buffers, (gpointer) self->current_cmd_buffer);
+  res = vkQueueSubmit (self->device->queue, 1,
+                      &submit_info, buffer->fence);
+  if (res != VK_SUCCESS)
+    {
+      g_printerr ("Unable to vkQueueSubmit: %d\n", res);
+      return false;
+    }
 
   vkQueueWaitIdle (self->device->queue);
+
+  vkFreeCommandBuffers (self->device->device, self->command_pool,
+                        1, &buffer->cmd_buffer);
+  vkDestroyFence (self->device->device, buffer->fence, NULL);
+
+  return true;
 }
 
 bool
@@ -126,15 +157,18 @@ openvr_vulkan_client_load_raw (OpenVRVulkanClient   *self,
                                gsize                 size,
                                VkFormat              format)
 {
-  openvr_vulkan_client_begin_res_cmd_buffer (self);
+  FencedCommandBuffer buffer = {};
+  if (!openvr_vulkan_client_begin_res_cmd_buffer (self, &buffer))
+    return false;
 
   if (!openvr_vulkan_texture_from_pixels (texture,
                                           self->device,
-                                          self->current_cmd_buffer->cmd_buffer,
+                                          buffer.cmd_buffer,
                                           pixels, width, height, size, format))
     return false;
 
-  openvr_vulkan_client_submit_res_cmd_buffer (self);
+  if (!openvr_vulkan_client_submit_res_cmd_buffer (self, &buffer))
+    return false;
 
   openvr_vulkan_texture_free_staging_memory (texture);
 
@@ -240,56 +274,4 @@ openvr_vulkan_client_init_vulkan (OpenVRVulkanClient *self,
     }
 
   return true;
-}
-
-/*
- * Get an available command buffer or create a new one if one available.
- * Associate a fence with the command buffer.
- */
-VulkanCommandBuffer_t*
-_get_command_buffer (OpenVRVulkanClient *self)
-{
-  VulkanCommandBuffer_t *command_buffer = g_new (VulkanCommandBuffer_t, 1);
-
-  if (g_queue_get_length (self->cmd_buffers) > 0)
-  {
-    /*
-     * If the fence associated with the command buffer has finished,
-     * reset it and return it
-     */
-    VulkanCommandBuffer_t *tail =
-      (VulkanCommandBuffer_t*) g_queue_peek_tail (self->cmd_buffers);
-
-    if (vkGetFenceStatus (self->device->device, tail->fence) == VK_SUCCESS)
-    {
-      command_buffer->cmd_buffer = tail->cmd_buffer;
-      command_buffer->fence = tail->fence;
-
-      vkResetCommandBuffer (command_buffer->cmd_buffer,
-                            VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
-      vkResetFences (self->device->device, 1, &command_buffer->fence);
-      gpointer last = g_queue_pop_tail (self->cmd_buffers);
-      g_free (last);
-
-      return command_buffer;
-    }
-  }
-
-  /* Create a new command buffer and associated fence */
-  VkCommandBufferAllocateInfo command_buffer_info =
-  {
-    .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-    .commandBufferCount = 1,
-    .commandPool = self->command_pool,
-    .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY
-  };
-  vkAllocateCommandBuffers (self->device->device, &command_buffer_info,
-                            &command_buffer->cmd_buffer);
-
-  VkFenceCreateInfo fence_info = {
-    .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO
-  };
-  vkCreateFence (self->device->device, &fence_info,
-                 NULL, &command_buffer->fence);
-  return command_buffer;
 }
