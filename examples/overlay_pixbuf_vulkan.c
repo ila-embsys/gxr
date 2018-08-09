@@ -150,7 +150,7 @@ test_cat_overlay ()
   g_assert (openvr_system_is_installed ());
 
   OpenVRVulkanUploader *uploader = openvr_vulkan_uploader_new ();
-  if (!openvr_vulkan_uploader_init_vulkan (uploader, false, system, compositor))
+  if (!openvr_vulkan_uploader_init_vulkan (uploader, true, system, compositor))
   {
     g_printerr ("Unable to initialize Vulkan!\n");
     return false;
