@@ -16,8 +16,12 @@
 
 G_BEGIN_DECLS
 
-#define OPENVR_TYPE_VULKAN_INSTANCE openvr_vulkan_instance_get_type()
-G_DECLARE_FINAL_TYPE (OpenVRVulkanInstance, openvr_vulkan_instance, OPENVR, VULKAN_INSTANCE, GObject)
+const gchar*
+vk_result_string (VkResult code);
+
+#define OPENVR_TYPE_VULKAN_INSTANCE openvr_vulkan_instance_get_type ()
+G_DECLARE_FINAL_TYPE (OpenVRVulkanInstance, openvr_vulkan_instance,
+                      OPENVR, VULKAN_INSTANCE, GObject)
 
 struct _OpenVRVulkanInstance
 {

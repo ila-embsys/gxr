@@ -10,12 +10,7 @@
 #include <vulkan/vulkan.h>
 #include <stdbool.h>
 
-#ifndef _countof
-#define _countof(x) (sizeof (x) / sizeof ((x)[0]))
-#endif
-
-/* OpenVR: no unique_objects when using validation with SteamVR */
-static gchar const *validation_layers[] =
+gchar const *validation_layers[] =
   {
     "VK_LAYER_GOOGLE_threading",
     "VK_LAYER_LUNARG_parameter_validation",
@@ -25,60 +20,56 @@ static gchar const *validation_layers[] =
   };
 
 static const gchar*
-debug_report_string (VkDebugReportFlagBitsEXT code)
+vk_debug_report_string (VkDebugReportFlagBitsEXT code)
 {
-  switch (code) {
-    ENUM_TO_STR(VK_DEBUG_REPORT_INFORMATION_BIT_EXT);
-    ENUM_TO_STR(VK_DEBUG_REPORT_WARNING_BIT_EXT);
-    ENUM_TO_STR(VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT);
-    ENUM_TO_STR(VK_DEBUG_REPORT_ERROR_BIT_EXT);
-    ENUM_TO_STR(VK_DEBUG_REPORT_DEBUG_BIT_EXT);
-    ENUM_TO_STR(VK_DEBUG_REPORT_FLAG_BITS_MAX_ENUM_EXT);
-    default:
-      return "UNKNOWN DEBUG_REPORT";
-  }
+  switch (code)
+    {
+      ENUM_TO_STR(VK_DEBUG_REPORT_INFORMATION_BIT_EXT);
+      ENUM_TO_STR(VK_DEBUG_REPORT_WARNING_BIT_EXT);
+      ENUM_TO_STR(VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT);
+      ENUM_TO_STR(VK_DEBUG_REPORT_ERROR_BIT_EXT);
+      ENUM_TO_STR(VK_DEBUG_REPORT_DEBUG_BIT_EXT);
+      ENUM_TO_STR(VK_DEBUG_REPORT_FLAG_BITS_MAX_ENUM_EXT);
+      default:
+        return "UNKNOWN DEBUG_REPORT";
+    }
 }
 
-static const gchar*
-result_string(VkResult code) {
-  switch (code) {
-    ENUM_TO_STR(VK_SUCCESS);
-    ENUM_TO_STR(VK_NOT_READY);
-    ENUM_TO_STR(VK_TIMEOUT);
-    ENUM_TO_STR(VK_EVENT_SET);
-    ENUM_TO_STR(VK_EVENT_RESET);
-    ENUM_TO_STR(VK_INCOMPLETE);
-    ENUM_TO_STR(VK_ERROR_OUT_OF_HOST_MEMORY);
-    ENUM_TO_STR(VK_ERROR_OUT_OF_DEVICE_MEMORY);
-    ENUM_TO_STR(VK_ERROR_INITIALIZATION_FAILED);
-    ENUM_TO_STR(VK_ERROR_DEVICE_LOST);
-    ENUM_TO_STR(VK_ERROR_MEMORY_MAP_FAILED);
-    ENUM_TO_STR(VK_ERROR_LAYER_NOT_PRESENT);
-    ENUM_TO_STR(VK_ERROR_EXTENSION_NOT_PRESENT);
-    ENUM_TO_STR(VK_ERROR_FEATURE_NOT_PRESENT);
-    ENUM_TO_STR(VK_ERROR_INCOMPATIBLE_DRIVER);
-    ENUM_TO_STR(VK_ERROR_TOO_MANY_OBJECTS);
-    ENUM_TO_STR(VK_ERROR_FORMAT_NOT_SUPPORTED);
-    ENUM_TO_STR(VK_ERROR_SURFACE_LOST_KHR);
-    ENUM_TO_STR(VK_ERROR_NATIVE_WINDOW_IN_USE_KHR);
-    ENUM_TO_STR(VK_SUBOPTIMAL_KHR);
-    ENUM_TO_STR(VK_ERROR_OUT_OF_DATE_KHR);
-    ENUM_TO_STR(VK_ERROR_INCOMPATIBLE_DISPLAY_KHR);
-    ENUM_TO_STR(VK_ERROR_VALIDATION_FAILED_EXT);
-    ENUM_TO_STR(VK_ERROR_INVALID_SHADER_NV);
-    default:
-      return "UNKNOWN RESULT";
-  }
+const gchar*
+vk_result_string (VkResult code)
+{
+  switch (code)
+    {
+      ENUM_TO_STR(VK_SUCCESS);
+      ENUM_TO_STR(VK_NOT_READY);
+      ENUM_TO_STR(VK_TIMEOUT);
+      ENUM_TO_STR(VK_EVENT_SET);
+      ENUM_TO_STR(VK_EVENT_RESET);
+      ENUM_TO_STR(VK_INCOMPLETE);
+      ENUM_TO_STR(VK_ERROR_OUT_OF_HOST_MEMORY);
+      ENUM_TO_STR(VK_ERROR_OUT_OF_DEVICE_MEMORY);
+      ENUM_TO_STR(VK_ERROR_INITIALIZATION_FAILED);
+      ENUM_TO_STR(VK_ERROR_DEVICE_LOST);
+      ENUM_TO_STR(VK_ERROR_MEMORY_MAP_FAILED);
+      ENUM_TO_STR(VK_ERROR_LAYER_NOT_PRESENT);
+      ENUM_TO_STR(VK_ERROR_EXTENSION_NOT_PRESENT);
+      ENUM_TO_STR(VK_ERROR_FEATURE_NOT_PRESENT);
+      ENUM_TO_STR(VK_ERROR_INCOMPATIBLE_DRIVER);
+      ENUM_TO_STR(VK_ERROR_TOO_MANY_OBJECTS);
+      ENUM_TO_STR(VK_ERROR_FORMAT_NOT_SUPPORTED);
+      ENUM_TO_STR(VK_ERROR_SURFACE_LOST_KHR);
+      ENUM_TO_STR(VK_ERROR_NATIVE_WINDOW_IN_USE_KHR);
+      ENUM_TO_STR(VK_SUBOPTIMAL_KHR);
+      ENUM_TO_STR(VK_ERROR_OUT_OF_DATE_KHR);
+      ENUM_TO_STR(VK_ERROR_INCOMPATIBLE_DISPLAY_KHR);
+      ENUM_TO_STR(VK_ERROR_VALIDATION_FAILED_EXT);
+      ENUM_TO_STR(VK_ERROR_INVALID_SHADER_NV);
+      default:
+        return "UNKNOWN RESULT";
+    }
 }
-
 
 G_DEFINE_TYPE (OpenVRVulkanInstance, openvr_vulkan_instance, G_TYPE_OBJECT)
-
-/* Vulkan extension entrypoints */
-static PFN_vkCreateDebugReportCallbackEXT
-  g_pVkCreateDebugReportCallbackEXT = NULL;
-static PFN_vkDestroyDebugReportCallbackEXT
-  g_pVkDestroyDebugReportCallbackEXT = NULL;
 
 static void
 openvr_vulkan_instance_init (OpenVRVulkanInstance *self)
@@ -98,8 +89,14 @@ openvr_vulkan_instance_finalize (GObject *gobject)
 {
   OpenVRVulkanInstance *self = OPENVR_VULKAN_INSTANCE (gobject);
   if (self->debug_report_cb != VK_NULL_HANDLE)
-    g_pVkDestroyDebugReportCallbackEXT (self->instance,
-                                        self->debug_report_cb, NULL);
+    {
+      PFN_vkDestroyDebugReportCallbackEXT destroy_fun = NULL;
+      destroy_fun = (PFN_vkDestroyDebugReportCallbackEXT)
+        vkGetInstanceProcAddr (self->instance,
+                               "vkDestroyDebugReportCallbackEXT");
+      if (destroy_fun != NULL)
+        destroy_fun (self->instance, self->debug_report_cb, NULL);
+    }
 
   vkDestroyInstance (self->instance, NULL);
 }
@@ -123,7 +120,7 @@ validation_cb (VkDebugReportFlagsEXT      flags,
                void                      *user_data)
 {
   g_print ("%s %s %lu:%d: %s\n",
-           debug_report_string (flags),
+           vk_debug_report_string (flags),
            layer_prefix, location, message_code, message);
   return VK_FALSE;
 }
@@ -148,7 +145,7 @@ _init_validation_layers (uint32_t     num_layers,
     }
 
   for (uint32_t i = 0; i < num_layers; i++)
-    for (uint32_t j = 0; j < _countof (validation_layers); j++)
+    for (uint32_t j = 0; j < G_N_ELEMENTS (validation_layers); j++)
       if (strstr (layer_props[i].layerName, validation_layers[j]) != NULL)
         enabled_layers[num_enabled++] = g_strdup (layer_props[i].layerName);
 
@@ -228,22 +225,19 @@ _init_instance_extensions (GSList      *required_extensions,
 void
 _init_validation_callback (OpenVRVulkanInstance *self)
 {
-  g_pVkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)
+  PFN_vkCreateDebugReportCallbackEXT debug_fun = NULL;
+  debug_fun = (PFN_vkCreateDebugReportCallbackEXT)
     vkGetInstanceProcAddr (self->instance, "vkCreateDebugReportCallbackEXT");
-  g_pVkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT)
-    vkGetInstanceProcAddr (self->instance, "vkDestroyDebugReportCallbackEXT");
 
   VkDebugReportCallbackCreateInfoEXT debug_report_info = {
     .sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT,
-    .pNext = NULL,
     .flags = VK_DEBUG_REPORT_ERROR_BIT_EXT,
-    .pfnCallback = validation_cb,
-    .pUserData = NULL
+    .pfnCallback = validation_cb
   };
 
-  g_pVkCreateDebugReportCallbackEXT (self->instance,
-                                     &debug_report_info,
-                                     NULL, &self->debug_report_cb);
+  if (debug_fun != NULL)
+    debug_fun (self->instance,&debug_report_info,
+               NULL, &self->debug_report_cb);
 }
 
 bool
@@ -295,12 +289,10 @@ openvr_vulkan_instance_create (OpenVRVulkanInstance *self,
   VkResult result =
     vkCreateInstance (&(VkInstanceCreateInfo) {
       .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-      .pNext = NULL,
       .pApplicationInfo = &(VkApplicationInfo) {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-        .pApplicationName = "vulkan_overlay",
+        .pApplicationName = "openvr-glib",
         .applicationVersion = 1,
-        .pEngineName = NULL,
         .engineVersion = 1,
         .apiVersion = VK_MAKE_VERSION (1, 0, 0)
       },
@@ -315,7 +307,7 @@ openvr_vulkan_instance_create (OpenVRVulkanInstance *self,
   if (result != VK_SUCCESS)
   {
     g_printerr ("vkCreateInstance failed with error %s\n",
-                result_string (result));
+                vk_result_string (result));
     return false;
   }
 
