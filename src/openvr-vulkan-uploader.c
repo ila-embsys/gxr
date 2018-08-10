@@ -68,7 +68,7 @@ openvr_vulkan_uploader_load_dmabuf (OpenVRVulkanUploader *self,
   OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (self);
 
   FencedCommandBuffer cmd_buffer = {};
-  if (!openvr_vulkan_client_submit_res_cmd_buffer (client, &cmd_buffer))
+  if (!openvr_vulkan_client_begin_res_cmd_buffer (client, &cmd_buffer))
     return false;
 
   if (!openvr_vulkan_texture_from_dmabuf (texture,

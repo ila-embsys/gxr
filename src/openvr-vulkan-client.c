@@ -118,6 +118,12 @@ bool
 openvr_vulkan_client_submit_res_cmd_buffer (OpenVRVulkanClient  *self,
                                             FencedCommandBuffer *buffer)
 {
+  if (buffer == NULL || buffer->cmd_buffer == VK_NULL_HANDLE)
+    {
+      g_printerr ("Trying to submit empty FencedCommandBuffer\n.");
+      return false;
+    }
+
   VkResult res = vkEndCommandBuffer (buffer->cmd_buffer);
   if (res != VK_SUCCESS)
     {
