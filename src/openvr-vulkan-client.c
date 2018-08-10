@@ -55,14 +55,10 @@ openvr_vulkan_client_init_command_pool (OpenVRVulkanClient *self)
       .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
     };
 
-  VkResult result = vkCreateCommandPool (self->device->device,
-                                         &command_pool_info,
-                                         NULL, &self->command_pool);
-  if (result != VK_SUCCESS)
-    {
-      g_printerr ("vkCreateCommandPool returned error %d.", result);
-      return false;
-    }
+  VkResult res = vkCreateCommandPool (self->device->device,
+                                     &command_pool_info,
+                                      NULL, &self->command_pool);
+  vk_check_error ("vkCreateCommandPool", res);
   return true;
 }
 
@@ -80,23 +76,14 @@ openvr_vulkan_client_begin_res_cmd_buffer (OpenVRVulkanClient  *self,
   VkResult res;
   res = vkAllocateCommandBuffers (self->device->device, &command_buffer_info,
                                  &buffer->cmd_buffer);
-
-  if (res != VK_SUCCESS)
-    {
-      g_printerr ("Unable to vkAllocateCommandBuffers: %d\n", res);
-      return false;
-    }
+  vk_check_error ("vkAllocateCommandBuffers", res);
 
   VkFenceCreateInfo fence_info = {
     .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO
   };
   res = vkCreateFence (self->device->device, &fence_info,
                        NULL, &buffer->fence);
-  if (res != VK_SUCCESS)
-    {
-      g_printerr ("Unable to vkCreateFence: %d\n", res);
-      return false;
-    }
+  vk_check_error ("vkCreateFence", res);
 
   VkCommandBufferBeginInfo command_buffer_begin_info =
   {
@@ -105,11 +92,7 @@ openvr_vulkan_client_begin_res_cmd_buffer (OpenVRVulkanClient  *self,
   };
   res = vkBeginCommandBuffer (buffer->cmd_buffer,
                              &command_buffer_begin_info);
-  if (res != VK_SUCCESS)
-    {
-      g_printerr ("Unable to vkBeginCommandBuffer: %d\n", res);
-      return false;
-    }
+  vk_check_error ("vkBeginCommandBuffer", res);
 
   return true;
 }
@@ -125,11 +108,7 @@ openvr_vulkan_client_submit_res_cmd_buffer (OpenVRVulkanClient  *self,
     }
 
   VkResult res = vkEndCommandBuffer (buffer->cmd_buffer);
-  if (res != VK_SUCCESS)
-    {
-      g_printerr ("Unable to vkEndCommandBuffer: %d\n", res);
-      return false;
-    }
+  vk_check_error ("vkEndCommandBuffer", res);
 
   VkSubmitInfo submit_info = {
     .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -139,11 +118,7 @@ openvr_vulkan_client_submit_res_cmd_buffer (OpenVRVulkanClient  *self,
 
   res = vkQueueSubmit (self->device->queue, 1,
                       &submit_info, buffer->fence);
-  if (res != VK_SUCCESS)
-    {
-      g_printerr ("Unable to vkQueueSubmit: %d\n", res);
-      return false;
-    }
+  vk_check_error ("vkQueueSubmit", res);
 
   vkQueueWaitIdle (self->device->queue);
 
@@ -257,7 +232,6 @@ openvr_vulkan_client_init_vulkan (OpenVRVulkanClient *self,
                                   GSList             *device_extensions,
                                   bool                enable_validation)
 {
-
   if (!openvr_vulkan_instance_create (self->instance,
                                       enable_validation,
                                       instance_extensions))
