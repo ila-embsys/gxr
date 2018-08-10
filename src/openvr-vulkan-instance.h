@@ -19,6 +19,15 @@ G_BEGIN_DECLS
 const gchar*
 vk_result_string (VkResult code);
 
+#define vk_check_error(fun, res) \
+VkResult r = (res); \
+if (r != VK_SUCCESS) \
+{ \
+  g_printerr ("ERROR: " fun " failed with %s in %s:%d\n", \
+              vk_result_string (r), __FILE__, __LINE__); \
+  return false; \
+}
+
 #define OPENVR_TYPE_VULKAN_INSTANCE openvr_vulkan_instance_get_type ()
 G_DECLARE_FINAL_TYPE (OpenVRVulkanInstance, openvr_vulkan_instance,
                       OPENVR, VULKAN_INSTANCE, GObject)

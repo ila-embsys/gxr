@@ -135,14 +135,8 @@ _init_validation_layers (uint32_t     num_layers,
   VkLayerProperties * layer_props =
     g_malloc(sizeof(VkLayerProperties) * num_layers);
 
-  VkResult result =
-    vkEnumerateInstanceLayerProperties (&num_layers, layer_props);
-
-  if (result != VK_SUCCESS)
-    {
-      g_printerr ("Error vkEnumerateInstanceLayerProperties in %d\n", result);
-      return false;
-    }
+  VkResult res = vkEnumerateInstanceLayerProperties (&num_layers, layer_props);
+  vk_check_error ("vkEnumerateInstanceLayerProperties", res);
 
   for (uint32_t i = 0; i < num_layers; i++)
     for (uint32_t j = 0; j < G_N_ELEMENTS (validation_layers); j++)
@@ -163,29 +157,18 @@ _init_instance_extensions (GSList      *required_extensions,
 {
   uint32_t num_enabled = 0;
   uint32_t num_extensions = 0;
-  VkResult result =
+  VkResult res =
     vkEnumerateInstanceExtensionProperties (NULL, &num_extensions, NULL);
-  if (result != VK_SUCCESS)
-  {
-    g_printerr ("vkEnumerateInstanceExtensionProperties failed with error %d\n",
-                result);
-    return false;
-  }
+  vk_check_error ("vkEnumerateInstanceExtensionProperties", res);
 
   VkExtensionProperties *extension_props =
     g_malloc (sizeof(VkExtensionProperties) * num_extensions);
 
   if (num_extensions > 0)
   {
-    result = vkEnumerateInstanceExtensionProperties (NULL, &num_extensions,
-                                                     extension_props);
-    if (result != VK_SUCCESS)
-    {
-      g_printerr ("vkEnumerateInstanceExtensionProperties"
-                  " failed with error %d\n",
-                  result);
-      return false;
-    }
+    res = vkEnumerateInstanceExtensionProperties (NULL, &num_extensions,
+                                                  extension_props);
+    vk_check_error ("vkEnumerateInstanceExtensionProperties", res);
 
     for (size_t i = 0; i < g_slist_length (required_extensions); i++)
     {
@@ -251,14 +234,8 @@ openvr_vulkan_instance_create (OpenVRVulkanInstance *self,
   if (enable_validation)
     {
       uint32_t num_layers = 0;
-      VkResult result = vkEnumerateInstanceLayerProperties (&num_layers, NULL);
-      if (result != VK_SUCCESS)
-        {
-          g_printerr ("vkEnumerateInstanceLayerProperties"
-                      " failed with error %d\n",
-                      result);
-          return false;
-        }
+      VkResult res = vkEnumerateInstanceLayerProperties (&num_layers, NULL);
+      vk_check_error ("vkEnumerateInstanceLayerProperties", res);
 
       enabled_layers = g_malloc(sizeof(const char*) * num_layers);
       if (num_layers > 0)
@@ -286,7 +263,7 @@ openvr_vulkan_instance_create (OpenVRVulkanInstance *self,
   for (int i = 0; i < num_enabled_extensions; i++)
       g_print ("%s\n", enabled_extensions[i]);
 
-  VkResult result =
+  VkResult res =
     vkCreateInstance (&(VkInstanceCreateInfo) {
       .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
       .pApplicationInfo = &(VkApplicationInfo) {
@@ -304,12 +281,7 @@ openvr_vulkan_instance_create (OpenVRVulkanInstance *self,
     NULL,
     &self->instance);
 
-  if (result != VK_SUCCESS)
-  {
-    g_printerr ("vkCreateInstance failed with error %s\n",
-                vk_result_string (result));
-    return false;
-  }
+  vk_check_error ("vkCreateInstance", res);
 
   if (enable_validation)
     _init_validation_callback (self);
