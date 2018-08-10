@@ -44,26 +44,22 @@ _find_physical_device (OpenVRVulkanDevice   *self,
                        VkPhysicalDevice requested_device)
 {
   uint32_t num_devices = 0;
-  VkResult result =
+  VkResult res =
     vkEnumeratePhysicalDevices (instance->instance, &num_devices, NULL);
-  if (result != VK_SUCCESS || num_devices == 0)
+  vk_check_error ("vkEnumeratePhysicalDevices", res);
+
+  if (num_devices == 0)
     {
-      g_printerr ("vkEnumeratePhysicalDevices failed, "
-                  "unable to init and enumerate GPUs with Vulkan.\n");
+      g_printerr ("No Vulkan devices found.\n");
       return false;
     }
 
   VkPhysicalDevice *physical_devices =
     g_malloc(sizeof(VkPhysicalDevice) * num_devices);
-  result = vkEnumeratePhysicalDevices (instance->instance,
-                                      &num_devices,
-                                       physical_devices);
-  if (result != VK_SUCCESS || num_devices == 0)
-    {
-      g_printerr ("vkEnumeratePhysicalDevices failed, "
-                  "unable to init and enumerate GPUs with Vulkan.\n");
-      return false;
-    }
+  res = vkEnumeratePhysicalDevices (instance->instance,
+                                   &num_devices,
+                                    physical_devices);
+  vk_check_error ("vkEnumeratePhysicalDevices", res);
 
   if (requested_device == VK_NULL_HANDLE)
     {
@@ -83,7 +79,6 @@ _find_physical_device (OpenVRVulkanDevice   *self,
 
       if (self->physical_device == VK_NULL_HANDLE)
         {
-          /* Requested device not found. Using first one */
           g_printerr ("Failed to find requested VkPhysicalDevice, "
                       "falling back to the first one.\n");
           self->physical_device = physical_devices[0];
@@ -150,15 +145,10 @@ bool
 _get_device_extension_count (OpenVRVulkanDevice *self,
                              uint32_t           *count)
 {
-  VkResult result =
+  VkResult res =
     vkEnumerateDeviceExtensionProperties (self->physical_device, NULL,
                                           count, NULL);
-  if (result != VK_SUCCESS)
-  {
-    g_printerr ("vkEnumerateDeviceExtensionProperties failed with error %d\n",
-                result);
-    return false;
-  }
+  vk_check_error ("vkEnumerateDeviceExtensionProperties", res);
   return true;
 }
 
@@ -177,18 +167,11 @@ _init_device_extensions (OpenVRVulkanDevice *self,
 
   memset (extension_props, 0, sizeof (VkExtensionProperties) * num_extensions);
 
-  VkResult result = vkEnumerateDeviceExtensionProperties (self->physical_device,
-                                                          NULL,
-                                                         &num_extensions,
-                                                          extension_props);
-  if (result != VK_SUCCESS)
-    {
-      g_printerr ("vkEnumerateDeviceExtensionProperties"
-                  " failed with error %d\n",
-                  result);
-      return false;
-    }
-
+  VkResult res = vkEnumerateDeviceExtensionProperties (self->physical_device,
+                                                       NULL,
+                                                      &num_extensions,
+                                                       extension_props);
+  vk_check_error ("vkEnumerateDeviceExtensionProperties", res);
   for (uint32_t i = 0; i < g_slist_length (required_extensions); i++)
     {
       bool found = false;
@@ -267,13 +250,9 @@ openvr_vulkan_device_create (OpenVRVulkanDevice   *self,
       .pEnabledFeatures = &physical_device_features
     };
 
-  VkResult result = vkCreateDevice (self->physical_device,
-                                   &device_info, NULL, &self->device);
-  if (result != VK_SUCCESS)
-    {
-      g_printerr ("vkCreateDevice failed with error %d\n", result);
-      return false;
-    }
+  VkResult res = vkCreateDevice (self->physical_device,
+                                &device_info, NULL, &self->device);
+  vk_check_error ("vkCreateDevice", res);
 
   vkGetDeviceQueue (self->device, self->queue_family_index, 0, &self->queue);
   return true;
@@ -319,11 +298,7 @@ openvr_vulkan_device_create_buffer (OpenVRVulkanDevice   *self,
     .usage = usage,
   };
   VkResult res = vkCreateBuffer (self->device, &buffer_info, NULL, buffer);
-  if (res != VK_SUCCESS)
-  {
-    g_printerr ("vkCreateBuffer failed with error %d\n", res);
-    return false;
-  }
+  vk_check_error ("vkCreateBuffer", res);
 
   VkMemoryRequirements requirements = {};
   vkGetBufferMemoryRequirements (self->device, *buffer, &requirements);
@@ -344,18 +319,10 @@ openvr_vulkan_device_create_buffer (OpenVRVulkanDevice   *self,
   }
 
   res = vkAllocateMemory (self->device, &alloc_info, NULL, memory);
-  if (res != VK_SUCCESS)
-  {
-    g_printerr ("vkCreateBuffer failed with error %d\n", res);
-    return false;
-  }
+  vk_check_error ("vkAllocateMemory", res);
 
   res = vkBindBufferMemory (self->device, *buffer, *memory, 0);
-  if (res != VK_SUCCESS)
-  {
-    g_printerr ("vkBindBufferMemory failed with error %d\n", res);
-    return false;
-  }
+  vk_check_error ("vkBindBufferMemory", res);
 
   return true;
 }
@@ -374,11 +341,7 @@ openvr_vulkan_device_map_memory (OpenVRVulkanDevice *self,
 
   void *tmp;
   VkResult res = vkMapMemory (self->device, memory, 0, VK_WHOLE_SIZE, 0, &tmp);
-  if (res != VK_SUCCESS)
-  {
-    g_printerr ("vkMapMemory returned error %d\n", res);
-    return false;
-  }
+  vk_check_error ("vkMapMemory", res);
 
   memcpy (tmp, data, size);
   vkUnmapMemory (self->device, memory);
@@ -388,11 +351,8 @@ openvr_vulkan_device_map_memory (OpenVRVulkanDevice *self,
     .memory = memory,
     .size = VK_WHOLE_SIZE
   };
-  if (vkFlushMappedMemoryRanges (self->device, 1, &memory_range) != VK_SUCCESS)
-  {
-    g_printerr ("vkFlushMappedMemoryRanges returned error %d\n", res);
-    return false;
-  }
+  res = vkFlushMappedMemoryRanges (self->device, 1, &memory_range);
+  vk_check_error ("vkFlushMappedMemoryRanges", res);
 
   return true;
 }
