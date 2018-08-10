@@ -134,10 +134,8 @@ _create_image_view (VkDevice device, VkImage image, VkFormat format)
   };
 
   VkImageView image_view;
-  if (vkCreateImageView (device, &info, NULL, &image_view) != VK_SUCCESS)
-    {
-      g_printerr ("Cound not create texture image view.\n");
-    }
+  VkResult res = vkCreateImageView (device, &info, NULL, &image_view);
+  vk_check_error ("vkCreateImageView", res);
 
   return image_view;
 }
@@ -181,11 +179,8 @@ _create_render_pass (VkDevice device,
     }
   };
 
-  if (vkCreateRenderPass (device, &info, NULL, render_pass) != VK_SUCCESS)
-    {
-      g_printerr ("Failed to create render pass.");
-      return false;
-    }
+  VkResult res = vkCreateRenderPass (device, &info, NULL, render_pass);
+  vk_check_error ("vkCreateRenderPass", res);
 
   return true;
 }
@@ -213,12 +208,9 @@ _create_descriptor_set_layout (VkDevice device,
     }
   };
 
-  if (vkCreateDescriptorSetLayout (device, &info,
-                                   NULL, descriptor_set_layout) != VK_SUCCESS)
-    {
-      g_printerr ("Failed to create descriptor set layout.");
-      return false;
-    }
+  VkResult res = vkCreateDescriptorSetLayout (device, &info,
+                                              NULL, descriptor_set_layout);
+  vk_check_error ("vkCreateDescriptorSetLayout", res);
 
   return true;
 }
@@ -241,12 +233,7 @@ _create_graphics_pipeline (VkDevice device,
 
   VkResult res;
   res = vkCreatePipelineLayout (device, &layout_info, NULL, pipeline_layout);
-
-  if (res != VK_SUCCESS)
-    {
-      g_printerr ("Failed to create pipeline layout.\n");
-      return false;
-    }
+  vk_check_error ("vkCreatePipelineLayout", res);
 
   VkGraphicsPipelineCreateInfo pipeline_info = {
     .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -336,12 +323,7 @@ _create_graphics_pipeline (VkDevice device,
 
   res = vkCreateGraphicsPipelines (device, VK_NULL_HANDLE, 1,
                                   &pipeline_info, NULL, graphics_pipeline);
-
-  if (res != VK_SUCCESS)
-    {
-      g_printerr ("Failed to create graphics pipeline.\n");
-      return false;
-    }
+  vk_check_error ("vkCreateGraphicsPipelines", res);
 
   return true;
 }
@@ -353,7 +335,7 @@ _find_surface_format (VkPhysicalDevice device,
 {
   uint32_t num_formats;
   VkSurfaceFormatKHR *formats = NULL;
-  vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &num_formats, NULL);
+  vkGetPhysicalDeviceSurfaceFormatsKHR (device, surface, &num_formats, NULL);
 
   if (num_formats != 0)
     {
@@ -456,11 +438,7 @@ _init_swapchain (VkDevice device,
   };
 
   VkResult res = vkCreateSwapchainKHR (device, &info, NULL, swapchain);
-  if (res != VK_SUCCESS)
-    {
-      g_printerr ("Unable to create swap chain.\n");
-      return false;
-    }
+  vk_check_error ("vkCreateSwapchainKHR", res);
 
   res = vkGetSwapchainImagesKHR (device, *swapchain, image_count, NULL);
 
@@ -468,12 +446,7 @@ _init_swapchain (VkDevice device,
 
   VkImage *images = g_malloc (sizeof(VkImage) * *image_count);
   res = vkGetSwapchainImagesKHR (device, *swapchain, image_count, images);
-
-  if (res != VK_SUCCESS)
-    {
-      g_printerr ("Unable to get swapchain images.\n");
-      return false;
-    }
+  vk_check_error ("vkGetSwapchainImagesKHR", res);
 
   *image_views = g_malloc (sizeof(VkImage) * *image_count);
   for (int i = 0; i < *image_count; i++)
@@ -516,12 +489,8 @@ _create_shader_module (VkDevice device,
     .pCode = buffer,
   };
 
-  if (vkCreateShaderModule (device, &info, NULL, module) != VK_SUCCESS)
-    {
-      g_printerr ("Failed to create shader module.\n");
-      g_bytes_unref (bytes);
-      return false;
-    }
+  VkResult res = vkCreateShaderModule (device, &info, NULL, module);
+  vk_check_error ("vkCreateShaderModule", res);
 
   g_bytes_unref (bytes);
 
@@ -550,13 +519,9 @@ _init_framebuffers (VkDevice device,
         .layers = 1
       };
 
-      VkResult ret =
-        vkCreateFramebuffer(device, &info, NULL, &((*framebuffers)[i]));
-      if (ret != VK_SUCCESS)
-        {
-          g_printerr ("Failed to create framebuffer.\n");
-          return false;
-        }
+      VkResult res =
+        vkCreateFramebuffer (device, &info, NULL, &((*framebuffers)[i]));
+      vk_check_error ("vkCreateFramebuffer", res);
     }
   return true;
 }
@@ -709,11 +674,7 @@ _init_descriptor_pool (VkDevice device,
   };
 
   VkResult res = vkCreateDescriptorPool (device, &info, NULL, descriptor_pool);
-  if (res != VK_SUCCESS)
-    {
-      g_printerr ("Failed to create descriptor pool.\n");
-      return false;
-    }
+  vk_check_error ("vkCreateDescriptorPool", res);
 
   return true;
 }
@@ -743,12 +704,7 @@ _init_descriptor_sets (VkDevice device,
 
   VkResult res =
     vkAllocateDescriptorSets (device, &alloc_info, &((*descriptor_sets)[0]));
-
-  if (res != VK_SUCCESS)
-    {
-      g_printerr ("Failed to allocate descriptor sets.\n");
-      return false;
-    }
+  vk_check_error ("vkAllocateDescriptorSets", res);
 
   for (size_t i = 0; i < count; i++)
     {
@@ -807,11 +763,8 @@ _init_texture_sampler (VkDevice device, VkSampler *sampler)
     .unnormalizedCoordinates = VK_FALSE
   };
 
-  if (vkCreateSampler(device, &info, NULL, sampler) != VK_SUCCESS)
-    {
-      g_printerr ("Failed to create sampler.\n");
-      return false;
-    }
+  VkResult res = vkCreateSampler (device, &info, NULL, sampler);
+  vk_check_error ("vkCreateSampler", res);
 
   return true;
 }
@@ -839,12 +792,8 @@ _init_draw_cmd_buffers (VkDevice device,
     .commandBufferCount = count
   };
 
-  VkResult ret = vkAllocateCommandBuffers (device, &alloc_info, *cmd_buffers);
-  if (ret != VK_SUCCESS)
-    {
-      g_printerr ("Failed to allocate command buffers.\n");
-      return false;
-    }
+  VkResult res = vkAllocateCommandBuffers (device, &alloc_info, *cmd_buffers);
+  vk_check_error ("vkAllocateCommandBuffers", res);
 
   for (size_t i = 0; i < count; i++)
     {
@@ -855,11 +804,8 @@ _init_draw_cmd_buffers (VkDevice device,
 
       VkCommandBuffer cmd_buffer = (*cmd_buffers)[i];
 
-      if (vkBeginCommandBuffer (cmd_buffer, &begin_info) != VK_SUCCESS)
-        {
-          g_printerr ("Failed to begin command buffer.\n");
-          return false;
-        }
+      res = vkBeginCommandBuffer (cmd_buffer, &begin_info);
+      vk_check_error ("vkBeginCommandBuffer", res);
 
       VkClearValue clear_color = {
         .color = {
@@ -898,11 +844,8 @@ _init_draw_cmd_buffers (VkDevice device,
 
       vkCmdEndRenderPass (cmd_buffer);
 
-      if (vkEndCommandBuffer (cmd_buffer) != VK_SUCCESS)
-        {
-          g_printerr ("Failed to end command buffer.\n");
-          return false;
-        }
+      res = vkEndCommandBuffer (cmd_buffer);
+      vk_check_error ("vkEndCommandBuffer", res);
     }
 
   return true;
@@ -927,31 +870,19 @@ _init_synchronization (VkDevice device,
     .flags = VK_FENCE_CREATE_SIGNALED_BIT
   };
 
-  VkResult ret;
+  VkResult res;
   for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
     {
-      ret = vkCreateSemaphore (device, &semaphore_info,
+      res = vkCreateSemaphore (device, &semaphore_info,
                                NULL, &((*submit_semaphores)[i]));
-      if (ret != VK_SUCCESS)
-        {
-          g_printerr ("Failed to create semaphore.\n");
-          return false;
-        }
+      vk_check_error ("vkCreateSemaphore", res);
 
-      ret = vkCreateSemaphore (device, &semaphore_info,
+      res = vkCreateSemaphore (device, &semaphore_info,
                                NULL, &((*present_semaphores)[i]));
-      if (ret != VK_SUCCESS)
-        {
-          g_printerr ("Failed to create semaphore.\n");
-          return false;
-        }
+      vk_check_error ("vkCreateSemaphore", res);
 
-      ret = vkCreateFence (device, &fence_info, NULL, &((*fences)[i]));
-      if (ret != VK_SUCCESS)
-        {
-          g_printerr ("Failed to create fence.\n");
-          return false;
-        }
+      res = vkCreateFence (device, &fence_info, NULL, &((*fences)[i]));
+      vk_check_error ("vkCreateFence", res);
     }
 
   return true;
@@ -1114,11 +1045,7 @@ openvr_vulkan_renderer_draw (OpenVRVulkanRenderer *self)
   res = vkAcquireNextImageKHR (device, self->swap_chain, UINT64_MAX,
                                submit_semaphore,
                                VK_NULL_HANDLE, &image_index);
-  if (res != VK_SUCCESS)
-    {
-      g_printerr ("Failed to acquire swap chain image.\n");
-      return false;
-    }
+  vk_check_error ("vkAcquireNextImageKHR", res);
 
   _update_uniform_buffer (client->device,
                           self->uniform_buffers_memory[image_index]);
@@ -1154,11 +1081,8 @@ openvr_vulkan_renderer_draw (OpenVRVulkanRenderer *self)
     .pImageIndices = &image_index,
   };
 
-  if (vkQueuePresentKHR (client->device->queue, &present_info) != VK_SUCCESS)
-    {
-      g_printerr ("Failed to present swapchain image.\n");
-      return false;
-    }
+  res = vkQueuePresentKHR (client->device->queue, &present_info);
+  vk_check_error ("vkQueuePresentKHR", res);
 
   self->current_frame = (self->current_frame + 1) % FRAMES_IN_FLIGHT;
 
