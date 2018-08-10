@@ -98,7 +98,9 @@ openvr_vulkan_texture_from_pixels (OpenVRVulkanTexture *self,
              VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
     .flags = 0
   };
-  vkCreateImage (device->device, &image_info, NULL, &self->image);
+  VkResult res;
+  res = vkCreateImage (device->device, &image_info, NULL, &self->image);
+  vk_check_error ("vkEnumerateInstanceLayerProperties", res);
 
   VkMemoryRequirements memory_requirements = {};
   vkGetImageMemoryRequirements (device->device, self->image,
@@ -114,8 +116,11 @@ openvr_vulkan_texture_from_pixels (OpenVRVulkanTexture *self,
     memory_requirements.memoryTypeBits,
     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
     &memory_info.memoryTypeIndex);
-  vkAllocateMemory (device->device, &memory_info, NULL, &self->image_memory);
-  vkBindImageMemory (device->device, self->image, self->image_memory, 0);
+  res = vkAllocateMemory (device->device, &memory_info,
+                          NULL, &self->image_memory);
+  vk_check_error ("vkAllocateMemory", res);
+  res = vkBindImageMemory (device->device, self->image, self->image_memory, 0);
+  vk_check_error ("vkBindImageMemory", res);
 
   VkImageViewCreateInfo image_view_info =
   {
@@ -131,7 +136,9 @@ openvr_vulkan_texture_from_pixels (OpenVRVulkanTexture *self,
       .layerCount = 1,
     }
   };
-  vkCreateImageView (device->device, &image_view_info, NULL, &self->image_view);
+  res = vkCreateImageView (device->device, &image_view_info,
+                           NULL, &self->image_view);
+  vk_check_error ("vkCreateImageView", res);
 
   if (!openvr_vulkan_device_create_buffer (device,
                                            size,
@@ -221,12 +228,9 @@ openvr_vulkan_texture_from_dmabuf (OpenVRVulkanTexture *self,
     //.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     .initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED
   };
-  if (vkCreateImage (device->device, &image_info, NULL, &self->image)
-      != VK_SUCCESS)
-    {
-      g_printerr ("Could not create Vulkan image.\n");
-      return FALSE;
-    }
+  VkResult res;
+  res = vkCreateImage (device->device, &image_info, NULL, &self->image);
+  vk_check_error ("vkCreateImage", res);
 
   VkMemoryRequirements memory_requirements = {};
   vkGetImageMemoryRequirements (device->device, self->image,
@@ -245,14 +249,12 @@ openvr_vulkan_texture_from_dmabuf (OpenVRVulkanTexture *self,
     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
     &memory_info.memoryTypeIndex);
 
-  if (vkAllocateMemory (device->device, &memory_info, NULL, &self->image_memory)
-      != VK_SUCCESS)
-   {
-     g_printerr ("Could allocate image memory.\n");
-     return FALSE;
-   }
+  res = vkAllocateMemory (device->device, &memory_info,
+                          NULL, &self->image_memory);
+  vk_check_error ("vkAllocateMemory", res);
 
-  vkBindImageMemory (device->device, self->image, self->image_memory, 0);
+  res = vkBindImageMemory (device->device, self->image, self->image_memory, 0);
+  vk_check_error ("vkBindImageMemory", res);
 
   VkImageViewCreateInfo image_view_info =
   {
@@ -269,7 +271,9 @@ openvr_vulkan_texture_from_dmabuf (OpenVRVulkanTexture *self,
       .layerCount = 1,
     }
   };
-  vkCreateImageView (device->device, &image_view_info, NULL, &self->image_view);
+  res = vkCreateImageView (device->device, &image_view_info,
+                           NULL, &self->image_view);
+  vk_check_error ("vkCreateImageView", res);
 
   return true;
 }
