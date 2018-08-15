@@ -1,0 +1,9 @@
+{
+   libpixman
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:calloc
+   ...
+   obj:/usr/lib/libpixman-1.so.*
+   ...
+}
