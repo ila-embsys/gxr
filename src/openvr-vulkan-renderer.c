@@ -55,6 +55,7 @@ openvr_vulkan_renderer_init (OpenVRVulkanRenderer *self)
 {
   self->current_frame = 0;
   self->swap_chain = VK_NULL_HANDLE;
+  self->surface = VK_NULL_HANDLE;
 }
 
 OpenVRVulkanRenderer *
@@ -86,6 +87,13 @@ openvr_vulkan_renderer_finalize (GObject *gobject)
           vkDestroyFence (device, self->fences[i], NULL);
         }
 
+      g_free (self->present_semaphores);
+      g_free (self->submit_semaphores);
+      g_free (self->fences);
+
+      g_free (self->draw_cmd_buffers);
+      g_free (self->descriptor_sets);
+
       vkDestroyDescriptorPool (device, self->descriptor_pool, NULL);
 
       vkDestroySampler (device, self->sampler, NULL);
@@ -102,8 +110,13 @@ openvr_vulkan_renderer_finalize (GObject *gobject)
           vkFreeMemory (device, self->uniform_buffers_memory[i], NULL);
         }
 
+      g_free (self->uniform_buffers);
+      g_free (self->uniform_buffers_memory);
+
       for (int i = 0; i < self->swapchain_image_count; i++)
         vkDestroyFramebuffer (device, self->framebuffers[i], NULL);
+
+      g_free (self->framebuffers);
 
       vkDestroyPipeline (device, self->graphics_pipeline, NULL);
       vkDestroyPipelineLayout (device, self->pipeline_layout, NULL);
@@ -115,9 +128,13 @@ openvr_vulkan_renderer_finalize (GObject *gobject)
       for (int i = 0; i < self->swapchain_image_count; i++)
         vkDestroyImageView (device, self->swapchain_image_views[i], NULL);
 
-      vkDestroySwapchainKHR (device, self->swap_chain, NULL);
+      g_free (self->swapchain_image_views);
 
+      vkDestroySwapchainKHR (device, self->swap_chain, NULL);
     }
+
+  if (self->surface != VK_NULL_HANDLE)
+    vkDestroySurfaceKHR (client->instance->instance, self->surface, NULL);
 
   G_OBJECT_CLASS (openvr_vulkan_renderer_parent_class)->finalize (gobject);
 }
@@ -361,9 +378,11 @@ _find_surface_format (VkPhysicalDevice device,
       {
         format->format = formats[i].format;
         format->colorSpace = formats[i].colorSpace;
+        g_free (formats);
         return true;
       }
 
+  g_free (formats);
   g_printerr ("Requested format not supported.\n");
   return false;
 }
@@ -395,9 +414,11 @@ _find_surface_present_mode (VkPhysicalDevice device,
     if (present_modes[i] == VK_PRESENT_MODE_IMMEDIATE_KHR)
       {
         *present_mode = present_modes[i];
+        g_free (present_modes);
         return true;
       }
 
+  g_free (present_modes);
   g_printerr ("Requested present mode not supported.\n");
   return false;
 }
@@ -457,6 +478,9 @@ _init_swapchain (VkDevice device,
   *image_views = g_malloc (sizeof(VkImage) * *image_count);
   for (int i = 0; i < *image_count; i++)
     (*image_views)[i] = _create_image_view (device, images[i], *image_format);
+
+  g_free (images);
+
   return true;
 }
 
@@ -712,6 +736,8 @@ _init_descriptor_sets (VkDevice device,
     vkAllocateDescriptorSets (device, &alloc_info, &((*descriptor_sets)[0]));
   vk_check_error ("vkAllocateDescriptorSets", res);
 
+  g_free (layouts);
+
   for (size_t i = 0; i < count; i++)
     {
       VkWriteDescriptorSet *descriptor_writes = (VkWriteDescriptorSet [])
@@ -901,6 +927,8 @@ openvr_vulkan_renderer_init_rendering (OpenVRVulkanRenderer *self,
 {
   OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (self);
   VkDevice device = client->device->device;
+
+  self->surface = surface;
 
   g_print ("Device surface support: %d\n",
            openvr_vulkan_device_queue_supports_surface (client->device,

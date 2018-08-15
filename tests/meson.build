@@ -48,7 +48,8 @@ test('test_vulkan_texture', test_vulkan_texture)
 
 if glfw_dep.found()
   test_vulkan_renderer = executable(
-    'test_vulkan_renderer', ['test_vulkan_renderer.c', '../res/tests.c'],
+    'test_vulkan_renderer', ['test_vulkan_renderer.c', '../res/tests.c',
+                             '../shaders/shaders.c'],
     dependencies: [vulkan_dep, openvr_glib_deps, glfw_dep],
     link_with: openvr_glib_lib,
     include_directories: openvr_glib_inc,

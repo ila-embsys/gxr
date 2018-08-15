@@ -59,6 +59,8 @@ struct _OpenVRVulkanRenderer
   VkSampler sampler;
 
   size_t current_frame;
+
+  VkSurfaceKHR surface;
 };
 
 struct _OpenVRVulkanRendererClass
