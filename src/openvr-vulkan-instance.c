@@ -127,7 +127,7 @@ validation_cb (VkDebugReportFlagsEXT      flags,
 
 bool
 _init_validation_layers (uint32_t     num_layers,
-                         const char **enabled_layers,
+                         char       **enabled_layers,
                          uint32_t    *out_num_enabled)
 {
   uint32_t num_enabled = 0;
@@ -152,7 +152,7 @@ _init_validation_layers (uint32_t     num_layers,
 
 bool
 _init_instance_extensions (GSList      *required_extensions,
-                           const char **enabled_extensions,
+                           char       **enabled_extensions,
                            uint32_t    *out_num_enabled)
 {
   uint32_t num_enabled = 0;
@@ -229,7 +229,7 @@ openvr_vulkan_instance_create (OpenVRVulkanInstance *self,
                                GSList* required_extensions)
 {
   uint32_t num_enabled_layers = 0;
-  const char **enabled_layers = NULL;
+  char** enabled_layers = NULL;
 
   if (enable_validation)
     {
@@ -237,20 +237,20 @@ openvr_vulkan_instance_create (OpenVRVulkanInstance *self,
       VkResult res = vkEnumerateInstanceLayerProperties (&num_layers, NULL);
       vk_check_error ("vkEnumerateInstanceLayerProperties", res);
 
-      enabled_layers = g_malloc(sizeof(const char*) * num_layers);
+      enabled_layers = g_malloc (sizeof (char*) * num_layers);
       if (num_layers > 0)
         {
           if (!_init_validation_layers (num_layers,
                                         enabled_layers,
                                        &num_enabled_layers))
-              return false;
+            return false;
           required_extensions = g_slist_append (required_extensions,
             (gpointer) VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
         }
     }
 
-  const char** enabled_extensions =
-    g_malloc(sizeof(const char*) * g_slist_length (required_extensions));
+  char** enabled_extensions =
+    g_malloc(sizeof(char*) * g_slist_length (required_extensions));
 
   uint32_t num_enabled_extensions = 0;
 
@@ -259,9 +259,14 @@ openvr_vulkan_instance_create (OpenVRVulkanInstance *self,
                                  &num_enabled_extensions))
     return false;
 
-  g_print ("Requesting instance extensions:\n");
-  for (int i = 0; i < num_enabled_extensions; i++)
-      g_print ("%s\n", enabled_extensions[i]);
+  g_slist_free (required_extensions);
+
+  if (num_enabled_extensions > 0)
+    {
+      g_print ("Requesting instance extensions:\n");
+      for (int i = 0; i < num_enabled_extensions; i++)
+        g_print ("%s\n", enabled_extensions[i]);
+    }
 
   VkResult res =
     vkCreateInstance (&(VkInstanceCreateInfo) {
@@ -274,20 +279,28 @@ openvr_vulkan_instance_create (OpenVRVulkanInstance *self,
         .apiVersion = VK_MAKE_VERSION (1, 0, 0)
       },
       .enabledExtensionCount = num_enabled_extensions,
-      .ppEnabledExtensionNames = enabled_extensions,
+      .ppEnabledExtensionNames = (const char* const*) enabled_extensions,
       .enabledLayerCount = num_enabled_layers,
-      .ppEnabledLayerNames = enabled_layers
+      .ppEnabledLayerNames = (const char* const*) enabled_layers
     },
     NULL,
-    &self->instance);
+   &self->instance);
 
   vk_check_error ("vkCreateInstance", res);
 
   if (enable_validation)
     _init_validation_callback (self);
 
+  for (uint32_t i = 0; i < num_enabled_extensions; i++)
+    g_free (enabled_extensions[i]);
   g_free (enabled_extensions);
-  g_free (enabled_layers);
+
+  if (enable_validation)
+    {
+      for (uint32_t i = 0; i < num_enabled_layers; i++)
+        g_free (enabled_layers[i]);
+      g_free (enabled_layers);
+    }
 
   return true;
 }
