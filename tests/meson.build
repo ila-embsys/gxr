@@ -22,3 +22,11 @@ test_vulkan_instance = executable(
   include_directories: openvr_glib_inc,
   install: false)
 test('test_vulkan_instance', test_vulkan_instance)
+
+test_vulkan_device = executable(
+  'test_vulkan_device', ['test_vulkan_device.c'],
+  dependencies: [vulkan_dep, openvr_glib_deps],
+  link_with: openvr_glib_lib,
+  include_directories: openvr_glib_inc,
+  install: false)
+test('test_vulkan_device', test_vulkan_device)
