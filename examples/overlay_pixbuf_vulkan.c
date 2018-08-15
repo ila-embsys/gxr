@@ -196,6 +196,8 @@ test_cat_overlay ()
   return 0;
 }
 
-int main (int argc, char *argv[]) {
+int
+main (int argc, char *argv[])
+{
   return test_cat_overlay ();
 }

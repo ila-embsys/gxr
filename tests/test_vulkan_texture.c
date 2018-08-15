@@ -57,7 +57,7 @@ _test_pixbuf_texture ()
 }
 
 int
-main(int argc, char *argv[])
+main (int argc, char *argv[])
 {
   _test_pixbuf ();
   _test_pixbuf_texture ();
