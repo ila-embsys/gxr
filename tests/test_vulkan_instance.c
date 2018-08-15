@@ -41,7 +41,7 @@ _test_extensions ()
                                            instance_extensions));
   g_assert_nonnull (instance);
 
-  //g_slist_free (instance_extensions);
+  g_slist_free (instance_extensions);
   g_object_unref (instance);
 }
 

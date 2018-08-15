@@ -259,7 +259,11 @@ openvr_vulkan_instance_create (OpenVRVulkanInstance *self,
                                  &num_enabled_extensions))
     return false;
 
-  g_slist_free (required_extensions);
+  /* Don't leak validation entry */
+  if (enable_validation)
+    required_extensions =
+      g_slist_remove (required_extensions,
+                      (gpointer) VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 
   if (num_enabled_extensions > 0)
     {
