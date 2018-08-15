@@ -156,14 +156,14 @@ bool
 _init_device_extensions (OpenVRVulkanDevice *self,
                          GSList             *required_extensions,
                          uint32_t            num_extensions,
-                         const char        **extension_names,
+                         char              **extension_names,
                          uint32_t           *out_num_enabled)
 {
   uint32_t num_enabled = 0;
 
   /* Enable required device extensions */
   VkExtensionProperties *extension_props =
-    g_malloc(sizeof(VkExtensionProperties) * num_extensions);
+    g_malloc (sizeof(VkExtensionProperties) * num_extensions);
 
   memset (extension_props, 0, sizeof (VkExtensionProperties) * num_extensions);
 
@@ -189,12 +189,15 @@ _init_device_extensions (OpenVRVulkanDevice *self,
       if (found)
         {
           GSList* extension_name = g_slist_nth (required_extensions, i);
-          extension_names[num_enabled] = (gchar*) extension_name->data;
+          extension_names[num_enabled] =
+            g_strdup ((char*) extension_name->data);
           num_enabled++;
         }
     }
 
   *out_num_enabled = num_enabled;
+
+  g_free (extension_props);
 
   return true;
 }
@@ -212,21 +215,25 @@ openvr_vulkan_device_create (OpenVRVulkanDevice   *self,
     return false;
 
   uint32_t num_extensions = 0;
-  if (!_get_device_extension_count(self, &num_extensions))
+  if (!_get_device_extension_count (self, &num_extensions))
     return false;
 
-  const char **extension_names =
-    g_malloc(sizeof(const char *) * num_extensions);
+  char **extension_names = g_malloc (sizeof (char*) * num_extensions);
   uint32_t num_enabled = 0;
 
   if (num_extensions > 0)
-    if (!_init_device_extensions (self, extensions, num_extensions,
-                                  extension_names, &num_enabled))
-      return false;
+    {
+      if (!_init_device_extensions (self, extensions, num_extensions,
+                                    extension_names, &num_enabled))
+        return false;
+    }
 
-  g_print ("Requesting device extensions:\n");
-  for (int i = 0; i < num_enabled; i++)
-      g_print ("%s\n", extension_names[i]);
+  if (num_enabled > 0)
+    {
+      g_print ("Requesting device extensions:\n");
+      for (int i = 0; i < num_enabled; i++)
+          g_print ("%s\n", extension_names[i]);
+    }
 
   float queue_priority = 1.0f;
 
@@ -246,7 +253,7 @@ openvr_vulkan_device_create (OpenVRVulkanDevice   *self,
           .pQueuePriorities = &queue_priority
         },
       .enabledExtensionCount = num_enabled,
-      .ppEnabledExtensionNames = extension_names,
+      .ppEnabledExtensionNames = (const char* const*) extension_names,
       .pEnabledFeatures = &physical_device_features
     };
 
@@ -255,6 +262,14 @@ openvr_vulkan_device_create (OpenVRVulkanDevice   *self,
   vk_check_error ("vkCreateDevice", res);
 
   vkGetDeviceQueue (self->device, self->queue_family_index, 0, &self->queue);
+
+  if (num_enabled > 0)
+    {
+      for (uint32_t i = 0; i < num_enabled; i++)
+        g_free (extension_names[i]);
+    }
+  g_free (extension_names);
+
   return true;
 }
 

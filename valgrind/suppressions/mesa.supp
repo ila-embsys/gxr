@@ -18,3 +18,11 @@
    obj:/usr/lib/libvulkan.so.*
    fun:vkCreateInstance
 }
+{
+   vkEnumeratePhysicalDevices
+   Memcheck:Cond
+   ...
+   obj:/usr/lib/libvulkan.so.*
+   ...
+   fun:vkEnumeratePhysicalDevices
+}
