@@ -100,7 +100,7 @@ openvr_vulkan_texture_from_pixels (OpenVRVulkanTexture *self,
   };
   VkResult res;
   res = vkCreateImage (device->device, &image_info, NULL, &self->image);
-  vk_check_error ("vkEnumerateInstanceLayerProperties", res);
+  vk_check_error ("vkCreateImage", res);
 
   VkMemoryRequirements memory_requirements = {};
   vkGetImageMemoryRequirements (device->device, self->image,

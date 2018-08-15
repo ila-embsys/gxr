@@ -37,3 +37,11 @@ test_vulkan_client = executable(
   include_directories: openvr_glib_inc,
   install: false)
 test('test_vulkan_client', test_vulkan_client)
+
+test_vulkan_texture = executable(
+  'test_vulkan_texture', ['test_vulkan_texture.c', '../res/tests.c'],
+  dependencies: [vulkan_dep, openvr_glib_deps],
+  link_with: openvr_glib_lib,
+  include_directories: openvr_glib_inc,
+  install: false)
+test('test_vulkan_texture', test_vulkan_texture)
