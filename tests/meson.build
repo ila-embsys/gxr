@@ -14,7 +14,6 @@ test_overlay_pixbuf = executable(
   install: false)
 test('test_overlay_pixbuf', test_overlay_pixbuf)
 
-
 test_vulkan_instance = executable(
   'test_vulkan_instance', ['test_vulkan_instance.c'],
   dependencies: [vulkan_dep, openvr_glib_deps],
@@ -30,3 +29,11 @@ test_vulkan_device = executable(
   include_directories: openvr_glib_inc,
   install: false)
 test('test_vulkan_device', test_vulkan_device)
+
+test_vulkan_client = executable(
+  'test_vulkan_client', ['test_vulkan_client.c'],
+  dependencies: [vulkan_dep, openvr_glib_deps],
+  link_with: openvr_glib_lib,
+  include_directories: openvr_glib_inc,
+  install: false)
+test('test_vulkan_client', test_vulkan_client)
