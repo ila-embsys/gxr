@@ -54,6 +54,7 @@ static void
 openvr_vulkan_renderer_init (OpenVRVulkanRenderer *self)
 {
   self->current_frame = 0;
+  self->swap_chain = VK_NULL_HANDLE;
 }
 
 OpenVRVulkanRenderer *
@@ -75,43 +76,48 @@ openvr_vulkan_renderer_finalize (GObject *gobject)
   if (device != VK_NULL_HANDLE)
     vkDeviceWaitIdle (device);
 
-  for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+  /* Check if rendering was initialized */
+  if (self->swap_chain != VK_NULL_HANDLE)
     {
-      vkDestroySemaphore (device, self->present_semaphores[i], NULL);
-      vkDestroySemaphore (device, self->submit_semaphores[i], NULL);
-      vkDestroyFence (device, self->fences[i], NULL);
+      for (size_t i = 0; i < FRAMES_IN_FLIGHT; i++)
+        {
+          vkDestroySemaphore (device, self->present_semaphores[i], NULL);
+          vkDestroySemaphore (device, self->submit_semaphores[i], NULL);
+          vkDestroyFence (device, self->fences[i], NULL);
+        }
+
+      vkDestroyDescriptorPool (device, self->descriptor_pool, NULL);
+
+      vkDestroySampler (device, self->sampler, NULL);
+
+      vkDestroyBuffer (device, self->vertex_buffer, NULL);
+      vkFreeMemory (device, self->vertex_buffer_memory, NULL);
+
+      vkDestroyBuffer (device, self->index_buffer, NULL);
+      vkFreeMemory (device, self->index_buffer_memory, NULL);
+
+      for (size_t i = 0; i < self->swapchain_image_count; i++)
+        {
+          vkDestroyBuffer (device, self->uniform_buffers[i], NULL);
+          vkFreeMemory (device, self->uniform_buffers_memory[i], NULL);
+        }
+
+      for (int i = 0; i < self->swapchain_image_count; i++)
+        vkDestroyFramebuffer (device, self->framebuffers[i], NULL);
+
+      vkDestroyPipeline (device, self->graphics_pipeline, NULL);
+      vkDestroyPipelineLayout (device, self->pipeline_layout, NULL);
+
+      vkDestroyDescriptorSetLayout (device, self->descriptor_set_layout, NULL);
+
+      vkDestroyRenderPass (device, self->render_pass, NULL);
+
+      for (int i = 0; i < self->swapchain_image_count; i++)
+        vkDestroyImageView (device, self->swapchain_image_views[i], NULL);
+
+      vkDestroySwapchainKHR (device, self->swap_chain, NULL);
+
     }
-
-  vkDestroyDescriptorPool (device, self->descriptor_pool, NULL);
-
-  vkDestroySampler (device, self->sampler, NULL);
-
-  vkDestroyBuffer (device, self->vertex_buffer, NULL);
-  vkFreeMemory (device, self->vertex_buffer_memory, NULL);
-
-  vkDestroyBuffer (device, self->index_buffer, NULL);
-  vkFreeMemory (device, self->index_buffer_memory, NULL);
-
-  for (size_t i = 0; i < self->swapchain_image_count; i++)
-    {
-      vkDestroyBuffer (device, self->uniform_buffers[i], NULL);
-      vkFreeMemory (device, self->uniform_buffers_memory[i], NULL);
-    }
-
-  for (int i = 0; i < self->swapchain_image_count; i++)
-    vkDestroyFramebuffer (device, self->framebuffers[i], NULL);
-
-  vkDestroyPipeline (device, self->graphics_pipeline, NULL);
-  vkDestroyPipelineLayout (device, self->pipeline_layout, NULL);
-
-  vkDestroyDescriptorSetLayout (device, self->descriptor_set_layout, NULL);
-
-  vkDestroyRenderPass (device, self->render_pass, NULL);
-
-  for (int i = 0; i < self->swapchain_image_count; i++)
-    vkDestroyImageView (device, self->swapchain_image_views[i], NULL);
-
-  vkDestroySwapchainKHR (device, self->swap_chain, NULL);
 
   G_OBJECT_CLASS (openvr_vulkan_renderer_parent_class)->finalize (gobject);
 }
