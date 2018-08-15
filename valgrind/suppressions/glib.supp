@@ -107,3 +107,18 @@
    fun:g_source_attach
    fun:g_timeout_add_full
 }
+{
+   g_resources_lookup_data
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   obj:/usr/lib/libglib-2.0.so.*
+   fun:g_rec_mutex_lock
+   fun:g_variant_type_info_get
+   fun:g_variant_serialised_get_child
+   fun:g_variant_get_child_value
+   obj:/usr/lib/libgio-2.0.so.*
+   obj:/usr/lib/libgio-2.0.so.*
+   fun:g_resource_lookup_data
+   fun:g_resources_lookup_data
+}

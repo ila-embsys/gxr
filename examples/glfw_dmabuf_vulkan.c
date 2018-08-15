@@ -28,14 +28,13 @@ typedef struct Example
   VkSurfaceKHR surface;
   OpenVRVulkanRenderer *renderer;
   bool should_quit;
+  amdgpu_bo_handle amd_bo;
+  amdgpu_device_handle amd_dev;
 } Example;
 
 void*
-allocate_dmabuf_amd (int size, int *fd)
+allocate_dmabuf_amd (Example *self, int size, int *fd)
 {
-  amdgpu_device_handle amd_dev;
-  amdgpu_bo_handle amd_bo;
-
   /* use render node to avoid needing to authenticate: */
   int dev_fd = open ("/dev/dri/renderD128", 02, 0);
 
@@ -44,7 +43,7 @@ allocate_dmabuf_amd (int size, int *fd)
   int ret = amdgpu_device_initialize (dev_fd,
                                      &major_version,
                                      &minor_version,
-                                     &amd_dev);
+                                     &self->amd_dev);
   if (ret < 0)
     {
       g_printerr ("Could not create amdgpu device: %s\n", strerror (-ret));
@@ -60,7 +59,7 @@ allocate_dmabuf_amd (int size, int *fd)
     .preferred_heap = AMDGPU_GEM_DOMAIN_GTT,
   };
 
-  ret = amdgpu_bo_alloc (amd_dev, &alloc_buffer, &amd_bo);
+  ret = amdgpu_bo_alloc (self->amd_dev, &alloc_buffer, &self->amd_bo);
   if (ret < 0)
     {
       g_printerr ("amdgpu_bo_alloc failed: %s\n", strerror(-ret));
@@ -68,7 +67,7 @@ allocate_dmabuf_amd (int size, int *fd)
     }
 
   uint32_t shared_handle;
-  ret = amdgpu_bo_export (amd_bo,
+  ret = amdgpu_bo_export (self->amd_bo,
                           amdgpu_bo_handle_type_dma_buf_fd,
                          &shared_handle);
 
@@ -80,7 +79,7 @@ allocate_dmabuf_amd (int size, int *fd)
 
   *fd = (int) shared_handle;
   void *cpu_buffer;
-  ret = amdgpu_bo_cpu_map (amd_bo, &cpu_buffer);
+  ret = amdgpu_bo_cpu_map (self->amd_bo, &cpu_buffer);
 
   if (ret < 0)
     {
@@ -151,7 +150,7 @@ main (int argc, char *argv[]) {
   int fd;
   int stride = ALIGN ((int) width, 32) * 4;
   uint64_t size = (uint64_t) stride * height;
-  char* map = (char*) allocate_dmabuf_amd (size, &fd);
+  char* map = (char*) allocate_dmabuf_amd (&example, size, &fd);
 
   dma_buf_fill (map, width, height, stride);
 
@@ -169,7 +168,7 @@ main (int argc, char *argv[]) {
   for (int i = 0; i < num_glfw_extensions; i++)
     {
       instance_ext_list = g_slist_append (instance_ext_list,
-                                          g_strdup (glfw_extensions[i]));
+                                          (char*) glfw_extensions[i]);
     }
 
   const gchar *device_extensions[] =
@@ -183,7 +182,7 @@ main (int argc, char *argv[]) {
   for (int i = 0; i < G_N_ELEMENTS (device_extensions); i++)
     {
       device_ext_list = g_slist_append (device_ext_list,
-                                        g_strdup (device_extensions[i]));
+                                        (char*) device_extensions[i]);
     }
 
   OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (example.renderer);
@@ -232,6 +231,20 @@ main (int argc, char *argv[]) {
 
   glfwDestroyWindow (example.window);
   glfwTerminate ();
+
+  int ret = amdgpu_bo_free(example.amd_bo);
+  if (ret < 0)
+    {
+      g_printerr ("Could not free amdgpu buffer: %s\n", strerror (-ret));
+      return -1;
+    }
+
+  ret = amdgpu_device_deinitialize (example.amd_dev);
+  if (ret < 0)
+    {
+      g_printerr ("Could not free amdgpu device: %s\n", strerror (-ret));
+      return -1;
+    }
 
   return 0;
 }
