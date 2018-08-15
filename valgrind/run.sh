@@ -28,6 +28,7 @@ generate_suppressions()
     --suppressions=$SUPP_DIR/mesa.supp \
     --suppressions=$SUPP_DIR/glib.supp \
     --suppressions=$SUPP_DIR/misc.supp \
+    --suppressions=$SUPP_DIR/openvr.supp \
     --log-file=memcheck.log \
     --gen-suppressions=all \
     $1
@@ -57,6 +58,7 @@ show_memleaks()
     --suppressions=$SUPP_DIR/mesa.supp \
     --suppressions=$SUPP_DIR/glib.supp \
     --suppressions=$SUPP_DIR/misc.supp \
+    --suppressions=$SUPP_DIR/openvr.supp \
     $1
 }
 

@@ -30,8 +30,6 @@ _system_init_fn_table (OpenVRSystem *self)
 static void
 openvr_system_finalize (GObject *gobject)
 {
-  // OpenVRSystem *self = OPENVR_VULKAN_UPLOADER (gobject);
-
   VR_ShutdownInternal();
 
   G_OBJECT_CLASS (openvr_system_parent_class)->finalize (gobject);
@@ -55,7 +53,7 @@ static gboolean
 _vr_init (OpenVRSystem * self, EVRApplicationType app_type)
 {
   EVRInitError error;
-  VR_InitInternal(&error, app_type);
+  VR_InitInternal (&error, app_type);
 
   if (error != EVRInitError_VRInitError_None) {
     g_printerr ("Could not init OpenVR runtime: %s: %s\n",

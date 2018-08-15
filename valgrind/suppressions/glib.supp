@@ -122,3 +122,15 @@
    fun:g_resource_lookup_data
    fun:g_resources_lookup_data
 }
+{
+   libgobject _dl_init
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   ...
+   obj:/usr/lib/libgobject-2.0.so.*
+   obj:/usr/lib/libgobject-2.0.so.*
+   fun:call_init.part.0
+   fun:_dl_init
+   obj:/usr/lib/ld-*.so
+}
