@@ -14,7 +14,6 @@ generate_suppressions()
     --tool=memcheck \
     --leak-check=full \
     --show-leak-kinds=all \
-    --leak-resolution=high \
     --num-callers=20 \
     --show-reachable=yes \
     --error-limit=no \

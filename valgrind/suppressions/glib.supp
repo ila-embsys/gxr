@@ -80,3 +80,30 @@
    ...
    fun:gdk_pixbuf_loader_write
 }
+{
+   g_main_loop_run malloc
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   ...
+   fun:g_main_loop_run
+}
+{
+   g_main_loop_new
+   Memcheck:Leak
+   ...
+   fun:g_main_loop_new
+}
+{
+   g_timeout_add_full
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:g_malloc
+   fun:g_memdup
+   obj:/usr/lib/libglib-2.0.so.*
+   obj:/usr/lib/libglib-2.0.so.*
+   obj:/usr/lib/libglib-2.0.so.*
+   fun:g_source_attach
+   fun:g_timeout_add_full
+}
