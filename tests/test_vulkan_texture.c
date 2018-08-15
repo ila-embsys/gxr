@@ -15,15 +15,11 @@ load_gdk_pixbuf ()
   GdkPixbuf * pixbuf_rgb =
     gdk_pixbuf_new_from_resource ("/res/cat.jpg", &error);
 
-  if (error != NULL) {
-    fprintf (stderr, "Unable to read file: %s\n", error->message);
-    g_error_free (error);
-    return NULL;
-  } else {
-    GdkPixbuf *pixbuf = gdk_pixbuf_add_alpha (pixbuf_rgb, false, 0, 0, 0);
-    g_object_unref (pixbuf_rgb);
-    return pixbuf;
-  }
+  g_assert_null (error);
+
+  GdkPixbuf *pixbuf = gdk_pixbuf_add_alpha (pixbuf_rgb, false, 0, 0, 0);
+  g_object_unref (pixbuf_rgb);
+  return pixbuf;
 }
 
 void

@@ -67,3 +67,16 @@
    ...
    fun:g_print
 }
+{
+   gdk_pixbuf_new_from_resource
+   Memcheck:Leak
+   ...
+   fun:gdk_pixbuf_new_from_resource
+}
+{
+   gdk_pixbuf_loader_write
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:gdk_pixbuf_loader_write
+}
