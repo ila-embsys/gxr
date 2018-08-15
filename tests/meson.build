@@ -13,3 +13,12 @@ test_overlay_pixbuf = executable(
   include_directories: openvr_glib_inc,
   install: false)
 test('test_overlay_pixbuf', test_overlay_pixbuf)
+
+
+test_vulkan_instance = executable(
+  'test_vulkan_instance', ['test_vulkan_instance.c'],
+  dependencies: [vulkan_dep, openvr_glib_deps],
+  link_with: openvr_glib_lib,
+  include_directories: openvr_glib_inc,
+  install: false)
+test('test_vulkan_instance', test_vulkan_instance)
