@@ -71,6 +71,13 @@ overlay_gtk = executable(
   include_directories: openvr_glib_inc,
   install: false)
 
+overlay_gtk_vulkan = executable(
+  'overlay_gtk_vulkan', ['overlay_gtk_vulkan.c'],
+  dependencies: [cogl_1_dep, gtk3_dep, vulkan_dep],
+  link_with: openvr_glib_lib,
+  include_directories: openvr_glib_inc,
+  install: false)
+
 if clutter_dep.found()
   overlay_clutter = executable(
     'overlay_clutter', ['overlay_clutter.c'],
