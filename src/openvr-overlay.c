@@ -8,9 +8,6 @@
 #include <time.h>
 #include <glib/gprintf.h>
 
-#define GL_GLEXT_PROTOTYPES 1
-#include <GL/glcorearb.h>
-
 #include <gdk/gdk.h>
 
 #include "openvr-context.h"

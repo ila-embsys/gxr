@@ -6,7 +6,6 @@
  */
 
 #include <time.h>
-#include <GL/gl.h>
 #include <glib.h>
 #include <glib/gprintf.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
