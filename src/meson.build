@@ -13,7 +13,8 @@ openvr_glib_sources = [
   'openvr-vulkan-renderer.c',
   'openvr-vulkan-client.c',
   'openvr-time.c',
-  'openvr-math.c'
+  'openvr-math.c',
+  'openvr-context.c'
 ]
 
 openvr_glib_headers = [
@@ -30,7 +31,8 @@ openvr_glib_headers = [
   'openvr-vulkan-renderer.h',
   'openvr-vulkan-client.h',
   'openvr-time.h',
-  'openvr-math.h'
+  'openvr-math.h',
+  'openvr-context.h'
 ]
 
 version_split = meson.project_version().split('.')

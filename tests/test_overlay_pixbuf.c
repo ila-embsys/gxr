@@ -34,7 +34,7 @@ load_gdk_pixbuf ()
       g_object_unref (pixbuf_rgb);
       return pixbuf;
     }
-  }
+}
 
 void
 test_overlay_opengl_pixbuf ()
