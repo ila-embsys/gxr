@@ -13,34 +13,36 @@
 
 #include "openvr-system.h"
 #include "openvr-overlay.h"
+#include "openvr-vulkan-uploader.h"
 
-
-gboolean
-init_offscreen_gl ()
+GdkPixbuf *
+load_gdk_pixbuf ()
 {
-  CoglError *error = NULL;
-  CoglContext *ctx = cogl_context_new (NULL, &error);
-  if (!ctx)
+  GError *error = NULL;
+  GdkPixbuf * pixbuf_rgb =
+    gdk_pixbuf_new_from_resource ("/res/cat.jpg", &error);
+
+  if (error != NULL)
     {
-      fprintf (stderr, "Failed to create context: %s\n", error->message);
-      return FALSE;
+      g_printerr ("Unable to read file: %s\n", error->message);
+      g_error_free (error);
+      return NULL;
     }
-
-  // TODO: implement CoglOffscreen frameuffer
-  CoglOnscreen *onscreen = cogl_onscreen_new (ctx, 800, 600);
-
-  return ctx != NULL && onscreen != NULL;
-}
+  else
+    {
+      GdkPixbuf *pixbuf = gdk_pixbuf_add_alpha (pixbuf_rgb, false, 0, 0, 0);
+      g_object_unref (pixbuf_rgb);
+      return pixbuf;
+    }
+  }
 
 void
 test_overlay_opengl_pixbuf ()
 {
   GError *error = NULL;
-  GdkPixbuf * pixbuf = gdk_pixbuf_new_from_resource ("/res/cat.jpg", &error);
+  GdkPixbuf * pixbuf = load_gdk_pixbuf ();
   g_assert (error == NULL);
   g_assert_nonnull (pixbuf);
-
-  g_assert (init_offscreen_gl ());
 
   OpenVRSystem * system = openvr_system_new ();
   g_assert_nonnull (system);
@@ -49,6 +51,20 @@ test_overlay_opengl_pixbuf ()
   g_assert (openvr_system_is_available (system));
   g_assert (openvr_system_is_installed ());
 
+  OpenVRCompositor *compositor = openvr_compositor_new ();
+  g_assert_nonnull (compositor);
+
+  OpenVRVulkanUploader *uploader = openvr_vulkan_uploader_new ();
+  g_assert_nonnull (uploader);
+
+  g_assert (openvr_vulkan_uploader_init_vulkan (uploader, true,
+                                                system, compositor));
+
+  OpenVRVulkanTexture *texture = openvr_vulkan_texture_new ();
+  g_assert_nonnull (texture);
+
+  openvr_vulkan_client_load_pixbuf (OPENVR_VULKAN_CLIENT (uploader),
+                                    texture, pixbuf);
 
   OpenVROverlay *overlay = openvr_overlay_new ();
   g_assert_nonnull (overlay);
@@ -62,7 +78,9 @@ test_overlay_opengl_pixbuf ()
                                   (float) gdk_pixbuf_get_width (pixbuf),
                                   (float) gdk_pixbuf_get_height (pixbuf));
 
-  openvr_overlay_upload_gdk_pixbuf (overlay, pixbuf);
+  openvr_vulkan_uploader_submit_frame (uploader, overlay, texture);
+
+  g_object_unref (pixbuf);
 }
 
 int
