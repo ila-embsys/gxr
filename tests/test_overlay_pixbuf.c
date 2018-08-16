@@ -32,8 +32,8 @@ init_offscreen_gl ()
   return ctx != NULL && onscreen != NULL;
 }
 
-int
-test_pixbuf_overlay ()
+void
+test_overlay_opengl_pixbuf ()
 {
   GError *error = NULL;
   GdkPixbuf * pixbuf = gdk_pixbuf_new_from_resource ("/res/cat.jpg", &error);
@@ -63,10 +63,12 @@ test_pixbuf_overlay ()
                                   (float) gdk_pixbuf_get_height (pixbuf));
 
   openvr_overlay_upload_gdk_pixbuf (overlay, pixbuf);
-
-  return 0;
 }
 
-int main (int argc, char *argv[]) {
-  return test_pixbuf_overlay ();
+int
+main (int argc, char *argv[])
+{
+  test_overlay_opengl_pixbuf ();
+
+  return 0;
 }
