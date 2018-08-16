@@ -36,6 +36,7 @@ static void
 openvr_context_init (OpenVRContext *self)
 {
   self->system = NULL;
+  self->overlay = NULL;
 }
 
 static void
@@ -97,6 +98,7 @@ _vr_init (OpenVRContext *self, EVRApplicationType app_type)
     return FALSE;
   }
   INIT_FN_TABLE (self->system, System);
+  INIT_FN_TABLE (self->overlay, Overlay);
 
   return TRUE;
 }
@@ -110,7 +112,7 @@ openvr_context_init_overlay (OpenVRContext * self)
 gboolean
 openvr_context_is_valid (OpenVRContext * self)
 {
-  return self->system != NULL;
+  return self->system != NULL && self->overlay != NULL;
 }
 
 gboolean

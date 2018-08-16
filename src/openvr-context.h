@@ -21,6 +21,7 @@ struct _OpenVRContext
   GObject parent;
 
   struct VR_IVRSystem_FnTable *system;
+  struct VR_IVROverlay_FnTable *overlay;
 };
 
 OpenVRContext *openvr_context_get_instance (void);

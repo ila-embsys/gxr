@@ -32,16 +32,14 @@ _damage_cb (GtkWidget *widget, GdkEventExpose *event, OpenVROverlay *overlay)
   if (offscreen_pixbuf != NULL)
   {
     /* skip rendering if the overlay isn't available or visible */
-    gboolean is_unavailable = !openvr_overlay_is_valid (overlay) ||
-                              !openvr_overlay_is_available (overlay);
     gboolean is_invisible = !openvr_overlay_is_visible (overlay) &&
                             !openvr_overlay_thumbnail_is_visible (overlay);
 
-    if (is_unavailable || is_invisible)
-    {
-      g_object_unref (offscreen_pixbuf);
-      return TRUE;
-    }
+    if (!openvr_overlay_is_valid (overlay) || is_invisible)
+      {
+        g_object_unref (offscreen_pixbuf);
+        return TRUE;
+      }
 
     GdkPixbuf *pixbuf = gdk_pixbuf_add_alpha (offscreen_pixbuf, false, 0, 0, 0);
     g_object_unref (offscreen_pixbuf);
@@ -235,8 +233,7 @@ main (int argc, char *argv[])
   OpenVROverlay *overlay = openvr_overlay_new ();
   openvr_overlay_create_for_dashboard (overlay, "openvr.example.gtk", "GTK+");
 
-  if (!openvr_overlay_is_valid (overlay) ||
-      !openvr_overlay_is_available (overlay))
+  if (!openvr_overlay_is_valid (overlay))
   {
     fprintf (stderr, "Overlay unavailable.\n");
     return -1;

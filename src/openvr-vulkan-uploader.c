@@ -166,5 +166,6 @@ openvr_vulkan_uploader_submit_frame (OpenVRVulkanUploader *self,
       .eColorSpace = EColorSpace_ColorSpace_Auto
     };
 
-  overlay->functions->SetOverlayTexture (overlay->overlay_handle, &vr_texture);
+  OpenVRContext *context = openvr_context_get_instance ();
+  context->overlay->SetOverlayTexture (overlay->overlay_handle, &vr_texture);
 }

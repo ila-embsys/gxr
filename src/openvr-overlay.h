@@ -54,8 +54,6 @@ struct _OpenVROverlay
   // describes where the overlay is displayed in VR
   // needs to be updated by the application when the overlay is moved
   graphene_matrix_t transform;
-
-  struct VR_IVROverlay_FnTable *functions;
 };
 
 OpenVROverlay *openvr_overlay_new (void);
@@ -77,17 +75,25 @@ openvr_overlay_create_for_dashboard (OpenVROverlay *self,
                                      gchar* key,
                                      gchar* name);
 
-void openvr_overlay_poll_event (OpenVROverlay *self);
+void
+openvr_overlay_poll_event (OpenVROverlay *self);
 
-void openvr_overlay_set_mouse_scale (OpenVROverlay *self,
-                                     float width,
-                                     float height);
+void
+openvr_overlay_set_mouse_scale (OpenVROverlay *self,
+                                float width,
+                                float height);
 
-gboolean openvr_overlay_is_valid (OpenVROverlay *self);
-gboolean openvr_overlay_is_visible (OpenVROverlay *self);
-gboolean openvr_overlay_thumbnail_is_visible (OpenVROverlay *self);
+gboolean
+openvr_overlay_is_valid (OpenVROverlay *self);
 
-gboolean openvr_overlay_is_available (OpenVROverlay * self);
+gboolean
+openvr_overlay_is_visible (OpenVROverlay *self);
+
+gboolean
+openvr_overlay_thumbnail_is_visible (OpenVROverlay *self);
+
+gboolean
+openvr_overlay_show (OpenVROverlay *self);
 
 G_END_DECLS
 

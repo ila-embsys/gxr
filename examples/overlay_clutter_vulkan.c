@@ -116,13 +116,11 @@ repaint_cb (gpointer user_data)
   Data *data = (Data*) user_data;
 
   /* skip rendering if the overlay isn't available or visible */
-  gboolean is_unavailable = !openvr_overlay_is_valid (data->overlay) ||
-                            !openvr_overlay_is_available (data->overlay);
   gboolean is_invisible = !openvr_overlay_is_visible (data->overlay) &&
                           !openvr_overlay_thumbnail_is_visible (data->overlay);
 
-  if (is_unavailable || is_invisible)
-    return TRUE;
+  if (!openvr_overlay_is_valid (data->overlay) || is_invisible)
+    return FALSE;
 
   uint32_t width = 500;
   uint32_t height = 500;
@@ -197,8 +195,7 @@ test_cat_overlay (int argc, char *argv[])
   OpenVROverlay *overlay = openvr_overlay_new ();
   openvr_overlay_create_for_dashboard (overlay, "example.clutter", "Clutter");
 
-  if (!openvr_overlay_is_valid (overlay) ||
-      !openvr_overlay_is_available (overlay))
+  if (!openvr_overlay_is_valid (overlay))
     {
       fprintf (stderr, "Overlay unavailable.\n");
       return -1;

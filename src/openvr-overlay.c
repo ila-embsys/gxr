@@ -13,7 +13,7 @@
 
 #include <gdk/gdk.h>
 
-#include "openvr-system.h"
+#include "openvr-context.h"
 #include "openvr-overlay.h"
 #include <openvr_capi.h>
 #include "openvr_capi_global.h"
@@ -79,18 +79,11 @@ openvr_overlay_class_init (OpenVROverlayClass *klass)
 
 }
 
-gboolean _overlay_init_fn_table (OpenVROverlay *self)
-{
-  INIT_FN_TABLE (self->functions, Overlay);
-}
-
 static void
 openvr_overlay_init (OpenVROverlay *self)
 {
   self->overlay_handle = 0;
   self->thumbnail_handle = 0;
-
-  _overlay_init_fn_table (self);
 }
 
 OpenVROverlay *
@@ -106,20 +99,22 @@ openvr_overlay_create_width (OpenVROverlay *self,
                        float width,
                        ETrackingUniverseOrigin openvr_tracking_universe)
 {
+  OpenVRContext *context = openvr_context_get_instance ();
+  struct VR_IVROverlay_FnTable *f = context->overlay;
+
   self->openvr_tracking_universe = openvr_tracking_universe;
-  EVROverlayError err = self->functions->CreateOverlay(
-    key, name, &self->overlay_handle);
+  EVROverlayError err = f->CreateOverlay (key, name, &self->overlay_handle);
 
   if (err != EVROverlayError_VROverlayError_None)
     {
       g_printerr ("Could not create overlay: %s\n",
-                  self->functions->GetOverlayErrorNameFromEnum (err));
+                  f->GetOverlayErrorNameFromEnum (err));
     }
   else
     {
-      self->functions->SetOverlayWidthInMeters (self->overlay_handle, width);
-      self->functions->SetOverlayInputMethod (self->overlay_handle,
-                                              VROverlayInputMethod_Mouse);
+      f->SetOverlayWidthInMeters (self->overlay_handle, width);
+      f->SetOverlayInputMethod (self->overlay_handle,
+                                VROverlayInputMethod_Mouse);
     }
 }
 
@@ -129,7 +124,7 @@ openvr_overlay_create (OpenVROverlay *self,
                        gchar* name,
                        ETrackingUniverseOrigin openvr_tracking_universe)
 {
-  openvr_overlay_create_width(self, key, name, 1.5, openvr_tracking_universe);
+  openvr_overlay_create_width (self, key, name, 1.5, openvr_tracking_universe);
 }
 
 void
@@ -137,33 +132,55 @@ openvr_overlay_create_for_dashboard (OpenVROverlay *self,
                                      gchar* key,
                                      gchar* name)
 {
-  EVROverlayError err = self->functions->CreateDashboardOverlay(
+  OpenVRContext *context = openvr_context_get_instance ();
+  struct VR_IVROverlay_FnTable *f = context->overlay;
+
+  EVROverlayError err = f->CreateDashboardOverlay (
     key, name, &self->overlay_handle, &self->thumbnail_handle);
 
   if (err != EVROverlayError_VROverlayError_None)
     {
       g_printerr ("Could not create overlay: %s\n",
-                  self->functions->GetOverlayErrorNameFromEnum (err));
+                  f->GetOverlayErrorNameFromEnum (err));
     }
   else
     {
-      self->functions->SetOverlayWidthInMeters (self->overlay_handle, 1.5f);
+      f->SetOverlayWidthInMeters (self->overlay_handle, 1.5f);
     }
 }
 
-gboolean openvr_overlay_is_valid (OpenVROverlay *self)
+gboolean
+openvr_overlay_is_valid (OpenVROverlay *self)
 {
   return self->overlay_handle != k_ulOverlayHandleInvalid;
 }
 
-gboolean openvr_overlay_is_visible (OpenVROverlay *self)
+gboolean
+openvr_overlay_show (OpenVROverlay *self)
 {
-  return self->functions->IsOverlayVisible (self->overlay_handle);
+  OpenVRContext *context = openvr_context_get_instance ();
+  EVROverlayError err = context->overlay->ShowOverlay (self->overlay_handle);
+  if (err != EVROverlayError_VROverlayError_None)
+    {
+      g_printerr ("Could not ShowOverlay: %s\n",
+                  context->overlay->GetOverlayErrorNameFromEnum (err));
+      return false;
+    }
+  return true;
 }
 
-gboolean openvr_overlay_thumbnail_is_visible (OpenVROverlay *self)
+gboolean
+openvr_overlay_is_visible (OpenVROverlay *self)
 {
-  return self->functions->IsOverlayVisible (self->thumbnail_handle);
+  OpenVRContext *context = openvr_context_get_instance ();
+  return context->overlay->IsOverlayVisible (self->overlay_handle);
+}
+
+gboolean
+openvr_overlay_thumbnail_is_visible (OpenVROverlay *self)
+{
+  OpenVRContext *context = openvr_context_get_instance ();
+  return context->overlay->IsOverlayVisible (self->thumbnail_handle);
 }
 
 static guint
@@ -187,10 +204,11 @@ openvr_overlay_poll_event (OpenVROverlay *self)
 {
   struct VREvent_t vr_event;
 
-  while (self->functions &&
-         self->functions->PollNextOverlayEvent (self->overlay_handle,
+  OpenVRContext *context = openvr_context_get_instance ();
+
+  while (context->overlay->PollNextOverlayEvent (self->overlay_handle,
                                                 &vr_event,
-                                                sizeof (vr_event)))
+                                                 sizeof (vr_event)))
   {
     switch (vr_event.eventType)
     {
@@ -241,14 +259,7 @@ openvr_overlay_poll_event (OpenVROverlay *self)
 void
 openvr_overlay_set_mouse_scale (OpenVROverlay *self, float width, float height)
 {
-  if (self->functions) {
-    struct HmdVector2_t mouse_scale = {{ width, height }};
-    self->functions->SetOverlayMouseScale (self->overlay_handle, &mouse_scale);
-  }
-}
-
-gboolean
-openvr_overlay_is_available (OpenVROverlay * self)
-{
-  return self->functions != NULL;
+  OpenVRContext *context = openvr_context_get_instance ();
+  struct HmdVector2_t mouse_scale = {{ width, height }};
+  context->overlay->SetOverlayMouseScale (self->overlay_handle, &mouse_scale);
 }

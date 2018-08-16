@@ -107,12 +107,10 @@ _show_cb (OpenVROverlay *overlay,
   g_print ("show\n");
 
   /* skip rendering if the overlay isn't available or visible */
-  gboolean is_unavailable = !openvr_overlay_is_valid (overlay) ||
-                            !openvr_overlay_is_available (overlay);
   gboolean is_invisible = !openvr_overlay_is_visible (overlay) &&
                           !openvr_overlay_thumbnail_is_visible (overlay);
 
-  if (is_unavailable || is_invisible)
+  if (!openvr_overlay_is_valid (overlay) || is_invisible)
     return;
 
   OpenVRVulkanUploader * uploader = (OpenVRVulkanUploader*) data;
@@ -136,20 +134,22 @@ show_overlay_info (OpenVROverlay *overlay)
   float radius;
   EDualAnalogWhich which = EDualAnalogWhich_k_EDualAnalog_Left;
 
-  EVROverlayError err = overlay->functions->GetOverlayDualAnalogTransform (
+  OpenVRContext *context = openvr_context_get_instance ();
+  struct VR_IVROverlay_FnTable *f = context->overlay;
+
+  EVROverlayError err = f->GetOverlayDualAnalogTransform (
     overlay->overlay_handle, which, &center, &radius);
 
   if (err != EVROverlayError_VROverlayError_None)
     {
       g_printerr ("Could not GetOverlayDualAnalogTransform: %s\n",
-                  overlay->functions->GetOverlayErrorNameFromEnum (err));
+                  f->GetOverlayErrorNameFromEnum (err));
     }
 
   g_print ("Center [%f, %f] Radius %f\n", center.v[0], center.v[1], radius);
 
   VROverlayTransformType transform_type;
-  err = overlay->functions->GetOverlayTransformType (overlay->overlay_handle,
-                                                     &transform_type);
+  err = f->GetOverlayTransformType (overlay->overlay_handle, &transform_type);
 
   switch (transform_type)
     {
@@ -169,16 +169,16 @@ show_overlay_info (OpenVROverlay *overlay)
 
   bool anti_alias = false;
 
-  err = overlay->functions->GetOverlayFlag(overlay->overlay_handle,
-                                           VROverlayFlags_RGSS4X,
-                                           &anti_alias);
+  err = f->GetOverlayFlag (overlay->overlay_handle,
+                           VROverlayFlags_RGSS4X,
+                          &anti_alias);
 
   g_print ("VROverlayFlags_RGSS4X: %d\n", anti_alias);
 
   TrackingUniverseOrigin tracking_origin;
   HmdMatrix34_t transform;
 
-  err = overlay->functions->GetOverlayTransformAbsolute (
+  err = f->GetOverlayTransformAbsolute (
     overlay->overlay_handle,
     &tracking_origin,
     &transform);
@@ -213,7 +213,7 @@ show_overlay_info (OpenVROverlay *overlay)
 
   openvr_math_print_matrix34 (translation34);
 
-  err = overlay->functions->SetOverlayTransformAbsolute (
+  err = f->SetOverlayTransformAbsolute (
     overlay->overlay_handle,
     tracking_origin,
     &translation34);
@@ -279,10 +279,9 @@ test_cat_overlay ()
   openvr_overlay_create (overlay, "vulkan.cat", "Vulkan Cat",
                          ETrackingUniverseOrigin_TrackingUniverseStanding);
 
-  if (!openvr_overlay_is_valid (overlay) ||
-      !openvr_overlay_is_available (overlay))
+  if (!openvr_overlay_is_valid (overlay))
   {
-    fprintf (stderr, "Overlay unavailable.\n");
+    g_printerr ("Overlay 1 handle invalid.\n");
     return -1;
   }
 
@@ -291,10 +290,9 @@ test_cat_overlay ()
                          ETrackingUniverseOrigin_TrackingUniverseStanding
   );
 
-  if (!openvr_overlay_is_valid (overlay2) ||
-      !openvr_overlay_is_available (overlay2))
+  if (!openvr_overlay_is_valid (overlay2))
   {
-    fprintf (stderr, "Overlay 2 unavailable.\n");
+    g_printerr ("Overlay 2 handle invalid.\n");
     return -1;
   }
 
@@ -302,23 +300,11 @@ test_cat_overlay ()
                                   (float) gdk_pixbuf_get_width (pixbuf),
                                   (float) gdk_pixbuf_get_height (pixbuf));
 
-  EVROverlayError err =
-    overlay->functions->ShowOverlay (overlay->overlay_handle);
+  if (!openvr_overlay_show (overlay))
+    return -1;
 
-  if (err != EVROverlayError_VROverlayError_None)
-    {
-      g_printerr ("Could not ShowOverlay: %s\n",
-                  overlay->functions->GetOverlayErrorNameFromEnum (err));
-    }
-
-  err =
-    overlay->functions->ShowOverlay (overlay2->overlay_handle);
-
-  if (err != EVROverlayError_VROverlayError_None)
-    {
-      g_printerr ("Could not ShowOverlay: %s\n",
-                  overlay->functions->GetOverlayErrorNameFromEnum (err));
-    }
+  if (!openvr_overlay_show (overlay2))
+    return -1;
 
   show_overlay_info (overlay);
 

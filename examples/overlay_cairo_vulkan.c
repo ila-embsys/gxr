@@ -98,12 +98,10 @@ _show_cb (OpenVROverlay *overlay,
   g_print ("show\n");
 
   /* skip rendering if the overlay isn't available or visible */
-  gboolean is_unavailable = !openvr_overlay_is_valid (overlay) ||
-                            !openvr_overlay_is_available (overlay);
   gboolean is_invisible = !openvr_overlay_is_visible (overlay) &&
                           !openvr_overlay_thumbnail_is_visible (overlay);
 
-  if (is_unavailable || is_invisible)
+  if (!openvr_overlay_is_valid (overlay) || is_invisible)
     return;
 
   OpenVRVulkanUploader * uploader = (OpenVRVulkanUploader*) data;
@@ -184,8 +182,7 @@ test_cat_overlay ()
   openvr_overlay_create (overlay, "examples.cairo", "Gradient",
                          ETrackingUniverseOrigin_TrackingUniverseStanding);
 
-  if (!openvr_overlay_is_valid (overlay) ||
-      !openvr_overlay_is_available (overlay))
+  if (!openvr_overlay_is_valid (overlay))
   {
     fprintf (stderr, "Overlay unavailable.\n");
     return -1;
@@ -193,7 +190,8 @@ test_cat_overlay ()
 
   openvr_overlay_set_mouse_scale (overlay, (float) WIDTH, (float) HEIGHT);
 
-  overlay->functions->ShowOverlay (overlay->overlay_handle);
+  if (!openvr_overlay_show (overlay))
+    return -1;
 
   openvr_vulkan_uploader_submit_frame (uploader, overlay, texture);
 

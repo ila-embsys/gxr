@@ -190,7 +190,7 @@ test_overlay ()
   if (!openvr_vulkan_uploader_init_vulkan (uploader, true, compositor))
   {
     g_printerr ("Unable to initialize Vulkan!\n");
-    return false;
+    return -1;
   }
 
   /* create openvr overlay */
@@ -198,16 +198,16 @@ test_overlay ()
   openvr_overlay_create (overlay, "examples.cairo", "Gradient",
                          ETrackingUniverseOrigin_TrackingUniverseStanding);
 
-  if (!openvr_overlay_is_valid (overlay) ||
-      !openvr_overlay_is_available (overlay))
+  if (!openvr_overlay_is_valid (overlay))
   {
-    fprintf (stderr, "Overlay unavailable.\n");
+    g_printerr ("Overlay unavailable.\n");
     return -1;
   }
 
   openvr_overlay_set_mouse_scale (overlay, (float) WIDTH, (float) HEIGHT);
 
-  overlay->functions->ShowOverlay (overlay->overlay_handle);
+  if (!openvr_overlay_show (overlay))
+    return -1;
 
   g_signal_connect (overlay, "button-press-event", (GCallback) _press_cb, loop);
   g_signal_connect (overlay, "destroy", (GCallback) _destroy_cb, loop);
