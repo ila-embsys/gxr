@@ -18,7 +18,6 @@
 
 #include "openvr-vulkan-client.h"
 #include "openvr-vulkan-texture.h"
-#include "openvr-compositor.h"
 #include "openvr-overlay.h"
 #include "openvr-system.h"
 
@@ -42,8 +41,7 @@ OpenVRVulkanUploader *openvr_vulkan_uploader_new (void);
 
 bool
 openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
-                                    bool enable_validation,
-                                    OpenVRCompositor *compositor);
+                                    bool enable_validation);
 
 void
 openvr_vulkan_uploader_submit_frame (OpenVRVulkanUploader *self,

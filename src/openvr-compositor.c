@@ -10,47 +10,7 @@
 #include "openvr_capi_global.h"
 
 #include "openvr-compositor.h"
-
-#include "openvr-global.h"
-
-G_DEFINE_TYPE (OpenVRCompositor, openvr_compositor, G_TYPE_OBJECT)
-
-gboolean
-_compositor_init_fn_table (OpenVRCompositor *self)
-{
-  INIT_FN_TABLE (self->functions, Compositor);
-}
-
-static void
-openvr_compositor_init (OpenVRCompositor *self)
-{
-  self->functions = NULL;
-  if (!_compositor_init_fn_table (self))
-    g_printerr ("Compositor functions failed to load.\n");
-
-  if (!self->functions)
-    g_printerr ("Compositor functions failed to load.\n");
-}
-
-OpenVRCompositor *
-openvr_compositor_new (void)
-{
-  return (OpenVRCompositor*) g_object_new (OPENVR_TYPE_COMPOSITOR, 0);
-}
-
-static void
-openvr_compositor_finalize (GObject *gobject)
-{
-  // OpenVRCompositor *self = OPENVR_COMPOSITOR (gobject);
-}
-
-static void
-openvr_compositor_class_init (OpenVRCompositorClass *klass)
-{
-  GObjectClass *object_class = G_OBJECT_CLASS (klass);
-
-  object_class->finalize = openvr_compositor_finalize;
-}
+#include "openvr-context.h"
 
 void
 _split (gchar *str, GSList **out_list)
@@ -67,17 +27,17 @@ _split (gchar *str, GSList **out_list)
 
 /* Ask OpenVR for the list of instance extensions required */
 void
-openvr_compositor_get_instance_extensions (OpenVRCompositor *self,
-                                           GSList          **out_list)
+openvr_compositor_get_instance_extensions (GSList **out_list)
 {
+  OpenVRContext *context = openvr_context_get_instance ();
   uint32_t size =
-    self->functions->GetVulkanInstanceExtensionsRequired (NULL, 0);
+    context->compositor->GetVulkanInstanceExtensionsRequired (NULL, 0);
 
   if (size > 0)
   {
     gchar *extensions = g_malloc(sizeof(gchar) * size);
     extensions[0] = 0;
-    self->functions->GetVulkanInstanceExtensionsRequired (extensions, size);
+    context->compositor->GetVulkanInstanceExtensionsRequired (extensions, size);
     _split (extensions, out_list);
     g_free(extensions);
   }
@@ -85,18 +45,18 @@ openvr_compositor_get_instance_extensions (OpenVRCompositor *self,
 
 /* Ask OpenVR for the list of device extensions required */
 void
-openvr_compositor_get_device_extensions (OpenVRCompositor *self,
-                                         VkPhysicalDevice  physical_device,
+openvr_compositor_get_device_extensions (VkPhysicalDevice  physical_device,
                                          GSList          **out_list)
 {
-  uint32_t size = self->functions->
+  OpenVRContext *context = openvr_context_get_instance ();
+  uint32_t size = context->compositor->
     GetVulkanDeviceExtensionsRequired (physical_device, NULL, 0);
 
   if (size > 0)
   {
     gchar *extensions = g_malloc(sizeof(gchar) * size);
     extensions[0] = 0;
-    self->functions->GetVulkanDeviceExtensionsRequired (
+    context->compositor->GetVulkanDeviceExtensionsRequired (
       physical_device, extensions, size);
 
     _split (extensions, out_list);

@@ -17,6 +17,8 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
 #include "openvr-overlay.h"
+#include "openvr-compositor.h"
+
 
 G_DEFINE_TYPE (OpenVRVulkanUploader, openvr_vulkan_uploader,
                OPENVR_TYPE_VULKAN_CLIENT)
@@ -87,13 +89,11 @@ openvr_vulkan_uploader_load_dmabuf (OpenVRVulkanUploader *self,
 
 bool
 openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
-                                    bool enable_validation,
-                                    OpenVRCompositor *compositor)
+                                    bool enable_validation)
 {
   OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (self);
   GSList* openvr_instance_extensions = NULL;
-  openvr_compositor_get_instance_extensions (compositor,
-                                             &openvr_instance_extensions);
+  openvr_compositor_get_instance_extensions (&openvr_instance_extensions);
 
   if (!openvr_vulkan_instance_create (client->instance,
                                       enable_validation,
@@ -114,8 +114,7 @@ openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
 
   /* Query required OpenVR device extensions */
   GSList *openvr_device_extensions = NULL;
-  openvr_compositor_get_device_extensions (compositor,
-                                           (VkPhysicalDevice) physical_device,
+  openvr_compositor_get_device_extensions ((VkPhysicalDevice) physical_device,
                                           &openvr_device_extensions);
 
   if (!openvr_vulkan_device_create (client->device,

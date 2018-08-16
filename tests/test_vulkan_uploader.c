@@ -21,9 +21,7 @@ _test_minimal ()
   g_assert (openvr_context_init_overlay (context));
   g_assert (openvr_context_is_valid (context));
 
-  OpenVRCompositor *compositor = openvr_compositor_new ();
-
-  g_assert (openvr_vulkan_uploader_init_vulkan (uploader, true, compositor));
+  g_assert (openvr_vulkan_uploader_init_vulkan (uploader, true));
   g_object_unref (uploader);
 }
 

@@ -195,10 +195,8 @@ main (int argc, char *argv[])
   if (!_init_openvr ())
     return -1;
 
-  OpenVRCompositor *compositor = openvr_compositor_new ();
-
   OpenVRVulkanUploader *uploader = openvr_vulkan_uploader_new ();
-  if (!openvr_vulkan_uploader_init_vulkan (uploader, true, compositor))
+  if (!openvr_vulkan_uploader_init_vulkan (uploader, true))
   {
     g_printerr ("Unable to initialize Vulkan!\n");
     return false;

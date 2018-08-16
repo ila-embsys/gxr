@@ -19,7 +19,6 @@ G_DEFINE_TYPE (OpenVRContext, openvr_context, G_TYPE_OBJECT)
   if (!ret || ptr == 0) \
     return false; \
   target = (struct VR_IVR##type##_FnTable*) ptr; \
-  return true; \
 }
 
 static void
@@ -37,6 +36,7 @@ openvr_context_init (OpenVRContext *self)
 {
   self->system = NULL;
   self->overlay = NULL;
+  self->compositor = NULL;
 }
 
 static void
@@ -84,6 +84,15 @@ _init_fn_table (const char *type, intptr_t *ret)
   return TRUE;
 }
 
+bool
+_init_function_tables (OpenVRContext *self)
+{
+  INIT_FN_TABLE (self->system, System);
+  INIT_FN_TABLE (self->overlay, Overlay);
+  INIT_FN_TABLE (self->compositor, Compositor);
+  return true;
+}
+
 /* TODO: Create app type enum to make this public */
 static gboolean
 _vr_init (OpenVRContext *self, EVRApplicationType app_type)
@@ -97,8 +106,12 @@ _vr_init (OpenVRContext *self, EVRApplicationType app_type)
                 VR_GetVRInitErrorAsEnglishDescription (error));
     return FALSE;
   }
-  INIT_FN_TABLE (self->system, System);
-  INIT_FN_TABLE (self->overlay, Overlay);
+
+  if (!_init_function_tables (self))
+    {
+      g_printerr ("Functions failed to load.\n");
+      return FALSE;
+    }
 
   return TRUE;
 }
@@ -112,7 +125,9 @@ openvr_context_init_overlay (OpenVRContext * self)
 gboolean
 openvr_context_is_valid (OpenVRContext * self)
 {
-  return self->system != NULL && self->overlay != NULL;
+  return self->system != NULL
+    && self->overlay != NULL
+    && self->compositor != NULL;
 }
 
 gboolean

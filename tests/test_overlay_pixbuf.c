@@ -50,13 +50,10 @@ test_overlay_pixbuf ()
   g_assert (openvr_context_init_overlay (context));
   g_assert (openvr_context_is_valid (context));
 
-  OpenVRCompositor *compositor = openvr_compositor_new ();
-  g_assert_nonnull (compositor);
-
   OpenVRVulkanUploader *uploader = openvr_vulkan_uploader_new ();
   g_assert_nonnull (uploader);
 
-  g_assert (openvr_vulkan_uploader_init_vulkan (uploader, true, compositor));
+  g_assert (openvr_vulkan_uploader_init_vulkan (uploader, true));
 
   OpenVRVulkanTexture *texture = openvr_vulkan_texture_new ();
   g_assert_nonnull (texture);
