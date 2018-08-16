@@ -5,6 +5,8 @@
  * SPDX-License-Identifier: MIT
  */
 
+
+#include "openvr-context.h"
 #include "openvr-vulkan-uploader.h"
 
 void
@@ -13,15 +15,15 @@ _test_minimal ()
   OpenVRVulkanUploader *uploader = openvr_vulkan_uploader_new ();
   g_assert_nonnull (uploader);
 
-  OpenVRSystem * system = openvr_system_new ();
-  g_assert (openvr_system_init_overlay (system));
+  g_assert (openvr_context_is_installed ());
+  OpenVRContext *context = openvr_context_get_instance ();
+  g_assert_nonnull (context);
+  g_assert (openvr_context_init_overlay (context));
+  g_assert (openvr_context_is_valid (context));
 
   OpenVRCompositor *compositor = openvr_compositor_new ();
-  g_assert (openvr_system_is_available (system));
-  g_assert (openvr_system_is_installed ());
 
-  g_assert (openvr_vulkan_uploader_init_vulkan (uploader, true,
-                                                system, compositor));
+  g_assert (openvr_vulkan_uploader_init_vulkan (uploader, true, compositor));
   g_object_unref (uploader);
 }
 

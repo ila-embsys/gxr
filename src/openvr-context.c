@@ -15,7 +15,7 @@ G_DEFINE_TYPE (OpenVRContext, openvr_context, G_TYPE_OBJECT)
 #define INIT_FN_TABLE(target, type) \
 { \
   intptr_t ptr = 0; \
-  gboolean ret = openvr_init_fn_table (IVR##type##_Version, &ptr); \
+  gboolean ret = _init_fn_table (IVR##type##_Version, &ptr); \
   if (!ret || ptr == 0) \
     return false; \
   target = (struct VR_IVR##type##_FnTable*) ptr; \
@@ -23,17 +23,27 @@ G_DEFINE_TYPE (OpenVRContext, openvr_context, G_TYPE_OBJECT)
 }
 
 static void
+openvr_context_finalize (GObject *gobject);
+
+static void
 openvr_context_class_init (OpenVRContextClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
-
   object_class->finalize = openvr_context_finalize;
 }
 
 static void
 openvr_context_init (OpenVRContext *self)
 {
-  // self->functions = NULL;
+  self->system = NULL;
+}
+
+static void
+openvr_context_finalize (GObject *gobject)
+{
+  VR_ShutdownInternal();
+
+  G_OBJECT_CLASS (openvr_context_parent_class)->finalize (gobject);
 }
 
 OpenVRContext *
@@ -73,8 +83,45 @@ _init_fn_table (const char *type, intptr_t *ret)
   return TRUE;
 }
 
-static void
-openvr_context_finalize (GObject *gobject)
+/* TODO: Create app type enum to make this public */
+static gboolean
+_vr_init (OpenVRContext *self, EVRApplicationType app_type)
 {
-  // OpenVRContext *self = OPENVR_CONTEXT (gobject);
+  EVRInitError error;
+  VR_InitInternal (&error, app_type);
+
+  if (error != EVRInitError_VRInitError_None) {
+    g_printerr ("Could not init OpenVR runtime: %s: %s\n",
+                VR_GetVRInitErrorAsSymbol (error),
+                VR_GetVRInitErrorAsEnglishDescription (error));
+    return FALSE;
+  }
+  INIT_FN_TABLE (self->system, System);
+
+  return TRUE;
 }
+
+gboolean
+openvr_context_init_overlay (OpenVRContext * self)
+{
+  return _vr_init (self, EVRApplicationType_VRApplication_Overlay);
+}
+
+gboolean
+openvr_context_is_valid (OpenVRContext * self)
+{
+  return self->system != NULL;
+}
+
+gboolean
+openvr_context_is_installed (void)
+{
+  return VR_IsRuntimeInstalled ();
+}
+
+gboolean
+openvr_context_is_hmd_present (void)
+{
+  return VR_IsHmdPresent ();
+}
+

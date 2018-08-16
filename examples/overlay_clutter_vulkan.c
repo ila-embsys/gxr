@@ -14,7 +14,7 @@
 
 #include <openvr-glib.h>
 
-#include "openvr-system.h"
+#include "openvr-context.h"
 #include "openvr-overlay.h"
 
 #include <cairo.h>
@@ -142,6 +142,31 @@ repaint_cb (gpointer user_data)
   return TRUE;
 }
 
+bool
+_init_openvr ()
+{
+  if (!openvr_context_is_installed ())
+    {
+      g_printerr ("VR Runtime not installed.\n");
+      return false;
+    }
+
+  OpenVRContext *context = openvr_context_get_instance ();
+  if (!openvr_context_init_overlay (context))
+    {
+      g_printerr ("Could not init OpenVR.\n");
+      return false;
+    }
+
+  if (!openvr_context_is_valid (context))
+    {
+      g_printerr ("Could not load OpenVR function pointers.\n");
+      return false;
+    }
+
+  return true;
+}
+
 int
 test_cat_overlay (int argc, char *argv[])
 {
@@ -155,16 +180,13 @@ test_cat_overlay (int argc, char *argv[])
       return EXIT_FAILURE;
     }
 
-  OpenVRSystem * system = openvr_system_new ();
-  gboolean ret = openvr_system_init_overlay (system);
+  /* init openvr */
+  if (!_init_openvr ())
+    return -1;
   OpenVRCompositor *compositor = openvr_compositor_new ();
 
-  g_assert (ret);
-  g_assert (openvr_system_is_available (system));
-  g_assert (openvr_system_is_installed ());
-
   uploader = openvr_vulkan_uploader_new ();
-  if (!openvr_vulkan_uploader_init_vulkan (uploader, true, system, compositor))
+  if (!openvr_vulkan_uploader_init_vulkan (uploader, true, compositor))
     {
       g_printerr ("Unable to initialize Vulkan!\n");
       return false;
@@ -216,6 +238,9 @@ test_cat_overlay (int argc, char *argv[])
   g_object_unref (overlay);
   g_object_unref (texture);
   g_object_unref (uploader);
+
+  OpenVRContext *context = openvr_context_get_instance ();
+  g_object_unref (context);
 
   return 0;
 }

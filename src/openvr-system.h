@@ -19,21 +19,11 @@ G_DECLARE_FINAL_TYPE (OpenVRSystem, openvr_system, OPENVR, SYSTEM, GObject)
 struct _OpenVRSystem
 {
   GObjectClass parent_class;
-
-  struct VR_IVRSystem_FnTable *functions;
 };
 
 OpenVRSystem *openvr_system_new (void);
 
-gboolean openvr_system_init_overlay (OpenVRSystem * self);
-
 void openvr_system_print_device_info (OpenVRSystem * self);
-
-gboolean openvr_system_is_available (OpenVRSystem * self);
-
-gboolean openvr_system_is_installed (void);
-
-gboolean openvr_system_is_hmd_present (void);
 
 G_END_DECLS
 

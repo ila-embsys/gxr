@@ -11,7 +11,7 @@
 
 #include <openvr-glib.h>
 
-#include "openvr-system.h"
+#include "openvr-context.h"
 #include "openvr-overlay.h"
 #include "openvr-vulkan-uploader.h"
 
@@ -37,19 +37,18 @@ load_gdk_pixbuf ()
 }
 
 void
-test_overlay_opengl_pixbuf ()
+test_overlay_pixbuf ()
 {
   GError *error = NULL;
   GdkPixbuf * pixbuf = load_gdk_pixbuf ();
   g_assert (error == NULL);
   g_assert_nonnull (pixbuf);
 
-  OpenVRSystem * system = openvr_system_new ();
-  g_assert_nonnull (system);
-  g_assert (openvr_system_init_overlay (system));
-
-  g_assert (openvr_system_is_available (system));
-  g_assert (openvr_system_is_installed ());
+  g_assert (openvr_context_is_installed ());
+  OpenVRContext *context = openvr_context_get_instance ();
+  g_assert_nonnull (context);
+  g_assert (openvr_context_init_overlay (context));
+  g_assert (openvr_context_is_valid (context));
 
   OpenVRCompositor *compositor = openvr_compositor_new ();
   g_assert_nonnull (compositor);
@@ -57,8 +56,7 @@ test_overlay_opengl_pixbuf ()
   OpenVRVulkanUploader *uploader = openvr_vulkan_uploader_new ();
   g_assert_nonnull (uploader);
 
-  g_assert (openvr_vulkan_uploader_init_vulkan (uploader, true,
-                                                system, compositor));
+  g_assert (openvr_vulkan_uploader_init_vulkan (uploader, true, compositor));
 
   OpenVRVulkanTexture *texture = openvr_vulkan_texture_new ();
   g_assert_nonnull (texture);
@@ -87,7 +85,7 @@ test_overlay_opengl_pixbuf ()
 int
 main (int argc, char *argv[])
 {
-  test_overlay_opengl_pixbuf ();
+  test_overlay_pixbuf ();
 
   return 0;
 }

@@ -9,29 +9,19 @@
 #include <openvr_capi.h>
 #include "openvr_capi_global.h"
 
+#include "openvr-context.h"
 #include "openvr-system.h"
-
-#include "openvr-global.h"
 
 G_DEFINE_TYPE (OpenVRSystem, openvr_system, G_TYPE_OBJECT)
 
 static void
 openvr_system_init (OpenVRSystem *self)
 {
-  self->functions = NULL;
-}
-
-gboolean
-_system_init_fn_table (OpenVRSystem *self)
-{
-  INIT_FN_TABLE (self->functions, System);
 }
 
 static void
 openvr_system_finalize (GObject *gobject)
 {
-  VR_ShutdownInternal();
-
   G_OBJECT_CLASS (openvr_system_parent_class)->finalize (gobject);
 }
 
@@ -39,7 +29,6 @@ static void
 openvr_system_class_init (OpenVRSystemClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
-
   object_class->finalize = openvr_system_finalize;
 }
 
@@ -47,30 +36,6 @@ OpenVRSystem *
 openvr_system_new (void)
 {
   return (OpenVRSystem*) g_object_new (OPENVR_TYPE_SYSTEM, 0);
-}
-
-static gboolean
-_vr_init (OpenVRSystem * self, EVRApplicationType app_type)
-{
-  EVRInitError error;
-  VR_InitInternal (&error, app_type);
-
-  if (error != EVRInitError_VRInitError_None) {
-    g_printerr ("Could not init OpenVR runtime: %s: %s\n",
-                VR_GetVRInitErrorAsSymbol (error),
-                VR_GetVRInitErrorAsEnglishDescription (error));
-    return FALSE;
-  }
-
-  _system_init_fn_table (self);
-
-  return TRUE;
-}
-
-gboolean
-openvr_system_init_overlay (OpenVRSystem * self)
-{
-  return _vr_init (self, EVRApplicationType_VRApplication_Overlay);
 }
 
 #define STRING_BUFFER_SIZE 128
@@ -82,13 +47,15 @@ _get_device_string (OpenVRSystem * self,
 {
   gchar *string = (gchar*) g_malloc (STRING_BUFFER_SIZE);
 
+  OpenVRContext *context = openvr_context_get_instance ();
+
   ETrackedPropertyError error;
-  self->functions->GetStringTrackedDeviceProperty(
+  context->system->GetStringTrackedDeviceProperty(
     device_index, property, string, STRING_BUFFER_SIZE, &error);
 
   if (error != ETrackedPropertyError_TrackedProp_Success)
     g_print ("Error getting string: %s\n",
-      self->functions->GetPropErrorNameFromEnum (error));
+      context->system->GetPropErrorNameFromEnum (error));
 
   return string;
 }
@@ -107,28 +74,4 @@ openvr_system_print_device_info (OpenVRSystem * self)
                         ETrackedDeviceProperty_Prop_SerialNumber_String);
   g_print ("SerialNumber: %s\n", serial_number);
   g_free (serial_number);
-}
-
-gboolean
-openvr_system_is_available (OpenVRSystem * self)
-{
-  return self->functions != NULL;
-}
-
-gboolean
-openvr_system_is_installed (void)
-{
-  return VR_IsRuntimeInstalled ();
-}
-
-gboolean
-openvr_system_is_hmd_present (void)
-{
-  return VR_IsHmdPresent ();
-}
-
-void
-openvr_system_shutdown (void)
-{
-  VR_ShutdownInternal();
 }

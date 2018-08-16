@@ -6,9 +6,7 @@
  */
 
 #include "openvr-vulkan-uploader.h"
-#include "openvr-global.h"
-
-#include "openvr_capi_global.h"
+#include "openvr-context.h"
 
 #define VK_USE_PLATFORM_XLIB_KHR
 #include <vulkan/vulkan.h>
@@ -90,7 +88,6 @@ openvr_vulkan_uploader_load_dmabuf (OpenVRVulkanUploader *self,
 bool
 openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
                                     bool enable_validation,
-                                    OpenVRSystem *system,
                                     OpenVRCompositor *compositor)
 {
   OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (self);
@@ -108,7 +105,8 @@ openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
 
   /* Query OpenVR for the physical device to use */
   uint64_t physical_device = 0;
-  system->functions->GetOutputDevice (
+  OpenVRContext *context = openvr_context_get_instance ();
+  context->system->GetOutputDevice (
     &physical_device, ETextureType_TextureType_Vulkan,
     (struct VkInstance_T*) client->instance->instance);
 

@@ -15,7 +15,7 @@
 
 #include <openvr-glib.h>
 
-#include "openvr-system.h"
+#include "openvr-context.h"
 #include "openvr-overlay.h"
 #include "openvr-compositor.h"
 #include "openvr-vulkan-uploader.h"
@@ -150,9 +150,36 @@ _destroy_cb (OpenVROverlay *overlay,
   g_main_loop_quit (loop);
 }
 
+bool
+_init_openvr ()
+{
+  if (!openvr_context_is_installed ())
+    {
+      g_printerr ("VR Runtime not installed.\n");
+      return false;
+    }
+
+  OpenVRContext *context = openvr_context_get_instance ();
+  if (!openvr_context_init_overlay (context))
+    {
+      g_printerr ("Could not init OpenVR.\n");
+      return false;
+    }
+
+  if (!openvr_context_is_valid (context))
+    {
+      g_printerr ("Could not load OpenVR function pointers.\n");
+      return false;
+    }
+
+  return true;
+}
+
 #define ALIGN(_v, _d) (((_v) + ((_d) - 1)) & ~((_d) - 1))
 
-int main (int argc, char *argv[]) {
+int
+main (int argc, char *argv[])
+{
   GMainLoop *loop = g_main_loop_new (NULL, FALSE);
 
   /* create dmabuf */
@@ -166,17 +193,14 @@ int main (int argc, char *argv[]) {
 
   dma_buf_fill (map, width, height, stride);
 
-  OpenVRSystem * system = openvr_system_new ();
-  gboolean ret = openvr_system_init_overlay (system);
+  /* init openvr */
+  if (!_init_openvr ())
+    return -1;
 
   OpenVRCompositor *compositor = openvr_compositor_new ();
 
-  g_assert (ret);
-  g_assert (openvr_system_is_available (system));
-  g_assert (openvr_system_is_installed ());
-
   OpenVRVulkanUploader *uploader = openvr_vulkan_uploader_new ();
-  if (!openvr_vulkan_uploader_init_vulkan (uploader, true, system, compositor))
+  if (!openvr_vulkan_uploader_init_vulkan (uploader, true, compositor))
   {
     g_printerr ("Unable to initialize Vulkan!\n");
     return false;
@@ -190,7 +214,6 @@ int main (int argc, char *argv[]) {
       g_printerr ("Unable to initialize vulkan dmabuf texture.\n");
       return -1;
     }
-
 
   OpenVROverlay *overlay = openvr_overlay_new ();
   openvr_overlay_create_for_dashboard (overlay, "vulkan.dmabuf", "Vulkan DMABUF");
@@ -224,6 +247,9 @@ int main (int argc, char *argv[]) {
   g_object_unref (overlay);
   g_object_unref (texture);
   g_object_unref (uploader);
+
+  OpenVRContext *context = openvr_context_get_instance ();
+  g_object_unref (context);
 
   return 0;
 }

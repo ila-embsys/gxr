@@ -43,7 +43,6 @@ OpenVRVulkanUploader *openvr_vulkan_uploader_new (void);
 bool
 openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
                                     bool enable_validation,
-                                    OpenVRSystem *system,
                                     OpenVRCompositor *compositor);
 
 void

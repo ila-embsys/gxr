@@ -23,13 +23,19 @@ struct _OpenVRContext
   struct VR_IVRSystem_FnTable *system;
 };
 
-OpenVRContext *openvr_context_new (void);
-
 OpenVRContext *openvr_context_get_instance (void);
 
-static void
-openvr_context_finalize (GObject *gobject);
+gboolean
+openvr_context_init_overlay (OpenVRContext *self);
 
+gboolean
+openvr_context_is_valid (OpenVRContext *self);
+
+gboolean
+openvr_context_is_installed (void);
+
+gboolean
+openvr_context_is_hmd_present (void);
 
 G_END_DECLS
 
