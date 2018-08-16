@@ -85,6 +85,13 @@ if clutter_dep.found()
     link_with: openvr_glib_lib,
     include_directories: openvr_glib_inc,
     install: false)
+
+  overlay_clutter_vulkan = executable(
+    'overlay_clutter_vulkan', ['overlay_clutter_vulkan.c'],
+    dependencies: [openvr_glib_deps, clutter_dep, vulkan_dep],
+    link_with: openvr_glib_lib,
+    include_directories: openvr_glib_inc,
+    install: false)
 endif
 
 if cogl_mutter_dep.found()
