@@ -2,16 +2,6 @@
 
 examples_inc_dir = include_directories('../examples')
 
-cogl_triangle = executable(
-  'cogl_triangle', ['cogl_triangle.c'],
-  dependencies: cogl_1_dep,
-  install: false)
-
-cogl_cube = executable(
-  'cogl_cube', ['cogl_cube.c', '../res/tests.c'],
-  dependencies: [cogl_1_dep, gio_dep, gl_dep],
-  install: false)
-
 gtk_pixbuf = executable(
   'gtk_pixbuf', ['gtk_pixbuf.c', '../res/tests.c'],
   dependencies: gtk3_dep,

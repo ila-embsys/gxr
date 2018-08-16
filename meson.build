@@ -19,18 +19,13 @@ cpp = meson.get_compiler('c')
 ## Required
 openvr_dep = cpp.find_library('openvr_api')
 m_dep = cpp.find_library('m')
-cogl_1_dep = dependency('cogl-1.0')
 gio_dep = dependency('gio-2.0', version: '>= 2.50')
-gl_dep = dependency('GL')
 gtk3_dep = dependency('gtk+-3.0', version: '>= 3.22')
 gdk_pixbuf_dep = dependency('gdk-pixbuf-2.0', version: '>= 2.36')
-
 vulkan_dep = dependency('vulkan')
 graphene_dep = dependency('graphene-1.0')
 
-
 ## Optional
-cogl_mutter_dep = dependency('mutter-cogl-2', required : false)
 x11_dep = dependency('x11', required : false)
 xi_dep = dependency('xi', required : false)
 clutter_gtk_dep = dependency('clutter-gtk-1.0', required : false)

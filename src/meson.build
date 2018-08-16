@@ -54,8 +54,6 @@ openvr_glib_deps = [
   gio_dep,
   gdk_pixbuf_dep,
   gtk3_dep,
-  gl_dep,
-  cogl_1_dep,
   openvr_dep,
   vulkan_dep,
   graphene_dep
