@@ -73,31 +73,15 @@ load_gdk_pixbuf ()
 }
 
 static void
-_move_cb (OpenVROverlay  *overlay,
-          GdkEventMotion *event,
-          gpointer        data)
-{
-  //g_print ("move: %f %f (%d)\n", event->x, event->y, event->time);
-}
-
-static void
 _press_cb (OpenVROverlay  *overlay,
            GdkEventButton *event,
            gpointer        data)
 {
+  (void) overlay;
   g_print ("press: %d %f %f (%d)\n",
            event->button, event->x, event->y, event->time);
   GMainLoop *loop = (GMainLoop*) data;
   g_main_loop_quit (loop);
-}
-
-static void
-_release_cb (OpenVROverlay  *overlay,
-             GdkEventButton *event,
-             gpointer        data)
-{
-  g_print ("release: %d %f %f (%d)\n",
-           event->button, event->x, event->y, event->time);
 }
 
 static void
@@ -122,6 +106,7 @@ static void
 _destroy_cb (OpenVROverlay *overlay,
              gpointer       data)
 {
+  (void) overlay;
   g_print ("destroy\n");
   GMainLoop *loop = (GMainLoop*) data;
   g_main_loop_quit (loop);
@@ -310,10 +295,7 @@ test_cat_overlay ()
   openvr_vulkan_uploader_submit_frame (uploader, overlay2, texture);
 
   /* connect glib callbacks */
-  g_signal_connect (overlay, "motion-notify-event", (GCallback) _move_cb, NULL);
   g_signal_connect (overlay, "button-press-event", (GCallback) _press_cb, loop);
-  g_signal_connect (
-    overlay, "button-release-event", (GCallback) _release_cb, NULL);
   g_signal_connect (overlay, "show", (GCallback) _show_cb, uploader);
   g_signal_connect (overlay, "destroy", (GCallback) _destroy_cb, loop);
 
@@ -336,6 +318,6 @@ test_cat_overlay ()
   return 0;
 }
 
-int main (int argc, char *argv[]) {
+int main () {
   return test_cat_overlay ();
 }

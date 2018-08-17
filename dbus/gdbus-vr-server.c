@@ -22,6 +22,13 @@ handle_get_property (GDBusConnection *connection,
                      GError         **error,
                      gpointer         user_data)
 {
+  (void) connection;
+  (void) sender;
+  (void) object_path;
+  (void) interface_name;
+  (void) error;
+  (void) user_data;
+
   GVariant *ret;
   ret = NULL;
   if (g_strcmp0 (property_name, "IsAvailable") == 0)
@@ -42,6 +49,8 @@ handle_set_property (GDBusConnection *connection,
                      GError         **error,
                      gpointer         user_data)
 {
+  (void) sender;
+  (void) user_data;
   if (g_strcmp0 (property_name, "IsAvailable") == 0)
     {
       GVariantBuilder *builder;
@@ -87,6 +96,9 @@ on_bus_acquired (GDBusConnection *connection,
                  const gchar     *name,
                  gpointer         user_data)
 {
+  (void) name;
+  (void) user_data;
+
   guint registration_id;
 
   registration_id =
@@ -105,6 +117,9 @@ on_name_acquired (GDBusConnection *connection,
                   const gchar     *name,
                   gpointer         user_data)
 {
+  (void) connection;
+  (void) name;
+  (void) user_data;
   g_print ("Name %s acquired.\n", name);
 }
 
@@ -113,12 +128,14 @@ on_name_lost (GDBusConnection *connection,
               const gchar     *name,
               gpointer         user_data)
 {
+  (void) connection;
+  (void) user_data;
   g_print ("Name %s lost. Bye.\n", name);
   exit (1);
 }
 
 int
-main (int argc, char *argv[])
+main ()
 {
   guint owner_id;
   GMainLoop *loop;

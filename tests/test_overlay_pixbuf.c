@@ -79,7 +79,7 @@ test_overlay_pixbuf ()
 }
 
 int
-main (int argc, char *argv[])
+main ()
 {
   test_overlay_pixbuf ();
 

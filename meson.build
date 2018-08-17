@@ -10,7 +10,11 @@ configure_file(
   configuration: config_h,
 )
 add_project_arguments([
-  '-I' + meson.build_root(),
+  ['-I' + meson.build_root(),
+   '-Werror',
+   '-Wall', #'-Wextra'
+   '-Wunused-parameter'
+   ],
 ], language: ['c'])
 
 ### Dependencies

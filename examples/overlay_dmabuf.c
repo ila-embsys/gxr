@@ -94,31 +94,15 @@ allocate_dmabuf_amd (int size, int *fd)
 }
 
 static void
-_move_cb (OpenVROverlay  *overlay,
-          GdkEventMotion *event,
-          gpointer        data)
-{
-  // g_print ("move: %f %f (%d)\n", event->x, event->y, event->time);
-}
-
-static void
 _press_cb (OpenVROverlay  *overlay,
            GdkEventButton *event,
            gpointer        data)
 {
+  (void) overlay;
   g_print ("press: %d %f %f (%d)\n",
            event->button, event->x, event->y, event->time);
   GMainLoop *loop = (GMainLoop*) data;
   g_main_loop_quit (loop);
-}
-
-static void
-_release_cb (OpenVROverlay  *overlay,
-             GdkEventButton *event,
-             gpointer        data)
-{
-  g_print ("release: %d %f %f (%d)\n",
-           event->button, event->x, event->y, event->time);
 }
 
 static void
@@ -143,6 +127,7 @@ static void
 _destroy_cb (OpenVROverlay *overlay,
              gpointer       data)
 {
+  (void) overlay;
   g_print ("destroy\n");
   GMainLoop *loop = (GMainLoop*) data;
   g_main_loop_quit (loop);
@@ -176,7 +161,7 @@ _init_openvr ()
 #define ALIGN(_v, _d) (((_v) + ((_d) - 1)) & ~((_d) - 1))
 
 int
-main (int argc, char *argv[])
+main ()
 {
   GMainLoop *loop = g_main_loop_new (NULL, FALSE);
 
@@ -226,10 +211,7 @@ main (int argc, char *argv[])
                                   (float) gdk_pixbuf_get_height (pixbuf));
   */
 
-  g_signal_connect (overlay, "motion-notify-event", (GCallback) _move_cb, NULL);
   g_signal_connect (overlay, "button-press-event", (GCallback) _press_cb, loop);
-  g_signal_connect (
-    overlay, "button-release-event", (GCallback) _release_cb, NULL);
   g_signal_connect (overlay, "show", (GCallback) _show_cb, uploader);
   g_signal_connect (overlay, "destroy", (GCallback) _destroy_cb, loop);
 

@@ -93,6 +93,9 @@ allocate_dmabuf_amd (Example *self, int size, int *fd)
 void key_callback (GLFWwindow* window, int key,
                    int scancode, int action, int mods)
 {
+  (void) scancode;
+  (void) mods;
+
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
     {
       Example *self = (Example*) glfwGetWindowUserPointer (window);
@@ -138,7 +141,7 @@ draw_cb (gpointer data)
 #define ALIGN(_v, _d) (((_v) + ((_d) - 1)) & ~((_d) - 1))
 
 int
-main (int argc, char *argv[]) {
+main () {
   Example example = {
     .should_quit = false
   };

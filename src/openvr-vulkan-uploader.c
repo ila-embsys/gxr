@@ -37,6 +37,7 @@ openvr_vulkan_uploader_class_init (OpenVRVulkanUploaderClass *klass)
 static void
 openvr_vulkan_uploader_init (OpenVRVulkanUploader *self)
 {
+  (void) self;
 }
 
 OpenVRVulkanUploader *

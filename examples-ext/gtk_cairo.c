@@ -13,6 +13,7 @@
 gboolean
 draw (GtkWidget *widget, cairo_t *cr, gpointer data)
 {
+  (void) data;
   guint width = gtk_widget_get_allocated_width (widget);
   guint height = gtk_widget_get_allocated_height (widget);
 
@@ -25,6 +26,7 @@ draw (GtkWidget *widget, cairo_t *cr, gpointer data)
 static void
 activate (GtkApplication* app, gpointer user_data)
 {
+  (void) user_data;
   GtkWidget *window = gtk_application_window_new (app);
   gtk_window_set_title (GTK_WINDOW (window), "Cairo");
 

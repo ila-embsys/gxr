@@ -18,7 +18,7 @@ _test_minimal ()
 }
 
 int
-main (int argc, char *argv[])
+main ()
 {
   _test_minimal ();
 

@@ -97,7 +97,6 @@ struct RenderContext
   OpenVROverlay *overlay;
 };
 
-
 gboolean
 render_callback (gpointer data)
 {
@@ -131,6 +130,7 @@ _press_cb (OpenVROverlay  *overlay,
            GdkEventButton *event,
            gpointer        data)
 {
+  (void) overlay;
   g_print ("press: %d %f %f (%d)\n",
            event->button, event->x, event->y, event->time);
   GMainLoop *loop = (GMainLoop*) data;
@@ -141,6 +141,7 @@ static void
 _destroy_cb (OpenVROverlay *overlay,
              gpointer       data)
 {
+  (void) overlay;
   g_print ("destroy\n");
   GMainLoop *loop = (GMainLoop*) data;
   g_main_loop_quit (loop);
@@ -229,6 +230,6 @@ test_overlay ()
   return 0;
 }
 
-int main (int argc, char *argv[]) {
+int main () {
   return test_overlay ();
 }

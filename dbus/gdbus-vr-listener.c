@@ -21,6 +21,9 @@ on_properties_changed (GDBusProxy          *proxy,
                        const gchar* const  *invalidated_properties,
                        gpointer             user_data)
 {
+  (void) proxy;
+  (void) invalidated_properties;
+  (void) user_data;
   if (g_variant_n_children (changed_properties) > 0)
     {
       GVariant *value = g_variant_lookup_value (changed_properties,
@@ -57,12 +60,14 @@ on_name_owner_notify (GObject    *object,
                       GParamSpec *pspec,
                       gpointer    user_data)
 {
+  (void) pspec;
+  (void) user_data;
   GDBusProxy *proxy = G_DBUS_PROXY (object);
   print_proxy (proxy);
 }
 
 int
-main (int argc, char *argv[])
+main ()
 {
   GError *error = NULL;
   GDBusProxyFlags flags;

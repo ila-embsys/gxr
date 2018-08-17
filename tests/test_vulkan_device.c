@@ -49,7 +49,7 @@ _test_extensions ()
 }
 
 int
-main(int argc, char *argv[])
+main ()
 {
   _test_minimal ();
   _test_extensions ();

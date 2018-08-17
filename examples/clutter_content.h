@@ -8,6 +8,7 @@ draw_content (ClutterCanvas *canvas,
               int            width,
               int            height)
 {
+  (void) canvas;
   draw_rounded_quad (cr, width, height);
   return TRUE;
 }

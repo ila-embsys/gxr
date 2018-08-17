@@ -31,7 +31,7 @@ _test_minimal ()
 }
 
 int
-main (int argc, char *argv[])
+main ()
 {
   _test_vr_init_shutdown ();
   _test_minimal ();

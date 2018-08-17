@@ -119,6 +119,9 @@ validation_cb (VkDebugReportFlagsEXT      flags,
                const char                *message,
                void                      *user_data)
 {
+  (void) object_type;
+  (void) object;
+  (void) user_data;
   g_print ("%s %s %lu:%d: %s\n",
            vk_debug_report_string (flags),
            layer_prefix, location, message_code, message);

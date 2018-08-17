@@ -31,6 +31,8 @@ update_fps (struct timespec* now)
 gboolean
 draw (GtkWidget *widget, cairo_t *cr, gpointer data)
 {
+  (void) data;
+
   struct timespec now;
   if (clock_gettime (CLOCK_REALTIME, &now) != 0)
   {
@@ -62,6 +64,7 @@ draw (GtkWidget *widget, cairo_t *cr, gpointer data)
 static void
 activate (GtkApplication* app, gpointer user_data)
 {
+  (void) user_data;
   GtkWidget *window = gtk_application_window_new (app);
   gtk_window_set_title (GTK_WINDOW (window), "Cairo");
 

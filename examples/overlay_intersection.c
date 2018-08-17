@@ -103,11 +103,12 @@ load_gdk_pixbuf ()
     }
 }
 
+/*
 static void
 _move_cb (OpenVROverlay *overlay, GdkEventMotion *event, gpointer data)
 {
   // this is not working correctly, but it's working
-  /*
+
   g_print ("move: %f %f\n", event->x, event->y);
   graphene_matrix_t m;
   graphene_matrix_init_from_matrix(&m, &overlay->transform);
@@ -125,14 +126,15 @@ _move_cb (OpenVROverlay *overlay, GdkEventMotion *event, gpointer data)
     pointer->overlay_handle,
     overlay->openvr_tracking_universe,
     &translation34);
-    */
 }
+*/
 
 static void
 _move_3d_cb (OpenVROverlay *          overlay,
              struct _motion_event_3d *event,
              gpointer                 data)
 {
+  (void) data;
   ETrackingUniverseOrigin tracking_origin = overlay->openvr_tracking_universe;
   // graphene_quaternion_to_vec4(&event->orientation, &quat);
   /*
@@ -174,22 +176,28 @@ _move_3d_cb (OpenVROverlay *          overlay,
 static void
 _scroll_cb (OpenVROverlay *overlay, GdkEventScroll *event, gpointer data)
 {
-  g_print ("scroll: %s %f\n", event->direction == GDK_SCROLL_UP ? "up" : "down",
-           event->y);
+  (void) overlay;
+  (void) data;
+  g_print ("scroll: %s %f\n",
+           event->direction == GDK_SCROLL_UP ? "up" : "down", event->y);
 }
 
 static void
 _press_cb (OpenVROverlay *overlay, GdkEventButton *event, gpointer data)
 {
-  g_print ("press: %d %f %f (%d)\n", event->button, event->x, event->y,
-           event->time);
+  (void) overlay;
+  (void) data;
+  g_print ("press: %d %f %f (%d)\n",
+           event->button, event->x, event->y, event->time);
 }
 
 static void
 _release_cb (OpenVROverlay *overlay, GdkEventButton *event, gpointer data)
 {
-  g_print ("release: %d %f %f (%d)\n", event->button, event->x, event->y,
-           event->time);
+  (void) overlay;
+  (void) data;
+  g_print ("release: %d %f %f (%d)\n",
+           event->button, event->x, event->y, event->time);
 }
 
 static void
@@ -212,6 +220,7 @@ _show_cb (OpenVROverlay *overlay, gpointer data)
 static void
 _destroy_cb (OpenVROverlay *overlay, gpointer data)
 {
+  (void) overlay;
   g_print ("destroy\n");
   GMainLoop *loop = (GMainLoop *)data;
   g_main_loop_quit (loop);
@@ -467,7 +476,7 @@ test_cat_overlay ()
   openvr_vulkan_uploader_submit_frame (uploader, overlay2, texture);
 
   /* connect glib callbacks */
-  g_signal_connect (overlay, "motion-notify-event", (GCallback)_move_cb, NULL);
+  // g_signal_connect (overlay, "motion-notify-event", (GCallback)_move_cb, NULL);
   g_signal_connect (overlay, "motion-notify-event-3d", (GCallback)_move_3d_cb,
                     NULL);
   g_signal_connect (overlay, "button-press-event", (GCallback)_press_cb, loop);
@@ -497,7 +506,7 @@ test_cat_overlay ()
 }
 
 int
-main (int argc, char *argv[])
+main ()
 {
   left.unControllerDeviceIndex = -1;
   right.unControllerDeviceIndex = -1;

@@ -16,6 +16,8 @@ offscreen_damage (GtkWidget      *widget,
                   GdkEventExpose *event,
                   gpointer       *data)
 {
+  (void) event;
+  (void) data;
   GdkPixbuf * offscreen_pixbuf =
     gtk_offscreen_window_get_pixbuf ((GtkOffscreenWindow *)widget);
 
@@ -44,6 +46,10 @@ offscreen_damage (GtkWidget      *widget,
 static gboolean
 _press_cb (GtkWidget *button, GdkEventButton *event, gpointer data)
 {
+  (void) button;
+  (void) event;
+  (void) data;
+
   g_print ("button pressed.\n");
   return TRUE;
 }
@@ -87,6 +93,9 @@ _timespec_to_double_s (struct timespec* time)
 static gboolean
 _draw_cb (GtkWidget *widget, cairo_t *cr, struct Labels* labels)
 {
+  (void) widget;
+  (void) cr;
+
   struct timespec now;
   if (clock_gettime (CLOCK_REALTIME, &now) != 0)
   {

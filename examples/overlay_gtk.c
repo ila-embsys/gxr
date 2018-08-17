@@ -25,6 +25,7 @@ OpenVRVulkanUploader *uploader;
 static gboolean
 _damage_cb (GtkWidget *widget, GdkEventExpose *event, OpenVROverlay *overlay)
 {
+  (void) event;
   GdkPixbuf * offscreen_pixbuf =
     gtk_offscreen_window_get_pixbuf ((GtkOffscreenWindow *)widget);
 
@@ -58,6 +59,9 @@ _damage_cb (GtkWidget *widget, GdkEventExpose *event, OpenVROverlay *overlay)
 static gboolean
 _button_press_cb (GtkWidget *button, GdkEventButton *event, gpointer data)
 {
+  (void) button;
+  (void) event;
+  (void) data;
   g_print ("button pressed.\n");
   return TRUE;
 }
@@ -72,6 +76,8 @@ struct Labels
 static gboolean
 _draw_cb (GtkWidget *widget, cairo_t *cr, struct Labels* labels)
 {
+  (void) widget;
+  (void) cr;
   struct timespec now;
   if (clock_gettime (CLOCK_REALTIME, &now) != 0)
   {
@@ -112,18 +118,11 @@ timeout_callback (gpointer data)
 }
 
 static void
-_move_cb (OpenVROverlay  *overlay,
-          GdkEventMotion *event,
-          gpointer        data)
-{
-  g_print ("move: %f %f (%d)\n", event->x, event->y, event->time);
-}
-
-static void
 _press_cb (OpenVROverlay  *overlay,
            GdkEventButton *event,
            gpointer        data)
 {
+  (void) overlay;
   g_print ("press: %d %f %f (%d)\n",
            event->button, event->x, event->y, event->time);
   GMainLoop *loop = (GMainLoop*) data;
@@ -131,25 +130,10 @@ _press_cb (OpenVROverlay  *overlay,
 }
 
 static void
-_release_cb (OpenVROverlay  *overlay,
-             GdkEventButton *event,
-             gpointer        data)
-{
-  g_print ("release: %d %f %f (%d)\n",
-           event->button, event->x, event->y, event->time);
-}
-
-static void
-_show_cb (OpenVROverlay *overlay,
-          gpointer       data)
-{
-  g_print ("show\n");
-}
-
-static void
 _destroy_cb (OpenVROverlay *overlay,
              gpointer       data)
 {
+  (void) overlay;
   g_print ("destroy\n");
   GMainLoop *loop = (GMainLoop*) data;
   g_main_loop_quit (loop);
@@ -239,11 +223,7 @@ main (int argc, char *argv[])
 
   openvr_overlay_set_mouse_scale (overlay, 300.0f, 200.0f);
 
-  g_signal_connect (overlay, "motion-notify-event", (GCallback) _move_cb, NULL);
   g_signal_connect (overlay, "button-press-event", (GCallback) _press_cb, loop);
-  g_signal_connect (overlay, "button-release-event",
-                    (GCallback) _release_cb, NULL);
-  g_signal_connect (overlay, "show", (GCallback) _show_cb, NULL);
   g_signal_connect (overlay, "destroy", (GCallback) _destroy_cb, loop);
 
   g_signal_connect (window, "damage-event", G_CALLBACK (_damage_cb), overlay);

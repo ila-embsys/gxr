@@ -75,7 +75,9 @@ _move_cb (OpenVROverlay  *overlay,
           GdkEventMotion *event,
           gpointer        data)
 {
-  // g_print ("move: %f %f (%d)\n", event->x, event->y, event->time);
+  (void) overlay;
+  (void) data;
+  g_print ("move: %f %f (%d)\n", event->x, event->y, event->time);
 }
 
 static void
@@ -83,6 +85,7 @@ _press_cb (OpenVROverlay  *overlay,
            GdkEventButton *event,
            gpointer        data)
 {
+  (void) overlay;
   g_print ("press: %d %f %f (%d)\n",
            event->button, event->x, event->y, event->time);
   GMainLoop *loop = (GMainLoop*) data;
@@ -94,6 +97,8 @@ _release_cb (OpenVROverlay  *overlay,
              GdkEventButton *event,
              gpointer        data)
 {
+  (void) overlay;
+  (void) data;
   g_print ("release: %d %f %f (%d)\n",
            event->button, event->x, event->y, event->time);
 }
@@ -120,6 +125,7 @@ static void
 _destroy_cb (OpenVROverlay *overlay,
              gpointer       data)
 {
+  (void) overlay;
   g_print ("destroy\n");
   GMainLoop *loop = (GMainLoop*) data;
   g_main_loop_quit (loop);
@@ -217,7 +223,7 @@ test_cat_overlay ()
 }
 
 int
-main (int argc, char *argv[])
+main ()
 {
   return test_cat_overlay ();
 }

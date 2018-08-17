@@ -22,6 +22,8 @@
 static gboolean
 _quit_cb (GtkWidget *button, GdkEvent *event, GMainLoop *loop)
 {
+  (void) button;
+  (void) event;
   g_main_loop_quit (loop);
   return TRUE;
 }
@@ -29,6 +31,7 @@ _quit_cb (GtkWidget *button, GdkEvent *event, GMainLoop *loop)
 static gboolean
 _quit2_cb (GtkWidget *button, GMainLoop *loop)
 {
+  (void) button;
   g_main_loop_quit (loop);
   return TRUE;
 }
@@ -41,6 +44,7 @@ _move_cb (GtkWidget      *widget,
           GdkEventMotion *event,
           gpointer        user_data)
 {
+  (void) user_data;
   g_print ("%s move: %f %f (%d) (%.2fx%.2f)\n",
            gtk_widget_get_name (widget),
            event->x, event->y,
@@ -133,6 +137,8 @@ _gtk_synth_iteration_cb (gpointer data)
 static gboolean
 _run_gtk_synth_cb (GtkWidget *button, GdkEventButton *event, GdkWindow *window)
 {
+  (void) button;
+  (void) event;
   gdk_simulation.runs = 0;
   gdk_simulation.start_time_ms = monotonic_time_ms ();
 
@@ -181,6 +187,8 @@ _xlib_synth_iteration_cb (gpointer data)
 static gboolean
 _run_xlib_synth_cb (GtkWidget *button, GdkEventButton *event, GdkWindow *window)
 {
+  (void) button;
+  (void) event;
   gdk_simulation.runs = 0;
   gdk_simulation.start_time_ms = monotonic_time_ms ();
 

@@ -22,7 +22,7 @@ draw (cairo_t *cr, unsigned width, unsigned height)
 }
 
 int
-main (int argc, char **argv)
+main ()
 {
   unsigned char image[STRIDE*HEIGHT];
 
