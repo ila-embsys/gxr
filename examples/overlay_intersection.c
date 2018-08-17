@@ -32,24 +32,15 @@ timeout_callback (gpointer data)
 {
   OpenVROverlay *overlay = (OpenVROverlay *)data;
 
-  if (left.unControllerDeviceIndex == -1)
-    {
-      init_controller (&left, 0);
-    }
-  if (right.unControllerDeviceIndex == -1)
-    {
-      init_controller (&right, 1);
-    }
-
-  if (left.unControllerDeviceIndex != -1)
-    {
+  if (left.initialized)
       trigger_events (&left, overlay);
-    }
+  else
+      init_controller (&left, 0);
 
-  if (right.unControllerDeviceIndex != -1)
-    {
+  if (right.initialized)
       trigger_events (&right, overlay);
-    }
+  else
+      init_controller (&right, 1);
 
   openvr_overlay_poll_event (overlay);
   return TRUE;
@@ -508,7 +499,7 @@ test_cat_overlay ()
 int
 main ()
 {
-  left.unControllerDeviceIndex = -1;
-  right.unControllerDeviceIndex = -1;
+  left.initialized = FALSE;
+  right.initialized = FALSE;
   return test_cat_overlay ();
 }

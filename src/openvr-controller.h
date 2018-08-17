@@ -21,8 +21,8 @@ typedef struct ControllerState
   TrackedDeviceIndex_t unControllerDeviceIndex;
   gboolean             _button1_pressed;  // button 1
   gboolean             _button2_pressed;  // button 2
-
-  gboolean _grip_pressed;  // button 9
+  gboolean             initialized;
+  gboolean             _grip_pressed;  // button 9
 } ControllerState;
 
 gboolean init_controller (ControllerState *state, int hand);
