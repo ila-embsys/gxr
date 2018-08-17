@@ -86,9 +86,10 @@ handle_set_property (GDBusConnection *connection,
 
 static const GDBusInterfaceVTable interface_vtable =
 {
-  NULL,
-  handle_get_property,
-  handle_set_property
+  .method_call = NULL,
+  .get_property = handle_get_property,
+  .set_property = handle_set_property,
+  .padding = {0}
 };
 
 static void

@@ -13,8 +13,7 @@ add_project_arguments([
   ['-I' + meson.build_root(),
    '-Werror',
    '-Wall',
-   '-Wsign-compare'
-   #'-Wextra'
+   '-Wextra'
 ],
 ], language: ['c'])
 

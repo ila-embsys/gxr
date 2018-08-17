@@ -188,7 +188,8 @@ _create_render_pass (VkDevice device,
       .pColorAttachments = &(VkAttachmentReference) {
         .attachment = 0,
         .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-      }
+      },
+      .pResolveAttachments = NULL,
     },
     .dependencyCount = 1,
     .pDependencies = &(VkSubpassDependency) {
@@ -339,6 +340,7 @@ _create_graphics_pipeline (VkDevice device,
           VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
           VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
       },
+     .blendConstants = {0.f, 0.f, 0.f, 0.f}
     },
     .layout = *pipeline_layout,
     .renderPass = render_pass
@@ -753,7 +755,8 @@ _init_descriptor_sets (VkDevice device,
             .buffer = uniform_buffers[i],
             .offset = 0,
             .range = sizeof (Transformation),
-          }
+          },
+          .pTexelBufferView = NULL
         },
         {
           .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -766,7 +769,8 @@ _init_descriptor_sets (VkDevice device,
             .sampler = texture_sampler,
             .imageView = texture_image_view,
             .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-          }
+          },
+          .pTexelBufferView = NULL
         }
       };
 
