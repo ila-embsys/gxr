@@ -15,7 +15,6 @@
 #include <openvr_capi.h>
 #include "openvr_capi_global.h"
 
-#include "openvr-global.h"
 #include "openvr-time.h"
 
 G_DEFINE_TYPE (OpenVROverlay, openvr_overlay, G_TYPE_OBJECT)

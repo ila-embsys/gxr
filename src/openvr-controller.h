@@ -8,13 +8,11 @@
 #ifndef OPENVR_GLIB_CONTROLLER_H_
 #define OPENVR_GLIB_CONTROLLER_H_
 
-#include "openvr-global.h"
 #include "openvr-math.h"
 #include "openvr-overlay.h"
 #include <gdk/gdk.h>
 #include <glib-object.h>
 #include <openvr_capi.h>
-#include "openvr-global.h"
 
 G_BEGIN_DECLS
 
