@@ -6,56 +6,25 @@
  */
 
 #include "openvr-controller.h"
+
 #include <gdk/gdk.h>
-
-// TODO: should not global, but also not replicated in each controller state
-static struct VR_IVRSystem_FnTable  *functions;
-static struct VR_IVRInput_FnTable   *inputfunctions;
-static struct VR_IVROverlay_FnTable *overlayfunctions;
-
-gboolean
-init_table ()
-{
-  INIT_FN_TABLE (functions, System);
-}
-
-gboolean
-init_input_table ()
-{
-  INIT_FN_TABLE (inputfunctions, Input);
-}
-
-gboolean
-init_overlay_table ()
-{
-  INIT_FN_TABLE (overlayfunctions, Overlay);
-}
+#include "openvr-context.h"
 
 // sets openvr controller ids in the order openvr assigns them
 gboolean
 init_controller (ControllerState *state, int num)
 {
-  if (!functions)
-    {
-      gboolean initsucc;
-      initsucc = init_table ();
-      initsucc = init_input_table ();
-      initsucc = init_overlay_table ();
-      if (!initsucc)
-        {
-          return FALSE;
-        }
-    }
+  OpenVRContext *context = openvr_context_get_instance ();
 
   // TODO: will steamvr give newly powered on controllers higher indices?
   // if not, this method could fail.
   int skipped = 0;
   for (int dev_index = 0; dev_index < k_unMaxTrackedDeviceCount; dev_index++)
     {
-      if (functions->IsTrackedDeviceConnected (dev_index))
+      if (context->system->IsTrackedDeviceConnected (dev_index))
         {
           ETrackedDeviceClass class =
-              functions->GetTrackedDeviceClass (dev_index);
+              context->system->GetTrackedDeviceClass (dev_index);
           if (class == ETrackedDeviceClass_TrackedDeviceClass_Controller)
             {
               // g_print("controller: %d: %d skipped %d\n", num, dev_index,
@@ -137,8 +106,10 @@ openvr_overlay_intersect (OpenVROverlay      *overlay,
   //        params.vDirection.v[0], params.vDirection.v[1],
   //        params.vDirection.v[2]);
 
+  OpenVRContext *context = openvr_context_get_instance ();
+
   struct VROverlayIntersectionResults_t results;
-  gboolean intersects = overlayfunctions->ComputeOverlayIntersection (
+  gboolean intersects = context->overlay->ComputeOverlayIntersection (
       overlay->overlay_handle, &params, &results);
 
   intersection_point->x = results.vPoint.v[0];
@@ -241,10 +212,13 @@ openvr_overlay_plane_intersect (ControllerState    *state,
   graphene_plane_t plane;
   graphene_plane_init_from_point (&plane, &overlay_normal, &overlay_origin);
 
+  OpenVRContext *context = openvr_context_get_instance ();
+
   TrackedDevicePose_t pTrackedDevicePose[k_unMaxTrackedDeviceCount];
-  functions->GetDeviceToAbsoluteTrackingPose (overlay->openvr_tracking_universe,
-                                              0, pTrackedDevicePose,
-                                              k_unMaxTrackedDeviceCount);
+  context->system->GetDeviceToAbsoluteTrackingPose (
+    overlay->openvr_tracking_universe,
+    0, pTrackedDevicePose,
+    k_unMaxTrackedDeviceCount);
 
   graphene_ray_t ray;
   openvr_controller_to_ray (&pTrackedDevicePose[state->unControllerDeviceIndex],
@@ -279,9 +253,13 @@ gboolean
 trigger_events (ControllerState *state, OpenVROverlay *overlay)
 {
   TrackedDevicePose_t pTrackedDevicePose[k_unMaxTrackedDeviceCount];
-  functions->GetDeviceToAbsoluteTrackingPose (overlay->openvr_tracking_universe,
-                                              0, pTrackedDevicePose,
-                                              k_unMaxTrackedDeviceCount);
+
+  OpenVRContext *context = openvr_context_get_instance ();
+
+  context->system->GetDeviceToAbsoluteTrackingPose (
+    overlay->openvr_tracking_universe,
+    0, pTrackedDevicePose,
+    k_unMaxTrackedDeviceCount);
 
   if (state->unControllerDeviceIndex == -1)
     {
@@ -330,9 +308,10 @@ trigger_events (ControllerState *state, OpenVROverlay *overlay)
     }
 
   // GetControllerState is deprecated but simpler to use than actions
-  VRControllerState_t pControllerState;
-  functions->GetControllerState (state->unControllerDeviceIndex,
-                                 &pControllerState, sizeof (pControllerState));
+  VRControllerState_t controller_state;
+  context->system->GetControllerState (state->unControllerDeviceIndex,
+                                      &controller_state,
+                                       sizeof (controller_state));
 
   // coordinates of the overlay in the VR space and coordinates of the
   // intersection point in the VR space can be used to calculate the position
@@ -350,16 +329,16 @@ trigger_events (ControllerState *state, OpenVROverlay *overlay)
   // the transformation matrix describes the *center* point of an overlay
   // to calculate 2D coordinates relative to overlay origin we have to shift
   gfloat overlay_width;
-  overlayfunctions->GetOverlayWidthInMeters(overlay->overlay_handle,
-                                            &overlay_width);
+  context->overlay->GetOverlayWidthInMeters(overlay->overlay_handle,
+                                           &overlay_width);
   // there is no function to get the height or aspect ratio of an overlay
   // so we need to calculate it from width + texture size
   // the texture aspect ratio should be preserved
   uint32_t texture_width;
   uint32_t texture_height;
-  overlayfunctions->GetOverlayTextureSize(overlay->overlay_handle,
-                                          &texture_width,
-                                          &texture_height);
+  context->overlay->GetOverlayTextureSize(overlay->overlay_handle,
+                                         &texture_width,
+                                         &texture_height);
   gfloat overlay_aspect = (float) texture_width / texture_height;
   gfloat overlay_height = overlay_width / overlay_aspect;
   /*
@@ -383,7 +362,7 @@ trigger_events (ControllerState *state, OpenVROverlay *overlay)
   gboolean last_b2 = state->_button2_pressed;
   gboolean last_grip = state->_grip_pressed;
 
-  if (pControllerState.ulButtonPressed &
+  if (controller_state.ulButtonPressed &
       ButtonMaskFromId (EVRButtonId_k_EButton_SteamVR_Trigger))
     {
       state->_button1_pressed = TRUE;
@@ -415,7 +394,7 @@ trigger_events (ControllerState *state, OpenVROverlay *overlay)
         }
     }
 
-  if (pControllerState.ulButtonPressed &
+  if (controller_state.ulButtonPressed &
       ButtonMaskFromId (EVRButtonId_k_EButton_ApplicationMenu))
     {
       state->_button2_pressed = TRUE;
@@ -447,7 +426,7 @@ trigger_events (ControllerState *state, OpenVROverlay *overlay)
         }
     }
 
-  if (pControllerState.ulButtonPressed &
+  if (controller_state.ulButtonPressed &
       ButtonMaskFromId (EVRButtonId_k_EButton_Grip))
     {
       state->_grip_pressed = TRUE;
@@ -479,15 +458,15 @@ trigger_events (ControllerState *state, OpenVROverlay *overlay)
         }
     }
 
-  if (pControllerState.ulButtonPressed &
+  if (controller_state.ulButtonPressed &
       ButtonMaskFromId (EVRButtonId_k_EButton_Axis0))
     {
       GdkEvent *event = gdk_event_new (GDK_SCROLL);
-      event->scroll.y = pControllerState.rAxis[0].y;
+      event->scroll.y = controller_state.rAxis[0].y;
       event->scroll.direction =
-          pControllerState.rAxis[0].y > 0 ? GDK_SCROLL_UP : GDK_SCROLL_DOWN;
+          controller_state.rAxis[0].y > 0 ? GDK_SCROLL_UP : GDK_SCROLL_DOWN;
       g_signal_emit (overlay, overlay_signals[SCROLL_EVENT], 0, event);
-      // g_print("touchpad y %f\n", pControllerState.rAxis[0].y);
+      // g_print("touchpad y %f\n", controller_state.rAxis[0].y);
     }
 
   return TRUE;

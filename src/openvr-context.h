@@ -23,6 +23,7 @@ struct _OpenVRContext
   struct VR_IVRSystem_FnTable *system;
   struct VR_IVROverlay_FnTable *overlay;
   struct VR_IVRCompositor_FnTable *compositor;
+  struct VR_IVRInput_FnTable *input;
 };
 
 OpenVRContext *openvr_context_get_instance (void);

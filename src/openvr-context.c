@@ -90,6 +90,7 @@ _init_function_tables (OpenVRContext *self)
   INIT_FN_TABLE (self->system, System);
   INIT_FN_TABLE (self->overlay, Overlay);
   INIT_FN_TABLE (self->compositor, Compositor);
+  INIT_FN_TABLE (self->input, Input);
   return true;
 }
 
@@ -127,7 +128,8 @@ openvr_context_is_valid (OpenVRContext * self)
 {
   return self->system != NULL
     && self->overlay != NULL
-    && self->compositor != NULL;
+    && self->compositor != NULL
+    && self->input != NULL;
 }
 
 gboolean
