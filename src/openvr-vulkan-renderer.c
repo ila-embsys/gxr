@@ -104,7 +104,7 @@ openvr_vulkan_renderer_finalize (GObject *gobject)
       vkDestroyBuffer (device, self->index_buffer, NULL);
       vkFreeMemory (device, self->index_buffer_memory, NULL);
 
-      for (size_t i = 0; i < self->swapchain_image_count; i++)
+      for (uint32_t i = 0; i < self->swapchain_image_count; i++)
         {
           vkDestroyBuffer (device, self->uniform_buffers[i], NULL);
           vkFreeMemory (device, self->uniform_buffers_memory[i], NULL);
@@ -113,7 +113,7 @@ openvr_vulkan_renderer_finalize (GObject *gobject)
       g_free (self->uniform_buffers);
       g_free (self->uniform_buffers_memory);
 
-      for (int i = 0; i < self->swapchain_image_count; i++)
+      for (uint32_t i = 0; i < self->swapchain_image_count; i++)
         vkDestroyFramebuffer (device, self->framebuffers[i], NULL);
 
       g_free (self->framebuffers);
@@ -125,7 +125,7 @@ openvr_vulkan_renderer_finalize (GObject *gobject)
 
       vkDestroyRenderPass (device, self->render_pass, NULL);
 
-      for (int i = 0; i < self->swapchain_image_count; i++)
+      for (uint32_t i = 0; i < self->swapchain_image_count; i++)
         vkDestroyImageView (device, self->swapchain_image_views[i], NULL);
 
       g_free (self->swapchain_image_views);
@@ -372,7 +372,7 @@ _find_surface_format (VkPhysicalDevice device,
       return false;
     }
 
-  for (int i = 0; i < num_formats; i++)
+  for (uint32_t i = 0; i < num_formats; i++)
     if (formats[i].format == VK_FORMAT_B8G8R8A8_UNORM &&
         formats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
       {
@@ -410,7 +410,7 @@ _find_surface_present_mode (VkPhysicalDevice device,
       return false;
     }
 
-  for (int i = 0; i < num_present_modes; i++)
+  for (uint32_t i = 0; i < num_present_modes; i++)
     if (present_modes[i] == VK_PRESENT_MODE_IMMEDIATE_KHR)
       {
         *present_mode = present_modes[i];
@@ -476,7 +476,7 @@ _init_swapchain (VkDevice device,
   vk_check_error ("vkGetSwapchainImagesKHR", res);
 
   *image_views = g_malloc (sizeof(VkImage) * *image_count);
-  for (int i = 0; i < *image_count; i++)
+  for (uint32_t i = 0; i < *image_count; i++)
     (*image_views)[i] = _create_image_view (device, images[i], *image_format);
 
   g_free (images);
@@ -720,7 +720,7 @@ _init_descriptor_sets (VkDevice device,
                        VkDescriptorSet **descriptor_sets)
 {
   VkDescriptorSetLayout* layouts = g_malloc (sizeof (VkBuffer) * count);
-  for (int i = 0; i < count; i++)
+  for (uint32_t i = 0; i < count; i++)
     layouts[i] = descriptor_set_layout;
 
   VkDescriptorSetAllocateInfo alloc_info = {

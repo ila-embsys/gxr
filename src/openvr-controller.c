@@ -25,7 +25,7 @@ init_controller (ControllerState *state, int num)
   // TODO: will steamvr give newly powered on controllers higher indices?
   // if not, this method could fail.
   int skipped = 0;
-  for (int dev_index = 0; dev_index < k_unMaxTrackedDeviceCount; dev_index++)
+  for (uint32_t dev_index = 0; dev_index < k_unMaxTrackedDeviceCount; dev_index++)
     {
       if (context->system->IsTrackedDeviceConnected (dev_index))
         {

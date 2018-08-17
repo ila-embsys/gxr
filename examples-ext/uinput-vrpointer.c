@@ -21,6 +21,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <math.h>
+#include <stdint.h>
 
 #include <X11/extensions/XInput2.h>
 #include <stdbool.h>
@@ -301,9 +302,8 @@ static void send_event(int fd, int type, int code, int value)
   event.code  = code;
   event.value = value;
 
-  if (write(fd, &event, sizeof(event)) < sizeof(event))
+  if (write(fd, &event, sizeof(event)) < (ssize_t) sizeof(event))
     perror("Send event failed.");
-
 }
 
 int
@@ -322,11 +322,10 @@ main(void)
   memset (&dev, 0, sizeof (dev));
   setup (&dev, fd);
 
-  if (write (fd, &dev, sizeof (dev)) < sizeof (dev))
+  if (write (fd, &dev, sizeof (dev)) < (ssize_t) sizeof (dev))
   {
     printf("WRITE!\n");
     goto error;
-
   }
 
   if (ioctl (fd, UI_DEV_CREATE, NULL) == -1)
@@ -404,7 +403,6 @@ main(void)
   send_event(fd, EV_ABS, ABS_MT_TRACKING_ID, -1);
   send_event(fd, EV_SYN, SYN_MT_REPORT, 0);
   send_event(fd, EV_SYN, SYN_REPORT, 0);
-
 
   /*
    * Give userspace some time to read the events before we destroy the

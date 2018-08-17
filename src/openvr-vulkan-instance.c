@@ -271,7 +271,7 @@ openvr_vulkan_instance_create (OpenVRVulkanInstance *self,
   if (num_enabled_extensions > 0)
     {
       g_print ("Requesting instance extensions:\n");
-      for (int i = 0; i < num_enabled_extensions; i++)
+      for (uint32_t i = 0; i < num_enabled_extensions; i++)
         g_print ("%s\n", enabled_extensions[i]);
     }
 

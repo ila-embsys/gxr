@@ -12,9 +12,10 @@ configure_file(
 add_project_arguments([
   ['-I' + meson.build_root(),
    '-Werror',
-   '-Wall', #'-Wextra'
-   '-Wunused-parameter'
-   ],
+   '-Wall',
+   '-Wsign-compare'
+   #'-Wextra'
+],
 ], language: ['c'])
 
 ### Dependencies

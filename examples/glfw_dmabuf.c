@@ -168,11 +168,9 @@ main () {
   glfw_extensions = glfwGetRequiredInstanceExtensions (&num_glfw_extensions);
 
   GSList *instance_ext_list = NULL;
-  for (int i = 0; i < num_glfw_extensions; i++)
-    {
-      instance_ext_list = g_slist_append (instance_ext_list,
-                                          (char*) glfw_extensions[i]);
-    }
+  for (uint32_t i = 0; i < num_glfw_extensions; i++)
+    instance_ext_list = g_slist_append (instance_ext_list,
+                                        (char*) glfw_extensions[i]);
 
   const gchar *device_extensions[] =
   {
@@ -182,11 +180,9 @@ main () {
   };
 
   GSList *device_ext_list = NULL;
-  for (int i = 0; i < G_N_ELEMENTS (device_extensions); i++)
-    {
-      device_ext_list = g_slist_append (device_ext_list,
-                                        (char*) device_extensions[i]);
-    }
+  for (uint32_t i = 0; i < G_N_ELEMENTS (device_extensions); i++)
+    device_ext_list = g_slist_append (device_ext_list,
+                                      (char*) device_extensions[i]);
 
   OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (example.renderer);
 

@@ -58,10 +58,8 @@ _test_glfw_extensions ()
   const char** glfw_extensions;
   glfw_extensions = glfwGetRequiredInstanceExtensions (&num_glfw_extensions);
 
-  for (int i = 0; i < num_glfw_extensions; i++)
-    {
-      g_print ("GLFW wants %s\n", glfw_extensions[i]);
-    }
+  for (uint32_t i = 0; i < num_glfw_extensions; i++)
+    g_print ("GLFW wants %s\n", glfw_extensions[i]);
 
   glfwTerminate ();
 }
@@ -84,7 +82,7 @@ _test_extensions_surface ()
   glfw_extensions = glfwGetRequiredInstanceExtensions (&num_glfw_extensions);
 
   GSList *instance_ext_list = NULL;
-  for (int i = 0; i < num_glfw_extensions; i++)
+  for (uint32_t i = 0; i < num_glfw_extensions; i++)
     {
       instance_ext_list = g_slist_append (instance_ext_list,
                                           (char *) glfw_extensions[i]);
@@ -93,7 +91,7 @@ _test_extensions_surface ()
   const gchar *device_extensions[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
   GSList *device_ext_list = NULL;
-  for (int i = 0; i < G_N_ELEMENTS (device_extensions); i++)
+  for (uint32_t i = 0; i < G_N_ELEMENTS (device_extensions); i++)
     {
       device_ext_list = g_slist_append (device_ext_list,
                                         (char *) device_extensions[i]);
@@ -139,7 +137,7 @@ _test_init_rendering ()
   glfw_extensions = glfwGetRequiredInstanceExtensions (&num_glfw_extensions);
 
   GSList *instance_ext_list = NULL;
-  for (int i = 0; i < num_glfw_extensions; i++)
+  for (uint32_t i = 0; i < num_glfw_extensions; i++)
     {
       instance_ext_list = g_slist_append (instance_ext_list,
                                           (char *) glfw_extensions[i]);
@@ -148,7 +146,7 @@ _test_init_rendering ()
   const gchar *device_extensions[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
   GSList *device_ext_list = NULL;
-  for (int i = 0; i < G_N_ELEMENTS (device_extensions); i++)
+  for (uint64_t i = 0; i < G_N_ELEMENTS (device_extensions); i++)
     {
       device_ext_list = g_slist_append (device_ext_list,
                                         (char *) device_extensions[i]);
