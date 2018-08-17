@@ -8,23 +8,6 @@
 #ifndef OPENVR_GLIB_SYSTEM_H_
 #define OPENVR_GLIB_SYSTEM_H_
 
-#include <glib-object.h>
-#include <openvr_capi.h>
-
-G_BEGIN_DECLS
-
-#define OPENVR_TYPE_SYSTEM openvr_system_get_type()
-G_DECLARE_FINAL_TYPE (OpenVRSystem, openvr_system, OPENVR, SYSTEM, GObject)
-
-struct _OpenVRSystem
-{
-  GObjectClass parent_class;
-};
-
-OpenVRSystem *openvr_system_new (void);
-
-void openvr_system_print_device_info (OpenVRSystem * self);
-
-G_END_DECLS
+void openvr_system_print_device_info ();
 
 #endif /* OPENVR_GLIB_SYSTEM_H_ */

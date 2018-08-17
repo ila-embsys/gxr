@@ -14,9 +14,7 @@
 void
 _test_minimal ()
 {
-  OpenVRSystem * system = openvr_system_new ();
-  openvr_system_print_device_info (system);
-  g_object_unref (system);
+  openvr_system_print_device_info ();
 }
 
 int
