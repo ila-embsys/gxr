@@ -346,8 +346,31 @@ trigger_events (ControllerState *state, OpenVROverlay *overlay)
   // in the xy plane.
   // implement method that translates window to origin & xy plane
   // then these operations become trivial
-  gfloat in_overlay_x = intersection_point.x - overlay_position.x;
-  gfloat in_overlay_y = intersection_point.y - overlay_position.y;
+
+  // the transformation matrix describes the *center* point of an overlay
+  // to calculate 2D coordinates relative to overlay origin we have to shift
+  gfloat overlay_width;
+  overlayfunctions->GetOverlayWidthInMeters(overlay->overlay_handle,
+                                            &overlay_width);
+  // there is no function to get the height or aspect ratio of an overlay
+  // so we need to calculate it from width + texture size
+  // the texture aspect ratio should be preserved
+  uint32_t texture_width;
+  uint32_t texture_height;
+  overlayfunctions->GetOverlayTextureSize(overlay->overlay_handle,
+                                          &texture_width,
+                                          &texture_height);
+  gfloat overlay_aspect = (float) texture_width / texture_height;
+  gfloat overlay_height = overlay_width / overlay_aspect;
+  /*
+  g_print("Overlay width %f height %f aspect %f texture %dx%d\n",
+          overlay_width, overlay_height, overlay_aspect,
+          texture_width, texture_height);
+  */
+  gfloat in_overlay_x = intersection_point.x - overlay_position.x
+                        + overlay_width / 2.f;
+  gfloat in_overlay_y = intersection_point.y - overlay_position.y
+                        + overlay_height / 2.f;
 
   // notifies the client application where in the current overlay the user is
   // pointing at
