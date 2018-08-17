@@ -1,4 +1,4 @@
-api_version = '0.1'
+api_version = '1.0'
 
 openvr_glib_sources = [
   'openvr-system.c',
