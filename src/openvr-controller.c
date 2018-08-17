@@ -128,41 +128,44 @@ openvr_overlay_intersect (OpenVROverlay      *overlay,
 gboolean
 graphene_vec3_init_from_matrix (graphene_vec3_t *vec, graphene_matrix_t *matrix)
 {
-  graphene_vec3_init (vec, graphene_matrix_get_value (matrix, 3, 0),
+  graphene_vec3_init (vec,
+                      graphene_matrix_get_value (matrix, 3, 0),
                       graphene_matrix_get_value (matrix, 3, 1),
                       graphene_matrix_get_value (matrix, 3, 2));
   return TRUE;
 }
 
 gboolean
-openvr_to_graphene_matrix (TrackedDevicePose_t *pTrackedDevicePose,
+openvr_to_graphene_matrix (TrackedDevicePose_t *pose,
                            graphene_matrix_t   *transform)
 {
-  if (pTrackedDevicePose->eTrackingResult !=
+  if (pose->eTrackingResult !=
       ETrackingResult_TrackingResult_Running_OK)
     {
       // g_print("Tracking result: Not running ok: %d!\n",
-      //  pTrackedDevicePose->eTrackingResult);
+      //  pose->eTrackingResult);
       return FALSE;
     }
-  else if (pTrackedDevicePose->bPoseIsValid)
+  else if (pose->bPoseIsValid)
     {
-      float mat4x4[16] = {pTrackedDevicePose->mDeviceToAbsoluteTracking.m[0][0],
-                          pTrackedDevicePose->mDeviceToAbsoluteTracking.m[1][0],
-                          pTrackedDevicePose->mDeviceToAbsoluteTracking.m[2][0],
-                          0,
-                          pTrackedDevicePose->mDeviceToAbsoluteTracking.m[0][1],
-                          pTrackedDevicePose->mDeviceToAbsoluteTracking.m[1][1],
-                          pTrackedDevicePose->mDeviceToAbsoluteTracking.m[2][1],
-                          0,
-                          pTrackedDevicePose->mDeviceToAbsoluteTracking.m[0][2],
-                          pTrackedDevicePose->mDeviceToAbsoluteTracking.m[1][2],
-                          pTrackedDevicePose->mDeviceToAbsoluteTracking.m[2][2],
-                          0,
-                          pTrackedDevicePose->mDeviceToAbsoluteTracking.m[0][3],
-                          pTrackedDevicePose->mDeviceToAbsoluteTracking.m[1][3],
-                          pTrackedDevicePose->mDeviceToAbsoluteTracking.m[2][3],
-                          1};
+      float mat4x4[16] = {
+        pose->mDeviceToAbsoluteTracking.m[0][0],
+        pose->mDeviceToAbsoluteTracking.m[1][0],
+        pose->mDeviceToAbsoluteTracking.m[2][0],
+        0,
+        pose->mDeviceToAbsoluteTracking.m[0][1],
+        pose->mDeviceToAbsoluteTracking.m[1][1],
+        pose->mDeviceToAbsoluteTracking.m[2][1],
+        0,
+        pose->mDeviceToAbsoluteTracking.m[0][2],
+        pose->mDeviceToAbsoluteTracking.m[1][2],
+        pose->mDeviceToAbsoluteTracking.m[2][2],
+        0,
+        pose->mDeviceToAbsoluteTracking.m[0][3],
+        pose->mDeviceToAbsoluteTracking.m[1][3],
+        pose->mDeviceToAbsoluteTracking.m[2][3],
+        1
+      };
 
       graphene_matrix_init_from_float (transform, mat4x4);
 
