@@ -51,10 +51,9 @@ init_controller (ControllerState *state, int num)
         }
     }
 
-  if (state->unControllerDeviceIndex == -1)
-    {
-      return FALSE;
-    }
+  if (!state->initialized)
+    return FALSE;
+
   return TRUE;
 }
 
@@ -270,9 +269,9 @@ trigger_events (ControllerState *state, OpenVROverlay *overlay)
     0, pTrackedDevicePose,
     k_unMaxTrackedDeviceCount);
 
-  if (state->unControllerDeviceIndex == -1)
+  if (!state->initialized)
     {
-      g_print ("trigger_events() with invalid controller called!\n");
+      g_printerr ("trigger_events() with invalid controller called!\n");
       return FALSE;
     }
 
