@@ -91,8 +91,9 @@ openvr_overlay_intersect (OpenVROverlay      *overlay,
                           graphene_point3d_t *intersection_point,
                           graphene_matrix_t  *transform)
 {
+  OpenVRContext *context = openvr_context_get_instance ();
   VROverlayIntersectionParams_t params;
-  params.eOrigin = overlay->openvr_tracking_universe;
+  params.eOrigin = context->origin;
 
   graphene_vec3_t direction;
   graphene_direction_from_matrix (transform, &direction);
@@ -110,8 +111,6 @@ openvr_overlay_intersect (OpenVROverlay      *overlay,
   //        params.vSource.v[0], params.vSource.v[1], params.vSource.v[2],
   //        params.vDirection.v[0], params.vDirection.v[1],
   //        params.vDirection.v[2]);
-
-  OpenVRContext *context = openvr_context_get_instance ();
 
   struct VROverlayIntersectionResults_t results;
   gboolean intersects = context->overlay->ComputeOverlayIntersection (
@@ -224,7 +223,7 @@ openvr_overlay_plane_intersect (ControllerState    *state,
 
   TrackedDevicePose_t pTrackedDevicePose[k_unMaxTrackedDeviceCount];
   context->system->GetDeviceToAbsoluteTrackingPose (
-    overlay->openvr_tracking_universe,
+    context->origin,
     0, pTrackedDevicePose,
     k_unMaxTrackedDeviceCount);
 
@@ -265,7 +264,7 @@ trigger_events (ControllerState *state, OpenVROverlay *overlay)
   OpenVRContext *context = openvr_context_get_instance ();
 
   context->system->GetDeviceToAbsoluteTrackingPose (
-    overlay->openvr_tracking_universe,
+    context->origin,
     0, pTrackedDevicePose,
     k_unMaxTrackedDeviceCount);
 

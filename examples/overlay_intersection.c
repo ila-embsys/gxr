@@ -94,39 +94,13 @@ load_gdk_pixbuf ()
     }
 }
 
-/*
 static void
-_move_cb (OpenVROverlay *overlay, GdkEventMotion *event, gpointer data)
-{
-  // this is not working correctly, but it's working
-
-  g_print ("move: %f %f\n", event->x, event->y);
-  graphene_matrix_t m;
-  graphene_matrix_init_from_matrix(&m, &overlay->transform);
-
-  graphene_point3d_t p;
-  p.x = event->x,
-  p.y = event->y;
-  p.z = 0;
-  graphene_matrix_translate(&m, &p);
-
-  HmdMatrix34_t translation34;
-  openvr_math_graphene_to_matrix34(&m, &translation34);
-
-  int err = pointer->functions->SetOverlayTransformAbsolute (
-    pointer->overlay_handle,
-    overlay->openvr_tracking_universe,
-    &translation34);
-}
-*/
-
-static void
-_move_3d_cb (OpenVROverlay *          overlay,
+_move_3d_cb (OpenVROverlay           *overlay,
              struct _motion_event_3d *event,
              gpointer                 data)
 {
+  (void) overlay;
   (void) data;
-  ETrackingUniverseOrigin tracking_origin = overlay->openvr_tracking_universe;
   // graphene_quaternion_to_vec4(&event->orientation, &quat);
   /*
   g_print ("controller: %3.4f %3.4f %3.4f; %3.4f %3.4f %3.4f %3.4f\n",
@@ -153,7 +127,7 @@ _move_3d_cb (OpenVROverlay *          overlay,
 
   OpenVRContext *context = openvr_context_get_instance ();
   int err = context->overlay->SetOverlayTransformAbsolute (
-      pointer->overlay_handle, tracking_origin, &translation34);
+      pointer->overlay_handle, context->origin, &translation34);
   if (err != EVROverlayError_VROverlayError_None)
     {
       g_print("Failed to set overlay transform!\n");
@@ -356,8 +330,7 @@ makePointerOverlay (OpenVRVulkanUploader *uploader)
 
   OpenVROverlay *overlay = openvr_overlay_new ();
   openvr_overlay_create_width (
-      overlay, "vulkan.pointer", "Vulkan Pointer", 0.15,
-      ETrackingUniverseOrigin_TrackingUniverseStanding);
+      overlay, "vulkan.pointer", "Vulkan Pointer", 0.15);
 
   if (!openvr_overlay_is_valid (overlay))
     {
@@ -433,8 +406,7 @@ test_cat_overlay ()
                                     pixbuf);
 
   OpenVROverlay *overlay = openvr_overlay_new ();
-  openvr_overlay_create (overlay, "vulkan.cat", "Vulkan Cat",
-                         ETrackingUniverseOrigin_TrackingUniverseStanding);
+  openvr_overlay_create (overlay, "vulkan.cat", "Vulkan Cat");
 
   if (!openvr_overlay_is_valid (overlay))
     {
@@ -443,8 +415,7 @@ test_cat_overlay ()
     }
 
   OpenVROverlay *overlay2 = openvr_overlay_new ();
-  openvr_overlay_create (overlay2, "vulkan.cat2", "Another Vulkan Cat",
-                         ETrackingUniverseOrigin_TrackingUniverseStanding);
+  openvr_overlay_create (overlay2, "vulkan.cat2", "Another Vulkan Cat");
 
   if (!openvr_overlay_is_valid (overlay2))
     {

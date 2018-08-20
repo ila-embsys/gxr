@@ -162,8 +162,7 @@ test_cat_overlay ()
 
   /* create openvr overlay */
   OpenVROverlay *overlay = openvr_overlay_new ();
-  openvr_overlay_create (overlay, "examples.cairo", "Gradient",
-                         ETrackingUniverseOrigin_TrackingUniverseStanding);
+  openvr_overlay_create (overlay, "examples.cairo", "Gradient");
 
   if (!openvr_overlay_is_valid (overlay))
   {

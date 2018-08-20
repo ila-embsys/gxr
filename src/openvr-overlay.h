@@ -49,8 +49,6 @@ struct _OpenVROverlay
   VROverlayHandle_t overlay_handle;
   VROverlayHandle_t thumbnail_handle;
 
-  ETrackingUniverseOrigin openvr_tracking_universe;
-
   // describes where the overlay is displayed in VR
   // needs to be updated by the application when the overlay is moved
   graphene_matrix_t transform;
@@ -62,13 +60,11 @@ void
 openvr_overlay_create_width (OpenVROverlay *self,
                              gchar* key,
                              gchar* name,
-                             float width_meters,
-                             ETrackingUniverseOrigin openvr_tracking_universe);
+                             float width_meters);
 
 void openvr_overlay_create (OpenVROverlay *self,
                             gchar* key,
-                            gchar* name,
-                            ETrackingUniverseOrigin openvr_tracking_universe);
+                            gchar* name);
 
 void
 openvr_overlay_create_for_dashboard (OpenVROverlay *self,

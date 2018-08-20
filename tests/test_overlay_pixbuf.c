@@ -64,8 +64,7 @@ test_overlay_pixbuf ()
   OpenVROverlay *overlay = openvr_overlay_new ();
   g_assert_nonnull (overlay);
 
-  openvr_overlay_create (overlay, "test.pixbuf", "GDK pixbuf",
-                         ETrackingUniverseOrigin_TrackingUniverseStanding);
+  openvr_overlay_create (overlay, "test.pixbuf", "GDK pixbuf");
 
   g_assert (openvr_overlay_is_valid (overlay));
 

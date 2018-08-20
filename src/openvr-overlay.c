@@ -92,13 +92,11 @@ void
 openvr_overlay_create_width (OpenVROverlay *self,
                        gchar* key,
                        gchar* name,
-                       float width,
-                       ETrackingUniverseOrigin openvr_tracking_universe)
+                       float width)
 {
   OpenVRContext *context = openvr_context_get_instance ();
   struct VR_IVROverlay_FnTable *f = context->overlay;
 
-  self->openvr_tracking_universe = openvr_tracking_universe;
   EVROverlayError err = f->CreateOverlay (key, name, &self->overlay_handle);
 
   if (err != EVROverlayError_VROverlayError_None)
@@ -117,10 +115,9 @@ openvr_overlay_create_width (OpenVROverlay *self,
 void
 openvr_overlay_create (OpenVROverlay *self,
                        gchar* key,
-                       gchar* name,
-                       ETrackingUniverseOrigin openvr_tracking_universe)
+                       gchar* name)
 {
-  openvr_overlay_create_width (self, key, name, 1.5, openvr_tracking_universe);
+  openvr_overlay_create_width (self, key, name, 1.5);
 }
 
 void

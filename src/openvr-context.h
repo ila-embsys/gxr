@@ -24,6 +24,7 @@ struct _OpenVRContext
   struct VR_IVROverlay_FnTable *overlay;
   struct VR_IVRCompositor_FnTable *compositor;
   struct VR_IVRInput_FnTable *input;
+  enum ETrackingUniverseOrigin origin;
 };
 
 OpenVRContext *openvr_context_get_instance (void);

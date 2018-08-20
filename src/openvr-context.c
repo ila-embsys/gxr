@@ -114,6 +114,8 @@ _vr_init (OpenVRContext *self, EVRApplicationType app_type)
       return FALSE;
     }
 
+  self->origin = self->compositor->GetTrackingSpace();
+
   return TRUE;
 }
 

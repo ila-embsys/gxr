@@ -259,8 +259,7 @@ test_cat_overlay ()
                                     texture, pixbuf);
 
   OpenVROverlay *overlay = openvr_overlay_new ();
-  openvr_overlay_create (overlay, "vulkan.cat", "Vulkan Cat",
-                         ETrackingUniverseOrigin_TrackingUniverseStanding);
+  openvr_overlay_create (overlay, "vulkan.cat", "Vulkan Cat");
 
   if (!openvr_overlay_is_valid (overlay))
   {
@@ -269,9 +268,7 @@ test_cat_overlay ()
   }
 
   OpenVROverlay *overlay2 = openvr_overlay_new ();
-  openvr_overlay_create (overlay2, "vulkan.cat2", "Another Vulkan Cat",
-                         ETrackingUniverseOrigin_TrackingUniverseStanding
-  );
+  openvr_overlay_create (overlay2, "vulkan.cat2", "Another Vulkan Cat");
 
   if (!openvr_overlay_is_valid (overlay2))
   {
