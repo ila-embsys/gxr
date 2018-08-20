@@ -40,6 +40,7 @@ init_controller (ControllerState *state, int num)
                   state->unControllerDeviceIndex = dev_index;
                   g_print ("Controller %d: %d, skipped %d\n", num,
                            state->unControllerDeviceIndex, skipped);
+                  state->initialized = TRUE;
                   break;
                 }
               else
