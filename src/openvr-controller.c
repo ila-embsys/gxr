@@ -234,11 +234,6 @@ openvr_controller_trigger_events (OpenVRController *self,
   graphene_point3d_t overlay_position;
   graphene_point3d_init_from_vec3 (&overlay_position, &overlay_translation);
 
-  // TODO: overlay can be any orientation so this is only correct for overlays
-  // in the xy plane.
-  // implement method that translates window to origin & xy plane
-  // then these operations become trivial
-
   // the transformation matrix describes the *center* point of an overlay
   // to calculate 2D coordinates relative to overlay origin we have to shift
   gfloat overlay_width;
@@ -259,10 +254,45 @@ openvr_controller_trigger_events (OpenVRController *self,
           overlay_width, overlay_height, overlay_aspect,
           texture_width, texture_height);
   */
+
+  // if the overlay is parallel to the xy plane the position in the overlay can
+  // be easily calculated:
+  /*
   gfloat in_overlay_x = intersection_point.x - overlay_position.x
                         + overlay_width / 2.f;
   gfloat in_overlay_y = intersection_point.y - overlay_position.y
                         + overlay_height / 2.f;
+   */
+
+
+  // to calculate the position in the overlay in any orientation, we can invert
+  // the transformation matrix of the overlay. This transformation matrix would
+  // bring the center of our overlay into the origin of the coordinate system,
+  // facing us (+z), the overlay being in the xy plane (since by convention that
+  // is the neutral position for overlays)
+  //
+  // since the transformation matrix transforms every possible point on the
+  // overlay onto the same overlay as it is in the origin in the xy plane,
+  // it transforms in particular the intersection point onto its position on the
+  // overlay in the xy plane.
+  // Then we only need to shift it by half of the overlay widht/height, because
+  // the *center* of the overlay sits in the origin
+  graphene_matrix_t inverted;
+  graphene_matrix_inverse (&overlay->transform, &inverted);
+
+  graphene_point3d_t transformed_intersection;
+  graphene_matrix_transform_point3d (&inverted,
+                                     &intersection_point,
+                                     &transformed_intersection);
+  gfloat in_overlay_x = transformed_intersection.x + overlay_width / 2.f;
+  gfloat in_overlay_y = transformed_intersection.y + overlay_height / 2.f;
+  /*
+  g_print("transformed %f %f %f -> %f %f %f\n",
+          intersection_point.x, intersection_point.y, intersection_point.z,
+          in_overlay_x,
+          in_overlay_y,
+          transformed_intersection.z);
+   */
 
   // notifies the client application where in the current overlay the user is
   // pointing at
