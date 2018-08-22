@@ -1,4 +1,4 @@
-project('openvr-glib', 'c', version: '0.5.1',
+project('openvr-glib', 'c', version: '0.5.2',
   meson_version: '>= 0.42.0',
 )
 
