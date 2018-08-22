@@ -22,6 +22,12 @@ cpp = meson.get_compiler('c')
 
 ## Required
 openvr_dep = cpp.find_library('openvr_api')
+
+# For a statically linked libopenvr_api we also need to link to the
+# Standard C++ library and the implementation of dlopen()
+stdcpp_dep = cpp.find_library('stdc++')
+dl_dep = cpp.find_library('dl')
+
 m_dep = cpp.find_library('m')
 gio_dep = dependency('gio-2.0', version: '>= 2.50')
 gtk3_dep = dependency('gtk+-3.0', version: '>= 3.22')
