@@ -22,25 +22,25 @@
 
 OpenVRVulkanTexture *texture;
 
-ControllerState left;
-ControllerState right;
+OpenVRController left;
+OpenVRController right;
 
 OpenVROverlay *pointer;
 
 gboolean
 timeout_callback (gpointer data)
 {
-  OpenVROverlay *overlay = (OpenVROverlay *)data;
+  OpenVROverlay *overlay = (OpenVROverlay*) data;
 
   if (left.initialized)
-    trigger_events (&left, overlay);
+    openvr_controller_trigger_events (&left, overlay);
   else
-    init_controller (&left, 0);
+    openvr_controller_init (&left, 0);
 
   if (right.initialized)
-    trigger_events (&right, overlay);
+    openvr_controller_trigger_events (&right, overlay);
   else
-    init_controller (&right, 1);
+    openvr_controller_init (&right, 1);
 
   openvr_overlay_poll_event (overlay);
   return TRUE;
