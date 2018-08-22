@@ -9,12 +9,7 @@
 
 #include <gdk/gdk.h>
 #include "openvr-context.h"
-
-// missing from openvr_capi.h
-uint64_t ButtonMaskFromId (EVRButtonId id)
-{
-  return 1ull << id;
-}
+#include "openvr_capi_global.h"
 
 // sets openvr controller ids in the order openvr assigns them
 gboolean
