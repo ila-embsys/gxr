@@ -18,7 +18,7 @@ G_BEGIN_DECLS
 
 typedef struct ControllerState
 {
-  TrackedDeviceIndex_t unControllerDeviceIndex;
+  TrackedDeviceIndex_t index;
   gboolean             _button1_pressed;  // button 1
   gboolean             _button2_pressed;  // button 2
   gboolean             initialized;

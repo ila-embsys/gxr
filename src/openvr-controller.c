@@ -32,9 +32,9 @@ init_controller (ControllerState *state, int num)
               // skipped);
               if (skipped >= num)
                 {
-                  state->unControllerDeviceIndex = dev_index;
+                  state->index = dev_index;
                   g_print ("Controller %d: %d, skipped %d\n", num,
-                           state->unControllerDeviceIndex, skipped);
+                           state->index, skipped);
                   state->initialized = TRUE;
                   break;
                 }
@@ -217,15 +217,12 @@ openvr_overlay_plane_intersect (ControllerState    *state,
 
   OpenVRContext *context = openvr_context_get_instance ();
 
-  TrackedDevicePose_t pTrackedDevicePose[k_unMaxTrackedDeviceCount];
+  TrackedDevicePose_t pose[k_unMaxTrackedDeviceCount];
   context->system->GetDeviceToAbsoluteTrackingPose (
-    context->origin,
-    0, pTrackedDevicePose,
-    k_unMaxTrackedDeviceCount);
+    context->origin, 0, pose, k_unMaxTrackedDeviceCount);
 
   graphene_ray_t ray;
-  openvr_controller_to_ray (&pTrackedDevicePose[state->unControllerDeviceIndex],
-                            &ray);
+  openvr_controller_to_ray (&pose[state->index], &ray);
 
   float dist = graphene_ray_get_distance_to_plane (&ray, &plane);
   if (dist == INFINITY)
@@ -255,14 +252,12 @@ openvr_overlay_plane_intersect (ControllerState    *state,
 gboolean
 trigger_events (ControllerState *state, OpenVROverlay *overlay)
 {
-  TrackedDevicePose_t pTrackedDevicePose[k_unMaxTrackedDeviceCount];
+  TrackedDevicePose_t pose[k_unMaxTrackedDeviceCount];
 
   OpenVRContext *context = openvr_context_get_instance ();
 
   context->system->GetDeviceToAbsoluteTrackingPose (
-    context->origin,
-    0, pTrackedDevicePose,
-    k_unMaxTrackedDeviceCount);
+    context->origin, 0, pose, k_unMaxTrackedDeviceCount);
 
   if (!state->initialized)
     {
@@ -271,11 +266,8 @@ trigger_events (ControllerState *state, OpenVROverlay *overlay)
     }
 
   graphene_matrix_t transform;
-  if (!openvr_to_graphene_matrix (
-          &pTrackedDevicePose[state->unControllerDeviceIndex], &transform))
-    {
-      return FALSE;
-    }
+  if (!openvr_to_graphene_matrix (&pose[state->index], &transform))
+    return FALSE;
 
   // this is just a demo how to create your own event e.g. for sending
   // graphene data structures to a client application in this case it is the
@@ -312,7 +304,7 @@ trigger_events (ControllerState *state, OpenVROverlay *overlay)
 
   // GetControllerState is deprecated but simpler to use than actions
   VRControllerState_t controller_state;
-  context->system->GetControllerState (state->unControllerDeviceIndex,
+  context->system->GetControllerState (state->index,
                                       &controller_state,
                                        sizeof (controller_state));
 
@@ -332,16 +324,16 @@ trigger_events (ControllerState *state, OpenVROverlay *overlay)
   // the transformation matrix describes the *center* point of an overlay
   // to calculate 2D coordinates relative to overlay origin we have to shift
   gfloat overlay_width;
-  context->overlay->GetOverlayWidthInMeters(overlay->overlay_handle,
-                                           &overlay_width);
+  context->overlay->GetOverlayWidthInMeters (overlay->overlay_handle,
+                                            &overlay_width);
   // there is no function to get the height or aspect ratio of an overlay
   // so we need to calculate it from width + texture size
   // the texture aspect ratio should be preserved
   uint32_t texture_width;
   uint32_t texture_height;
-  context->overlay->GetOverlayTextureSize(overlay->overlay_handle,
-                                         &texture_width,
-                                         &texture_height);
+  context->overlay->GetOverlayTextureSize (overlay->overlay_handle,
+                                          &texture_width,
+                                          &texture_height);
   gfloat overlay_aspect = (float) texture_width / texture_height;
   gfloat overlay_height = overlay_width / overlay_aspect;
   /*
@@ -378,7 +370,7 @@ trigger_events (ControllerState *state, OpenVROverlay *overlay)
           g_signal_emit (overlay, overlay_signals[BUTTON_PRESS_EVENT], 0,
                          event);
           // g_print("%d: Pressed button 1\n",
-          // state->unControllerDeviceIndex);
+          // state->index);
         }
     }
   else
@@ -393,7 +385,7 @@ trigger_events (ControllerState *state, OpenVROverlay *overlay)
           g_signal_emit (overlay, overlay_signals[BUTTON_RELEASE_EVENT], 0,
                          event);
           // g_print("%d: Released button 1\n",
-          // state->unControllerDeviceIndex);
+          // state->index);
         }
     }
 
@@ -410,7 +402,7 @@ trigger_events (ControllerState *state, OpenVROverlay *overlay)
           g_signal_emit (overlay, overlay_signals[BUTTON_PRESS_EVENT], 0,
                          event);
           // g_print("%d: Pressed button 2\n",
-          // state->unControllerDeviceIndex);
+          // state->index);
         }
     }
   else
@@ -425,7 +417,7 @@ trigger_events (ControllerState *state, OpenVROverlay *overlay)
           g_signal_emit (overlay, overlay_signals[BUTTON_RELEASE_EVENT], 0,
                          event);
           // g_print("%d: Released button 2\n",
-          // state->unControllerDeviceIndex);
+          // state->index);
         }
     }
 
@@ -442,7 +434,7 @@ trigger_events (ControllerState *state, OpenVROverlay *overlay)
           g_signal_emit (overlay, overlay_signals[BUTTON_PRESS_EVENT], 0,
                          event);
           // g_print("%d: Pressed grip button\n",
-          // state->unControllerDeviceIndex);
+          // state->index);
         }
     }
   else
@@ -457,7 +449,7 @@ trigger_events (ControllerState *state, OpenVROverlay *overlay)
           g_signal_emit (overlay, overlay_signals[BUTTON_RELEASE_EVENT], 0,
                          event);
           // g_print("%d: Released grip button\n",
-          // state->unControllerDeviceIndex);
+          // state->index);
         }
     }
 
