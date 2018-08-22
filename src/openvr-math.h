@@ -10,11 +10,29 @@
 
 #include <openvr_capi.h>
 #include <graphene.h>
+#include <glib.h>
 
 void
 openvr_math_print_matrix34 (HmdMatrix34_t mat);
 
 void
 openvr_math_graphene_to_matrix34 (graphene_matrix_t *mat, HmdMatrix34_t *mat34);
+
+gboolean
+openvr_math_vec3_init_from_matrix (graphene_vec3_t   *vec,
+                                   graphene_matrix_t *matrix);
+
+gboolean
+openvr_math_direction_from_matrix_vec3 (graphene_matrix_t *matrix,
+                                        graphene_vec3_t   *start,
+                                        graphene_vec3_t   *direction);
+
+gboolean
+openvr_math_direction_from_matrix (graphene_matrix_t *matrix,
+                                   graphene_vec3_t   *direction);
+
+gboolean
+openvr_math_pose_to_matrix (TrackedDevicePose_t *pose,
+                            graphene_matrix_t   *transform);
 
 #endif /* OPENVR_GLIB_MATH_H_ */

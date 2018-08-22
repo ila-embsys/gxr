@@ -54,35 +54,6 @@ openvr_controller_init (OpenVRController *self, int num)
 }
 
 gboolean
-_graphene_direction_from_matrix_vec3 (graphene_matrix_t *matrix,
-                                      graphene_vec3_t   *start,
-                                      graphene_vec3_t   *direction)
-{
-  graphene_quaternion_t orientation;
-  graphene_quaternion_init_from_matrix (&orientation, matrix);
-
-  // construct a matrix that only contains rotation instead of
-  // rotation + translation like transform
-  graphene_matrix_t rotation_matrix;
-  graphene_matrix_init_identity (&rotation_matrix);
-  graphene_matrix_rotate_quaternion (&rotation_matrix, &orientation);
-
-  graphene_matrix_transform_vec3 (&rotation_matrix, start, direction);
-  return TRUE;
-}
-
-gboolean
-_graphene_direction_from_matrix (graphene_matrix_t *matrix,
-                                 graphene_vec3_t   *direction)
-{
-  // in openvr, the neutral forward direction is along the -z axis
-  graphene_vec3_t start;
-  graphene_vec3_init (&start, 0, 0, -1);
-
-  return _graphene_direction_from_matrix_vec3 (matrix, &start, direction);
-}
-
-gboolean
 _overlay_intersect (OpenVROverlay      *overlay,
                     graphene_point3d_t *intersection_point,
                     graphene_matrix_t  *transform)
@@ -92,7 +63,7 @@ _overlay_intersect (OpenVROverlay      *overlay,
   params.eOrigin = context->origin;
 
   graphene_vec3_t direction;
-  _graphene_direction_from_matrix (transform, &direction);
+  openvr_math_direction_from_matrix (transform, &direction);
 
   params.vSource.v[0] = graphene_matrix_get_value (transform, 3, 0);
   params.vSource.v[1] = graphene_matrix_get_value (transform, 3, 1);
@@ -118,75 +89,21 @@ _overlay_intersect (OpenVROverlay      *overlay,
   return intersects;
 }
 
-// translation vector
-gboolean
-_graphene_vec3_init_from_matrix (graphene_vec3_t   *vec,
-                                 graphene_matrix_t *matrix)
-{
-  graphene_vec3_init (vec,
-                      graphene_matrix_get_value (matrix, 3, 0),
-                      graphene_matrix_get_value (matrix, 3, 1),
-                      graphene_matrix_get_value (matrix, 3, 2));
-  return TRUE;
-}
-
-gboolean
-_openvr_to_graphene_matrix (TrackedDevicePose_t *pose,
-                            graphene_matrix_t   *transform)
-{
-  if (pose->eTrackingResult != ETrackingResult_TrackingResult_Running_OK)
-    {
-      // g_print("Tracking result: Not running ok: %d!\n",
-      //  pose->eTrackingResult);
-      return FALSE;
-    }
-  else if (pose->bPoseIsValid)
-    {
-      float mat4x4[16] = {
-        pose->mDeviceToAbsoluteTracking.m[0][0],
-        pose->mDeviceToAbsoluteTracking.m[1][0],
-        pose->mDeviceToAbsoluteTracking.m[2][0],
-        0,
-        pose->mDeviceToAbsoluteTracking.m[0][1],
-        pose->mDeviceToAbsoluteTracking.m[1][1],
-        pose->mDeviceToAbsoluteTracking.m[2][1],
-        0,
-        pose->mDeviceToAbsoluteTracking.m[0][2],
-        pose->mDeviceToAbsoluteTracking.m[1][2],
-        pose->mDeviceToAbsoluteTracking.m[2][2],
-        0,
-        pose->mDeviceToAbsoluteTracking.m[0][3],
-        pose->mDeviceToAbsoluteTracking.m[1][3],
-        pose->mDeviceToAbsoluteTracking.m[2][3],
-        1
-      };
-
-      graphene_matrix_init_from_float (transform, mat4x4);
-
-      return TRUE;
-    }
-  else
-    {
-      // g_print("controller: Pose invalid\n");
-      return FALSE;
-    }
-}
-
 gboolean
 _controller_to_ray (TrackedDevicePose_t *pose, graphene_ray_t *ray)
 {
   graphene_matrix_t transform;
-  if (!_openvr_to_graphene_matrix (pose, &transform))
+  if (!openvr_math_pose_to_matrix (pose, &transform))
     {
       return FALSE;
     }
 
   // now rotate it with the window orientation
   graphene_vec3_t direction;
-  _graphene_direction_from_matrix (&transform, &direction);
+  openvr_math_direction_from_matrix (&transform, &direction);
 
   graphene_vec3_t translation;
-  _graphene_vec3_init_from_matrix (&translation, &transform);
+  openvr_math_vec3_init_from_matrix (&translation, &transform);
 
   graphene_ray_init_from_vec3 (ray, &translation, &direction);
   return TRUE;
@@ -201,7 +118,7 @@ openvr_controller_intersect_overlay (OpenVRController   *self,
   float epsilon = 0.00001;
 
   graphene_vec3_t overlay_translation;
-  _graphene_vec3_init_from_matrix (&overlay_translation, &overlay->transform);
+  openvr_math_vec3_init_from_matrix (&overlay_translation, &overlay->transform);
   graphene_point3d_t overlay_origin;
   graphene_point3d_init_from_vec3 (&overlay_origin, &overlay_translation);
 
@@ -209,8 +126,8 @@ openvr_controller_intersect_overlay (OpenVRController   *self,
   graphene_vec3_t overlay_normal;
   graphene_vec3_init (&overlay_normal, 0, 0, 1);
   // now rotate the normal with the current overlay orientation
-  _graphene_direction_from_matrix_vec3 (&overlay->transform, &overlay_normal,
-                                        &overlay_normal);
+  openvr_math_direction_from_matrix_vec3 (&overlay->transform, &overlay_normal,
+                                          &overlay_normal);
 
   graphene_plane_t plane;
   graphene_plane_init_from_point (&plane, &overlay_normal, &overlay_origin);
@@ -267,7 +184,7 @@ openvr_controller_trigger_events (OpenVRController *self,
     }
 
   graphene_matrix_t transform;
-  if (!_openvr_to_graphene_matrix (&pose[self->index], &transform))
+  if (!openvr_math_pose_to_matrix (&pose[self->index], &transform))
     return FALSE;
 
   // this is just a demo how to create your own event e.g. for sending
@@ -313,7 +230,7 @@ openvr_controller_trigger_events (OpenVRController *self,
   // intersection point in the VR space can be used to calculate the position
   // of the intersection point relative to the overlay
   graphene_vec3_t overlay_translation;
-  _graphene_vec3_init_from_matrix (&overlay_translation, &overlay->transform);
+  openvr_math_vec3_init_from_matrix (&overlay_translation, &overlay->transform);
   graphene_point3d_t overlay_position;
   graphene_point3d_init_from_vec3 (&overlay_position, &overlay_translation);
 
