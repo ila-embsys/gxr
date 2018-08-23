@@ -286,9 +286,17 @@ makePointerOverlay (OpenVRVulkanUploader *uploader)
 #define X TRUE,
 #define _ FALSE,
   gboolean pointerSrc[10 * 10] = {
-      X X _ _ _ _ _ _ _ _ _ X X X _ _ _ _ _ _ _ X X X X X _ _ _ _ _ _ X X X X X
-          X _ _ _ _ X X X X X X X X _ _ _ X X X X X _ _ _ _ _ X X _ X X X _ _ _
-              _ _ _ _ X X X _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ FALSE};
+      X X _ _ _ _ _ _ _ _
+      _ X X X _ _ _ _ _ _
+      _ X X X X X _ _ _ _
+      _ _ X X X X X X _ _
+      _ _ X X X X X X X X
+      _ _ _ X X X X X _ _
+      _ _ _ X X _ X X X _
+      _ _ _ _ _ _ X X X _
+      _ _ _ _ _ _ _ _ _ _
+      _ _ _ _ _ _ _ _ _ _
+  };
 #undef X
 #undef _
   int rows = 10;
