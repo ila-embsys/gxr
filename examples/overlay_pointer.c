@@ -28,7 +28,7 @@ OpenVRController right;
 OpenVROverlay *pointer;
 
 gboolean
-timeout_callback (gpointer data)
+_overlay_event_cb (gpointer data)
 {
   OpenVROverlay *overlay = (OpenVROverlay*) data;
 
@@ -44,30 +44,6 @@ timeout_callback (gpointer data)
 
   openvr_overlay_poll_event (overlay);
   return TRUE;
-}
-
-void
-print_pixbuf_info (GdkPixbuf *pixbuf)
-{
-  gint n_channels = gdk_pixbuf_get_n_channels (pixbuf);
-
-  GdkColorspace colorspace = gdk_pixbuf_get_colorspace (pixbuf);
-
-  gint     bits_per_sample = gdk_pixbuf_get_bits_per_sample (pixbuf);
-  gboolean has_alpha = gdk_pixbuf_get_has_alpha (pixbuf);
-
-  gint width = gdk_pixbuf_get_width (pixbuf);
-  gint height = gdk_pixbuf_get_height (pixbuf);
-
-  gint rowstride = gdk_pixbuf_get_rowstride (pixbuf);
-
-  g_print ("We loaded a pixbuf.\n");
-  g_print ("channels %d\n", n_channels);
-  g_print ("colorspace %d\n", colorspace);
-  g_print ("bits_per_sample %d\n", bits_per_sample);
-  g_print ("has_alpha %d\n", has_alpha);
-  g_print ("pixel dimensions %dx%d\n", width, height);
-  g_print ("rowstride %d\n", rowstride);
 }
 
 GdkPixbuf *
@@ -101,17 +77,8 @@ _move_3d_cb (OpenVROverlay           *overlay,
 {
   (void) overlay;
   (void) data;
-  // graphene_quaternion_to_vec4(&event->orientation, &quat);
+
   /*
-  g_print ("controller: %3.4f %3.4f %3.4f; %3.4f %3.4f %3.4f %3.4f\n",
-           graphene_vec3_get_x(&event->pos),
-           graphene_vec3_get_y(&event->pos),
-           graphene_vec3_get_z(&event->pos),
-           graphene_vec4_get_x(&quat),
-           graphene_vec4_get_y(&quat),
-           graphene_vec4_get_z(&quat),
-           graphene_vec4_get_w(&quat));
-  */
   HmdMatrix34_t translation34;
   openvr_math_graphene_to_matrix34 (&event->transform, &translation34);
 
@@ -132,6 +99,8 @@ _move_3d_cb (OpenVROverlay           *overlay,
     {
       g_print("Failed to set overlay transform!\n");
     }
+  */
+  openvr_overlay_set_transform_absolute (pointer, &event->transform);
 
   // TODO: because this is a custom event with a struct that has been allocated
   // specifically for us, we need to free it. Maybe reuse?
@@ -166,118 +135,12 @@ _release_cb (OpenVROverlay *overlay, GdkEventButton *event, gpointer data)
 }
 
 static void
-_show_cb (OpenVROverlay *overlay, gpointer data)
-{
-  g_print ("show\n");
-
-  /* skip rendering if the overlay isn't available or visible */
-  gboolean is_invisible = !openvr_overlay_is_visible (overlay) &&
-                          !openvr_overlay_thumbnail_is_visible (overlay);
-
-  if (!openvr_overlay_is_valid (overlay) || is_invisible)
-    return;
-
-  OpenVRVulkanUploader *uploader = (OpenVRVulkanUploader *)data;
-
-  openvr_vulkan_uploader_submit_frame (uploader, overlay, texture);
-}
-
-static void
 _destroy_cb (OpenVROverlay *overlay, gpointer data)
 {
   (void) overlay;
   g_print ("destroy\n");
   GMainLoop *loop = (GMainLoop *)data;
   g_main_loop_quit (loop);
-}
-
-void
-show_overlay_info (OpenVROverlay *overlay)
-{
-  struct HmdVector2_t center;
-  float               radius;
-  EDualAnalogWhich    which = EDualAnalogWhich_k_EDualAnalog_Left;
-
-  OpenVRContext *context = openvr_context_get_instance ();
-  struct VR_IVROverlay_FnTable *f = context->overlay;
-
-  EVROverlayError err = f->GetOverlayDualAnalogTransform (
-      overlay->overlay_handle, which, &center, &radius);
-
-  if (err != EVROverlayError_VROverlayError_None)
-    {
-      g_printerr ("Could not GetOverlayDualAnalogTransform: %s\n",
-                  f->GetOverlayErrorNameFromEnum (err));
-    }
-
-  g_print ("Center [%f, %f] Radius %f\n", center.v[0], center.v[1], radius);
-
-  VROverlayTransformType transform_type;
-  err = f->GetOverlayTransformType (overlay->overlay_handle, &transform_type);
-
-  switch (transform_type)
-    {
-    case VROverlayTransformType_VROverlayTransform_Absolute:
-      g_print ("VROverlayTransform_Absolute\n");
-      break;
-    case VROverlayTransformType_VROverlayTransform_TrackedDeviceRelative:
-      g_print ("VROverlayTransform_TrackedDeviceRelative\n");
-      break;
-    case VROverlayTransformType_VROverlayTransform_SystemOverlay:
-      g_print ("VROverlayTransform_SystemOverlay\n");
-      break;
-    case VROverlayTransformType_VROverlayTransform_TrackedComponent:
-      g_print ("VROverlayTransform_TrackedComponent\n");
-      break;
-    }
-
-  bool anti_alias = false;
-
-  err = f->GetOverlayFlag (overlay->overlay_handle,
-                           VROverlayFlags_RGSS4X, &anti_alias);
-
-  g_print ("VROverlayFlags_RGSS4X: %d\n", anti_alias);
-
-  TrackingUniverseOrigin tracking_origin;
-  HmdMatrix34_t          transform;
-
-  err = f->GetOverlayTransformAbsolute (
-    overlay->overlay_handle, &tracking_origin, &transform);
-
-  switch (tracking_origin)
-    {
-    case ETrackingUniverseOrigin_TrackingUniverseSeated:
-      g_print ("ETrackingUniverseOrigin_TrackingUniverseSeated\n");
-      break;
-    case ETrackingUniverseOrigin_TrackingUniverseStanding:
-      g_print ("ETrackingUniverseOrigin_TrackingUniverseStanding\n");
-      break;
-    case ETrackingUniverseOrigin_TrackingUniverseRawAndUncalibrated:
-      g_print ("ETrackingUniverseOrigin_TrackingUniverseRawAndUncalibrated\n");
-      break;
-    }
-
-  openvr_math_print_matrix34 (transform);
-
-  graphene_point3d_t translation_vec;
-  graphene_point3d_init (&translation_vec, -1.3f, 1.5f, -2.7f);
-
-  graphene_matrix_t translation;
-  graphene_matrix_init_translate (&translation, &translation_vec);
-
-  graphene_matrix_rotate_y (&translation, -45.4f);
-
-  graphene_matrix_print (&translation);
-
-  HmdMatrix34_t translation34;
-  openvr_math_graphene_to_matrix34 (&translation, &translation34);
-
-  openvr_math_print_matrix34 (translation34);
-
-  err = f->SetOverlayTransformAbsolute (
-    overlay->overlay_handle, tracking_origin, &translation34);
-
-  graphene_matrix_init_from_matrix (&overlay->transform, &translation);
 }
 
 OpenVROverlay *
@@ -294,7 +157,7 @@ _init_pointer_overlay (OpenVRVulkanUploader *uploader)
   g_object_unref (pixbuf);
 
   OpenVROverlay *overlay = openvr_overlay_new ();
-  openvr_overlay_create_width (overlay, "pointer", "Pointer", 0.15);
+  openvr_overlay_create_width (overlay, "pointer", "Pointer", 0.1f);
 
   if (!openvr_overlay_is_valid (overlay))
     {
@@ -328,9 +191,6 @@ _init_pointer_overlay (OpenVRVulkanUploader *uploader)
 
   g_print ("GetOverlayRenderModel returned id %d\n", id);
   g_print ("GetOverlayRenderModel name %s\n", name_ret);
-
-  if (!openvr_overlay_set_width_meters (overlay, 0.1f))
-    return NULL;
 
   if (!openvr_overlay_set_alpha (overlay, 0.0f))
     return NULL;
@@ -372,8 +232,6 @@ test_cat_overlay ()
   GMainLoop *loop;
 
   GdkPixbuf *pixbuf = load_gdk_pixbuf ();
-  print_pixbuf_info (pixbuf);
-
   if (pixbuf == NULL)
     return -1;
 
@@ -422,8 +280,6 @@ test_cat_overlay ()
 
   pointer = _init_pointer_overlay (uploader);
 
-  show_overlay_info (overlay);
-
   openvr_vulkan_uploader_submit_frame (uploader, overlay, texture);
   openvr_vulkan_uploader_submit_frame (uploader, overlay2, texture);
 
@@ -435,10 +291,9 @@ test_cat_overlay ()
   g_signal_connect (overlay, "scroll-event", (GCallback)_scroll_cb, loop);
   g_signal_connect (overlay, "button-release-event", (GCallback)_release_cb,
                     NULL);
-  g_signal_connect (overlay, "show", (GCallback)_show_cb, uploader);
   g_signal_connect (overlay, "destroy", (GCallback)_destroy_cb, loop);
 
-  g_timeout_add (20, timeout_callback, overlay);
+  g_timeout_add (20, _overlay_event_cb, overlay);
 
   /* start glib main loop */
   g_main_loop_run (loop);
