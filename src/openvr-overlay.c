@@ -168,6 +168,26 @@ openvr_overlay_show (OpenVROverlay *self)
 }
 
 gboolean
+openvr_overlay_hide (OpenVROverlay *self)
+{
+  GET_OVERLAY_FUNCTIONS
+
+  err = f->HideOverlay (self->overlay_handle);
+
+  OVERLAY_CHECK_ERROR ("HideOverlay", err);
+  return TRUE;
+}
+
+gboolean
+openvr_overlay_set_visibility (OpenVROverlay *self, gboolean visibility)
+{
+  if (visibility)
+    return openvr_overlay_show (self);
+  else
+    return openvr_overlay_hide (self);
+}
+
+gboolean
 openvr_overlay_is_visible (OpenVROverlay *self)
 {
   OpenVRContext *context = openvr_context_get_instance ();

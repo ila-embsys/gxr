@@ -88,7 +88,13 @@ gboolean
 openvr_overlay_thumbnail_is_visible (OpenVROverlay *self);
 
 gboolean
+openvr_overlay_set_visibility (OpenVROverlay *self, gboolean visibility);
+
+gboolean
 openvr_overlay_show (OpenVROverlay *self);
+
+gboolean
+openvr_overlay_hide (OpenVROverlay *self);
 
 gboolean
 openvr_overlay_set_model (OpenVROverlay *self, gchar *name,
