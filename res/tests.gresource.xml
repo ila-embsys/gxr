@@ -2,5 +2,6 @@
 <gresources>
   <gresource prefix="/res">
     <file>cat.jpg</file>
+    <file>crosshair.png</file>
   </gresource>
 </gresources>

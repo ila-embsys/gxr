@@ -44,10 +44,10 @@ _overlay_event_cb (gpointer data)
 }
 
 GdkPixbuf *
-load_gdk_pixbuf ()
+load_gdk_pixbuf (const gchar* name)
 {
   GError * error = NULL;
-  GdkPixbuf *pixbuf_rgb = gdk_pixbuf_new_from_resource ("/res/cat.jpg", &error);
+  GdkPixbuf *pixbuf_rgb = gdk_pixbuf_new_from_resource (name, &error);
 
   if (error != NULL)
     {
@@ -132,7 +132,7 @@ _destroy_cb (OpenVROverlay *overlay, gpointer data)
 OpenVROverlay *
 _init_pointer_overlay (OpenVRVulkanUploader *uploader)
 {
-  GdkPixbuf *pixbuf = load_gdk_pixbuf ();
+  GdkPixbuf *pixbuf = load_gdk_pixbuf ("/res/cat.jpg");
   if (pixbuf == NULL)
     return NULL;
 
@@ -215,7 +215,7 @@ _init_openvr ()
 gboolean
 _init_cat_overlay (OpenVRVulkanUploader *uploader, GMainLoop *loop)
 {
-  GdkPixbuf *pixbuf = load_gdk_pixbuf ();
+  GdkPixbuf *pixbuf = load_gdk_pixbuf ("/res/cat.jpg");
   if (pixbuf == NULL)
     return -1;
 
@@ -259,56 +259,14 @@ _init_cat_overlay (OpenVRVulkanUploader *uploader, GMainLoop *loop)
 gboolean
 _init_intersection_overlay (OpenVRVulkanUploader *uploader)
 {
-#define X TRUE,
-#define _ FALSE,
-  gboolean cursor[10 * 10] = {
-      X X _ _ _ _ _ _ _ _
-      _ X X X _ _ _ _ _ _
-      _ X X X X X _ _ _ _
-      _ _ X X X X X X _ _
-      _ _ X X X X X X X X
-      _ _ _ X X X X X _ _
-      _ _ _ X X _ X X X _
-      _ _ _ _ _ _ X X X _
-      _ _ _ _ _ _ _ _ _ _
-      _ _ _ _ _ _ _ _ _ _
-  };
-#undef X
-#undef _
-  int rows = 10;
-  int cols = 10;
-
-  guchar data[rows * cols * 4];
-  memset (data, 0, rows * cols * 4 * sizeof (guchar));
-
-  for (int row = 0; row < rows; row++)
-    {
-      for (int col = 0; col < cols; col++)
-        {
-          int r = (row * cols + col) * 4;
-          int g = r + 1;
-          int b = r + 2;
-          int a = r + 3;
-          if (cursor[row * cols + col])
-            {
-              data[r] = 255;
-              data[g] = 0;
-              data[b] = 0;
-              data[a] = 255;
-            }
-        }
-    }
-
-  GdkPixbuf *pixbuf = gdk_pixbuf_new_from_data (data, GDK_COLORSPACE_RGB,
-                                                TRUE, 8, cols, rows, 4 * cols,
-                                                NULL, NULL);
-
+  GdkPixbuf *pixbuf = load_gdk_pixbuf ("/res/crosshair.png");
   if (pixbuf == NULL)
     return FALSE;
 
   OpenVRVulkanTexture *intersection_texture = openvr_vulkan_texture_new ();
   openvr_vulkan_client_load_pixbuf (OPENVR_VULKAN_CLIENT (uploader),
                                     intersection_texture, pixbuf);
+  g_object_unref (pixbuf);
 
   intersection = openvr_overlay_new ();
   openvr_overlay_create_width (intersection, "pointer.intersection",
