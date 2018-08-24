@@ -61,6 +61,17 @@ load_gdk_pixbuf ()
   return pixbuf;
 }
 
+void
+_update_intersection_position (OpenVROverlay *overlay,
+                               struct _motion_event_3d *event)
+{
+  graphene_matrix_t transform;
+  graphene_matrix_init_from_matrix (&transform, &event->transform);
+  openvr_math_matrix_set_translation (&transform, &event->intersection_point);
+  openvr_overlay_set_transform_absolute (overlay, &transform);
+  openvr_overlay_show (overlay);
+}
+
 static void
 _move_3d_cb (OpenVROverlay           *overlay,
              struct _motion_event_3d *event,
@@ -69,31 +80,11 @@ _move_3d_cb (OpenVROverlay           *overlay,
   (void) overlay;
   (void) data;
 
-  HmdMatrix34_t translation34;
-  openvr_math_graphene_to_matrix34 (&event->transform, &translation34);
-
   // if we have an intersection point, move the pointer overlay there
   if (event->has_intersection)
-    {
-      translation34.m[0][3] = event->intersection_point.x;
-      translation34.m[1][3] = event->intersection_point.y;
-      translation34.m[2][3] = event->intersection_point.z;
-      // g_print("%f %f %f\n", translation34.m[0][3], translation34.m[1][3],
-      // translation34.m[2][3]);
-      //
-      OpenVRContext *context = openvr_context_get_instance ();
-      int err = context->overlay->SetOverlayTransformAbsolute (
-          intersection->overlay_handle, context->origin, &translation34);
-
-      if (err != EVROverlayError_VROverlayError_None)
-        g_printerr ("Failed to set overlay transform!\n");
-      //
-      openvr_overlay_show (intersection);
-    }
+    _update_intersection_position (intersection, event);
   else
-    {
-      openvr_overlay_hide (intersection);
-    }
+    openvr_overlay_hide (intersection);
 
   openvr_overlay_set_transform_absolute (pointer, &event->transform);
 
