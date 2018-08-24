@@ -91,6 +91,7 @@ _init_function_tables (OpenVRContext *self)
   INIT_FN_TABLE (self->overlay, Overlay);
   INIT_FN_TABLE (self->compositor, Compositor);
   INIT_FN_TABLE (self->input, Input);
+  INIT_FN_TABLE (self->model, RenderModels);
   return true;
 }
 
@@ -131,7 +132,8 @@ openvr_context_is_valid (OpenVRContext * self)
   return self->system != NULL
     && self->overlay != NULL
     && self->compositor != NULL
-    && self->input != NULL;
+    && self->input != NULL
+    && self->model != NULL;
 }
 
 gboolean
@@ -146,3 +148,18 @@ openvr_context_is_hmd_present (void)
   return VR_IsHmdPresent ();
 }
 
+void
+openvr_context_list_models (OpenVRContext *self)
+{
+  struct VR_IVRRenderModels_FnTable *f = self->model;
+
+  uint32_t model_count = f->GetRenderModelCount ();
+  char name[k_unMaxPropertyStringSize];
+
+  g_print ("You have %d render models:\n", model_count);
+  for (uint32_t i = 0; i < model_count; i++)
+    {
+      uint32_t ret = f->GetRenderModelName (i, name,k_unMaxPropertyStringSize);
+      g_print ("\t%d: %s\n", ret, name);
+    }
+}

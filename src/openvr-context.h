@@ -24,6 +24,7 @@ struct _OpenVRContext
   struct VR_IVROverlay_FnTable *overlay;
   struct VR_IVRCompositor_FnTable *compositor;
   struct VR_IVRInput_FnTable *input;
+  struct VR_IVRRenderModels_FnTable *model;
   enum ETrackingUniverseOrigin origin;
 };
 
@@ -40,6 +41,9 @@ openvr_context_is_installed (void);
 
 gboolean
 openvr_context_is_hmd_present (void);
+
+void
+openvr_context_list_models (OpenVRContext *self);
 
 G_END_DECLS
 
