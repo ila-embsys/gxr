@@ -20,27 +20,24 @@
 #include "openvr-overlay.h"
 #include "openvr-vulkan-uploader.h"
 
+
+#define NUM_CONTROLLERS 2
+
 OpenVRVulkanTexture *texture;
 
-OpenVRController left;
-OpenVRController right;
+OpenVRController controllers[NUM_CONTROLLERS];
 
 OpenVROverlay *pointer;
+OpenVROverlay *intersection;
+OpenVROverlay *cat;
 
 gboolean
 _overlay_event_cb (gpointer data)
 {
   OpenVROverlay *overlay = (OpenVROverlay*) data;
 
-  if (left.initialized)
-    openvr_controller_trigger_events (&left, overlay);
-  else
-    openvr_controller_init (&left, 0);
-
-  if (right.initialized)
-    openvr_controller_trigger_events (&right, overlay);
-  else
-    openvr_controller_init (&right, 1);
+  for (int i = 0; i < NUM_CONTROLLERS; i++)
+    openvr_controller_trigger_events (&controllers[i], overlay);
 
   openvr_overlay_poll_event (overlay);
   return TRUE;
@@ -49,9 +46,8 @@ _overlay_event_cb (gpointer data)
 GdkPixbuf *
 load_gdk_pixbuf ()
 {
-  GError *   error = NULL;
-  GdkPixbuf *pixbuf_unflipped =
-      gdk_pixbuf_new_from_resource ("/res/cat.jpg", &error);
+  GError * error = NULL;
+  GdkPixbuf *pixbuf_rgb = gdk_pixbuf_new_from_resource ("/res/cat.jpg", &error);
 
   if (error != NULL)
     {
@@ -59,15 +55,10 @@ load_gdk_pixbuf ()
       g_error_free (error);
       return NULL;
     }
-  else
-    {
-      // GdkPixbuf * pixbuf = gdk_pixbuf_flip (pixbuf_unflipped, FALSE);
-      GdkPixbuf *pixbuf =
-          gdk_pixbuf_add_alpha (pixbuf_unflipped, false, 0, 0, 0);
-      g_object_unref (pixbuf_unflipped);
-      // g_object_unref (pixbuf);
-      return pixbuf;
-    }
+
+  GdkPixbuf *pixbuf = gdk_pixbuf_add_alpha (pixbuf_rgb, false, 0, 0, 0);
+  g_object_unref (pixbuf_rgb);
+  return pixbuf;
 }
 
 static void
@@ -78,7 +69,6 @@ _move_3d_cb (OpenVROverlay           *overlay,
   (void) overlay;
   (void) data;
 
-  /*
   HmdMatrix34_t translation34;
   openvr_math_graphene_to_matrix34 (&event->transform, &translation34);
 
@@ -90,16 +80,21 @@ _move_3d_cb (OpenVROverlay           *overlay,
       translation34.m[2][3] = event->intersection_point.z;
       // g_print("%f %f %f\n", translation34.m[0][3], translation34.m[1][3],
       // translation34.m[2][3]);
+      //
+      OpenVRContext *context = openvr_context_get_instance ();
+      int err = context->overlay->SetOverlayTransformAbsolute (
+          intersection->overlay_handle, context->origin, &translation34);
+
+      if (err != EVROverlayError_VROverlayError_None)
+        g_printerr ("Failed to set overlay transform!\n");
+      //
+      openvr_overlay_show (intersection);
+    }
+  else
+    {
+      openvr_overlay_hide (intersection);
     }
 
-  OpenVRContext *context = openvr_context_get_instance ();
-  int err = context->overlay->SetOverlayTransformAbsolute (
-      pointer->overlay_handle, context->origin, &translation34);
-  if (err != EVROverlayError_VROverlayError_None)
-    {
-      g_print("Failed to set overlay transform!\n");
-    }
-  */
   openvr_overlay_set_transform_absolute (pointer, &event->transform);
 
   // TODO: because this is a custom event with a struct that has been allocated
@@ -226,16 +221,124 @@ _init_openvr ()
   return true;
 }
 
-int
-test_cat_overlay ()
+gboolean
+_init_cat_overlay (OpenVRVulkanUploader *uploader, GMainLoop *loop)
 {
-  GMainLoop *loop;
-
   GdkPixbuf *pixbuf = load_gdk_pixbuf ();
   if (pixbuf == NULL)
     return -1;
 
-  loop = g_main_loop_new (NULL, FALSE);
+  cat = openvr_overlay_new ();
+  openvr_overlay_create (cat, "vulkan.cat", "Vulkan Cat");
+
+  if (!openvr_overlay_is_valid (cat))
+    {
+      fprintf (stderr, "Overlay unavailable.\n");
+      return -1;
+    }
+
+  openvr_overlay_set_mouse_scale (cat,
+                                  (float) gdk_pixbuf_get_width (pixbuf),
+                                  (float) gdk_pixbuf_get_height (pixbuf));
+
+  if (!openvr_overlay_show (cat))
+    return -1;
+
+  texture = openvr_vulkan_texture_new ();
+
+  openvr_vulkan_client_load_pixbuf (OPENVR_VULKAN_CLIENT (uploader), texture,
+                                    pixbuf);
+
+  g_object_unref (pixbuf);
+
+  openvr_vulkan_uploader_submit_frame (uploader, cat, texture);
+
+  /* connect glib callbacks */
+  g_signal_connect (cat, "motion-notify-event-3d", (GCallback)_move_3d_cb,
+                    NULL);
+  g_signal_connect (cat, "button-press-event", (GCallback)_press_cb, loop);
+  g_signal_connect (cat, "scroll-event", (GCallback)_scroll_cb, loop);
+  g_signal_connect (cat, "button-release-event", (GCallback)_release_cb,
+                    NULL);
+  g_signal_connect (cat, "destroy", (GCallback)_destroy_cb, loop);
+
+  return TRUE;
+}
+
+gboolean
+_init_intersection_overlay (OpenVRVulkanUploader *uploader)
+{
+#define X TRUE,
+#define _ FALSE,
+  gboolean cursor[10 * 10] = {
+      X X _ _ _ _ _ _ _ _
+      _ X X X _ _ _ _ _ _
+      _ X X X X X _ _ _ _
+      _ _ X X X X X X _ _
+      _ _ X X X X X X X X
+      _ _ _ X X X X X _ _
+      _ _ _ X X _ X X X _
+      _ _ _ _ _ _ X X X _
+      _ _ _ _ _ _ _ _ _ _
+      _ _ _ _ _ _ _ _ _ _
+  };
+#undef X
+#undef _
+  int rows = 10;
+  int cols = 10;
+
+  guchar data[rows * cols * 4];
+  memset (data, 0, rows * cols * 4 * sizeof (guchar));
+
+  for (int row = 0; row < rows; row++)
+    {
+      for (int col = 0; col < cols; col++)
+        {
+          int r = (row * cols + col) * 4;
+          int g = r + 1;
+          int b = r + 2;
+          int a = r + 3;
+          if (cursor[row * cols + col])
+            {
+              data[r] = 255;
+              data[g] = 0;
+              data[b] = 0;
+              data[a] = 255;
+            }
+        }
+    }
+
+  GdkPixbuf *pixbuf = gdk_pixbuf_new_from_data (data, GDK_COLORSPACE_RGB,
+                                                TRUE, 8, cols, rows, 4 * cols,
+                                                NULL, NULL);
+
+  if (pixbuf == NULL)
+    return FALSE;
+
+  OpenVRVulkanTexture *intersection_texture = openvr_vulkan_texture_new ();
+  openvr_vulkan_client_load_pixbuf (OPENVR_VULKAN_CLIENT (uploader),
+                                    intersection_texture, pixbuf);
+
+  intersection = openvr_overlay_new ();
+  openvr_overlay_create_width (intersection, "pointer.intersection",
+                               "Interection", 0.15);
+
+  if (!openvr_overlay_is_valid (intersection))
+    {
+      g_printerr ("Overlay unavailable.\n");
+      return FALSE;
+    }
+
+  openvr_vulkan_uploader_submit_frame (uploader,
+                                       intersection, intersection_texture);
+
+  return TRUE;
+}
+
+int
+main ()
+{
+  GMainLoop *loop = g_main_loop_new (NULL, FALSE);
 
   /* init openvr */
   if (!_init_openvr ())
@@ -248,52 +351,18 @@ test_cat_overlay ()
       return false;
     }
 
-  texture = openvr_vulkan_texture_new ();
-
-  openvr_vulkan_client_load_pixbuf (OPENVR_VULKAN_CLIENT (uploader), texture,
-                                    pixbuf);
-
-  OpenVROverlay *overlay = openvr_overlay_new ();
-  openvr_overlay_create (overlay, "vulkan.cat", "Vulkan Cat");
-
-  if (!openvr_overlay_is_valid (overlay))
-    {
-      fprintf (stderr, "Overlay unavailable.\n");
-      return -1;
-    }
-
-  OpenVROverlay *overlay2 = openvr_overlay_new ();
-  openvr_overlay_create (overlay2, "vulkan.cat2", "Another Vulkan Cat");
-
-  if (!openvr_overlay_is_valid (overlay2))
-    {
-      fprintf (stderr, "Overlay 2 unavailable.\n");
-      return -1;
-    }
-
-  openvr_overlay_set_mouse_scale (overlay,
-                                  (float)gdk_pixbuf_get_width (pixbuf),
-                                  (float)gdk_pixbuf_get_height (pixbuf));
-
-  if (!openvr_overlay_show (overlay))
-    return -1;
-
   pointer = _init_pointer_overlay (uploader);
 
-  openvr_vulkan_uploader_submit_frame (uploader, overlay, texture);
-  openvr_vulkan_uploader_submit_frame (uploader, overlay2, texture);
+  if (!_init_intersection_overlay (uploader))
+    return -1;
 
-  /* connect glib callbacks */
-  // g_signal_connect (overlay, "motion-notify-event", (GCallback)_move_cb, NULL);
-  g_signal_connect (overlay, "motion-notify-event-3d", (GCallback)_move_3d_cb,
-                    NULL);
-  g_signal_connect (overlay, "button-press-event", (GCallback)_press_cb, loop);
-  g_signal_connect (overlay, "scroll-event", (GCallback)_scroll_cb, loop);
-  g_signal_connect (overlay, "button-release-event", (GCallback)_release_cb,
-                    NULL);
-  g_signal_connect (overlay, "destroy", (GCallback)_destroy_cb, loop);
+  if (!_init_cat_overlay (uploader, loop))
+    return -1;
 
-  g_timeout_add (20, _overlay_event_cb, overlay);
+  for (int i = 0; i < NUM_CONTROLLERS; i++)
+    openvr_controller_init (&controllers[i], 0);
+
+  g_timeout_add (20, _overlay_event_cb, cat);
 
   /* start glib main loop */
   g_main_loop_run (loop);
@@ -301,8 +370,9 @@ test_cat_overlay ()
 
   g_print ("bye\n");
 
-  g_object_unref (overlay);
-  g_object_unref (pixbuf);
+  g_object_unref (cat);
+  g_object_unref (pointer);
+  g_object_unref (intersection);
   g_object_unref (texture);
   g_object_unref (uploader);
 
@@ -310,12 +380,4 @@ test_cat_overlay ()
   g_object_unref (context);
 
   return 0;
-}
-
-int
-main ()
-{
-  left.initialized = FALSE;
-  right.initialized = FALSE;
-  return test_cat_overlay ();
 }
