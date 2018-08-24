@@ -16,6 +16,7 @@
 #include "openvr_capi_global.h"
 
 #include "openvr-time.h"
+#include "openvr-math.h"
 
 G_DEFINE_TYPE (OpenVROverlay, openvr_overlay, G_TYPE_OBJECT)
 
@@ -355,5 +356,21 @@ openvr_overlay_set_width_meters (OpenVROverlay *self, float meters)
   err = f->SetOverlayWidthInMeters (self->overlay_handle, meters);
 
   OVERLAY_CHECK_ERROR ("SetOverlayWidthInMeters", err);
+  return TRUE;
+}
+
+gboolean
+openvr_overlay_set_transform_absolute (OpenVROverlay *self,
+                                       graphene_matrix_t *mat)
+{
+  GET_OVERLAY_FUNCTIONS
+
+  HmdMatrix34_t translation34;
+  openvr_math_graphene_to_matrix34 (mat, &translation34);
+
+  err = f->SetOverlayTransformAbsolute (self->overlay_handle,
+                                        context->origin, &translation34);
+
+  OVERLAY_CHECK_ERROR ("SetOverlayTransformAbsolute", err);
   return TRUE;
 }

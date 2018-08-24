@@ -113,6 +113,9 @@ openvr_overlay_set_alpha (OpenVROverlay *self, float alpha);
 gboolean
 openvr_overlay_set_width_meters (OpenVROverlay *self, float meters);
 
+gboolean
+openvr_overlay_set_transform_absolute (OpenVROverlay *self,
+                                       graphene_matrix_t *mat);
 
 
 G_END_DECLS
