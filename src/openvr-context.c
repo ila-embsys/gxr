@@ -37,6 +37,8 @@ openvr_context_init (OpenVRContext *self)
   self->system = NULL;
   self->overlay = NULL;
   self->compositor = NULL;
+  self->input = NULL;
+  self->model = NULL;
 }
 
 static void
@@ -115,7 +117,7 @@ _vr_init (OpenVRContext *self, EVRApplicationType app_type)
       return FALSE;
     }
 
-  self->origin = self->compositor->GetTrackingSpace();
+  self->origin = self->compositor->GetTrackingSpace ();
 
   return TRUE;
 }
@@ -160,6 +162,6 @@ openvr_context_list_models (OpenVRContext *self)
   for (uint32_t i = 0; i < model_count; i++)
     {
       uint32_t ret = f->GetRenderModelName (i, name,k_unMaxPropertyStringSize);
-      g_print ("\t%d: %s\n", ret, name);
+      g_print ("\t%03d: %s\n", ret, name);
     }
 }
