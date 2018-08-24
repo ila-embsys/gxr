@@ -143,7 +143,7 @@ _init_pointer_overlay (OpenVRVulkanUploader *uploader)
   g_object_unref (pixbuf);
 
   OpenVROverlay *overlay = openvr_overlay_new ();
-  openvr_overlay_create_width (overlay, "pointer", "Pointer", 0.1f);
+  openvr_overlay_create_width (overlay, "pointer", "Pointer", 0.01f);
 
   if (!openvr_overlay_is_valid (overlay))
     {
