@@ -157,9 +157,9 @@ openvr_overlay_show (OpenVROverlay *self)
     {
       g_printerr ("Could not ShowOverlay: %s\n",
                   context->overlay->GetOverlayErrorNameFromEnum (err));
-      return false;
+      return FALSE;
     }
-  return true;
+  return TRUE;
 }
 
 gboolean
@@ -255,4 +255,145 @@ openvr_overlay_set_mouse_scale (OpenVROverlay *self, float width, float height)
   OpenVRContext *context = openvr_context_get_instance ();
   struct HmdVector2_t mouse_scale = {{ width, height }};
   context->overlay->SetOverlayMouseScale (self->overlay_handle, &mouse_scale);
+}
+
+/*
+ * Sets render model to draw behind this overlay and the vertex color to use,
+ * pass NULL for color to match the overlays vertex color
+ */
+
+gboolean
+openvr_overlay_set_model (OpenVROverlay *self, gchar *name,
+                          struct HmdColor_t *color)
+{
+  EVROverlayError err;
+  OpenVRContext *context = openvr_context_get_instance ();
+  struct VR_IVROverlay_FnTable *f = context->overlay;
+
+  err = f->SetOverlayRenderModel (self->overlay_handle, name, color);
+
+  if (err != EVROverlayError_VROverlayError_None)
+    {
+      g_printerr ("Could not SetOverlayRenderModel: %s\n",
+                  f->GetOverlayErrorNameFromEnum (err));
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+gboolean
+openvr_overlay_get_model (OpenVROverlay *self, gchar *name,
+                          struct HmdColor_t *color, uint32_t *id)
+{
+  EVROverlayError err;
+  OpenVRContext *context = openvr_context_get_instance ();
+  struct VR_IVROverlay_FnTable *f = context->overlay;
+
+  *id = f->GetOverlayRenderModel (self->overlay_handle,
+                                  name, k_unMaxPropertyStringSize,
+                                  color, &err);
+  if (err != EVROverlayError_VROverlayError_None)
+    {
+      g_printerr ("Could not GetOverlayRenderModel: %s\n",
+                  f->GetOverlayErrorNameFromEnum (err));
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+gboolean
+openvr_overlay_clear_texture (OpenVROverlay *self)
+{
+  EVROverlayError err;
+  OpenVRContext *context = openvr_context_get_instance ();
+  struct VR_IVROverlay_FnTable *f = context->overlay;
+
+  err = f->ClearOverlayTexture (self->overlay_handle);
+  if (err != EVROverlayError_VROverlayError_None)
+    {
+      g_printerr ("Could not ClearOverlayTexture: %s\n",
+                  f->GetOverlayErrorNameFromEnum (err));
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+gboolean
+openvr_overlay_get_color (OpenVROverlay *self, graphene_vec3_t *color)
+{
+  EVROverlayError err;
+  OpenVRContext *context = openvr_context_get_instance ();
+  struct VR_IVROverlay_FnTable *f = context->overlay;
+
+  float r, g, b;
+  err = f->GetOverlayColor (self->overlay_handle, &r, &g, &b);
+  if (err != EVROverlayError_VROverlayError_None)
+    {
+      g_printerr ("Could not GetOverlayColor: %s\n",
+                  f->GetOverlayErrorNameFromEnum (err));
+    }
+
+  graphene_vec3_init (color, r, g, b);
+
+  return TRUE;
+}
+
+gboolean
+openvr_overlay_set_color (OpenVROverlay *self, const graphene_vec3_t *color)
+{
+  EVROverlayError err;
+  OpenVRContext *context = openvr_context_get_instance ();
+  struct VR_IVROverlay_FnTable *f = context->overlay;
+
+  err = f->SetOverlayColor (self->overlay_handle,
+                            graphene_vec3_get_x (color),
+                            graphene_vec3_get_y (color),
+                            graphene_vec3_get_z (color));
+  if (err != EVROverlayError_VROverlayError_None)
+    {
+      g_printerr ("Could not SetOverlayColor: %s\n",
+                  f->GetOverlayErrorNameFromEnum (err));
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+gboolean
+openvr_overlay_set_alpha (OpenVROverlay *self, float alpha)
+{
+  EVROverlayError err;
+  OpenVRContext *context = openvr_context_get_instance ();
+  struct VR_IVROverlay_FnTable *f = context->overlay;
+
+  err = f->SetOverlayAlpha (self->overlay_handle, alpha);
+  if (err != EVROverlayError_VROverlayError_None)
+    {
+      g_printerr ("Could not SetOverlayAlpha: %s\n",
+                  f->GetOverlayErrorNameFromEnum (err));
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+gboolean
+openvr_overlay_set_width_meters (OpenVROverlay *self, float meters)
+{
+  EVROverlayError err;
+  OpenVRContext *context = openvr_context_get_instance ();
+  struct VR_IVROverlay_FnTable *f = context->overlay;
+
+  err = f->SetOverlayWidthInMeters (self->overlay_handle, meters);
+  if (err != EVROverlayError_VROverlayError_None)
+    {
+      g_printerr ("Could not SetOverlayAlpha: %s\n",
+                  f->GetOverlayErrorNameFromEnum (err));
+      return FALSE;
+    }
+
+  return TRUE;
 }

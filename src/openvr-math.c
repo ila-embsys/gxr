@@ -11,6 +11,17 @@ openvr_math_print_matrix34 (HmdMatrix34_t mat)
   g_print ("%f %f %f\n", mat.m[0][3], mat.m[1][3], mat.m[2][3]);
 }
 
+GString *
+openvr_math_vec3_to_string (graphene_vec3_t *vec)
+{
+  GString *string = g_string_new ("");
+  g_string_printf (string, "[%f, %f, %f]",
+                   graphene_vec3_get_x (vec),
+                   graphene_vec3_get_y (vec),
+                   graphene_vec3_get_z (vec));
+  return string;
+}
+
 void
 openvr_math_graphene_to_matrix34 (graphene_matrix_t *mat, HmdMatrix34_t *mat34)
 {

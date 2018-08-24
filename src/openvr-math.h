@@ -35,4 +35,7 @@ gboolean
 openvr_math_pose_to_matrix (TrackedDevicePose_t *pose,
                             graphene_matrix_t   *transform);
 
+GString *
+openvr_math_vec3_to_string (graphene_vec3_t *vec);
+
 #endif /* OPENVR_GLIB_MATH_H_ */

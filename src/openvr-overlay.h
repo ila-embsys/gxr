@@ -91,6 +91,31 @@ openvr_overlay_thumbnail_is_visible (OpenVROverlay *self);
 gboolean
 openvr_overlay_show (OpenVROverlay *self);
 
+gboolean
+openvr_overlay_set_model (OpenVROverlay *self, gchar *name,
+                          struct HmdColor_t *color);
+
+gboolean
+openvr_overlay_get_model (OpenVROverlay *self, gchar *name,
+                          struct HmdColor_t *color, uint32_t *id);
+
+gboolean
+openvr_overlay_clear_texture (OpenVROverlay *self);
+
+gboolean
+openvr_overlay_get_color (OpenVROverlay *self, graphene_vec3_t *color);
+
+gboolean
+openvr_overlay_set_color (OpenVROverlay *self, const graphene_vec3_t *color);
+
+gboolean
+openvr_overlay_set_alpha (OpenVROverlay *self, float alpha);
+
+gboolean
+openvr_overlay_set_width_meters (OpenVROverlay *self, float meters);
+
+
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_OVERLAY_H_ */
