@@ -21,6 +21,22 @@ G_DEFINE_TYPE (OpenVROverlay, openvr_overlay, G_TYPE_OBJECT)
 
 guint overlay_signals[LAST_SIGNAL] = { 0 };
 
+#define GET_OVERLAY_FUNCTIONS \
+  EVROverlayError err; \
+  OpenVRContext *context = openvr_context_get_instance (); \
+  struct VR_IVROverlay_FnTable *f = context->overlay;
+
+#define OVERLAY_CHECK_ERROR(fun, res) \
+{ \
+  EVROverlayError r = (res); \
+  if (r != EVROverlayError_VROverlayError_None) \
+    { \
+      g_printerr ("ERROR: " fun ": failed with %s in %s:%d\n", \
+                  f->GetOverlayErrorNameFromEnum (r), __FILE__, __LINE__); \
+      return FALSE; \
+    } \
+}
+
 static void
 openvr_overlay_class_init (OpenVROverlayClass *klass)
 {
@@ -88,58 +104,49 @@ openvr_overlay_new (void)
   return (OpenVROverlay*) g_object_new (OPENVR_TYPE_OVERLAY, 0);
 }
 
-void
+gboolean
 openvr_overlay_create_width (OpenVROverlay *self,
-                       gchar* key,
-                       gchar* name,
-                       float width)
+                             gchar* key,
+                             gchar* name,
+                             float meters)
 {
-  OpenVRContext *context = openvr_context_get_instance ();
-  struct VR_IVROverlay_FnTable *f = context->overlay;
+  GET_OVERLAY_FUNCTIONS
 
-  EVROverlayError err = f->CreateOverlay (key, name, &self->overlay_handle);
+  err = f->CreateOverlay (key, name, &self->overlay_handle);
 
-  if (err != EVROverlayError_VROverlayError_None)
-    {
-      g_printerr ("Could not create overlay: %s\n",
-                  f->GetOverlayErrorNameFromEnum (err));
-    }
-  else
-    {
-      f->SetOverlayWidthInMeters (self->overlay_handle, width);
-      f->SetOverlayInputMethod (self->overlay_handle,
-                                VROverlayInputMethod_Mouse);
-    }
+  OVERLAY_CHECK_ERROR ("CreateOverlay", err);
+
+  f->SetOverlayWidthInMeters (self->overlay_handle, meters);
+  f->SetOverlayInputMethod (self->overlay_handle,
+                            VROverlayInputMethod_Mouse);
+  return TRUE;
+
 }
 
-void
+gboolean
 openvr_overlay_create (OpenVROverlay *self,
                        gchar* key,
                        gchar* name)
 {
-  openvr_overlay_create_width (self, key, name, 1.5);
+  return openvr_overlay_create_width (self, key, name, 1.5);
 }
 
-void
+gboolean
 openvr_overlay_create_for_dashboard (OpenVROverlay *self,
                                      gchar* key,
                                      gchar* name)
 {
-  OpenVRContext *context = openvr_context_get_instance ();
-  struct VR_IVROverlay_FnTable *f = context->overlay;
+  GET_OVERLAY_FUNCTIONS
 
-  EVROverlayError err = f->CreateDashboardOverlay (
-    key, name, &self->overlay_handle, &self->thumbnail_handle);
+  err = f->CreateDashboardOverlay (key, name, &self->overlay_handle,
+                                  &self->thumbnail_handle);
 
-  if (err != EVROverlayError_VROverlayError_None)
-    {
-      g_printerr ("Could not create overlay: %s\n",
-                  f->GetOverlayErrorNameFromEnum (err));
-    }
-  else
-    {
-      f->SetOverlayWidthInMeters (self->overlay_handle, 1.5f);
-    }
+  OVERLAY_CHECK_ERROR ("CreateDashboardOverlay", err);
+
+  if (!openvr_overlay_set_width_meters (self, 1.5f))
+    return FALSE;
+
+  return TRUE;
 }
 
 gboolean
@@ -151,14 +158,11 @@ openvr_overlay_is_valid (OpenVROverlay *self)
 gboolean
 openvr_overlay_show (OpenVROverlay *self)
 {
-  OpenVRContext *context = openvr_context_get_instance ();
-  EVROverlayError err = context->overlay->ShowOverlay (self->overlay_handle);
-  if (err != EVROverlayError_VROverlayError_None)
-    {
-      g_printerr ("Could not ShowOverlay: %s\n",
-                  context->overlay->GetOverlayErrorNameFromEnum (err));
-      return FALSE;
-    }
+  GET_OVERLAY_FUNCTIONS
+
+  err = f->ShowOverlay (self->overlay_handle);
+
+  OVERLAY_CHECK_ERROR ("ShowOverlay", err);
   return TRUE;
 }
 
@@ -249,12 +253,16 @@ openvr_overlay_poll_event (OpenVROverlay *self)
   }
 }
 
-void
+gboolean
 openvr_overlay_set_mouse_scale (OpenVROverlay *self, float width, float height)
 {
-  OpenVRContext *context = openvr_context_get_instance ();
+  GET_OVERLAY_FUNCTIONS
+
   struct HmdVector2_t mouse_scale = {{ width, height }};
-  context->overlay->SetOverlayMouseScale (self->overlay_handle, &mouse_scale);
+  err = f->SetOverlayMouseScale (self->overlay_handle, &mouse_scale);
+
+  OVERLAY_CHECK_ERROR ("SetOverlayMouseScale", err);
+  return TRUE;
 }
 
 /*
@@ -266,19 +274,11 @@ gboolean
 openvr_overlay_set_model (OpenVROverlay *self, gchar *name,
                           struct HmdColor_t *color)
 {
-  EVROverlayError err;
-  OpenVRContext *context = openvr_context_get_instance ();
-  struct VR_IVROverlay_FnTable *f = context->overlay;
+  GET_OVERLAY_FUNCTIONS
 
   err = f->SetOverlayRenderModel (self->overlay_handle, name, color);
 
-  if (err != EVROverlayError_VROverlayError_None)
-    {
-      g_printerr ("Could not SetOverlayRenderModel: %s\n",
-                  f->GetOverlayErrorNameFromEnum (err));
-      return FALSE;
-    }
-
+  OVERLAY_CHECK_ERROR ("SetOverlayRenderModel", err);
   return TRUE;
 }
 
@@ -286,55 +286,36 @@ gboolean
 openvr_overlay_get_model (OpenVROverlay *self, gchar *name,
                           struct HmdColor_t *color, uint32_t *id)
 {
-  EVROverlayError err;
-  OpenVRContext *context = openvr_context_get_instance ();
-  struct VR_IVROverlay_FnTable *f = context->overlay;
+  GET_OVERLAY_FUNCTIONS
 
   *id = f->GetOverlayRenderModel (self->overlay_handle,
                                   name, k_unMaxPropertyStringSize,
                                   color, &err);
-  if (err != EVROverlayError_VROverlayError_None)
-    {
-      g_printerr ("Could not GetOverlayRenderModel: %s\n",
-                  f->GetOverlayErrorNameFromEnum (err));
-      return FALSE;
-    }
 
+  OVERLAY_CHECK_ERROR ("GetOverlayRenderModel", err);
   return TRUE;
 }
 
 gboolean
 openvr_overlay_clear_texture (OpenVROverlay *self)
 {
-  EVROverlayError err;
-  OpenVRContext *context = openvr_context_get_instance ();
-  struct VR_IVROverlay_FnTable *f = context->overlay;
+  GET_OVERLAY_FUNCTIONS
 
   err = f->ClearOverlayTexture (self->overlay_handle);
-  if (err != EVROverlayError_VROverlayError_None)
-    {
-      g_printerr ("Could not ClearOverlayTexture: %s\n",
-                  f->GetOverlayErrorNameFromEnum (err));
-      return FALSE;
-    }
 
+  OVERLAY_CHECK_ERROR ("ClearOverlayTexture", err);
   return TRUE;
 }
 
 gboolean
 openvr_overlay_get_color (OpenVROverlay *self, graphene_vec3_t *color)
 {
-  EVROverlayError err;
-  OpenVRContext *context = openvr_context_get_instance ();
-  struct VR_IVROverlay_FnTable *f = context->overlay;
+  GET_OVERLAY_FUNCTIONS
 
   float r, g, b;
   err = f->GetOverlayColor (self->overlay_handle, &r, &g, &b);
-  if (err != EVROverlayError_VROverlayError_None)
-    {
-      g_printerr ("Could not GetOverlayColor: %s\n",
-                  f->GetOverlayErrorNameFromEnum (err));
-    }
+
+  OVERLAY_CHECK_ERROR ("GetOverlayColor", err);
 
   graphene_vec3_init (color, r, g, b);
 
@@ -344,56 +325,35 @@ openvr_overlay_get_color (OpenVROverlay *self, graphene_vec3_t *color)
 gboolean
 openvr_overlay_set_color (OpenVROverlay *self, const graphene_vec3_t *color)
 {
-  EVROverlayError err;
-  OpenVRContext *context = openvr_context_get_instance ();
-  struct VR_IVROverlay_FnTable *f = context->overlay;
+  GET_OVERLAY_FUNCTIONS
 
   err = f->SetOverlayColor (self->overlay_handle,
                             graphene_vec3_get_x (color),
                             graphene_vec3_get_y (color),
                             graphene_vec3_get_z (color));
-  if (err != EVROverlayError_VROverlayError_None)
-    {
-      g_printerr ("Could not SetOverlayColor: %s\n",
-                  f->GetOverlayErrorNameFromEnum (err));
-      return FALSE;
-    }
 
+  OVERLAY_CHECK_ERROR ("SetOverlayColor", err);
   return TRUE;
 }
 
 gboolean
 openvr_overlay_set_alpha (OpenVROverlay *self, float alpha)
 {
-  EVROverlayError err;
-  OpenVRContext *context = openvr_context_get_instance ();
-  struct VR_IVROverlay_FnTable *f = context->overlay;
+  GET_OVERLAY_FUNCTIONS
 
   err = f->SetOverlayAlpha (self->overlay_handle, alpha);
-  if (err != EVROverlayError_VROverlayError_None)
-    {
-      g_printerr ("Could not SetOverlayAlpha: %s\n",
-                  f->GetOverlayErrorNameFromEnum (err));
-      return FALSE;
-    }
 
+  OVERLAY_CHECK_ERROR ("SetOverlayAlpha", err);
   return TRUE;
 }
 
 gboolean
 openvr_overlay_set_width_meters (OpenVROverlay *self, float meters)
 {
-  EVROverlayError err;
-  OpenVRContext *context = openvr_context_get_instance ();
-  struct VR_IVROverlay_FnTable *f = context->overlay;
+  GET_OVERLAY_FUNCTIONS
 
   err = f->SetOverlayWidthInMeters (self->overlay_handle, meters);
-  if (err != EVROverlayError_VROverlayError_None)
-    {
-      g_printerr ("Could not SetOverlayAlpha: %s\n",
-                  f->GetOverlayErrorNameFromEnum (err));
-      return FALSE;
-    }
 
+  OVERLAY_CHECK_ERROR ("SetOverlayWidthInMeters", err);
   return TRUE;
 }

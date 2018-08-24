@@ -56,17 +56,18 @@ struct _OpenVROverlay
 
 OpenVROverlay *openvr_overlay_new (void);
 
-void
+gboolean
 openvr_overlay_create_width (OpenVROverlay *self,
                              gchar* key,
                              gchar* name,
                              float width_meters);
 
-void openvr_overlay_create (OpenVROverlay *self,
-                            gchar* key,
-                            gchar* name);
+gboolean
+openvr_overlay_create (OpenVROverlay *self,
+                       gchar* key,
+                       gchar* name);
 
-void
+gboolean
 openvr_overlay_create_for_dashboard (OpenVROverlay *self,
                                      gchar* key,
                                      gchar* name);
@@ -74,10 +75,8 @@ openvr_overlay_create_for_dashboard (OpenVROverlay *self,
 void
 openvr_overlay_poll_event (OpenVROverlay *self);
 
-void
-openvr_overlay_set_mouse_scale (OpenVROverlay *self,
-                                float width,
-                                float height);
+gboolean
+openvr_overlay_set_mouse_scale (OpenVROverlay *self, float width, float height);
 
 gboolean
 openvr_overlay_is_valid (OpenVROverlay *self);
