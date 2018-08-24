@@ -5,10 +5,14 @@
 void
 openvr_math_print_matrix34 (HmdMatrix34_t mat)
 {
-  g_print ("%f %f %f\n", mat.m[0][0], mat.m[1][0], mat.m[2][0]);
-  g_print ("%f %f %f\n", mat.m[0][1], mat.m[1][1], mat.m[2][1]);
-  g_print ("%f %f %f\n", mat.m[0][2], mat.m[1][2], mat.m[2][2]);
-  g_print ("%f %f %f\n", mat.m[0][3], mat.m[1][3], mat.m[2][3]);
+  for (int i = 0; i < 4; i++)
+    g_print ("| %+.6f %+.6f %+.6f |\n", mat.m[0][i], mat.m[1][i], mat.m[2][i]);
+}
+
+void
+openvr_math_print_point3d (graphene_point3d_t *point)
+{
+  g_print ("| %+.6f %+.6f %+.6f |\n", point->x, point->y, point->z);
 }
 
 GString *
@@ -25,20 +29,9 @@ openvr_math_vec3_to_string (graphene_vec3_t *vec)
 void
 openvr_math_graphene_to_matrix34 (graphene_matrix_t *mat, HmdMatrix34_t *mat34)
 {
-  mat34->m[0][0] = graphene_matrix_get_value (mat, 0, 0);
-  mat34->m[0][1] = graphene_matrix_get_value (mat, 1, 0);
-  mat34->m[0][2] = graphene_matrix_get_value (mat, 2, 0);
-  mat34->m[0][3] = graphene_matrix_get_value (mat, 3, 0);
-
-  mat34->m[1][0] = graphene_matrix_get_value (mat, 0, 1);
-  mat34->m[1][1] = graphene_matrix_get_value (mat, 1, 1);
-  mat34->m[1][2] = graphene_matrix_get_value (mat, 2, 1);
-  mat34->m[1][3] = graphene_matrix_get_value (mat, 3, 1);
-
-  mat34->m[2][0] = graphene_matrix_get_value (mat, 0, 2);
-  mat34->m[2][1] = graphene_matrix_get_value (mat, 1, 2);
-  mat34->m[2][2] = graphene_matrix_get_value (mat, 2, 2);
-  mat34->m[2][3] = graphene_matrix_get_value (mat, 3, 2);
+  for (int i = 0; i < 3; i++)
+    for (int j = 0; j < 4; j++)
+      mat34->m[i][j] = graphene_matrix_get_value (mat, j, i);
 }
 
 // translation vector
@@ -122,4 +115,18 @@ openvr_math_pose_to_matrix (TrackedDevicePose_t *pose,
       // g_print("controller: Pose invalid\n");
       return FALSE;
     }
+}
+
+void
+openvr_math_matrix_set_translation (graphene_matrix_t *matrix,
+                                    graphene_point3d_t *point)
+{
+  float m[16];
+  graphene_matrix_to_float (matrix, m);
+
+  m[12] = point->x;
+  m[13] = point->y;
+  m[14] = point->z;
+
+  graphene_matrix_init_from_float (matrix, m);
 }

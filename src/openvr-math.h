@@ -38,4 +38,11 @@ openvr_math_pose_to_matrix (TrackedDevicePose_t *pose,
 GString *
 openvr_math_vec3_to_string (graphene_vec3_t *vec);
 
+void
+openvr_math_print_point3d (graphene_point3d_t *point);
+
+void
+openvr_math_matrix_set_translation (graphene_matrix_t *matrix,
+                                    graphene_point3d_t *point);
+
 #endif /* OPENVR_GLIB_MATH_H_ */
