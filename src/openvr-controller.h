@@ -26,7 +26,7 @@ typedef struct OpenVRController
 } OpenVRController;
 
 gboolean
-openvr_controller_init (OpenVRController *self, int hand);
+openvr_controller_find_by_id (OpenVRController *self, int id);
 
 gboolean
 openvr_controller_trigger_events (OpenVRController *self,

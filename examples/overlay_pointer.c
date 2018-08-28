@@ -309,7 +309,7 @@ main ()
     return -1;
 
   for (int i = 0; i < NUM_CONTROLLERS; i++)
-    openvr_controller_init (&controllers[i], 0);
+    openvr_controller_find_by_id (&controllers[i], 0);
 
   g_timeout_add (20, _overlay_event_cb, cat);
 

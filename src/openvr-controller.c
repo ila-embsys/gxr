@@ -13,7 +13,7 @@
 
 // sets openvr controller ids in the order openvr assigns them
 gboolean
-openvr_controller_init (OpenVRController *self, int num)
+openvr_controller_find_by_id (OpenVRController *self, int id)
 {
   OpenVRContext *context = openvr_context_get_instance ();
 
@@ -28,12 +28,12 @@ openvr_controller_init (OpenVRController *self, int num)
               context->system->GetTrackedDeviceClass (i);
           if (class == ETrackedDeviceClass_TrackedDeviceClass_Controller)
             {
-              // g_print("controller: %d: %d skipped %d\n", num, i,
+              // g_print("controller: %d: %d skipped %d\n", id, i,
               // skipped);
-              if (skipped >= num)
+              if (skipped >= id)
                 {
                   self->index = i;
-                  g_print ("Controller %d: %d, skipped %d\n", num,
+                  g_print ("Controller %d: %d, skipped %d\n", id,
                            self->index, skipped);
                   self->initialized = TRUE;
                   break;
