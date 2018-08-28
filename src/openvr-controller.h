@@ -31,10 +31,11 @@ struct _OpenVRController
 {
   GObject parent;
   TrackedDeviceIndex_t index;
-  gboolean             _button1_pressed;  // button 1
-  gboolean             _button2_pressed;  // button 2
   gboolean             initialized;
-  gboolean             _grip_pressed;  // button 9
+
+  gboolean             button1_pressed;  // button 1
+  gboolean             button2_pressed;  // button 2
+  gboolean             grip_pressed;  // button 9
 };
 
 OpenVRController *openvr_controller_new (void);

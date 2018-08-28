@@ -149,6 +149,133 @@ _emit_3d_event (OpenVROverlay      *overlay,
   g_signal_emit (overlay, overlay_signals[MOTION_NOTIFY_EVENT3D], 0, event_3d);
 }
 
+void
+_emit_overlay_events (OpenVRController    *self,
+                      OpenVROverlay       *overlay,
+                      VRControllerState_t *controller_state,
+                      graphene_vec2_t     *position_2d)
+{
+  /*
+   * Notifies the client application where in the current overlay the user is
+   * pointing at
+   */
+  GdkEvent *event = gdk_event_new (GDK_MOTION_NOTIFY);
+  event->motion.x = graphene_vec2_get_x (position_2d);
+  event->motion.y = graphene_vec2_get_y (position_2d);
+  g_signal_emit (overlay, overlay_signals[MOTION_NOTIFY_EVENT], 0, event);
+
+  gboolean last_b1 = self->button1_pressed;
+  gboolean last_b2 = self->button2_pressed;
+  gboolean last_grip = self->grip_pressed;
+
+  if (controller_state->ulButtonPressed &
+      ButtonMaskFromId (EVRButtonId_k_EButton_SteamVR_Trigger))
+    {
+      self->button1_pressed = TRUE;
+      if (!last_b1)
+        {
+          GdkEvent *event = gdk_event_new (GDK_BUTTON_PRESS);
+          event->button.x = graphene_vec2_get_x (position_2d);
+          event->button.y = graphene_vec2_get_y (position_2d);
+          event->button.button = 1;
+          g_signal_emit (overlay, overlay_signals[BUTTON_PRESS_EVENT], 0,
+                         event);
+          // g_print("%d: Pressed button 1\n",
+          // self->index);
+        }
+    }
+  else
+    {
+      self->button1_pressed = FALSE;
+      if (last_b1)
+        {
+          GdkEvent *event = gdk_event_new (GDK_BUTTON_RELEASE);
+          event->button.x = graphene_vec2_get_x (position_2d);
+          event->button.y = graphene_vec2_get_y (position_2d);
+          event->button.button = 1;
+          g_signal_emit (overlay, overlay_signals[BUTTON_RELEASE_EVENT], 0,
+                         event);
+          // g_print("%d: Released button 1\n",
+          // self->index);
+        }
+    }
+
+  if (controller_state->ulButtonPressed &
+      ButtonMaskFromId (EVRButtonId_k_EButton_ApplicationMenu))
+    {
+      self->button2_pressed = TRUE;
+      if (!last_b2)
+        {
+          GdkEvent *event = gdk_event_new (GDK_BUTTON_PRESS);
+          event->button.x = graphene_vec2_get_x (position_2d);
+          event->button.y = graphene_vec2_get_y (position_2d);
+          event->button.button = 2;
+          g_signal_emit (overlay, overlay_signals[BUTTON_PRESS_EVENT], 0,
+                         event);
+          // g_print("%d: Pressed button 2\n",
+          // state->index);
+        }
+    }
+  else
+    {
+      self->button2_pressed = FALSE;
+      if (last_b2)
+        {
+          GdkEvent *event = gdk_event_new (GDK_BUTTON_RELEASE);
+          event->button.x = graphene_vec2_get_x (position_2d);
+          event->button.y = graphene_vec2_get_y (position_2d);
+          event->button.button = 2;
+          g_signal_emit (overlay, overlay_signals[BUTTON_RELEASE_EVENT], 0,
+                         event);
+          // g_print("%d: Released button 2\n",
+          // self->index);
+        }
+    }
+
+  if (controller_state->ulButtonPressed &
+      ButtonMaskFromId (EVRButtonId_k_EButton_Grip))
+    {
+      self->grip_pressed = TRUE;
+      if (!last_grip)
+        {
+          GdkEvent *event = gdk_event_new (GDK_BUTTON_PRESS);
+          event->button.x = graphene_vec2_get_x (position_2d);
+          event->button.y = graphene_vec2_get_y (position_2d);
+          event->button.button = 9;
+          g_signal_emit (overlay, overlay_signals[BUTTON_PRESS_EVENT], 0,
+                         event);
+          // g_print("%d: Pressed grip button\n",
+          // self->index);
+        }
+    }
+  else
+    {
+      self->grip_pressed = FALSE;
+      if (last_grip)
+        {
+          GdkEvent *event = gdk_event_new (GDK_BUTTON_RELEASE);
+          event->button.x = graphene_vec2_get_x (position_2d);
+          event->button.y = graphene_vec2_get_y (position_2d);
+          event->button.button = 9;
+          g_signal_emit (overlay, overlay_signals[BUTTON_RELEASE_EVENT], 0,
+                         event);
+          // g_print("%d: Released grip button\n",
+          // state->index);
+        }
+    }
+
+  if (controller_state->ulButtonPressed &
+      ButtonMaskFromId (EVRButtonId_k_EButton_Axis0))
+    {
+      GdkEvent *event = gdk_event_new (GDK_SCROLL);
+      event->scroll.y = controller_state->rAxis[0].y;
+      event->scroll.direction =
+          controller_state->rAxis[0].y > 0 ? GDK_SCROLL_UP : GDK_SCROLL_DOWN;
+      g_signal_emit (overlay, overlay_signals[SCROLL_EVENT], 0, event);
+      // g_print("touchpad y %f\n", controller_state->rAxis[0].y);
+    }
+}
+
 gboolean
 openvr_controller_poll_event (OpenVRController *self,
                               OpenVROverlay    *overlay)
@@ -184,132 +311,13 @@ openvr_controller_poll_event (OpenVRController *self,
       return FALSE;
     }
 
-  graphene_vec2_t in_overlay;
+  graphene_vec2_t position_2d;
   if (!openvr_overlay_get_2d_intersection (overlay,
                                           &intersection_point,
-                                          &in_overlay))
+                                          &position_2d))
     return FALSE;
 
-  /*
-   * Notifies the client application where in the current overlay the user is
-   * pointing at
-   */
-
-  GdkEvent *event = gdk_event_new (GDK_MOTION_NOTIFY);
-  event->motion.x = graphene_vec2_get_x (&in_overlay);
-  event->motion.y = graphene_vec2_get_y (&in_overlay);
-  g_signal_emit (overlay, overlay_signals[MOTION_NOTIFY_EVENT], 0, event);
-
-  gboolean last_b1 = self->_button1_pressed;
-  gboolean last_b2 = self->_button2_pressed;
-  gboolean last_grip = self->_grip_pressed;
-
-  if (controller_state.ulButtonPressed &
-      ButtonMaskFromId (EVRButtonId_k_EButton_SteamVR_Trigger))
-    {
-      self->_button1_pressed = TRUE;
-      if (!last_b1)
-        {
-          GdkEvent *event = gdk_event_new (GDK_BUTTON_PRESS);
-          event->button.x = graphene_vec2_get_x (&in_overlay);
-          event->button.y = graphene_vec2_get_y (&in_overlay);
-          event->button.button = 1;
-          g_signal_emit (overlay, overlay_signals[BUTTON_PRESS_EVENT], 0,
-                         event);
-          // g_print("%d: Pressed button 1\n",
-          // self->index);
-        }
-    }
-  else
-    {
-      self->_button1_pressed = FALSE;
-      if (last_b1)
-        {
-          GdkEvent *event = gdk_event_new (GDK_BUTTON_RELEASE);
-          event->button.x = graphene_vec2_get_x (&in_overlay);
-          event->button.y = graphene_vec2_get_y (&in_overlay);
-          event->button.button = 1;
-          g_signal_emit (overlay, overlay_signals[BUTTON_RELEASE_EVENT], 0,
-                         event);
-          // g_print("%d: Released button 1\n",
-          // self->index);
-        }
-    }
-
-  if (controller_state.ulButtonPressed &
-      ButtonMaskFromId (EVRButtonId_k_EButton_ApplicationMenu))
-    {
-      self->_button2_pressed = TRUE;
-      if (!last_b2)
-        {
-          GdkEvent *event = gdk_event_new (GDK_BUTTON_PRESS);
-          event->button.x = graphene_vec2_get_x (&in_overlay);
-          event->button.y = graphene_vec2_get_y (&in_overlay);
-          event->button.button = 2;
-          g_signal_emit (overlay, overlay_signals[BUTTON_PRESS_EVENT], 0,
-                         event);
-          // g_print("%d: Pressed button 2\n",
-          // state->index);
-        }
-    }
-  else
-    {
-      self->_button2_pressed = FALSE;
-      if (last_b2)
-        {
-          GdkEvent *event = gdk_event_new (GDK_BUTTON_RELEASE);
-          event->button.x = graphene_vec2_get_x (&in_overlay);
-          event->button.y = graphene_vec2_get_y (&in_overlay);
-          event->button.button = 2;
-          g_signal_emit (overlay, overlay_signals[BUTTON_RELEASE_EVENT], 0,
-                         event);
-          // g_print("%d: Released button 2\n",
-          // self->index);
-        }
-    }
-
-  if (controller_state.ulButtonPressed &
-      ButtonMaskFromId (EVRButtonId_k_EButton_Grip))
-    {
-      self->_grip_pressed = TRUE;
-      if (!last_grip)
-        {
-          GdkEvent *event = gdk_event_new (GDK_BUTTON_PRESS);
-          event->button.x = graphene_vec2_get_x (&in_overlay);
-          event->button.y = graphene_vec2_get_y (&in_overlay);
-          event->button.button = 9;
-          g_signal_emit (overlay, overlay_signals[BUTTON_PRESS_EVENT], 0,
-                         event);
-          // g_print("%d: Pressed grip button\n",
-          // self->index);
-        }
-    }
-  else
-    {
-      self->_grip_pressed = FALSE;
-      if (last_grip)
-        {
-          GdkEvent *event = gdk_event_new (GDK_BUTTON_RELEASE);
-          event->button.x = graphene_vec2_get_x (&in_overlay);
-          event->button.y = graphene_vec2_get_y (&in_overlay);
-          event->button.button = 9;
-          g_signal_emit (overlay, overlay_signals[BUTTON_RELEASE_EVENT], 0,
-                         event);
-          // g_print("%d: Released grip button\n",
-          // state->index);
-        }
-    }
-
-  if (controller_state.ulButtonPressed &
-      ButtonMaskFromId (EVRButtonId_k_EButton_Axis0))
-    {
-      GdkEvent *event = gdk_event_new (GDK_SCROLL);
-      event->scroll.y = controller_state.rAxis[0].y;
-      event->scroll.direction =
-          controller_state.rAxis[0].y > 0 ? GDK_SCROLL_UP : GDK_SCROLL_DOWN;
-      g_signal_emit (overlay, overlay_signals[SCROLL_EVENT], 0, event);
-      // g_print("touchpad y %f\n", controller_state.rAxis[0].y);
-    }
+  _emit_overlay_events (self, overlay, &controller_state, &position_2d);
 
   return TRUE;
 }
