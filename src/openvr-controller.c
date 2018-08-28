@@ -175,34 +175,6 @@ openvr_controller_poll_event (OpenVRController *self,
   graphene_point3d_init_from_vec3 (&overlay_position, &overlay_translation);
 
   /*
-   * The transformation matrix describes the *center* point of an overlay
-   * to calculate 2D coordinates relative to overlay origin we have to shift.
-   */
-
-  gfloat overlay_width;
-  context->overlay->GetOverlayWidthInMeters (overlay->overlay_handle,
-                                            &overlay_width);
-
-  /*
-   * There is no function to get the height or aspect ratio of an overlay
-   * so we need to calculate it from width + texture size
-   * the texture aspect ratio should be preserved.
-   */
-
-  uint32_t texture_width;
-  uint32_t texture_height;
-  context->overlay->GetOverlayTextureSize (overlay->overlay_handle,
-                                          &texture_width,
-                                          &texture_height);
-  gfloat overlay_aspect = (float) texture_width / texture_height;
-  gfloat overlay_height = overlay_width / overlay_aspect;
-  /*
-  g_print("Overlay width %f height %f aspect %f texture %dx%d\n",
-          overlay_width, overlay_height, overlay_aspect,
-          texture_width, texture_height);
-  */
-
-  /*
    * If the overlay is parallel to the xy plane the position in the overlay can
    * be easily calculated:
    */
@@ -213,37 +185,11 @@ openvr_controller_poll_event (OpenVRController *self,
                         + overlay_height / 2.f;
    */
 
-  /*
-   * To calculate the position in the overlay in any orientation, we can invert
-   * the transformation matrix of the overlay. This transformation matrix would
-   * bring the center of our overlay into the origin of the coordinate system,
-   * facing us (+z), the overlay being in the xy plane (since by convention that
-   * is the neutral position for overlays).
-   *
-   * Since the transformation matrix transforms every possible point on the
-   * overlay onto the same overlay as it is in the origin in the xy plane,
-   * it transforms in particular the intersection point onto its position on the
-   * overlay in the xy plane.
-   * Then we only need to shift it by half of the overlay widht/height, because
-   * the *center* of the overlay sits in the origin.
-   */
-
-  graphene_matrix_t inverted;
-  graphene_matrix_inverse (&overlay->transform, &inverted);
-
-  graphene_point3d_t transformed_intersection;
-  graphene_matrix_transform_point3d (&inverted,
-                                     &intersection_point,
-                                     &transformed_intersection);
-  gfloat in_overlay_x = transformed_intersection.x + overlay_width / 2.f;
-  gfloat in_overlay_y = transformed_intersection.y + overlay_height / 2.f;
-  /*
-  g_print ("transformed %f %f %f -> %f %f %f\n",
-           intersection_point.x, intersection_point.y, intersection_point.z,
-           in_overlay_x,
-           in_overlay_y,
-           transformed_intersection.z);
-  */
+  graphene_vec2_t in_overlay;
+  if (!openvr_overlay_get_2d_intersection (overlay,
+                                          &intersection_point,
+                                          &in_overlay))
+    return FALSE;
 
   /*
    * Notifies the client application where in the current overlay the user is
@@ -251,8 +197,8 @@ openvr_controller_poll_event (OpenVRController *self,
    */
 
   GdkEvent *event = gdk_event_new (GDK_MOTION_NOTIFY);
-  event->motion.x = in_overlay_x;
-  event->motion.y = in_overlay_y;
+  event->motion.x = graphene_vec2_get_x (&in_overlay);
+  event->motion.y = graphene_vec2_get_y (&in_overlay);
   g_signal_emit (overlay, overlay_signals[MOTION_NOTIFY_EVENT], 0, event);
 
   gboolean last_b1 = self->_button1_pressed;
@@ -266,8 +212,8 @@ openvr_controller_poll_event (OpenVRController *self,
       if (!last_b1)
         {
           GdkEvent *event = gdk_event_new (GDK_BUTTON_PRESS);
-          event->button.x = in_overlay_x;
-          event->button.y = in_overlay_y;
+          event->button.x = graphene_vec2_get_x (&in_overlay);
+          event->button.y = graphene_vec2_get_y (&in_overlay);
           event->button.button = 1;
           g_signal_emit (overlay, overlay_signals[BUTTON_PRESS_EVENT], 0,
                          event);
@@ -281,8 +227,8 @@ openvr_controller_poll_event (OpenVRController *self,
       if (last_b1)
         {
           GdkEvent *event = gdk_event_new (GDK_BUTTON_RELEASE);
-          event->button.x = in_overlay_x;
-          event->button.y = in_overlay_y;
+          event->button.x = graphene_vec2_get_x (&in_overlay);
+          event->button.y = graphene_vec2_get_y (&in_overlay);
           event->button.button = 1;
           g_signal_emit (overlay, overlay_signals[BUTTON_RELEASE_EVENT], 0,
                          event);
@@ -298,8 +244,8 @@ openvr_controller_poll_event (OpenVRController *self,
       if (!last_b2)
         {
           GdkEvent *event = gdk_event_new (GDK_BUTTON_PRESS);
-          event->button.x = in_overlay_x;
-          event->button.y = in_overlay_y;
+          event->button.x = graphene_vec2_get_x (&in_overlay);
+          event->button.y = graphene_vec2_get_y (&in_overlay);
           event->button.button = 2;
           g_signal_emit (overlay, overlay_signals[BUTTON_PRESS_EVENT], 0,
                          event);
@@ -313,8 +259,8 @@ openvr_controller_poll_event (OpenVRController *self,
       if (last_b2)
         {
           GdkEvent *event = gdk_event_new (GDK_BUTTON_RELEASE);
-          event->button.x = in_overlay_x;
-          event->button.y = in_overlay_y;
+          event->button.x = graphene_vec2_get_x (&in_overlay);
+          event->button.y = graphene_vec2_get_y (&in_overlay);
           event->button.button = 2;
           g_signal_emit (overlay, overlay_signals[BUTTON_RELEASE_EVENT], 0,
                          event);
@@ -330,8 +276,8 @@ openvr_controller_poll_event (OpenVRController *self,
       if (!last_grip)
         {
           GdkEvent *event = gdk_event_new (GDK_BUTTON_PRESS);
-          event->button.x = in_overlay_x;
-          event->button.y = in_overlay_y;
+          event->button.x = graphene_vec2_get_x (&in_overlay);
+          event->button.y = graphene_vec2_get_y (&in_overlay);
           event->button.button = 9;
           g_signal_emit (overlay, overlay_signals[BUTTON_PRESS_EVENT], 0,
                          event);
@@ -345,8 +291,8 @@ openvr_controller_poll_event (OpenVRController *self,
       if (last_grip)
         {
           GdkEvent *event = gdk_event_new (GDK_BUTTON_RELEASE);
-          event->button.x = in_overlay_x;
-          event->button.y = in_overlay_y;
+          event->button.x = graphene_vec2_get_x (&in_overlay);
+          event->button.y = graphene_vec2_get_y (&in_overlay);
           event->button.button = 9;
           g_signal_emit (overlay, overlay_signals[BUTTON_RELEASE_EVENT], 0,
                          event);

@@ -152,6 +152,11 @@ openvr_overlay_get_width_meters (OpenVROverlay *self, float *width);
 gboolean
 openvr_overlay_get_size_meters (OpenVROverlay *self, graphene_vec2_t *size);
 
+gboolean
+openvr_overlay_get_2d_intersection (OpenVROverlay      *overlay,
+                                    graphene_point3d_t *intersection_point,
+                                    graphene_vec2_t    *result);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_OVERLAY_H_ */

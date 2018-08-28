@@ -572,3 +572,52 @@ openvr_overlay_get_size_meters (OpenVROverlay *self, graphene_vec2_t *size)
 
   return TRUE;
 }
+
+/*
+ * The transformation matrix describes the *center* point of an overlay
+ * to calculate 2D coordinates relative to overlay origin we have to shift.
+ *
+ * To calculate the position in the overlay in any orientation, we can invert
+ * the transformation matrix of the overlay. This transformation matrix would
+ * bring the center of our overlay into the origin of the coordinate system,
+ * facing us (+z), the overlay being in the xy plane (since by convention that
+ * is the neutral position for overlays).
+ *
+ * Since the transformation matrix transforms every possible point on the
+ * overlay onto the same overlay as it is in the origin in the xy plane,
+ * it transforms in particular the intersection point onto its position on the
+ * overlay in the xy plane.
+ * Then we only need to shift it by half of the overlay widht/height, because
+ * the *center* of the overlay sits in the origin.
+ */
+
+gboolean
+openvr_overlay_get_2d_intersection (OpenVROverlay      *overlay,
+                                    graphene_point3d_t *intersection_point,
+                                    graphene_vec2_t    *result)
+{
+  graphene_vec2_t size_meters;
+  if (!openvr_overlay_get_size_meters (overlay, &size_meters))
+    return FALSE;
+
+  graphene_matrix_t inverted;
+  graphene_matrix_inverse (&overlay->transform, &inverted);
+
+  graphene_point3d_t transformed_intersection;
+  graphene_matrix_transform_point3d (&inverted,
+                                      intersection_point,
+                                     &transformed_intersection);
+  gfloat x = transformed_intersection.x
+           + graphene_vec2_get_x (&size_meters) / 2.f;
+  gfloat y = transformed_intersection.y
+           + graphene_vec2_get_y (&size_meters) / 2.f;
+  /*
+  g_print ("transformed %f %f %f -> %f %f %f\n",
+           intersection_point.x, intersection_point.y, intersection_point.z,
+           x, y, transformed_intersection.z);
+  */
+
+  graphene_vec2_init (result, x, y);
+
+  return TRUE;
+}
