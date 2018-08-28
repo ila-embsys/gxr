@@ -74,7 +74,7 @@ load_gdk_pixbuf (const gchar* name)
 
 void
 _update_intersection_position (OpenVROverlay *overlay,
-                               struct _motion_event_3d *event)
+                               OpenVRController3DEvent *event)
 {
   graphene_matrix_t transform;
   graphene_matrix_init_from_matrix (&transform, &event->transform);
@@ -85,7 +85,7 @@ _update_intersection_position (OpenVROverlay *overlay,
 
 static void
 _move_3d_cb (OpenVROverlay           *overlay,
-             struct _motion_event_3d *event,
+             OpenVRController3DEvent *event,
              gpointer                 data)
 {
   (void) overlay;

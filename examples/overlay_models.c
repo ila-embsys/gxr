@@ -51,7 +51,7 @@ _overlay_event_cb (gpointer overlay)
 
 static void
 _move_3d_cb (OpenVROverlay           *overlay,
-             struct _motion_event_3d *event,
+             OpenVRController3DEvent *event,
              gpointer                 data)
 {
   (void) overlay;

@@ -103,18 +103,19 @@ gboolean
 openvr_controller_poll_event (OpenVRController *self,
                               OpenVROverlay    *overlay)
 {
+  if (!self->initialized)
+    {
+      g_printerr ("openvr_controller_poll_event()"
+                  " called with invalid controller!\n");
+      return FALSE;
+    }
+
   TrackedDevicePose_t pose[k_unMaxTrackedDeviceCount];
 
   OpenVRContext *context = openvr_context_get_instance ();
 
   context->system->GetDeviceToAbsoluteTrackingPose (
     context->origin, 0, pose, k_unMaxTrackedDeviceCount);
-
-  if (!self->initialized)
-    {
-      g_printerr ("trigger_events() with invalid controller called!\n");
-      return FALSE;
-    }
 
   graphene_matrix_t transform;
   if (!openvr_math_pose_to_matrix (&pose[self->index], &transform))
@@ -125,9 +126,8 @@ openvr_controller_poll_event (OpenVRController *self,
   // transform matrix of the controller and a 3D intersection point, in case
   // the user is pointing at an overlay
   // TODO: note that we malloc() it here, so the client needs to free it
-  struct _motion_event_3d *controller_pos_ev =
-      malloc (sizeof (struct _motion_event_3d));
-  graphene_matrix_init_from_matrix (&controller_pos_ev->transform, &transform);
+  OpenVRController3DEvent *event_3d = malloc (sizeof (OpenVRController3DEvent));
+  graphene_matrix_init_from_matrix (&event_3d->transform, &transform);
 
   graphene_point3d_t intersection_point;
   gboolean intersects = openvr_overlay_intersects (overlay,
@@ -135,20 +135,20 @@ openvr_controller_poll_event (OpenVRController *self,
                                                   &transform);
   if (!intersects)
     {
-      controller_pos_ev->has_intersection = FALSE;
+      event_3d->has_intersection = FALSE;
       g_signal_emit (overlay, overlay_signals[MOTION_NOTIFY_EVENT3D], 0,
-                     controller_pos_ev);
+                     event_3d);
 
       // g_print("No intersection!\n");
       return FALSE;
     }
   else
     {
-      controller_pos_ev->has_intersection = TRUE;
-      graphene_point3d_init_from_point (&controller_pos_ev->intersection_point,
+      event_3d->has_intersection = TRUE;
+      graphene_point3d_init_from_point (&event_3d->intersection_point,
                                         &intersection_point);
       g_signal_emit (overlay, overlay_signals[MOTION_NOTIFY_EVENT3D], 0,
-                     controller_pos_ev);
+                     event_3d);
 
       // g_print("Intersects at point %f %f %f\n", intersection_point.x,
       //         intersection_point.y, intersection_point.z);

@@ -21,12 +21,6 @@ G_BEGIN_DECLS
 #define OPENVR_TYPE_OVERLAY openvr_overlay_get_type()
 G_DECLARE_FINAL_TYPE (OpenVROverlay, openvr_overlay, OPENVR, OVERLAY, GObject)
 
-struct _motion_event_3d {
-  graphene_matrix_t transform;
-  gboolean has_intersection;
-  graphene_point3d_t intersection_point;
-};
-
 enum {
   MOTION_NOTIFY_EVENT,
   BUTTON_PRESS_EVENT,

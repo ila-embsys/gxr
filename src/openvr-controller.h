@@ -15,6 +15,12 @@
 #include <glib-object.h>
 #include <openvr_capi.h>
 
+typedef struct OpenVRController3DEvent {
+  graphene_matrix_t transform;
+  gboolean has_intersection;
+  graphene_point3d_t intersection_point;
+} OpenVRController3DEvent;
+
 G_BEGIN_DECLS
 
 #define OPENVR_TYPE_CONTROLLER openvr_controller_get_type()
