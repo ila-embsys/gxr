@@ -486,7 +486,7 @@ openvr_overlay_intersects_ray (OpenVROverlay      *overlay,
   return TRUE;
 }
 
-bool
+gboolean
 openvr_overlay_set_gdk_pixbuf_raw (OpenVROverlay *self, GdkPixbuf * pixbuf)
 {
   int width = gdk_pixbuf_get_width (pixbuf);
@@ -510,7 +510,7 @@ openvr_overlay_set_gdk_pixbuf_raw (OpenVROverlay *self, GdkPixbuf * pixbuf)
 }
 
 
-bool
+gboolean
 openvr_overlay_set_raw (OpenVROverlay *self, guchar *pixels,
                         uint32_t width, uint32_t height, uint32_t depth)
 {
@@ -523,3 +523,52 @@ openvr_overlay_set_raw (OpenVROverlay *self, guchar *pixels,
   return TRUE;
 }
 
+gboolean
+openvr_overlay_get_size_pixels (OpenVROverlay *self, PixelSize *size)
+{
+  GET_OVERLAY_FUNCTIONS
+
+  err =  f->GetOverlayTextureSize (self->overlay_handle,
+                                   &size->width, &size->height);
+
+  OVERLAY_CHECK_ERROR ("GetOverlayTextureSize", err);
+
+  return TRUE;
+}
+
+gboolean
+openvr_overlay_get_width_meters (OpenVROverlay *self, float *width)
+{
+  GET_OVERLAY_FUNCTIONS
+
+  err = f->GetOverlayWidthInMeters (self->overlay_handle, width);
+
+  OVERLAY_CHECK_ERROR ("GetOverlayWidthInMeters", err);
+
+  return TRUE;
+}
+
+/*
+ * There is no function to get the height or aspect ratio of an overlay,
+ * so we need to calculate it from width + texture size
+ * the texture aspect ratio should be preserved.
+ */
+
+gboolean
+openvr_overlay_get_size_meters (OpenVROverlay *self, graphene_vec2_t *size)
+{
+  gfloat width_meters;
+  if (!openvr_overlay_get_width_meters (self, &width_meters))
+    return FALSE;
+
+  PixelSize size_pixels = {};
+  if (openvr_overlay_get_size_pixels (self, &size_pixels))
+    return FALSE;
+
+  gfloat aspect = (gfloat) size_pixels.width / (gfloat) size_pixels.height;
+  gfloat height_meters = width_meters / aspect;
+
+  graphene_vec2_init (size, width_meters, height_meters);
+
+  return TRUE;
+}

@@ -48,6 +48,12 @@ struct _OpenVROverlay
   graphene_matrix_t transform;
 };
 
+typedef struct PixelSize
+{
+  uint32_t width;
+  uint32_t height;
+} PixelSize;
+
 OpenVROverlay *openvr_overlay_new (void);
 
 gboolean
@@ -130,12 +136,21 @@ openvr_overlay_intersects_ray (OpenVROverlay      *overlay,
                                graphene_ray_t     *ray,
                                graphene_point3d_t *intersection_point);
 
-bool
+gboolean
 openvr_overlay_set_raw (OpenVROverlay *self, guchar *pixels,
                         uint32_t width, uint32_t height, uint32_t depth);
 
-bool
+gboolean
 openvr_overlay_set_gdk_pixbuf_raw (OpenVROverlay *self, GdkPixbuf * pixbuf);
+
+gboolean
+openvr_overlay_get_size_pixels (OpenVROverlay *self, PixelSize *size);
+
+gboolean
+openvr_overlay_get_width_meters (OpenVROverlay *self, float *width);
+
+gboolean
+openvr_overlay_get_size_meters (OpenVROverlay *self, graphene_vec2_t *size);
 
 G_END_DECLS
 
