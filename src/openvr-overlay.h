@@ -123,6 +123,10 @@ gboolean
 openvr_overlay_set_transform_absolute (OpenVROverlay *self,
                                        graphene_matrix_t *mat);
 
+gboolean
+openvr_overlay_intersects (OpenVROverlay      *overlay,
+                           graphene_point3d_t *intersection_point,
+                           graphene_matrix_t  *transform);
 
 G_END_DECLS
 

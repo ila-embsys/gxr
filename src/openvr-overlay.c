@@ -394,3 +394,40 @@ openvr_overlay_set_transform_absolute (OpenVROverlay *self,
   OVERLAY_CHECK_ERROR ("SetOverlayTransformAbsolute", err);
   return TRUE;
 }
+
+gboolean
+openvr_overlay_intersects (OpenVROverlay      *overlay,
+                           graphene_point3d_t *intersection_point,
+                           graphene_matrix_t  *transform)
+{
+  OpenVRContext *context = openvr_context_get_instance ();
+  VROverlayIntersectionParams_t params;
+  params.eOrigin = context->origin;
+
+  graphene_vec3_t direction;
+  openvr_math_direction_from_matrix (transform, &direction);
+
+  params.vSource.v[0] = graphene_matrix_get_value (transform, 3, 0);
+  params.vSource.v[1] = graphene_matrix_get_value (transform, 3, 1);
+  params.vSource.v[2] = graphene_matrix_get_value (transform, 3, 2);
+
+  params.vDirection.v[0] = graphene_vec3_get_x (&direction);
+  params.vDirection.v[1] = graphene_vec3_get_y (&direction);
+  params.vDirection.v[2] = graphene_vec3_get_z (&direction);
+
+  // g_print("Controller position: %f %f %f    Controller direction: %f %f
+  // %f\n",
+  //        params.vSource.v[0], params.vSource.v[1], params.vSource.v[2],
+  //        params.vDirection.v[0], params.vDirection.v[1],
+  //        params.vDirection.v[2]);
+
+  struct VROverlayIntersectionResults_t results;
+  gboolean intersects = context->overlay->ComputeOverlayIntersection (
+      overlay->overlay_handle, &params, &results);
+
+  intersection_point->x = results.vPoint.v[0];
+  intersection_point->y = results.vPoint.v[1];
+  intersection_point->z = results.vPoint.v[2];
+
+  return intersects;
+}
