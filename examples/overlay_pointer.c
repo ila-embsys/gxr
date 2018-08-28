@@ -129,20 +129,22 @@ _destroy_cb (OpenVROverlay *overlay, gpointer data)
   g_main_loop_quit (loop);
 }
 
-OpenVROverlay *
-_init_pointer_overlay (OpenVRVulkanUploader *uploader)
+GdkPixbuf *
+_create_empty_pixbuf (uint32_t width, uint32_t height)
 {
-  GdkPixbuf *pixbuf = load_gdk_pixbuf ("/res/cat.jpg");
-  if (pixbuf == NULL)
-    return NULL;
+  guchar pixels[height * width * 4];
+  memset (pixels, 0, height * width * 4 * sizeof (guchar));
+  GdkPixbuf *pixbuf = gdk_pixbuf_new_from_data (pixels, GDK_COLORSPACE_RGB,
+                                                TRUE, 8, width, height,
+                                                4 * width, NULL, NULL);
+  return pixbuf;
+}
 
-  OpenVRVulkanTexture *texture = openvr_vulkan_texture_new ();
-  openvr_vulkan_client_load_pixbuf (OPENVR_VULKAN_CLIENT (uploader),
-                                    texture, pixbuf);
-
-  g_object_unref (pixbuf);
-
+OpenVROverlay *
+_init_pointer_overlay ()
+{
   OpenVROverlay *overlay = openvr_overlay_new ();
+
   openvr_overlay_create_width (overlay, "pointer", "Pointer", 0.01f);
 
   if (!openvr_overlay_is_valid (overlay))
@@ -151,21 +153,21 @@ _init_pointer_overlay (OpenVRVulkanUploader *uploader)
       return NULL;
     }
 
-  OpenVRContext *context = openvr_context_get_instance ();
-  openvr_context_list_models (context);
+  GdkPixbuf *pixbuf = _create_empty_pixbuf (10, 10);
+  if (pixbuf == NULL)
+    return NULL;
 
-  openvr_vulkan_uploader_submit_frame (uploader, overlay, texture);
-
-  char *mode_name = "{system}laser_pointer";
+  openvr_overlay_set_gdk_pixbuf_raw (overlay, pixbuf);
+  g_object_unref (pixbuf);
 
   struct HmdColor_t color = {
     .r = 1.0f,
-    .g = 0.5f,
+    .g = 1.0f,
     .b = 1.0f,
     .a = 1.0f
   };
 
-  if (!openvr_overlay_set_model (overlay, mode_name, &color))
+  if (!openvr_overlay_set_model (overlay, "{system}laser_pointer", &color))
     return NULL;
 
   char name_ret[k_unMaxPropertyStringSize];
@@ -177,6 +179,9 @@ _init_pointer_overlay (OpenVRVulkanUploader *uploader)
 
   g_print ("GetOverlayRenderModel returned id %d\n", id);
   g_print ("GetOverlayRenderModel name %s\n", name_ret);
+
+  if (!openvr_overlay_set_width_meters (overlay, 0.01f))
+    return NULL;
 
   if (!openvr_overlay_set_alpha (overlay, 0.0f))
     return NULL;
@@ -300,7 +305,7 @@ main ()
       return false;
     }
 
-  pointer = _init_pointer_overlay (uploader);
+  pointer = _init_pointer_overlay ();
 
   if (!_init_intersection_overlay (uploader))
     return -1;
