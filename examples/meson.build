@@ -15,13 +15,6 @@ executable(
   install: false)
 
 executable(
-  'overlay_intersection', ['overlay_intersection.c', '../res/tests.c'],
-  dependencies: [gtk3_dep, openvr_dep, cairo_dep, graphene_dep],
-  link_with: openvr_glib_lib,
-  include_directories: openvr_glib_inc,
-  install: false)
-
-executable(
   'overlay_pointer', ['overlay_pointer.c', '../res/tests.c'],
   dependencies: [gtk3_dep, openvr_dep, cairo_dep, graphene_dep],
   link_with: openvr_glib_lib,
