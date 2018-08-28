@@ -37,6 +37,15 @@ openvr_controller_new (void)
   return (OpenVRController*) g_object_new (OPENVR_TYPE_CONTROLLER, 0);
 }
 
+OpenVRController *
+openvr_controller_new_from_id (uint32_t id)
+{
+  OpenVRController *controller = openvr_controller_new ();
+  controller->index = id;
+  controller->initialized = TRUE;
+  return controller;
+}
+
 static void
 openvr_controller_finalize (GObject *gobject)
 {
@@ -44,46 +53,28 @@ openvr_controller_finalize (GObject *gobject)
   (void) self;
 }
 
-// sets openvr controller ids in the order openvr assigns them
-gboolean
-openvr_controller_find_by_id (OpenVRController *self, int id)
+GSList *
+openvr_controller_enumerate ()
 {
   OpenVRContext *context = openvr_context_get_instance ();
 
-  // TODO: will steamvr give newly powered on controllers higher indices?
-  // if not, this method could fail.
-  int skipped = 0;
+  GSList *controlllers = NULL;
+
   for (uint32_t i = 0; i < k_unMaxTrackedDeviceCount; i++)
-    {
-      if (context->system->IsTrackedDeviceConnected (i))
-        {
-          ETrackedDeviceClass class =
-              context->system->GetTrackedDeviceClass (i);
-          if (class == ETrackedDeviceClass_TrackedDeviceClass_Controller)
-            {
-              // g_print("controller: %d: %d skipped %d\n", id, i,
-              // skipped);
-              if (skipped >= id)
-                {
-                  self->index = i;
-                  g_print ("Controller %d: %d, skipped %d\n", id,
-                           self->index, skipped);
-                  self->initialized = TRUE;
-                  break;
-                }
-              else
-                {
-                  skipped++;
-                  continue;
-                }
-            }
-        }
-    }
+    if (context->system->IsTrackedDeviceConnected (i))
+      {
+        ETrackedDeviceClass class = context->system->GetTrackedDeviceClass (i);
+        if (class == ETrackedDeviceClass_TrackedDeviceClass_Controller)
+          {
+            g_print ("Controller %d found.\n", i);
+            OpenVRController *controller = openvr_controller_new_from_id (i);
+            controlllers = g_slist_append (controlllers, controller);
+          }
+      }
 
-  if (!self->initialized)
-    return FALSE;
+  g_print ("Found %d controllers.\n", g_slist_length (controlllers));
 
-  return TRUE;
+  return controlllers;
 }
 
 #if 0

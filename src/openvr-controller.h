@@ -18,7 +18,8 @@
 G_BEGIN_DECLS
 
 #define OPENVR_TYPE_CONTROLLER openvr_controller_get_type()
-G_DECLARE_FINAL_TYPE (OpenVRController, openvr_controller, OPENVR, CONTROLLER, GObject)
+G_DECLARE_FINAL_TYPE (OpenVRController, openvr_controller,
+                      OPENVR, CONTROLLER, GObject)
 
 struct _OpenVRController
 {
@@ -32,8 +33,10 @@ struct _OpenVRController
 
 OpenVRController *openvr_controller_new (void);
 
-gboolean
-openvr_controller_find_by_id (OpenVRController *self, int id);
+OpenVRController *openvr_controller_new_from_id (uint32_t id);
+
+GSList *
+openvr_controller_enumerate ();
 
 gboolean
 openvr_controller_poll_event (OpenVRController *self,

@@ -10,6 +10,7 @@
 #include <gdk/gdk.h>
 #include <glib.h>
 #include <graphene.h>
+#include <signal.h>
 
 #include <openvr-glib.h>
 
@@ -20,24 +21,34 @@
 #include "openvr-overlay.h"
 #include "openvr-vulkan-uploader.h"
 
-
-#define NUM_CONTROLLERS 2
-
 OpenVRVulkanTexture *texture;
 
-OpenVRController *controllers[NUM_CONTROLLERS];
+GSList *controllers;
 
 OpenVROverlay *pointer;
 OpenVROverlay *intersection;
 OpenVROverlay *cat;
 
-gboolean
-_overlay_event_cb (gpointer data)
-{
-  OpenVROverlay *overlay = (OpenVROverlay*) data;
+GMainLoop *loop;
 
-  for (int i = 0; i < NUM_CONTROLLERS; i++)
-    openvr_controller_poll_event (controllers[i], overlay);
+void
+_sigint_cb (int sig_num)
+{
+  if (sig_num == SIGINT)
+    g_main_loop_quit (loop);
+}
+
+static void
+_controller_poll (gpointer controller, gpointer overlay)
+{
+  openvr_controller_poll_event ((OpenVRController*) controller,
+                                (OpenVROverlay*) overlay);
+}
+
+gboolean
+_overlay_event_cb (gpointer overlay)
+{
+  g_slist_foreach (controllers, _controller_poll, overlay);
 
   openvr_overlay_poll_event (overlay);
   return TRUE;
@@ -292,7 +303,7 @@ _init_intersection_overlay (OpenVRVulkanUploader *uploader)
 int
 main ()
 {
-  GMainLoop *loop = g_main_loop_new (NULL, FALSE);
+  loop = g_main_loop_new (NULL, FALSE);
 
   /* init openvr */
   if (!_init_openvr ())
@@ -313,13 +324,11 @@ main ()
   if (!_init_cat_overlay (uploader, loop))
     return -1;
 
-  for (int i = 0; i < NUM_CONTROLLERS; i++)
-    {
-      controllers[i] = openvr_controller_new ();
-      openvr_controller_find_by_id (controllers[i], i);
-    }
+  controllers = openvr_controller_enumerate ();
 
   g_timeout_add (20, _overlay_event_cb, cat);
+
+  signal (SIGINT, _sigint_cb);
 
   /* start glib main loop */
   g_main_loop_run (loop);
@@ -333,8 +342,7 @@ main ()
   g_object_unref (texture);
   g_object_unref (uploader);
 
-  for (int i = 0; i < NUM_CONTROLLERS; i++)
-    g_object_unref (controllers[i]);
+  g_slist_free_full (controllers, g_object_unref);
 
   OpenVRContext *context = openvr_context_get_instance ();
   g_object_unref (context);

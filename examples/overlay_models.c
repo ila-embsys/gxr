@@ -10,6 +10,7 @@
 #include <gdk/gdk.h>
 #include <glib.h>
 #include <graphene.h>
+#include <signal.h>
 
 #include <openvr-glib.h>
 
@@ -21,18 +22,28 @@
 #include "openvr-vulkan-uploader.h"
 
 
-#define NUM_CONTROLLERS 2
-
-OpenVRController *controllers[NUM_CONTROLLERS];
+GSList *controllers;
 OpenVROverlay *pointer;
+GMainLoop *loop;
+
+void
+_sigint_cb (int sig_num)
+{
+  if (sig_num == SIGINT)
+    g_main_loop_quit (loop);
+}
+
+static void
+_controller_poll (gpointer controller, gpointer overlay)
+{
+  openvr_controller_poll_event ((OpenVRController*) controller,
+                                (OpenVROverlay*) overlay);
+}
 
 gboolean
-_overlay_event_cb (gpointer data)
+_overlay_event_cb (gpointer overlay)
 {
-  OpenVROverlay *overlay = (OpenVROverlay*) data;
-
-  for (int i = 0; i < NUM_CONTROLLERS; i++)
-    openvr_controller_poll_event (controllers[i], overlay);
+  g_slist_foreach (controllers, _controller_poll, overlay);
 
   openvr_overlay_poll_event (overlay);
   return TRUE;
@@ -106,6 +117,9 @@ _init_pointer_overlay ()
   if (!openvr_overlay_set_alpha (overlay, 0.0f))
     return NULL;
 
+  if (!openvr_overlay_set_width_meters (overlay, 0.5f))
+    return NULL;
+
   if (!openvr_overlay_show (overlay))
     return NULL;
 
@@ -140,7 +154,7 @@ _init_openvr ()
 int
 main ()
 {
-  GMainLoop *loop = g_main_loop_new (NULL, FALSE);
+  loop = g_main_loop_new (NULL, FALSE);
 
   /* init openvr */
   if (!_init_openvr ())
@@ -154,13 +168,11 @@ main ()
   g_signal_connect (pointer, "motion-notify-event-3d",
                     (GCallback)_move_3d_cb, NULL);
 
-  for (int i = 0; i < NUM_CONTROLLERS; i++)
-    {
-      controllers[i] = openvr_controller_new ();
-      openvr_controller_find_by_id (controllers[i], i);
-    }
+  controllers = openvr_controller_enumerate ();
 
   g_timeout_add (20, _overlay_event_cb, pointer);
+
+  signal (SIGINT, _sigint_cb);
 
   /* start glib main loop */
   g_main_loop_run (loop);
@@ -170,8 +182,7 @@ main ()
 
   g_object_unref (pointer);
 
-  for (int i = 0; i < NUM_CONTROLLERS; i++)
-    g_object_unref (controllers[i]);
+  g_slist_free_full (controllers, g_object_unref);
 
   g_object_unref (context);
 
