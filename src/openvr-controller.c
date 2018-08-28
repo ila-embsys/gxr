@@ -149,6 +149,16 @@ _emit_3d_event (OpenVROverlay      *overlay,
   g_signal_emit (overlay, overlay_signals[MOTION_NOTIFY_EVENT3D], 0, event_3d);
 }
 
+GdkEvent *
+_create_positioned_button_event (GdkEventType type,
+                                 graphene_vec2_t *position_2d)
+{
+  GdkEvent *event = gdk_event_new (type);
+  event->button.x = graphene_vec2_get_x (position_2d);
+  event->button.y = graphene_vec2_get_y (position_2d);
+  return event;
+}
+
 void
 _emit_overlay_events (OpenVRController    *self,
                       OpenVROverlay       *overlay,
@@ -174,14 +184,13 @@ _emit_overlay_events (OpenVRController    *self,
       self->button1_pressed = TRUE;
       if (!last_b1)
         {
-          GdkEvent *event = gdk_event_new (GDK_BUTTON_PRESS);
-          event->button.x = graphene_vec2_get_x (position_2d);
-          event->button.y = graphene_vec2_get_y (position_2d);
+          GdkEvent *event =
+            _create_positioned_button_event (GDK_BUTTON_PRESS, position_2d);
+
           event->button.button = 1;
           g_signal_emit (overlay, overlay_signals[BUTTON_PRESS_EVENT], 0,
                          event);
-          // g_print("%d: Pressed button 1\n",
-          // self->index);
+          // g_print("%d: Pressed button 1\n", self->index);
         }
     }
   else
@@ -189,14 +198,12 @@ _emit_overlay_events (OpenVRController    *self,
       self->button1_pressed = FALSE;
       if (last_b1)
         {
-          GdkEvent *event = gdk_event_new (GDK_BUTTON_RELEASE);
-          event->button.x = graphene_vec2_get_x (position_2d);
-          event->button.y = graphene_vec2_get_y (position_2d);
+          GdkEvent *event =
+            _create_positioned_button_event (GDK_BUTTON_RELEASE, position_2d);
           event->button.button = 1;
           g_signal_emit (overlay, overlay_signals[BUTTON_RELEASE_EVENT], 0,
                          event);
-          // g_print("%d: Released button 1\n",
-          // self->index);
+          // g_print("%d: Released button 1\n", self->index);
         }
     }
 
@@ -206,14 +213,12 @@ _emit_overlay_events (OpenVRController    *self,
       self->button2_pressed = TRUE;
       if (!last_b2)
         {
-          GdkEvent *event = gdk_event_new (GDK_BUTTON_PRESS);
-          event->button.x = graphene_vec2_get_x (position_2d);
-          event->button.y = graphene_vec2_get_y (position_2d);
+          GdkEvent *event =
+            _create_positioned_button_event (GDK_BUTTON_PRESS, position_2d);
           event->button.button = 2;
           g_signal_emit (overlay, overlay_signals[BUTTON_PRESS_EVENT], 0,
                          event);
-          // g_print("%d: Pressed button 2\n",
-          // state->index);
+          // g_print("%d: Pressed button 2\n", self->index);
         }
     }
   else
@@ -221,14 +226,12 @@ _emit_overlay_events (OpenVRController    *self,
       self->button2_pressed = FALSE;
       if (last_b2)
         {
-          GdkEvent *event = gdk_event_new (GDK_BUTTON_RELEASE);
-          event->button.x = graphene_vec2_get_x (position_2d);
-          event->button.y = graphene_vec2_get_y (position_2d);
+          GdkEvent *event =
+            _create_positioned_button_event (GDK_BUTTON_RELEASE, position_2d);
           event->button.button = 2;
           g_signal_emit (overlay, overlay_signals[BUTTON_RELEASE_EVENT], 0,
                          event);
-          // g_print("%d: Released button 2\n",
-          // self->index);
+          // g_print("%d: Released button 2\n", self->index);
         }
     }
 
@@ -238,14 +241,12 @@ _emit_overlay_events (OpenVRController    *self,
       self->grip_pressed = TRUE;
       if (!last_grip)
         {
-          GdkEvent *event = gdk_event_new (GDK_BUTTON_PRESS);
-          event->button.x = graphene_vec2_get_x (position_2d);
-          event->button.y = graphene_vec2_get_y (position_2d);
+          GdkEvent *event =
+            _create_positioned_button_event (GDK_BUTTON_PRESS, position_2d);
           event->button.button = 9;
           g_signal_emit (overlay, overlay_signals[BUTTON_PRESS_EVENT], 0,
                          event);
-          // g_print("%d: Pressed grip button\n",
-          // self->index);
+          // g_print("%d: Pressed grip button\n", self->index);
         }
     }
   else
@@ -253,14 +254,12 @@ _emit_overlay_events (OpenVRController    *self,
       self->grip_pressed = FALSE;
       if (last_grip)
         {
-          GdkEvent *event = gdk_event_new (GDK_BUTTON_RELEASE);
-          event->button.x = graphene_vec2_get_x (position_2d);
-          event->button.y = graphene_vec2_get_y (position_2d);
+          GdkEvent *event =
+            _create_positioned_button_event (GDK_BUTTON_RELEASE, position_2d);
           event->button.button = 9;
           g_signal_emit (overlay, overlay_signals[BUTTON_RELEASE_EVENT], 0,
                          event);
-          // g_print("%d: Released grip button\n",
-          // state->index);
+          // g_print("%d: Released grip button\n", self->index);
         }
     }
 
@@ -272,7 +271,9 @@ _emit_overlay_events (OpenVRController    *self,
       event->scroll.direction =
           controller_state->rAxis[0].y > 0 ? GDK_SCROLL_UP : GDK_SCROLL_DOWN;
       g_signal_emit (overlay, overlay_signals[SCROLL_EVENT], 0, event);
-      // g_print("touchpad y %f\n", controller_state->rAxis[0].y);
+      // g_print("touchpad x %f y %f\n",
+      //         controller_state->rAxis[0].x,
+      //         controller_state->rAxis[0].y);
     }
 }
 
