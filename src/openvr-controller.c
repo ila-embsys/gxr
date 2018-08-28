@@ -121,11 +121,14 @@ openvr_controller_poll_event (OpenVRController *self,
   if (!openvr_math_pose_to_matrix (&pose[self->index], &transform))
     return FALSE;
 
-  // this is just a demo how to create your own event e.g. for sending
-  // graphene data structures to a client application in this case it is the
-  // transform matrix of the controller and a 3D intersection point, in case
-  // the user is pointing at an overlay
-  // TODO: note that we malloc() it here, so the client needs to free it
+  /*
+   * This shows how to create a custom event, e.g. for sending
+   * graphene data structures to a client application in this case it is the
+   * transform matrix of the controller and a 3D intersection point, in case
+   * the user is pointing at an overlay.
+   * mote that we malloc() it here, so the client needs to free it.
+   */
+
   OpenVRController3DEvent *event_3d = malloc (sizeof (OpenVRController3DEvent));
   graphene_matrix_init_from_matrix (&event_3d->transform, &transform);
 
@@ -154,28 +157,38 @@ openvr_controller_poll_event (OpenVRController *self,
       //         intersection_point.y, intersection_point.z);
     }
 
-  // GetOpenVRController is deprecated but simpler to use than actions
+  /* GetOpenVRController is deprecated but simpler to use than actions */
   VRControllerState_t controller_state;
   context->system->GetControllerState (self->index,
                                       &controller_state,
                                        sizeof (controller_state));
 
-  // coordinates of the overlay in the VR space and coordinates of the
-  // intersection point in the VR space can be used to calculate the position
-  // of the intersection point relative to the overlay
+  /*
+   * Coordinates of the overlay in the VR space and coordinates of the
+   * intersection point in the VR space can be used to calculate the position
+   * of the intersection point relative to the overlay.
+   */
+
   graphene_vec3_t overlay_translation;
   openvr_math_vec3_init_from_matrix (&overlay_translation, &overlay->transform);
   graphene_point3d_t overlay_position;
   graphene_point3d_init_from_vec3 (&overlay_position, &overlay_translation);
 
-  // the transformation matrix describes the *center* point of an overlay
-  // to calculate 2D coordinates relative to overlay origin we have to shift
+  /*
+   * The transformation matrix describes the *center* point of an overlay
+   * to calculate 2D coordinates relative to overlay origin we have to shift.
+   */
+
   gfloat overlay_width;
   context->overlay->GetOverlayWidthInMeters (overlay->overlay_handle,
                                             &overlay_width);
-  // there is no function to get the height or aspect ratio of an overlay
-  // so we need to calculate it from width + texture size
-  // the texture aspect ratio should be preserved
+
+  /*
+   * There is no function to get the height or aspect ratio of an overlay
+   * so we need to calculate it from width + texture size
+   * the texture aspect ratio should be preserved.
+   */
+
   uint32_t texture_width;
   uint32_t texture_height;
   context->overlay->GetOverlayTextureSize (overlay->overlay_handle,
@@ -189,8 +202,10 @@ openvr_controller_poll_event (OpenVRController *self,
           texture_width, texture_height);
   */
 
-  // if the overlay is parallel to the xy plane the position in the overlay can
-  // be easily calculated:
+  /*
+   * If the overlay is parallel to the xy plane the position in the overlay can
+   * be easily calculated:
+   */
   /*
   gfloat in_overlay_x = intersection_point.x - overlay_position.x
                         + overlay_width / 2.f;
@@ -198,19 +213,21 @@ openvr_controller_poll_event (OpenVRController *self,
                         + overlay_height / 2.f;
    */
 
+  /*
+   * To calculate the position in the overlay in any orientation, we can invert
+   * the transformation matrix of the overlay. This transformation matrix would
+   * bring the center of our overlay into the origin of the coordinate system,
+   * facing us (+z), the overlay being in the xy plane (since by convention that
+   * is the neutral position for overlays).
+   *
+   * Since the transformation matrix transforms every possible point on the
+   * overlay onto the same overlay as it is in the origin in the xy plane,
+   * it transforms in particular the intersection point onto its position on the
+   * overlay in the xy plane.
+   * Then we only need to shift it by half of the overlay widht/height, because
+   * the *center* of the overlay sits in the origin.
+   */
 
-  // to calculate the position in the overlay in any orientation, we can invert
-  // the transformation matrix of the overlay. This transformation matrix would
-  // bring the center of our overlay into the origin of the coordinate system,
-  // facing us (+z), the overlay being in the xy plane (since by convention that
-  // is the neutral position for overlays)
-  //
-  // since the transformation matrix transforms every possible point on the
-  // overlay onto the same overlay as it is in the origin in the xy plane,
-  // it transforms in particular the intersection point onto its position on the
-  // overlay in the xy plane.
-  // Then we only need to shift it by half of the overlay widht/height, because
-  // the *center* of the overlay sits in the origin
   graphene_matrix_t inverted;
   graphene_matrix_inverse (&overlay->transform, &inverted);
 
@@ -221,15 +238,18 @@ openvr_controller_poll_event (OpenVRController *self,
   gfloat in_overlay_x = transformed_intersection.x + overlay_width / 2.f;
   gfloat in_overlay_y = transformed_intersection.y + overlay_height / 2.f;
   /*
-  g_print("transformed %f %f %f -> %f %f %f\n",
-          intersection_point.x, intersection_point.y, intersection_point.z,
-          in_overlay_x,
-          in_overlay_y,
-          transformed_intersection.z);
+  g_print ("transformed %f %f %f -> %f %f %f\n",
+           intersection_point.x, intersection_point.y, intersection_point.z,
+           in_overlay_x,
+           in_overlay_y,
+           transformed_intersection.z);
+  */
+
+  /*
+   * Notifies the client application where in the current overlay the user is
+   * pointing at
    */
 
-  // notifies the client application where in the current overlay the user is
-  // pointing at
   GdkEvent *event = gdk_event_new (GDK_MOTION_NOTIFY);
   event->motion.x = in_overlay_x;
   event->motion.y = in_overlay_y;
