@@ -36,8 +36,8 @@ gboolean
 openvr_controller_find_by_id (OpenVRController *self, int id);
 
 gboolean
-openvr_controller_trigger_events (OpenVRController *self,
-                                  OpenVROverlay    *overlay);
+openvr_controller_poll_event (OpenVRController *self,
+                              OpenVROverlay    *overlay);
 
 G_END_DECLS
 #endif /* OPENVR_GLIB_CONTROLLER_H_ */

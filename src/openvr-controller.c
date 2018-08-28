@@ -109,8 +109,8 @@ _controller_to_ray (TrackedDevicePose_t *pose, graphene_ray_t *ray)
 #endif
 
 gboolean
-openvr_controller_trigger_events (OpenVRController *self,
-                                  OpenVROverlay    *overlay)
+openvr_controller_poll_event (OpenVRController *self,
+                              OpenVROverlay    *overlay)
 {
   TrackedDevicePose_t pose[k_unMaxTrackedDeviceCount];
 

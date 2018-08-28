@@ -33,7 +33,7 @@ timeout_callback (gpointer data)
   OpenVROverlay *overlay = (OpenVROverlay*) data;
 
   for (int i = 0; i < NUM_CONTROLLERS; i++)
-    openvr_controller_trigger_events (controllers[i], overlay);
+    openvr_controller_poll_event (controllers[i], overlay);
 
   openvr_overlay_poll_event (overlay);
   return TRUE;
