@@ -53,6 +53,7 @@ openvr_controller_init (OpenVRController *self, int num)
   return TRUE;
 }
 
+#if 0
 gboolean
 _controller_to_ray (TrackedDevicePose_t *pose, graphene_ray_t *ray)
 {
@@ -72,63 +73,7 @@ _controller_to_ray (TrackedDevicePose_t *pose, graphene_ray_t *ray)
   graphene_ray_init_from_vec3 (ray, &translation, &direction);
   return TRUE;
 }
-
-gboolean
-openvr_controller_intersect_overlay (OpenVRController   *self,
-                                     OpenVROverlay      *overlay,
-                                     graphene_point3d_t *intersection_point)
-{
-  // if controller is "too near", we don't have an intersection
-  float epsilon = 0.00001;
-
-  graphene_vec3_t overlay_translation;
-  openvr_math_vec3_init_from_matrix (&overlay_translation, &overlay->transform);
-  graphene_point3d_t overlay_origin;
-  graphene_point3d_init_from_vec3 (&overlay_origin, &overlay_translation);
-
-  // the normal of an overlay in xy plane faces the "backwards" direction +z
-  graphene_vec3_t overlay_normal;
-  graphene_vec3_init (&overlay_normal, 0, 0, 1);
-  // now rotate the normal with the current overlay orientation
-  openvr_math_direction_from_matrix_vec3 (&overlay->transform, &overlay_normal,
-                                          &overlay_normal);
-
-  graphene_plane_t plane;
-  graphene_plane_init_from_point (&plane, &overlay_normal, &overlay_origin);
-
-  OpenVRContext *context = openvr_context_get_instance ();
-
-  TrackedDevicePose_t pose[k_unMaxTrackedDeviceCount];
-  context->system->GetDeviceToAbsoluteTrackingPose (
-    context->origin, 0, pose, k_unMaxTrackedDeviceCount);
-
-  graphene_ray_t ray;
-  _controller_to_ray (&pose[self->index], &ray);
-
-  float dist = graphene_ray_get_distance_to_plane (&ray, &plane);
-  if (dist == INFINITY)
-    {
-      // g_print("No intersection!\n");
-      return FALSE;
-    }
-  if (dist < epsilon)
-    {
-      g_print ("Too near for intersection: %f < %f!\n", dist, epsilon);
-      return FALSE;
-    }
-
-  graphene_ray_get_position_at (&ray, dist, intersection_point);
-
-  /*
-  g_print("intersection! %f %f %f\n",
-    intersection_point->x,
-    intersection_point->y,
-    intersection_point->z
-  );
-  */
-
-  return TRUE;
-}
+#endif
 
 gboolean
 openvr_controller_trigger_events (OpenVRController *self,

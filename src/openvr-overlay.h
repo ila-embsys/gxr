@@ -128,6 +128,14 @@ openvr_overlay_intersects (OpenVROverlay      *overlay,
                            graphene_point3d_t *intersection_point,
                            graphene_matrix_t  *transform);
 
+// extends the overlay to an infinite plane, then calculates the intersection
+// useful when implementing grab&move of overlays along their current axes
+// via pointing a controller to the desired destination
+gboolean
+openvr_overlay_intersects_ray (OpenVROverlay      *overlay,
+                               graphene_ray_t     *ray,
+                               graphene_point3d_t *intersection_point);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_OVERLAY_H_ */
