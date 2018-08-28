@@ -176,31 +176,13 @@ openvr_controller_poll_event (OpenVRController *self,
   /* GetOpenVRController is deprecated but simpler to use than actions */
   OpenVRContext *context = openvr_context_get_instance ();
   VRControllerState_t controller_state;
-  context->system->GetControllerState (self->index,
-                                      &controller_state,
-                                       sizeof (controller_state));
-
-  /*
-   * Coordinates of the overlay in the VR space and coordinates of the
-   * intersection point in the VR space can be used to calculate the position
-   * of the intersection point relative to the overlay.
-   */
-
-  graphene_vec3_t overlay_translation;
-  openvr_math_vec3_init_from_matrix (&overlay_translation, &overlay->transform);
-  graphene_point3d_t overlay_position;
-  graphene_point3d_init_from_vec3 (&overlay_position, &overlay_translation);
-
-  /*
-   * If the overlay is parallel to the xy plane the position in the overlay can
-   * be easily calculated:
-   */
-  /*
-  gfloat in_overlay_x = intersection_point.x - overlay_position.x
-                        + overlay_width / 2.f;
-  gfloat in_overlay_y = intersection_point.y - overlay_position.y
-                        + overlay_height / 2.f;
-   */
+  if (!context->system->GetControllerState (self->index,
+                                           &controller_state,
+                                            sizeof (controller_state)))
+    {
+      g_printerr ("GetControllerState returned error.\n");
+      return FALSE;
+    }
 
   graphene_vec2_t in_overlay;
   if (!openvr_overlay_get_2d_intersection (overlay,
