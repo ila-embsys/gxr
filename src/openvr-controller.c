@@ -100,6 +100,25 @@ _controller_to_ray (TrackedDevicePose_t *pose, graphene_ray_t *ray)
 #endif
 
 gboolean
+openvr_controller_get_transformation (OpenVRController  *self,
+                                      graphene_matrix_t *transform)
+{
+  TrackedDevicePose_t pose[k_unMaxTrackedDeviceCount];
+
+  OpenVRContext *context = openvr_context_get_instance ();
+
+  /* TODO: Can we maybe get less than all tracked device poses
+   *       from the API here? Most likely GetControllerStateWithPose. */
+  context->system->GetDeviceToAbsoluteTrackingPose (
+    context->origin, 0, pose, k_unMaxTrackedDeviceCount);
+
+  if (!openvr_math_pose_to_matrix (&pose[self->index], transform))
+    return FALSE;
+
+  return TRUE;
+}
+
+gboolean
 openvr_controller_poll_event (OpenVRController *self,
                               OpenVROverlay    *overlay)
 {
@@ -110,16 +129,8 @@ openvr_controller_poll_event (OpenVRController *self,
       return FALSE;
     }
 
-  TrackedDevicePose_t pose[k_unMaxTrackedDeviceCount];
-
-  OpenVRContext *context = openvr_context_get_instance ();
-
-  context->system->GetDeviceToAbsoluteTrackingPose (
-    context->origin, 0, pose, k_unMaxTrackedDeviceCount);
-
   graphene_matrix_t transform;
-  if (!openvr_math_pose_to_matrix (&pose[self->index], &transform))
-    return FALSE;
+  openvr_controller_get_transformation (self, &transform);
 
   /*
    * This shows how to create a custom event, e.g. for sending
@@ -158,6 +169,7 @@ openvr_controller_poll_event (OpenVRController *self,
     }
 
   /* GetOpenVRController is deprecated but simpler to use than actions */
+  OpenVRContext *context = openvr_context_get_instance ();
   VRControllerState_t controller_state;
   context->system->GetControllerState (self->index,
                                       &controller_state,

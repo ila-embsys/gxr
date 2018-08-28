@@ -48,5 +48,9 @@ gboolean
 openvr_controller_poll_event (OpenVRController *self,
                               OpenVROverlay    *overlay);
 
+gboolean
+openvr_controller_get_transformation (OpenVRController  *self,
+                                      graphene_matrix_t *transform);
+
 G_END_DECLS
 #endif /* OPENVR_GLIB_CONTROLLER_H_ */
