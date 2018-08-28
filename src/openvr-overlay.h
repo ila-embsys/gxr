@@ -136,6 +136,13 @@ openvr_overlay_intersects_ray (OpenVROverlay      *overlay,
                                graphene_ray_t     *ray,
                                graphene_point3d_t *intersection_point);
 
+bool
+openvr_overlay_set_raw (OpenVROverlay *self, guchar *pixels,
+                        uint32_t width, uint32_t height, uint32_t depth);
+
+bool
+openvr_overlay_set_gdk_pixbuf_raw (OpenVROverlay *self, GdkPixbuf * pixbuf);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_OVERLAY_H_ */

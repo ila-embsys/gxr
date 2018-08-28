@@ -485,3 +485,41 @@ openvr_overlay_intersects_ray (OpenVROverlay      *overlay,
 
   return TRUE;
 }
+
+bool
+openvr_overlay_set_gdk_pixbuf_raw (OpenVROverlay *self, GdkPixbuf * pixbuf)
+{
+  int width = gdk_pixbuf_get_width (pixbuf);
+  int height = gdk_pixbuf_get_height (pixbuf);
+  guchar *pixels = gdk_pixbuf_get_pixels (pixbuf);
+
+  uint32_t depth = 3;
+  switch (gdk_pixbuf_get_n_channels (pixbuf))
+  {
+    case 3:
+      depth = 3;
+      break;
+    case 4:
+      depth = 4;
+      break;
+    default:
+      depth = 3;
+  }
+
+  return openvr_overlay_set_raw (self, pixels, width, height, depth);
+}
+
+
+bool
+openvr_overlay_set_raw (OpenVROverlay *self, guchar *pixels,
+                        uint32_t width, uint32_t height, uint32_t depth)
+{
+  GET_OVERLAY_FUNCTIONS
+
+  err = f->SetOverlayRaw (self->overlay_handle,
+                          (void*) pixels, width, height, depth);
+
+  OVERLAY_CHECK_ERROR ("SetOverlayRaw", err);
+  return TRUE;
+}
+
