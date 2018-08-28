@@ -22,8 +22,8 @@
 
 OpenVRVulkanTexture *texture;
 
-OpenVRController left;
-OpenVRController right;
+#define NUM_CONTROLLERS 2
+OpenVRController *controllers[NUM_CONTROLLERS];
 
 OpenVROverlay *pointer;
 
@@ -32,15 +32,8 @@ timeout_callback (gpointer data)
 {
   OpenVROverlay *overlay = (OpenVROverlay*) data;
 
-  if (left.initialized)
-    openvr_controller_trigger_events (&left, overlay);
-  else
-    openvr_controller_find_by_id (&left, 0);
-
-  if (right.initialized)
-    openvr_controller_trigger_events (&right, overlay);
-  else
-    openvr_controller_find_by_id (&right, 1);
+  for (int i = 0; i < NUM_CONTROLLERS; i++)
+    openvr_controller_trigger_events (controllers[i], overlay);
 
   openvr_overlay_poll_event (overlay);
   return TRUE;
@@ -431,6 +424,12 @@ test_cat_overlay ()
       return -1;
     }
 
+  for (int i = 0; i < NUM_CONTROLLERS; i++)
+    {
+      controllers[i] = openvr_controller_new ();
+      openvr_controller_find_by_id (controllers[i], i);
+    }
+
   openvr_overlay_set_mouse_scale (overlay,
                                   (float)gdk_pixbuf_get_width (pixbuf),
                                   (float)gdk_pixbuf_get_height (pixbuf));
@@ -469,6 +468,9 @@ test_cat_overlay ()
   g_object_unref (texture);
   g_object_unref (uploader);
 
+  for (int i = 0; i < NUM_CONTROLLERS; i++)
+    g_object_unref (controllers[i]);
+
   OpenVRContext *context = openvr_context_get_instance ();
   g_object_unref (context);
 
@@ -478,7 +480,5 @@ test_cat_overlay ()
 int
 main ()
 {
-  left.initialized = FALSE;
-  right.initialized = FALSE;
   return test_cat_overlay ();
 }

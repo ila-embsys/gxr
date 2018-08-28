@@ -25,7 +25,7 @@
 
 OpenVRVulkanTexture *texture;
 
-OpenVRController controllers[NUM_CONTROLLERS];
+OpenVRController *controllers[NUM_CONTROLLERS];
 
 OpenVROverlay *pointer;
 
@@ -35,7 +35,7 @@ _overlay_event_cb (gpointer data)
   OpenVROverlay *overlay = (OpenVROverlay*) data;
 
   for (int i = 0; i < NUM_CONTROLLERS; i++)
-    openvr_controller_trigger_events (&controllers[i], overlay);
+    openvr_controller_trigger_events (controllers[i], overlay);
 
   openvr_overlay_poll_event (overlay);
   return TRUE;
@@ -177,7 +177,10 @@ main ()
                     NULL);
 
   for (int i = 0; i < NUM_CONTROLLERS; i++)
-    openvr_controller_find_by_id (&controllers[i], 0);
+    {
+      controllers[i] = openvr_controller_new ();
+      openvr_controller_find_by_id (controllers[i], i);
+    }
 
   g_timeout_add (20, _overlay_event_cb, pointer);
 
@@ -190,6 +193,9 @@ main ()
   g_object_unref (pointer);
   g_object_unref (texture);
   g_object_unref (uploader);
+
+  for (int i = 0; i < NUM_CONTROLLERS; i++)
+    g_object_unref (controllers[i]);
 
   OpenVRContext *context = openvr_context_get_instance ();
   g_object_unref (context);

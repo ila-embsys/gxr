@@ -2,6 +2,7 @@
  * OpenVR GLib
  * Copyright 2018 Collabora Ltd.
  * Author: Christoph Haag <christoph.haag@collabora.com>
+ * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
  * SPDX-License-Identifier: MIT
  */
 
@@ -10,6 +11,38 @@
 #include <gdk/gdk.h>
 #include "openvr-context.h"
 #include "openvr_capi_global.h"
+
+G_DEFINE_TYPE (OpenVRController, openvr_controller, G_TYPE_OBJECT)
+
+static void
+openvr_controller_finalize (GObject *gobject);
+
+static void
+openvr_controller_class_init (OpenVRControllerClass *klass)
+{
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+
+  object_class->finalize = openvr_controller_finalize;
+}
+
+static void
+openvr_controller_init (OpenVRController *self)
+{
+  self->initialized = FALSE;
+}
+
+OpenVRController *
+openvr_controller_new (void)
+{
+  return (OpenVRController*) g_object_new (OPENVR_TYPE_CONTROLLER, 0);
+}
+
+static void
+openvr_controller_finalize (GObject *gobject)
+{
+  OpenVRController *self = OPENVR_CONTROLLER (gobject);
+  (void) self;
+}
 
 // sets openvr controller ids in the order openvr assigns them
 gboolean
