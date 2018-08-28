@@ -118,6 +118,37 @@ openvr_controller_get_transformation (OpenVRController  *self,
   return TRUE;
 }
 
+/*
+ * This shows how to create a custom event, e.g. for sending
+ * graphene data structures to a client application in this case it is the
+ * transform matrix of the controller and a 3D intersection point, in case
+ * the user is pointing at an overlay.
+ * mote that we malloc() it here, so the client needs to free it.
+ */
+
+void
+_emit_3d_event (OpenVROverlay      *overlay,
+                gboolean            intersects,
+                graphene_matrix_t  *transform,
+                graphene_point3d_t *intersection_point)
+{
+  OpenVRController3DEvent *event_3d = malloc (sizeof (OpenVRController3DEvent));
+  graphene_matrix_init_from_matrix (&event_3d->transform, transform);
+
+  event_3d->has_intersection = intersects;
+
+  if (intersects)
+    {
+      graphene_point3d_init_from_point (&event_3d->intersection_point,
+                                        intersection_point);
+
+      // g_print("Intersects at point %f %f %f\n", intersection_point.x,
+      //         intersection_point.y, intersection_point.z);
+    }
+
+  g_signal_emit (overlay, overlay_signals[MOTION_NOTIFY_EVENT3D], 0, event_3d);
+}
+
 gboolean
 openvr_controller_poll_event (OpenVRController *self,
                               OpenVROverlay    *overlay)
@@ -132,41 +163,15 @@ openvr_controller_poll_event (OpenVRController *self,
   graphene_matrix_t transform;
   openvr_controller_get_transformation (self, &transform);
 
-  /*
-   * This shows how to create a custom event, e.g. for sending
-   * graphene data structures to a client application in this case it is the
-   * transform matrix of the controller and a 3D intersection point, in case
-   * the user is pointing at an overlay.
-   * mote that we malloc() it here, so the client needs to free it.
-   */
-
-  OpenVRController3DEvent *event_3d = malloc (sizeof (OpenVRController3DEvent));
-  graphene_matrix_init_from_matrix (&event_3d->transform, &transform);
-
   graphene_point3d_t intersection_point;
   gboolean intersects = openvr_overlay_intersects (overlay,
                                                   &intersection_point,
                                                   &transform);
+
+  _emit_3d_event (overlay, intersects, &transform, &intersection_point);
+
   if (!intersects)
-    {
-      event_3d->has_intersection = FALSE;
-      g_signal_emit (overlay, overlay_signals[MOTION_NOTIFY_EVENT3D], 0,
-                     event_3d);
-
-      // g_print("No intersection!\n");
-      return FALSE;
-    }
-  else
-    {
-      event_3d->has_intersection = TRUE;
-      graphene_point3d_init_from_point (&event_3d->intersection_point,
-                                        &intersection_point);
-      g_signal_emit (overlay, overlay_signals[MOTION_NOTIFY_EVENT3D], 0,
-                     event_3d);
-
-      // g_print("Intersects at point %f %f %f\n", intersection_point.x,
-      //         intersection_point.y, intersection_point.z);
-    }
+    return FALSE;
 
   /* GetOpenVRController is deprecated but simpler to use than actions */
   OpenVRContext *context = openvr_context_get_instance ();
