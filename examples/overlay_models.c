@@ -36,8 +36,8 @@ _sigint_cb (int sig_num)
 static void
 _controller_poll (gpointer controller, gpointer overlay)
 {
-  openvr_controller_poll_overlay_event ((OpenVRController*) controller,
-                                        (OpenVROverlay*) overlay);
+  openvr_overlay_poll_controller_event ((OpenVROverlay*) overlay,
+                                        (OpenVRController*) controller);
 }
 
 gboolean
@@ -51,7 +51,7 @@ _overlay_event_cb (gpointer overlay)
 
 static void
 _move_3d_cb (OpenVROverlay           *overlay,
-             OpenVRController3DEvent *event,
+             OpenVRIntersectionEvent *event,
              gpointer                 data)
 {
   (void) overlay;
@@ -165,7 +165,7 @@ main ()
 
   pointer = _init_pointer_overlay ();
 
-  g_signal_connect (pointer, "motion-notify-event-3d",
+  g_signal_connect (pointer, "intersection-event",
                     (GCallback)_move_3d_cb, NULL);
 
   controllers = openvr_controller_enumerate ();

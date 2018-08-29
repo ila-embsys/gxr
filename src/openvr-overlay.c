@@ -17,10 +17,11 @@
 
 #include "openvr-time.h"
 #include "openvr-math.h"
+#include "openvr-controller.h"
 
 G_DEFINE_TYPE (OpenVROverlay, openvr_overlay, G_TYPE_OBJECT)
 
-guint overlay_signals[LAST_SIGNAL] = { 0 };
+
 
 #define GET_OVERLAY_FUNCTIONS \
   EVROverlayError err; \
@@ -37,6 +38,19 @@ guint overlay_signals[LAST_SIGNAL] = { 0 };
       return FALSE; \
     } \
 }
+
+enum {
+  MOTION_NOTIFY_EVENT,
+  BUTTON_PRESS_EVENT,
+  BUTTON_RELEASE_EVENT,
+  SHOW,
+  DESTROY,
+  INTERSECTION_EVENT,
+  SCROLL_EVENT,
+  LAST_SIGNAL
+};
+
+static guint overlay_signals[LAST_SIGNAL] = { 0 };
 
 static void
 openvr_overlay_class_init (OpenVROverlayClass *klass)
@@ -76,8 +90,8 @@ openvr_overlay_class_init (OpenVROverlayClass *klass)
                       G_SIGNAL_NO_HOOKS,
                    0, NULL, NULL, NULL, G_TYPE_NONE, 0);
 
-  overlay_signals[MOTION_NOTIFY_EVENT3D] =
-    g_signal_new ("motion-notify-event-3d",
+  overlay_signals[INTERSECTION_EVENT] =
+    g_signal_new ("intersection-event",
                   G_TYPE_FROM_CLASS (klass),
                   G_SIGNAL_RUN_LAST,
                   0, NULL, NULL, NULL, G_TYPE_NONE,
@@ -618,6 +632,165 @@ openvr_overlay_get_2d_intersection (OpenVROverlay      *overlay,
   */
 
   graphene_vec2_init (result, x, y);
+
+  return TRUE;
+}
+
+/*
+ * This shows how to create a custom event, e.g. for sending
+ * graphene data structures to a client application in this case it is the
+ * transform matrix of the controller and a 3D intersection point, in case
+ * the user is pointing at an overlay.
+ * mote that we malloc() it here, so the client needs to free it.
+ */
+
+void
+_emit_intersection_event (OpenVROverlay      *overlay,
+                          gboolean            intersects,
+                          graphene_matrix_t  *transform,
+                          graphene_point3d_t *intersection_point)
+{
+  OpenVRIntersectionEvent *event = malloc (sizeof (OpenVRIntersectionEvent));
+  graphene_matrix_init_from_matrix (&event->transform, transform);
+
+  event->has_intersection = intersects;
+
+  if (intersects)
+    {
+      graphene_point3d_init_from_point (&event->intersection_point,
+                                        intersection_point);
+
+      // g_print("Intersects at point %f %f %f\n", intersection_point.x,
+      //         intersection_point.y, intersection_point.z);
+    }
+
+  g_signal_emit (overlay, overlay_signals[INTERSECTION_EVENT], 0, event);
+}
+
+GdkEvent *
+_create_positioned_button_event (GdkEventType type,
+                                 graphene_vec2_t *position_2d)
+{
+  GdkEvent *event = gdk_event_new (type);
+  event->button.x = graphene_vec2_get_x (position_2d);
+  event->button.y = graphene_vec2_get_y (position_2d);
+  return event;
+}
+
+void
+_check_press_release (OpenVROverlay    *self,
+                      OpenVRController *controller,
+                      uint64_t          pressed_state,
+                      OpenVRButton      button,
+                      graphene_vec2_t  *position_2d)
+{
+  EVRButtonId button_id = openvr_controller_to_evr_button (button);
+
+  uint64_t is_pressed = openvr_controller_is_pressed (pressed_state, button_id);
+  uint64_t was_pressed =
+    openvr_controller_is_pressed (controller->last_pressed_state, button_id);
+
+  if (is_pressed != was_pressed)
+    {
+      GdkEventType type;
+      guint signal;
+      if (is_pressed)
+        {
+          type = GDK_BUTTON_PRESS;
+          signal = BUTTON_PRESS_EVENT;
+        }
+      else
+        {
+          type = GDK_BUTTON_RELEASE;
+          signal = BUTTON_RELEASE_EVENT;
+        }
+
+      GdkEvent *event = _create_positioned_button_event (type, position_2d);
+      event->button.button = button;
+      g_signal_emit (self, overlay_signals[signal], 0, event);
+      // g_print ("Controller #%d: %d button %d\n", controller->index, type, button);
+    }
+}
+
+void
+_emit_controller_events (OpenVROverlay       *self,
+                         OpenVRController    *controller,
+                         VRControllerState_t *state,
+                         graphene_vec2_t     *position_2d)
+{
+  /* Motion event */
+  GdkEvent *event = gdk_event_new (GDK_MOTION_NOTIFY);
+  event->motion.x = graphene_vec2_get_x (position_2d);
+  event->motion.y = graphene_vec2_get_y (position_2d);
+  g_signal_emit (self, overlay_signals[MOTION_NOTIFY_EVENT], 0, event);
+
+  /* Press / release events */
+  uint64_t pressed_state = state->ulButtonPressed;
+  _check_press_release (self, controller, pressed_state,
+                        OPENVR_BUTTON_TRIGGER, position_2d);
+  _check_press_release (self, controller, pressed_state,
+                        OPENVR_BUTTON_MENU, position_2d);
+  _check_press_release (self, controller, pressed_state,
+                        OPENVR_BUTTON_GRIP, position_2d);
+
+  /* Scroll event from touchpad */
+  if (openvr_controller_is_pressed (pressed_state, EVRButtonId_k_EButton_Axis0))
+    {
+      GdkEvent *event = gdk_event_new (GDK_SCROLL);
+      event->scroll.y = state->rAxis[0].y;
+      event->scroll.direction =
+        state->rAxis[0].y > 0 ? GDK_SCROLL_UP : GDK_SCROLL_DOWN;
+      g_signal_emit (self, overlay_signals[SCROLL_EVENT], 0, event);
+      // g_print ("touchpad x %f y %f\n",
+      //          state->rAxis[0].x,
+      //          state->rAxis[0].y);
+    }
+
+  controller->last_pressed_state = pressed_state;
+}
+
+gboolean
+openvr_overlay_poll_controller_event (OpenVROverlay    *self,
+                                      OpenVRController *controller)
+{
+  if (!controller->initialized)
+    {
+      g_printerr ("openvr_controller_poll_event()"
+                  " called with invalid controller!\n");
+      return FALSE;
+    }
+
+  graphene_matrix_t transform;
+  openvr_controller_get_transformation (controller, &transform);
+
+  graphene_point3d_t intersection_point;
+  gboolean intersects = openvr_overlay_intersects (self,
+                                                  &intersection_point,
+                                                  &transform);
+
+  _emit_intersection_event (self, intersects, &transform, &intersection_point);
+
+  if (!intersects)
+    return FALSE;
+
+  /* GetOpenVRController is deprecated but simpler to use than actions */
+  OpenVRContext *context = openvr_context_get_instance ();
+  VRControllerState_t controller_state;
+  if (!context->system->GetControllerState (controller->index,
+                                           &controller_state,
+                                            sizeof (controller_state)))
+    {
+      g_printerr ("GetControllerState returned error.\n");
+      return FALSE;
+    }
+
+  graphene_vec2_t position_2d;
+  if (!openvr_overlay_get_2d_intersection (self,
+                                          &intersection_point,
+                                          &position_2d))
+    return FALSE;
+
+  _emit_controller_events (self, controller, &controller_state, &position_2d);
 
   return TRUE;
 }

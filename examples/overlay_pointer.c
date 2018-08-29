@@ -41,8 +41,8 @@ _sigint_cb (int sig_num)
 static void
 _controller_poll (gpointer controller, gpointer overlay)
 {
-  openvr_controller_poll_overlay_event ((OpenVRController*) controller,
-                                        (OpenVROverlay*) overlay);
+  openvr_overlay_poll_controller_event ((OpenVROverlay*) overlay,
+                                        (OpenVRController*) controller);
 }
 
 gboolean
@@ -74,7 +74,7 @@ load_gdk_pixbuf (const gchar* name)
 
 void
 _update_intersection_position (OpenVROverlay *overlay,
-                               OpenVRController3DEvent *event)
+                               OpenVRIntersectionEvent *event)
 {
   graphene_matrix_t transform;
   graphene_matrix_init_from_matrix (&transform, &event->transform);
@@ -85,7 +85,7 @@ _update_intersection_position (OpenVROverlay *overlay,
 
 static void
 _move_3d_cb (OpenVROverlay           *overlay,
-             OpenVRController3DEvent *event,
+             OpenVRIntersectionEvent *event,
              gpointer                 data)
 {
   (void) overlay;
@@ -261,7 +261,7 @@ _init_cat_overlay (OpenVRVulkanUploader *uploader, GMainLoop *loop)
   openvr_vulkan_uploader_submit_frame (uploader, cat, texture);
 
   /* connect glib callbacks */
-  g_signal_connect (cat, "motion-notify-event-3d", (GCallback)_move_3d_cb,
+  g_signal_connect (cat, "intersection-event", (GCallback)_move_3d_cb,
                     NULL);
   g_signal_connect (cat, "button-press-event", (GCallback)_press_cb, loop);
   g_signal_connect (cat, "scroll-event", (GCallback)_scroll_cb, loop);

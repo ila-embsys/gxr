@@ -16,25 +16,18 @@
 #include <openvr_capi.h>
 #include <graphene.h>
 
+#include "openvr-controller.h"
+
+typedef struct OpenVRIntersectionEvent {
+  graphene_matrix_t transform;
+  gboolean has_intersection;
+  graphene_point3d_t intersection_point;
+} OpenVRIntersectionEvent;
+
 G_BEGIN_DECLS
 
 #define OPENVR_TYPE_OVERLAY openvr_overlay_get_type()
 G_DECLARE_FINAL_TYPE (OpenVROverlay, openvr_overlay, OPENVR, OVERLAY, GObject)
-
-enum {
-  MOTION_NOTIFY_EVENT,
-  BUTTON_PRESS_EVENT,
-  BUTTON_RELEASE_EVENT,
-  SHOW,
-  DESTROY,
-  MOTION_NOTIFY_EVENT3D,
-  BUTTON_PRESS_EVENT3D,
-  BUTTON_RELEASE_EVENT3D,
-  SCROLL_EVENT,
-  LAST_SIGNAL
-};
-
-extern guint overlay_signals[LAST_SIGNAL];
 
 struct _OpenVROverlay
 {
@@ -156,6 +149,10 @@ gboolean
 openvr_overlay_get_2d_intersection (OpenVROverlay      *overlay,
                                     graphene_point3d_t *intersection_point,
                                     graphene_vec2_t    *result);
+
+gboolean
+openvr_overlay_poll_controller_event (OpenVROverlay    *self,
+                                      OpenVRController *controller);
 
 G_END_DECLS
 

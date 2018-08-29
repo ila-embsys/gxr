@@ -10,16 +10,13 @@
 #define OPENVR_GLIB_CONTROLLER_H_
 
 #include "openvr-math.h"
-#include "openvr-overlay.h"
 #include <gdk/gdk.h>
 #include <glib-object.h>
 #include <openvr_capi.h>
 
-typedef struct OpenVRController3DEvent {
+typedef struct OpenVRMotion3DEvent {
   graphene_matrix_t transform;
-  gboolean has_intersection;
-  graphene_point3d_t intersection_point;
-} OpenVRController3DEvent;
+} OpenVRMotion3DEvent;
 
 typedef enum OpenVRButton {
   OPENVR_BUTTON_TRIGGER,
@@ -51,12 +48,14 @@ GSList *
 openvr_controller_enumerate ();
 
 gboolean
-openvr_controller_poll_overlay_event (OpenVRController *self,
-                                      OpenVROverlay    *overlay);
-
-gboolean
 openvr_controller_get_transformation (OpenVRController  *self,
                                       graphene_matrix_t *transform);
+
+EVRButtonId
+openvr_controller_to_evr_button (OpenVRButton button);
+
+uint64_t
+openvr_controller_is_pressed (uint64_t state, EVRButtonId id);
 
 G_END_DECLS
 #endif /* OPENVR_GLIB_CONTROLLER_H_ */

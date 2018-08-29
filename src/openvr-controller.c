@@ -12,6 +12,17 @@
 #include "openvr-context.h"
 #include "openvr_capi_global.h"
 
+enum {
+  MOTION_3D_NOTIFY_EVENT,
+  BUTTON_3D_PRESS_EVENT,
+  BUTTON_3D_RELEASE_EVENT,
+  TOUCHPAD_EVENT,
+  CONNECTION_EVENT,
+  LAST_SIGNAL
+};
+
+static guint controller_signals[LAST_SIGNAL] = { 0 };
+
 G_DEFINE_TYPE (OpenVRController, openvr_controller, G_TYPE_OBJECT)
 
 static void
@@ -21,6 +32,41 @@ static void
 openvr_controller_class_init (OpenVRControllerClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
+
+  controller_signals[MOTION_3D_NOTIFY_EVENT] =
+    g_signal_new ("motion-3d-notify-event",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_LAST,
+                  0, NULL, NULL, NULL, G_TYPE_NONE,
+                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  controller_signals[BUTTON_3D_PRESS_EVENT] =
+    g_signal_new ("button-3d-press-event",
+                   G_TYPE_FROM_CLASS (klass),
+                   G_SIGNAL_RUN_LAST,
+                   0, NULL, NULL, NULL, G_TYPE_NONE,
+                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  controller_signals[BUTTON_3D_RELEASE_EVENT] =
+    g_signal_new ("button-3d-release-event",
+                   G_TYPE_FROM_CLASS (klass),
+                   G_SIGNAL_RUN_LAST,
+                   0, NULL, NULL, NULL, G_TYPE_NONE,
+                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  controller_signals[TOUCHPAD_EVENT] =
+    g_signal_new ("touchpad-event",
+                   G_TYPE_FROM_CLASS (klass),
+                   G_SIGNAL_RUN_LAST,
+                   0, NULL, NULL, NULL, G_TYPE_NONE,
+                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  controller_signals[CONNECTION_EVENT] =
+    g_signal_new ("connection-event",
+                   G_TYPE_FROM_CLASS (klass),
+                   G_SIGNAL_RUN_LAST,
+                   0, NULL, NULL, NULL, G_TYPE_NONE,
+                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
 
   object_class->finalize = openvr_controller_finalize;
 }
@@ -127,55 +173,14 @@ openvr_controller_get_transformation (OpenVRController  *self,
   return TRUE;
 }
 
-/*
- * This shows how to create a custom event, e.g. for sending
- * graphene data structures to a client application in this case it is the
- * transform matrix of the controller and a 3D intersection point, in case
- * the user is pointing at an overlay.
- * mote that we malloc() it here, so the client needs to free it.
- */
-
-void
-_emit_3d_event (OpenVROverlay      *overlay,
-                gboolean            intersects,
-                graphene_matrix_t  *transform,
-                graphene_point3d_t *intersection_point)
-{
-  OpenVRController3DEvent *event_3d = malloc (sizeof (OpenVRController3DEvent));
-  graphene_matrix_init_from_matrix (&event_3d->transform, transform);
-
-  event_3d->has_intersection = intersects;
-
-  if (intersects)
-    {
-      graphene_point3d_init_from_point (&event_3d->intersection_point,
-                                        intersection_point);
-
-      // g_print("Intersects at point %f %f %f\n", intersection_point.x,
-      //         intersection_point.y, intersection_point.z);
-    }
-
-  g_signal_emit (overlay, overlay_signals[MOTION_NOTIFY_EVENT3D], 0, event_3d);
-}
-
-GdkEvent *
-_create_positioned_button_event (GdkEventType type,
-                                 graphene_vec2_t *position_2d)
-{
-  GdkEvent *event = gdk_event_new (type);
-  event->button.x = graphene_vec2_get_x (position_2d);
-  event->button.y = graphene_vec2_get_y (position_2d);
-  return event;
-}
-
 uint64_t
-_is_pressed (uint64_t state, EVRButtonId id)
+openvr_controller_is_pressed (uint64_t state, EVRButtonId id)
 {
   return state & ButtonMaskFromId (id);
 }
 
 EVRButtonId
-_map_button (OpenVRButton button)
+openvr_controller_to_evr_button (OpenVRButton button)
 {
   switch (button)
     {
@@ -187,121 +192,4 @@ _map_button (OpenVRButton button)
         g_printerr ("Unknown OpenVRButton %d\n", button);
     }
   return 0;
-}
-
-void
-_check_press_release (OpenVRController *self,
-                      OpenVROverlay    *overlay,
-                      uint64_t          pressed_state,
-                      OpenVRButton      button,
-                      graphene_vec2_t  *position_2d)
-{
-  EVRButtonId button_id = _map_button (button);
-
-  uint64_t is_pressed = _is_pressed (pressed_state, button_id);
-  uint64_t was_pressed = _is_pressed (self->last_pressed_state, button_id);
-
-  if (is_pressed != was_pressed)
-    {
-      GdkEventType type;
-      guint signal;
-      if (is_pressed)
-        {
-          type = GDK_BUTTON_PRESS;
-          signal = BUTTON_PRESS_EVENT;
-        }
-      else
-        {
-          type = GDK_BUTTON_RELEASE;
-          signal = BUTTON_RELEASE_EVENT;
-        }
-
-      GdkEvent *event = _create_positioned_button_event (type, position_2d);
-      event->button.button = button;
-      g_signal_emit (overlay, overlay_signals[signal], 0, event);
-      // g_print ("Controller #%d: %d button %d\n", self->index, type, button);
-    }
-}
-
-void
-_emit_overlay_events (OpenVRController    *self,
-                      OpenVROverlay       *overlay,
-                      VRControllerState_t *state,
-                      graphene_vec2_t     *position_2d)
-{
-  /* Motion event */
-  GdkEvent *event = gdk_event_new (GDK_MOTION_NOTIFY);
-  event->motion.x = graphene_vec2_get_x (position_2d);
-  event->motion.y = graphene_vec2_get_y (position_2d);
-  g_signal_emit (overlay, overlay_signals[MOTION_NOTIFY_EVENT], 0, event);
-
-  /* Press / release events */
-  uint64_t pressed_state = state->ulButtonPressed;
-  _check_press_release (self, overlay, pressed_state,
-                        OPENVR_BUTTON_TRIGGER, position_2d);
-  _check_press_release (self, overlay, pressed_state,
-                        OPENVR_BUTTON_MENU, position_2d);
-  _check_press_release (self, overlay, pressed_state,
-                        OPENVR_BUTTON_GRIP, position_2d);
-
-  /* Scroll event from touchpad */
-  if (_is_pressed (pressed_state, EVRButtonId_k_EButton_Axis0))
-    {
-      GdkEvent *event = gdk_event_new (GDK_SCROLL);
-      event->scroll.y = state->rAxis[0].y;
-      event->scroll.direction =
-        state->rAxis[0].y > 0 ? GDK_SCROLL_UP : GDK_SCROLL_DOWN;
-      g_signal_emit (overlay, overlay_signals[SCROLL_EVENT], 0, event);
-      // g_print ("touchpad x %f y %f\n",
-      //          state->rAxis[0].x,
-      //          state->rAxis[0].y);
-    }
-
-  self->last_pressed_state = pressed_state;
-}
-
-gboolean
-openvr_controller_poll_overlay_event (OpenVRController *self,
-                                      OpenVROverlay    *overlay)
-{
-  if (!self->initialized)
-    {
-      g_printerr ("openvr_controller_poll_event()"
-                  " called with invalid controller!\n");
-      return FALSE;
-    }
-
-  graphene_matrix_t transform;
-  openvr_controller_get_transformation (self, &transform);
-
-  graphene_point3d_t intersection_point;
-  gboolean intersects = openvr_overlay_intersects (overlay,
-                                                  &intersection_point,
-                                                  &transform);
-
-  _emit_3d_event (overlay, intersects, &transform, &intersection_point);
-
-  if (!intersects)
-    return FALSE;
-
-  /* GetOpenVRController is deprecated but simpler to use than actions */
-  OpenVRContext *context = openvr_context_get_instance ();
-  VRControllerState_t controller_state;
-  if (!context->system->GetControllerState (self->index,
-                                           &controller_state,
-                                            sizeof (controller_state)))
-    {
-      g_printerr ("GetControllerState returned error.\n");
-      return FALSE;
-    }
-
-  graphene_vec2_t position_2d;
-  if (!openvr_overlay_get_2d_intersection (overlay,
-                                          &intersection_point,
-                                          &position_2d))
-    return FALSE;
-
-  _emit_overlay_events (self, overlay, &controller_state, &position_2d);
-
-  return TRUE;
 }
