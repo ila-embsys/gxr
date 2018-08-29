@@ -170,6 +170,11 @@ _init_pointer_overlay ()
       return NULL;
     }
 
+  // TODO: wrap the uint32 of the sort order in some sort of hierarchy
+  // for now: The pointer itself should *always* be visible on top of overlays,
+  // so use the max value here
+  openvr_overlay_set_sort_order (overlay, UINT32_MAX);
+
   GdkPixbuf *pixbuf = _create_empty_pixbuf (10, 10);
   if (pixbuf == NULL)
     return NULL;
@@ -309,6 +314,10 @@ _init_intersection_overlay (OpenVRVulkanUploader *uploader)
       g_printerr ("Overlay unavailable.\n");
       return FALSE;
     }
+
+  // for now: The crosshair should always be visible, except the pointer can
+  // occlude it. The pointer has max sort order, so the crosshair gets max -1
+  openvr_overlay_set_sort_order (intersection, UINT32_MAX - 1);
 
   openvr_vulkan_uploader_submit_frame (uploader,
                                        intersection, intersection_texture);
