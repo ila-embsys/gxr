@@ -13,7 +13,7 @@
 #include "openvr_capi_global.h"
 
 enum {
-  MOTION_3D_NOTIFY_EVENT,
+  MOTION_3D_EVENT,
   BUTTON_PRESS_EVENT,
   BUTTON_RELEASE_EVENT,
   TOUCHPAD_EVENT,
@@ -33,8 +33,8 @@ openvr_controller_class_init (OpenVRControllerClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  controller_signals[MOTION_3D_NOTIFY_EVENT] =
-    g_signal_new ("motion-3d-notify-event",
+  controller_signals[MOTION_3D_EVENT] =
+    g_signal_new ("motion-3d-event",
                   G_TYPE_FROM_CLASS (klass),
                   G_SIGNAL_RUN_LAST,
                   0, NULL, NULL, NULL, G_TYPE_NONE,
@@ -199,7 +199,7 @@ _emit_motion_3d_event (OpenVRController *self, graphene_matrix_t *transform)
 {
   OpenVRMotion3DEvent *event = malloc (sizeof (OpenVRMotion3DEvent));
   graphene_matrix_init_from_matrix (&event->transform, transform);
-  g_signal_emit (self, controller_signals[MOTION_3D_NOTIFY_EVENT], 0, event);
+  g_signal_emit (self, controller_signals[MOTION_3D_EVENT], 0, event);
 }
 
 void

@@ -34,25 +34,25 @@ _sigint_cb (int sig_num)
 }
 
 static void
-_controller_poll (gpointer controller, gpointer overlay)
+_controller_poll (gpointer controller, gpointer unused)
 {
-  openvr_overlay_poll_controller_event ((OpenVROverlay*) overlay,
-                                        (OpenVRController*) controller);
+  (void) unused;
+  openvr_controller_poll_event ((OpenVRController*) controller);
 }
 
 gboolean
-_overlay_event_cb (gpointer overlay)
+_poll_cb (gpointer nothing)
 {
-  g_slist_foreach (controllers, _controller_poll, overlay);
+  (void) nothing;
+  g_slist_foreach (controllers, _controller_poll, NULL);
 
-  openvr_overlay_poll_event (overlay);
   return TRUE;
 }
 
 static void
-_move_3d_cb (OpenVROverlay           *overlay,
-             OpenVRIntersectionEvent *event,
-             gpointer                 data)
+_motion_3d_cb (OpenVROverlay       *overlay,
+               OpenVRMotion3DEvent *event,
+               gpointer             data)
 {
   (void) overlay;
   (void) data;
@@ -60,6 +60,24 @@ _move_3d_cb (OpenVROverlay           *overlay,
   openvr_overlay_set_transform_absolute (pointer, &event->transform);
 
   free (event);
+}
+
+static void
+_press_cb (OpenVROverlay *overlay, GdkEventButton *event, gpointer data)
+{
+  (void) overlay;
+  (void) data;
+  g_print ("press: %d %f %f (%d)\n",
+           event->button, event->x, event->y, event->time);
+}
+
+static void
+_release_cb (OpenVROverlay *overlay, GdkEventButton *event, gpointer data)
+{
+  (void) overlay;
+  (void) data;
+  g_print ("release: %d %f %f (%d)\n",
+           event->button, event->x, event->y, event->time);
 }
 
 GdkPixbuf *
@@ -151,6 +169,16 @@ _init_openvr ()
   return true;
 }
 
+static void
+_register_controller_events (gpointer controller, gpointer unused)
+{
+  (void) unused;
+  OpenVRController* c = (OpenVRController*) controller;
+  g_signal_connect (c, "motion-3d-event", (GCallback) _motion_3d_cb, NULL);
+  g_signal_connect (c, "button-press-event", (GCallback) _press_cb, NULL);
+  g_signal_connect (c, "button-release-event", (GCallback) _release_cb, NULL);
+}
+
 int
 main ()
 {
@@ -165,12 +193,11 @@ main ()
 
   pointer = _init_pointer_overlay ();
 
-  g_signal_connect (pointer, "intersection-event",
-                    (GCallback)_move_3d_cb, NULL);
-
   controllers = openvr_controller_enumerate ();
 
-  g_timeout_add (20, _overlay_event_cb, pointer);
+  g_slist_foreach (controllers, _register_controller_events, NULL);
+
+  g_timeout_add (20, _poll_cb, NULL);
 
   signal (SIGINT, _sigint_cb);
 
