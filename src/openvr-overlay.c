@@ -562,7 +562,7 @@ openvr_overlay_get_size_meters (OpenVROverlay *self, graphene_vec2_t *size)
     return FALSE;
 
   PixelSize size_pixels = {};
-  if (openvr_overlay_get_size_pixels (self, &size_pixels))
+  if (!openvr_overlay_get_size_pixels (self, &size_pixels))
     return FALSE;
 
   gfloat aspect = (gfloat) size_pixels.width / (gfloat) size_pixels.height;
