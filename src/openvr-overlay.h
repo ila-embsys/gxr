@@ -90,6 +90,9 @@ gboolean
 openvr_overlay_hide (OpenVROverlay *self);
 
 gboolean
+openvr_overlay_set_sort_order (OpenVROverlay *self, uint32_t sort_order);
+
+gboolean
 openvr_overlay_set_model (OpenVROverlay *self, gchar *name,
                           struct HmdColor_t *color);
 

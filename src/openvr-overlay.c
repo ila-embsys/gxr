@@ -215,6 +215,18 @@ openvr_overlay_thumbnail_is_visible (OpenVROverlay *self)
   return context->overlay->IsOverlayVisible (self->thumbnail_handle);
 }
 
+gboolean
+openvr_overlay_set_sort_order (OpenVROverlay *self, uint32_t sort_order)
+{
+  GET_OVERLAY_FUNCTIONS
+
+  err = f->SetOverlaySortOrder (self->overlay_handle, sort_order);
+
+  OVERLAY_CHECK_ERROR ("SetOverlaySortOrder", err);
+  return TRUE;
+}
+
+
 static guint
 _vr_to_gdk_mouse_button (uint32_t btn)
 {
