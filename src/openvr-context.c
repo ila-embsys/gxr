@@ -151,7 +151,7 @@ openvr_context_is_hmd_present (void)
 }
 
 void
-openvr_context_list_models (OpenVRContext *self)
+openvr_context_print_model_list (OpenVRContext *self)
 {
   struct VR_IVRRenderModels_FnTable *f = self->model;
 
@@ -164,4 +164,21 @@ openvr_context_list_models (OpenVRContext *self)
       uint32_t ret = f->GetRenderModelName (i, name,k_unMaxPropertyStringSize);
       g_print ("\t%03d: %s\n", ret, name);
     }
+}
+
+GSList *
+openvr_context_get_model_list (OpenVRContext *self)
+{
+  struct VR_IVRRenderModels_FnTable *f = self->model;
+
+  GSList *models = NULL;
+
+  char name[k_unMaxPropertyStringSize];
+  for (uint32_t i = 0; i < f->GetRenderModelCount (); i++)
+    {
+      f->GetRenderModelName (i, name,k_unMaxPropertyStringSize);
+      models = g_slist_append (models, g_strdup (name));
+    }
+
+  return models;
 }

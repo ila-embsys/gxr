@@ -25,6 +25,8 @@
 GSList *controllers;
 OpenVROverlay *pointer;
 GMainLoop *loop;
+guint current_model_list_index = 0;
+GSList *models = NULL;
 
 void
 _sigint_cb (int sig_num)
@@ -50,11 +52,11 @@ _poll_cb (gpointer nothing)
 }
 
 static void
-_motion_3d_cb (OpenVROverlay       *overlay,
+_motion_3d_cb (OpenVRController    *controller,
                OpenVRMotion3DEvent *event,
                gpointer             data)
 {
-  (void) overlay;
+  (void) controller;
   (void) data;
 
   openvr_overlay_set_transform_absolute (pointer, &event->transform);
@@ -62,33 +64,106 @@ _motion_3d_cb (OpenVROverlay       *overlay,
   free (event);
 }
 
-static void
-_press_cb (OpenVROverlay *overlay, GdkEventButton *event, gpointer data)
+gboolean
+_update_model ()
 {
-  (void) overlay;
-  (void) data;
-  g_print ("press: %d %f %f (%d)\n",
-           event->button, event->x, event->y, event->time);
+  struct HmdColor_t color = {
+    .r = 1.0f,
+    .g = 1.0f,
+    .b = 1.0f,
+    .a = 1.0f
+  };
+
+  GSList* name = g_slist_nth (models, current_model_list_index);
+  g_print ("Setting Model '%s' [%d/%d]\n",
+           (gchar *) name->data,
+           current_model_list_index + 1,
+           g_slist_length (models));
+
+  if (!openvr_overlay_set_model (pointer, (gchar *) name->data, &color))
+    return FALSE;
+
+  return TRUE;
+}
+
+gboolean
+_next_model ()
+{
+  if (current_model_list_index == g_slist_length (models) - 1)
+    current_model_list_index = 0;
+  else
+    current_model_list_index++;
+
+  if (!_update_model ())
+    return FALSE;
+
+  return TRUE;
+}
+
+gboolean
+_previous_model ()
+{
+  if (current_model_list_index == 0)
+    current_model_list_index = g_slist_length (models) - 1;
+  else
+    current_model_list_index--;
+
+  if (!_update_model ())
+    return FALSE;
+
+  return TRUE;
 }
 
 static void
-_release_cb (OpenVROverlay *overlay, GdkEventButton *event, gpointer data)
+_press_cb (OpenVRController *controller, GdkEventButton *event, gpointer data)
 {
-  (void) overlay;
+  (void) controller;
   (void) data;
-  g_print ("release: %d %f %f (%d)\n",
-           event->button, event->x, event->y, event->time);
+
+  switch (event->button)
+    {
+      case OPENVR_BUTTON_AXIS0:
+        {
+          if (event->x > 0)
+            _next_model ();
+          else
+            _previous_model ();
+        }
+    }
+}
+
+#if 0
+static void
+_release_cb (OpenVRController *controller, GdkEventButton *event, gpointer data)
+{
+  (void) controller;
+  (void) data;
+  // g_print ("release: %d %f %f (%d)\n",
+  //          event->button, event->x, event->y, event->time);
+
+  switch (event->button)
+    {
+      case OPENVR_BUTTON_AXIS0:
+        {
+          // g_print ("Touchpad release: [%f %f]\n", event->x, event->y);
+          if (event->x > 0)
+            g_print ("release right\n");
+          else
+            g_print ("release left\n");
+        }
+    }
 }
 
 static void
-_pad_motion_cb (OpenVROverlay  *overlay,
-                GdkEventMotion *event,
-                gpointer        data)
+_pad_motion_cb (OpenVRController *controller,
+                GdkEventMotion   *event,
+                gpointer          data)
 {
-  (void) overlay;
+  (void) controller;
   (void) data;
   g_print ("pad motion: %f %f (%d)\n", event->x, event->y, event->time);
 }
+#endif
 
 GdkPixbuf *
 _create_empty_pixbuf (uint32_t width, uint32_t height)
@@ -101,26 +176,26 @@ _create_empty_pixbuf (uint32_t width, uint32_t height)
   return pixbuf;
 }
 
-OpenVROverlay *
+gboolean
 _init_pointer_overlay ()
 {
-  OpenVROverlay *overlay = openvr_overlay_new ();
-  openvr_overlay_create_width (overlay, "pointer", "Pointer", 0.5f);
+  pointer = openvr_overlay_new ();
+  openvr_overlay_create_width (pointer, "pointer", "Pointer", 0.5f);
 
-  if (!openvr_overlay_is_valid (overlay))
+  if (!openvr_overlay_is_valid (pointer))
     {
       g_printerr ("Overlay unavailable.\n");
-      return NULL;
+      return FALSE;
     }
 
   GdkPixbuf *pixbuf = _create_empty_pixbuf (10, 10);
   if (pixbuf == NULL)
-    return NULL;
+    return FALSE;
 
   /* Overlay needs a texture to be set to show model
    * See https://github.com/ValveSoftware/openvr/issues/496
    */
-  openvr_overlay_set_gdk_pixbuf_raw (overlay, pixbuf);
+  openvr_overlay_set_gdk_pixbuf_raw (pointer, pixbuf);
   g_object_unref (pixbuf);
 
   struct HmdColor_t color = {
@@ -130,28 +205,29 @@ _init_pointer_overlay ()
     .a = 1.0f
   };
 
-  if (!openvr_overlay_set_model (overlay, "dk2_hmd", &color))
-    return NULL;
+  GSList* model_name = g_slist_nth (models, current_model_list_index);
+  if (!openvr_overlay_set_model (pointer, (gchar *) model_name->data, &color))
+    return FALSE;
 
   char name_ret[k_unMaxPropertyStringSize];
   struct HmdColor_t color_ret = {};
 
   uint32_t id;
-  if (!openvr_overlay_get_model (overlay, name_ret, &color_ret, &id))
-    return NULL;
+  if (!openvr_overlay_get_model (pointer, name_ret, &color_ret, &id))
+    return FALSE;
 
   g_print ("GetOverlayRenderModel returned id %d name: %s\n", id, name_ret);
 
-  if (!openvr_overlay_set_alpha (overlay, 0.0f))
-    return NULL;
+  if (!openvr_overlay_set_alpha (pointer, 0.0f))
+    return FALSE;
 
-  if (!openvr_overlay_set_width_meters (overlay, 0.5f))
-    return NULL;
+  if (!openvr_overlay_set_width_meters (pointer, 0.5f))
+    return FALSE;
 
-  if (!openvr_overlay_show (overlay))
-    return NULL;
+  if (!openvr_overlay_show (pointer))
+    return FALSE;
 
-  return overlay;
+  return TRUE;
 }
 
 bool
@@ -186,9 +262,16 @@ _register_controller_events (gpointer controller, gpointer unused)
   OpenVRController* c = (OpenVRController*) controller;
   g_signal_connect (c, "motion-3d-event", (GCallback) _motion_3d_cb, NULL);
   g_signal_connect (c, "button-press-event", (GCallback) _press_cb, NULL);
-  g_signal_connect (c, "button-release-event", (GCallback) _release_cb, NULL);
-  g_signal_connect (c, "touchpad-motion-event",
-                    (GCallback) _pad_motion_cb, NULL);
+  // g_signal_connect (c, "button-release-event", (GCallback) _release_cb, NULL);
+  // g_signal_connect (c, "touchpad-motion-event",
+  //                   (GCallback) _pad_motion_cb, NULL);
+}
+
+static void
+_print_model (gpointer name, gpointer unused)
+{
+  (void) unused;
+  g_print ("Model: %s\n", (gchar*) name);
 }
 
 int
@@ -201,9 +284,13 @@ main ()
     return -1;
 
   OpenVRContext *context = openvr_context_get_instance ();
-  openvr_context_list_models (context);
 
-  pointer = _init_pointer_overlay ();
+  // openvr_context_list_models (context);
+  models = openvr_context_get_model_list (context);
+  g_slist_foreach (models, _print_model, NULL);
+
+  if (!_init_pointer_overlay ())
+    return -1;
 
   controllers = openvr_controller_enumerate ();
 
@@ -222,6 +309,7 @@ main ()
   g_object_unref (pointer);
 
   g_slist_free_full (controllers, g_object_unref);
+  g_slist_free_full (models, g_free);
 
   g_object_unref (context);
 
