@@ -97,7 +97,13 @@ _move_3d_cb (OpenVROverlay           *overlay,
   else
     openvr_overlay_hide (intersection);
 
-  openvr_overlay_set_transform_absolute (pointer, &event->transform);
+  graphene_matrix_t scale_matrix;
+  graphene_matrix_init_scale (&scale_matrix, 1.0f, 1.0f, 5.0f);
+
+  graphene_matrix_t scaled;
+  graphene_matrix_multiply (&scale_matrix, &event->transform, &scaled);
+
+  openvr_overlay_set_transform_absolute (pointer, &scaled);
 
   // TODO: because this is a custom event with a struct that has been allocated
   // specifically for us, we need to free it. Maybe reuse?

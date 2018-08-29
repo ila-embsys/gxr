@@ -63,15 +63,17 @@ _motion_3d_cb (OpenVRController    *controller,
 
   graphene_point3d_init (&translation_point, .0f, .1f, -.1f);
 
-  graphene_matrix_t translation_matrix;
-  graphene_matrix_init_translate (&translation_matrix, &translation_point);
+  graphene_matrix_t transformation_matrix;
+  graphene_matrix_init_translate (&transformation_matrix, &translation_point);
 
-  graphene_matrix_t translated;
-  graphene_matrix_multiply (&translation_matrix,
+  graphene_matrix_scale (&transformation_matrix, 1.0f, 1.0f, 0.5f);
+
+  graphene_matrix_t transformed;
+  graphene_matrix_multiply (&transformation_matrix,
                             &event->transform,
-                            &translated);
+                            &transformed);
 
-  openvr_overlay_set_transform_absolute (pointer, &translated);
+  openvr_overlay_set_transform_absolute (pointer, &transformed);
 
   free (event);
 }
