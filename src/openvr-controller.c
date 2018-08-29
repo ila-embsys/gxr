@@ -14,8 +14,8 @@
 
 enum {
   MOTION_3D_NOTIFY_EVENT,
-  BUTTON_3D_PRESS_EVENT,
-  BUTTON_3D_RELEASE_EVENT,
+  BUTTON_PRESS_EVENT,
+  BUTTON_RELEASE_EVENT,
   TOUCHPAD_EVENT,
   CONNECTION_EVENT,
   LAST_SIGNAL
@@ -40,15 +40,15 @@ openvr_controller_class_init (OpenVRControllerClass *klass)
                   0, NULL, NULL, NULL, G_TYPE_NONE,
                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
 
-  controller_signals[BUTTON_3D_PRESS_EVENT] =
-    g_signal_new ("button-3d-press-event",
+  controller_signals[BUTTON_PRESS_EVENT] =
+    g_signal_new ("button-press-event",
                    G_TYPE_FROM_CLASS (klass),
                    G_SIGNAL_RUN_LAST,
                    0, NULL, NULL, NULL, G_TYPE_NONE,
                    1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
 
-  controller_signals[BUTTON_3D_RELEASE_EVENT] =
-    g_signal_new ("button-3d-release-event",
+  controller_signals[BUTTON_RELEASE_EVENT] =
+    g_signal_new ("button-release-event",
                    G_TYPE_FROM_CLASS (klass),
                    G_SIGNAL_RUN_LAST,
                    0, NULL, NULL, NULL, G_TYPE_NONE,
@@ -192,4 +192,95 @@ openvr_controller_to_evr_button (OpenVRButton button)
         g_printerr ("Unknown OpenVRButton %d\n", button);
     }
   return 0;
+}
+
+void
+_emit_motion_3d_event (OpenVRController *self, graphene_matrix_t *transform)
+{
+  OpenVRMotion3DEvent *event = malloc (sizeof (OpenVRMotion3DEvent));
+  graphene_matrix_init_from_matrix (&event->transform, transform);
+  g_signal_emit (self, controller_signals[MOTION_3D_NOTIFY_EVENT], 0, event);
+}
+
+void
+_controller_check_press_release (OpenVRController *self,
+                                 uint64_t          pressed_state,
+                                 OpenVRButton      button)
+{
+  EVRButtonId button_id = openvr_controller_to_evr_button (button);
+
+  uint64_t is_pressed = openvr_controller_is_pressed (pressed_state, button_id);
+  uint64_t was_pressed =
+    openvr_controller_is_pressed (self->last_pressed_state, button_id);
+
+  if (is_pressed != was_pressed)
+    {
+      GdkEventType type;
+      guint signal;
+      if (is_pressed)
+        {
+          type = GDK_BUTTON_PRESS;
+          signal = BUTTON_PRESS_EVENT;
+        }
+      else
+        {
+          type = GDK_BUTTON_RELEASE;
+          signal = BUTTON_RELEASE_EVENT;
+        }
+
+      GdkEvent *event = gdk_event_new (type);
+      event->button.button = button;
+      g_signal_emit (self, controller_signals[signal], 0, event);
+    }
+}
+
+gboolean
+openvr_controller_poll_event (OpenVRController *self)
+{
+  if (!self->initialized)
+    {
+      g_printerr ("openvr_controller_poll_event()"
+                  " called with invalid controller!\n");
+      return FALSE;
+    }
+
+  graphene_matrix_t transform;
+  openvr_controller_get_transformation (self, &transform);
+
+  _emit_motion_3d_event (self, &transform);
+
+  /* GetOpenVRController is deprecated but simpler to use than actions */
+  OpenVRContext *context = openvr_context_get_instance ();
+  VRControllerState_t state;
+  if (!context->system->GetControllerState (self->index,
+                                           &state, sizeof (state)))
+    {
+      g_printerr ("GetControllerState returned error.\n");
+      return FALSE;
+    }
+
+  /* Press / release events */
+  uint64_t pressed_state = state.ulButtonPressed;
+  _controller_check_press_release (self, pressed_state, OPENVR_BUTTON_TRIGGER);
+  _controller_check_press_release (self, pressed_state, OPENVR_BUTTON_MENU);
+  _controller_check_press_release (self, pressed_state, OPENVR_BUTTON_GRIP);
+
+  /* Scroll event from touchpad */
+#if 0
+  if (openvr_controller_is_pressed (pressed_state, EVRButtonId_k_EButton_Axis0))
+    {
+      GdkEvent *event = gdk_event_new (GDK_SCROLL);
+      event->scroll.y = state.rAxis[0].y;
+      event->scroll.direction =
+        state.rAxis[0].y > 0 ? GDK_SCROLL_UP : GDK_SCROLL_DOWN;
+      g_signal_emit (self, controller_signals[SCROLL_EVENT], 0, event);
+      // g_print ("touchpad x %f y %f\n",
+      //          state->rAxis[0].x,
+      //          state->rAxis[0].y);
+    }
+#endif
+
+  self->last_pressed_state = pressed_state;
+
+  return TRUE;
 }

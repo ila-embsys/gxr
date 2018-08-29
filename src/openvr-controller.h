@@ -57,5 +57,8 @@ openvr_controller_to_evr_button (OpenVRButton button);
 uint64_t
 openvr_controller_is_pressed (uint64_t state, EVRButtonId id);
 
+gboolean
+openvr_controller_poll_event (OpenVRController *self);
+
 G_END_DECLS
 #endif /* OPENVR_GLIB_CONTROLLER_H_ */
