@@ -80,6 +80,16 @@ _release_cb (OpenVROverlay *overlay, GdkEventButton *event, gpointer data)
            event->button, event->x, event->y, event->time);
 }
 
+static void
+_pad_motion_cb (OpenVROverlay  *overlay,
+                GdkEventMotion *event,
+                gpointer        data)
+{
+  (void) overlay;
+  (void) data;
+  g_print ("pad motion: %f %f (%d)\n", event->x, event->y, event->time);
+}
+
 GdkPixbuf *
 _create_empty_pixbuf (uint32_t width, uint32_t height)
 {
@@ -177,6 +187,8 @@ _register_controller_events (gpointer controller, gpointer unused)
   g_signal_connect (c, "motion-3d-event", (GCallback) _motion_3d_cb, NULL);
   g_signal_connect (c, "button-press-event", (GCallback) _press_cb, NULL);
   g_signal_connect (c, "button-release-event", (GCallback) _release_cb, NULL);
+  g_signal_connect (c, "touchpad-motion-event",
+                    (GCallback) _pad_motion_cb, NULL);
 }
 
 int
