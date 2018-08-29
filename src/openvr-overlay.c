@@ -667,16 +667,6 @@ _emit_intersection_event (OpenVROverlay      *overlay,
   g_signal_emit (overlay, overlay_signals[INTERSECTION_EVENT], 0, event);
 }
 
-GdkEvent *
-_create_positioned_button_event (GdkEventType type,
-                                 graphene_vec2_t *position_2d)
-{
-  GdkEvent *event = gdk_event_new (type);
-  event->button.x = graphene_vec2_get_x (position_2d);
-  event->button.y = graphene_vec2_get_y (position_2d);
-  return event;
-}
-
 void
 _check_press_release (OpenVROverlay    *self,
                       OpenVRController *controller,
@@ -705,10 +695,11 @@ _check_press_release (OpenVROverlay    *self,
           signal = BUTTON_RELEASE_EVENT;
         }
 
-      GdkEvent *event = _create_positioned_button_event (type, position_2d);
+      GdkEvent *event = gdk_event_new (type);
+      event->button.x = graphene_vec2_get_x (position_2d);
+      event->button.y = graphene_vec2_get_y (position_2d);
       event->button.button = button;
       g_signal_emit (self, overlay_signals[signal], 0, event);
-      // g_print ("Controller #%d: %d button %d\n", controller->index, type, button);
     }
 }
 

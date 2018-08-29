@@ -16,7 +16,7 @@ enum {
   MOTION_3D_EVENT,
   BUTTON_PRESS_EVENT,
   BUTTON_RELEASE_EVENT,
-  TOUCHPAD_EVENT,
+  TOUCHPAD_MOTION_EVENT,
   CONNECTION_EVENT,
   LAST_SIGNAL
 };
@@ -54,8 +54,8 @@ openvr_controller_class_init (OpenVRControllerClass *klass)
                    0, NULL, NULL, NULL, G_TYPE_NONE,
                    1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
 
-  controller_signals[TOUCHPAD_EVENT] =
-    g_signal_new ("touchpad-event",
+  controller_signals[TOUCHPAD_MOTION_EVENT] =
+    g_signal_new ("touchpad-motion-event",
                    G_TYPE_FROM_CLASS (klass),
                    G_SIGNAL_RUN_LAST,
                    0, NULL, NULL, NULL, G_TYPE_NONE,
@@ -203,9 +203,10 @@ _emit_motion_3d_event (OpenVRController *self, graphene_matrix_t *transform)
 }
 
 void
-_controller_check_press_release (OpenVRController *self,
-                                 uint64_t          pressed_state,
-                                 OpenVRButton      button)
+_controller_check_press_release_pos (OpenVRController *self,
+                                     uint64_t          pressed_state,
+                                     OpenVRButton      button,
+                                     graphene_vec2_t  *position_2d)
 {
   EVRButtonId button_id = openvr_controller_to_evr_button (button);
 
@@ -229,9 +230,24 @@ _controller_check_press_release (OpenVRController *self,
         }
 
       GdkEvent *event = gdk_event_new (type);
+
+      if (position_2d != NULL)
+        {
+          event->button.x = graphene_vec2_get_x (position_2d);
+          event->button.y = graphene_vec2_get_y (position_2d);
+        }
+
       event->button.button = button;
       g_signal_emit (self, controller_signals[signal], 0, event);
     }
+}
+
+void
+_controller_check_press_release (OpenVRController *self,
+                                 uint64_t          pressed_state,
+                                 OpenVRButton      button)
+{
+  _controller_check_press_release_pos (self, pressed_state, button, NULL);
 }
 
 gboolean
@@ -265,20 +281,24 @@ openvr_controller_poll_event (OpenVRController *self)
   _controller_check_press_release (self, pressed_state, OPENVR_BUTTON_MENU);
   _controller_check_press_release (self, pressed_state, OPENVR_BUTTON_GRIP);
 
-  /* Scroll event from touchpad */
-#if 0
-  if (openvr_controller_is_pressed (pressed_state, EVRButtonId_k_EButton_Axis0))
+
+  /* Touchpad events */
+  // x [-1; 1] left to right
+  // y [-1; 1] bottom to top
+  // g_print ("Pad Axis [%f %f]\n", state.rAxis[0].x, state.rAxis[0].y);
+
+  graphene_vec2_t touch_position;
+  graphene_vec2_init (&touch_position, state.rAxis[0].x, state.rAxis[0].y);
+  _controller_check_press_release_pos (self, pressed_state,
+                                       OPENVR_BUTTON_AXIS0, &touch_position);
+
+  if (state.rAxis[0].x != 0.f || state.rAxis[0].y != 0.f)
     {
-      GdkEvent *event = gdk_event_new (GDK_SCROLL);
-      event->scroll.y = state.rAxis[0].y;
-      event->scroll.direction =
-        state.rAxis[0].y > 0 ? GDK_SCROLL_UP : GDK_SCROLL_DOWN;
-      g_signal_emit (self, controller_signals[SCROLL_EVENT], 0, event);
-      // g_print ("touchpad x %f y %f\n",
-      //          state->rAxis[0].x,
-      //          state->rAxis[0].y);
+      GdkEvent *event = gdk_event_new (GDK_MOTION_NOTIFY);
+      event->motion.x = state.rAxis[0].x;
+      event->motion.y = state.rAxis[0].y;
+      g_signal_emit (self, controller_signals[TOUCHPAD_MOTION_EVENT], 0, event);
     }
-#endif
 
   self->last_pressed_state = pressed_state;
 
