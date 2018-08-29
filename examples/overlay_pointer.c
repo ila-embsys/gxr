@@ -250,6 +250,16 @@ _init_cat_overlay (OpenVRVulkanUploader *uploader, GMainLoop *loop)
       return -1;
     }
 
+  graphene_point3d_t position = {
+    .x = -1,
+    .y = 1,
+    .z = -3
+  };
+
+  graphene_matrix_t transform;
+  graphene_matrix_init_translate (&transform, &position);
+  openvr_overlay_set_transform_absolute (cat, &transform);
+
   openvr_overlay_set_mouse_scale (cat,
                                   (float) gdk_pixbuf_get_width (pixbuf),
                                   (float) gdk_pixbuf_get_height (pixbuf));
