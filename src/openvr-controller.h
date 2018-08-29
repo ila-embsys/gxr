@@ -21,6 +21,13 @@ typedef struct OpenVRController3DEvent {
   graphene_point3d_t intersection_point;
 } OpenVRController3DEvent;
 
+typedef enum OpenVRButton {
+  OPENVR_BUTTON_TRIGGER,
+  OPENVR_BUTTON_MENU,
+  OPENVR_BUTTON_GRIP,
+  OPENVR_BUTTON_AXIS0
+} OpenVRButton;
+
 G_BEGIN_DECLS
 
 #define OPENVR_TYPE_CONTROLLER openvr_controller_get_type()
@@ -33,9 +40,7 @@ struct _OpenVRController
   TrackedDeviceIndex_t index;
   gboolean             initialized;
 
-  gboolean             button1_pressed;  // button 1
-  gboolean             button2_pressed;  // button 2
-  gboolean             grip_pressed;  // button 9
+  uint64_t             last_pressed_state;
 };
 
 OpenVRController *openvr_controller_new (void);
@@ -46,8 +51,8 @@ GSList *
 openvr_controller_enumerate ();
 
 gboolean
-openvr_controller_poll_event (OpenVRController *self,
-                              OpenVROverlay    *overlay);
+openvr_controller_poll_overlay_event (OpenVRController *self,
+                                      OpenVROverlay    *overlay);
 
 gboolean
 openvr_controller_get_transformation (OpenVRController  *self,

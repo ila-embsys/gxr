@@ -43,6 +43,15 @@ openvr_controller_new_from_id (uint32_t id)
   OpenVRController *controller = openvr_controller_new ();
   controller->index = id;
   controller->initialized = TRUE;
+
+  VRControllerState_t state;
+  OpenVRContext *context = openvr_context_get_instance ();
+  if (!context->system->GetControllerState (controller->index,
+                                           &state, sizeof (state)))
+    g_printerr ("GetControllerState returned error.\n");
+  else
+    controller->last_pressed_state = state.ulButtonPressed;
+
   return controller;
 }
 
@@ -159,127 +168,101 @@ _create_positioned_button_event (GdkEventType type,
   return event;
 }
 
+uint64_t
+_is_pressed (uint64_t state, EVRButtonId id)
+{
+  return state & ButtonMaskFromId (id);
+}
+
+EVRButtonId
+_map_button (OpenVRButton button)
+{
+  switch (button)
+    {
+      case OPENVR_BUTTON_TRIGGER: return EVRButtonId_k_EButton_SteamVR_Trigger;
+      case OPENVR_BUTTON_MENU:    return EVRButtonId_k_EButton_ApplicationMenu;
+      case OPENVR_BUTTON_GRIP:    return EVRButtonId_k_EButton_Grip;
+      case OPENVR_BUTTON_AXIS0:   return EVRButtonId_k_EButton_Axis0;
+      default:
+        g_printerr ("Unknown OpenVRButton %d\n", button);
+    }
+  return 0;
+}
+
+void
+_check_press_release (OpenVRController *self,
+                      OpenVROverlay    *overlay,
+                      uint64_t          pressed_state,
+                      OpenVRButton      button,
+                      graphene_vec2_t  *position_2d)
+{
+  EVRButtonId button_id = _map_button (button);
+
+  uint64_t is_pressed = _is_pressed (pressed_state, button_id);
+  uint64_t was_pressed = _is_pressed (self->last_pressed_state, button_id);
+
+  if (is_pressed != was_pressed)
+    {
+      GdkEventType type;
+      guint signal;
+      if (is_pressed)
+        {
+          type = GDK_BUTTON_PRESS;
+          signal = BUTTON_PRESS_EVENT;
+        }
+      else
+        {
+          type = GDK_BUTTON_RELEASE;
+          signal = BUTTON_RELEASE_EVENT;
+        }
+
+      GdkEvent *event = _create_positioned_button_event (type, position_2d);
+      event->button.button = button;
+      g_signal_emit (overlay, overlay_signals[signal], 0, event);
+      // g_print ("Controller #%d: %d button %d\n", self->index, type, button);
+    }
+}
+
 void
 _emit_overlay_events (OpenVRController    *self,
                       OpenVROverlay       *overlay,
-                      VRControllerState_t *controller_state,
+                      VRControllerState_t *state,
                       graphene_vec2_t     *position_2d)
 {
-  /*
-   * Notifies the client application where in the current overlay the user is
-   * pointing at
-   */
+  /* Motion event */
   GdkEvent *event = gdk_event_new (GDK_MOTION_NOTIFY);
   event->motion.x = graphene_vec2_get_x (position_2d);
   event->motion.y = graphene_vec2_get_y (position_2d);
   g_signal_emit (overlay, overlay_signals[MOTION_NOTIFY_EVENT], 0, event);
 
-  gboolean last_b1 = self->button1_pressed;
-  gboolean last_b2 = self->button2_pressed;
-  gboolean last_grip = self->grip_pressed;
+  /* Press / release events */
+  uint64_t pressed_state = state->ulButtonPressed;
+  _check_press_release (self, overlay, pressed_state,
+                        OPENVR_BUTTON_TRIGGER, position_2d);
+  _check_press_release (self, overlay, pressed_state,
+                        OPENVR_BUTTON_MENU, position_2d);
+  _check_press_release (self, overlay, pressed_state,
+                        OPENVR_BUTTON_GRIP, position_2d);
 
-  if (controller_state->ulButtonPressed &
-      ButtonMaskFromId (EVRButtonId_k_EButton_SteamVR_Trigger))
-    {
-      self->button1_pressed = TRUE;
-      if (!last_b1)
-        {
-          GdkEvent *event =
-            _create_positioned_button_event (GDK_BUTTON_PRESS, position_2d);
-
-          event->button.button = 1;
-          g_signal_emit (overlay, overlay_signals[BUTTON_PRESS_EVENT], 0,
-                         event);
-          // g_print("%d: Pressed button 1\n", self->index);
-        }
-    }
-  else
-    {
-      self->button1_pressed = FALSE;
-      if (last_b1)
-        {
-          GdkEvent *event =
-            _create_positioned_button_event (GDK_BUTTON_RELEASE, position_2d);
-          event->button.button = 1;
-          g_signal_emit (overlay, overlay_signals[BUTTON_RELEASE_EVENT], 0,
-                         event);
-          // g_print("%d: Released button 1\n", self->index);
-        }
-    }
-
-  if (controller_state->ulButtonPressed &
-      ButtonMaskFromId (EVRButtonId_k_EButton_ApplicationMenu))
-    {
-      self->button2_pressed = TRUE;
-      if (!last_b2)
-        {
-          GdkEvent *event =
-            _create_positioned_button_event (GDK_BUTTON_PRESS, position_2d);
-          event->button.button = 2;
-          g_signal_emit (overlay, overlay_signals[BUTTON_PRESS_EVENT], 0,
-                         event);
-          // g_print("%d: Pressed button 2\n", self->index);
-        }
-    }
-  else
-    {
-      self->button2_pressed = FALSE;
-      if (last_b2)
-        {
-          GdkEvent *event =
-            _create_positioned_button_event (GDK_BUTTON_RELEASE, position_2d);
-          event->button.button = 2;
-          g_signal_emit (overlay, overlay_signals[BUTTON_RELEASE_EVENT], 0,
-                         event);
-          // g_print("%d: Released button 2\n", self->index);
-        }
-    }
-
-  if (controller_state->ulButtonPressed &
-      ButtonMaskFromId (EVRButtonId_k_EButton_Grip))
-    {
-      self->grip_pressed = TRUE;
-      if (!last_grip)
-        {
-          GdkEvent *event =
-            _create_positioned_button_event (GDK_BUTTON_PRESS, position_2d);
-          event->button.button = 9;
-          g_signal_emit (overlay, overlay_signals[BUTTON_PRESS_EVENT], 0,
-                         event);
-          // g_print("%d: Pressed grip button\n", self->index);
-        }
-    }
-  else
-    {
-      self->grip_pressed = FALSE;
-      if (last_grip)
-        {
-          GdkEvent *event =
-            _create_positioned_button_event (GDK_BUTTON_RELEASE, position_2d);
-          event->button.button = 9;
-          g_signal_emit (overlay, overlay_signals[BUTTON_RELEASE_EVENT], 0,
-                         event);
-          // g_print("%d: Released grip button\n", self->index);
-        }
-    }
-
-  if (controller_state->ulButtonPressed &
-      ButtonMaskFromId (EVRButtonId_k_EButton_Axis0))
+  /* Scroll event from touchpad */
+  if (_is_pressed (pressed_state, EVRButtonId_k_EButton_Axis0))
     {
       GdkEvent *event = gdk_event_new (GDK_SCROLL);
-      event->scroll.y = controller_state->rAxis[0].y;
+      event->scroll.y = state->rAxis[0].y;
       event->scroll.direction =
-          controller_state->rAxis[0].y > 0 ? GDK_SCROLL_UP : GDK_SCROLL_DOWN;
+        state->rAxis[0].y > 0 ? GDK_SCROLL_UP : GDK_SCROLL_DOWN;
       g_signal_emit (overlay, overlay_signals[SCROLL_EVENT], 0, event);
-      // g_print("touchpad x %f y %f\n",
-      //         controller_state->rAxis[0].x,
-      //         controller_state->rAxis[0].y);
+      // g_print ("touchpad x %f y %f\n",
+      //          state->rAxis[0].x,
+      //          state->rAxis[0].y);
     }
+
+  self->last_pressed_state = pressed_state;
 }
 
 gboolean
-openvr_controller_poll_event (OpenVRController *self,
-                              OpenVROverlay    *overlay)
+openvr_controller_poll_overlay_event (OpenVRController *self,
+                                      OpenVROverlay    *overlay)
 {
   if (!self->initialized)
     {

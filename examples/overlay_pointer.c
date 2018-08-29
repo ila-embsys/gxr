@@ -41,8 +41,8 @@ _sigint_cb (int sig_num)
 static void
 _controller_poll (gpointer controller, gpointer overlay)
 {
-  openvr_controller_poll_event ((OpenVRController*) controller,
-                                (OpenVROverlay*) overlay);
+  openvr_controller_poll_overlay_event ((OpenVRController*) controller,
+                                        (OpenVROverlay*) overlay);
 }
 
 gboolean
