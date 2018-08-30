@@ -42,6 +42,9 @@ _controller_poll (gpointer controller, gpointer unused)
   openvr_controller_poll_event ((OpenVRController*) controller);
 }
 
+static void
+_register_controller_events (gpointer controller, gpointer unused);
+
 gboolean
 _poll_cb (gpointer nothing)
 {
@@ -49,7 +52,10 @@ _poll_cb (gpointer nothing)
 
   // TODO: Controllers should be registered in the system event callback
   if (controllers == NULL)
-    controllers = openvr_controller_enumerate ();
+    {
+      controllers = openvr_controller_enumerate ();
+      g_slist_foreach (controllers, _register_controller_events, NULL);
+    }
 
   g_slist_foreach (controllers, _controller_poll, NULL);
 
@@ -310,8 +316,6 @@ main ()
 
   if (!_init_pointer_overlay ())
     return -1;
-
-  g_slist_foreach (controllers, _register_controller_events, NULL);
 
   g_timeout_add (20, _poll_cb, NULL);
 
