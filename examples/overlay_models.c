@@ -46,6 +46,11 @@ gboolean
 _poll_cb (gpointer nothing)
 {
   (void) nothing;
+
+  // TODO: Controllers should be registered in the system event callback
+  if (controllers == NULL)
+    controllers = openvr_controller_enumerate ();
+
   g_slist_foreach (controllers, _controller_poll, NULL);
 
   return TRUE;
@@ -305,8 +310,6 @@ main ()
 
   if (!_init_pointer_overlay ())
     return -1;
-
-  controllers = openvr_controller_enumerate ();
 
   g_slist_foreach (controllers, _register_controller_events, NULL);
 

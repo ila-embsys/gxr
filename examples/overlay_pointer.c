@@ -23,7 +23,7 @@
 
 OpenVRVulkanTexture *texture;
 
-GSList *controllers;
+GSList *controllers = NULL;
 
 OpenVROverlay *pointer;
 OpenVROverlay *intersection;
@@ -48,6 +48,10 @@ _controller_poll (gpointer controller, gpointer overlay)
 gboolean
 _overlay_event_cb (gpointer overlay)
 {
+  // TODO: Controllers should be registered in the system event callback
+  if (controllers == NULL)
+    controllers = openvr_controller_enumerate ();
+
   g_slist_foreach (controllers, _controller_poll, overlay);
 
   openvr_overlay_poll_event (overlay);
@@ -348,8 +352,6 @@ main ()
 
   if (!_init_cat_overlay (uploader, loop))
     return -1;
-
-  controllers = openvr_controller_enumerate ();
 
   g_timeout_add (20, _overlay_event_cb, cat);
 
