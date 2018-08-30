@@ -120,10 +120,7 @@ openvr_overlay_new (void)
 }
 
 gboolean
-openvr_overlay_create_width (OpenVROverlay *self,
-                             gchar* key,
-                             gchar* name,
-                             float meters)
+openvr_overlay_create (OpenVROverlay *self, gchar* key, gchar* name)
 {
   GET_OVERLAY_FUNCTIONS
 
@@ -131,19 +128,22 @@ openvr_overlay_create_width (OpenVROverlay *self,
 
   OVERLAY_CHECK_ERROR ("CreateOverlay", err);
 
-  f->SetOverlayWidthInMeters (self->overlay_handle, meters);
-  f->SetOverlayInputMethod (self->overlay_handle,
-                            VROverlayInputMethod_Mouse);
   return TRUE;
-
 }
 
 gboolean
-openvr_overlay_create (OpenVROverlay *self,
-                       gchar* key,
-                       gchar* name)
+openvr_overlay_create_width (OpenVROverlay *self,
+                             gchar* key,
+                             gchar* name,
+                             float meters)
 {
-  return openvr_overlay_create_width (self, key, name, 1.5);
+  if (!openvr_overlay_create (self, key, name))
+    return FALSE;
+
+  if (!openvr_overlay_set_width_meters (self, meters))
+    return FALSE;
+
+  return TRUE;
 }
 
 gboolean
@@ -157,9 +157,6 @@ openvr_overlay_create_for_dashboard (OpenVROverlay *self,
                                   &self->thumbnail_handle);
 
   OVERLAY_CHECK_ERROR ("CreateDashboardOverlay", err);
-
-  if (!openvr_overlay_set_width_meters (self, 1.5f))
-    return FALSE;
 
   return TRUE;
 }
@@ -226,7 +223,6 @@ openvr_overlay_set_sort_order (OpenVROverlay *self, uint32_t sort_order)
   return TRUE;
 }
 
-
 static guint
 _vr_to_gdk_mouse_button (uint32_t btn)
 {
@@ -241,6 +237,19 @@ _vr_to_gdk_mouse_button (uint32_t btn)
     default:
       return 0;
   }
+}
+
+gboolean
+openvr_overlay_enable_mouse_input (OpenVROverlay *self)
+{
+  GET_OVERLAY_FUNCTIONS
+
+  err = f->SetOverlayInputMethod (self->overlay_handle,
+                                  VROverlayInputMethod_Mouse);
+
+  OVERLAY_CHECK_ERROR ("SetOverlayInputMethod", err);
+
+  return TRUE;
 }
 
 void

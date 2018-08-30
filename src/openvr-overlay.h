@@ -50,15 +50,15 @@ typedef struct PixelSize
 OpenVROverlay *openvr_overlay_new (void);
 
 gboolean
-openvr_overlay_create_width (OpenVROverlay *self,
-                             gchar* key,
-                             gchar* name,
-                             float width_meters);
-
-gboolean
 openvr_overlay_create (OpenVROverlay *self,
                        gchar* key,
                        gchar* name);
+
+gboolean
+openvr_overlay_create_width (OpenVROverlay *self,
+                             gchar* key,
+                             gchar* name,
+                             float meters);
 
 gboolean
 openvr_overlay_create_for_dashboard (OpenVROverlay *self,
@@ -156,6 +156,9 @@ openvr_overlay_get_2d_intersection (OpenVROverlay      *overlay,
 gboolean
 openvr_overlay_poll_controller_event (OpenVROverlay    *self,
                                       OpenVRController *controller);
+
+gboolean
+openvr_overlay_enable_mouse_input (OpenVROverlay *self);
 
 G_END_DECLS
 
