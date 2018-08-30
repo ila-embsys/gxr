@@ -34,18 +34,6 @@ openvr_math_graphene_to_matrix34 (graphene_matrix_t *mat, HmdMatrix34_t *mat34)
       mat34->m[i][j] = graphene_matrix_get_value (mat, j, i);
 }
 
-// translation vector
-gboolean
-openvr_math_vec3_init_from_matrix (graphene_vec3_t   *vec,
-                                   graphene_matrix_t *matrix)
-{
-  graphene_vec3_init (vec,
-                      graphene_matrix_get_value (matrix, 3, 0),
-                      graphene_matrix_get_value (matrix, 3, 1),
-                      graphene_matrix_get_value (matrix, 3, 2));
-  return TRUE;
-}
-
 gboolean
 openvr_math_direction_from_matrix_vec3 (graphene_matrix_t *matrix,
                                         graphene_vec3_t   *start,
@@ -130,3 +118,16 @@ openvr_math_matrix_set_translation (graphene_matrix_t *matrix,
 
   graphene_matrix_init_from_float (matrix, m);
 }
+
+// translation vector
+gboolean
+openvr_math_vec3_init_from_matrix (graphene_vec3_t   *vec,
+                                   graphene_matrix_t *matrix)
+{
+  graphene_vec3_init (vec,
+                      graphene_matrix_get_value (matrix, 3, 0),
+                      graphene_matrix_get_value (matrix, 3, 1),
+                      graphene_matrix_get_value (matrix, 3, 2));
+  return TRUE;
+}
+

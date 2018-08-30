@@ -160,6 +160,11 @@ openvr_overlay_poll_controller_event (OpenVROverlay    *self,
 gboolean
 openvr_overlay_enable_mouse_input (OpenVROverlay *self);
 
+gboolean
+openvr_overlay_test_intersection (OpenVROverlay      *self,
+                                  graphene_matrix_t  *pose,
+                                  graphene_point3d_t *point);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_OVERLAY_H_ */

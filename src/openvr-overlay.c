@@ -762,6 +762,18 @@ _emit_controller_events (OpenVROverlay       *self,
 }
 
 gboolean
+openvr_overlay_test_intersection (OpenVROverlay      *self,
+                                  graphene_matrix_t  *pose,
+                                  graphene_point3d_t *point)
+{
+  gboolean intersects = openvr_overlay_intersects (self, point, pose);
+  if (intersects)
+    _emit_intersection_event (self, intersects, pose, point);
+
+  return intersects;
+}
+
+gboolean
 openvr_overlay_poll_controller_event (OpenVROverlay    *self,
                                       OpenVRController *controller)
 {
@@ -776,13 +788,7 @@ openvr_overlay_poll_controller_event (OpenVROverlay    *self,
   openvr_controller_get_transformation (controller, &transform);
 
   graphene_point3d_t intersection_point;
-  gboolean intersects = openvr_overlay_intersects (self,
-                                                  &intersection_point,
-                                                  &transform);
-
-  _emit_intersection_event (self, intersects, &transform, &intersection_point);
-
-  if (!intersects)
+  if (!openvr_overlay_test_intersection (self, &transform, &intersection_point))
     return FALSE;
 
   /* GetOpenVRController is deprecated but simpler to use than actions */
