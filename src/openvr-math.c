@@ -34,6 +34,31 @@ openvr_math_graphene_to_matrix34 (graphene_matrix_t *mat, HmdMatrix34_t *mat34)
       mat34->m[i][j] = graphene_matrix_get_value (mat, j, i);
 }
 
+void
+openvr_math_matrix34_to_graphene (HmdMatrix34_t *mat34, graphene_matrix_t *mat)
+{
+  float m[16] = {
+    mat34->m[0][0],
+    mat34->m[1][0],
+    mat34->m[2][0],
+    0,
+    mat34->m[0][1],
+    mat34->m[1][1],
+    mat34->m[2][1],
+    0,
+    mat34->m[0][2],
+    mat34->m[1][2],
+    mat34->m[2][2],
+    0,
+    mat34->m[0][3],
+    mat34->m[1][3],
+    mat34->m[2][3],
+    1
+  };
+
+  graphene_matrix_init_from_float (mat, m);
+}
+
 gboolean
 openvr_math_direction_from_matrix_vec3 (graphene_matrix_t *matrix,
                                         graphene_vec3_t   *start,
@@ -75,27 +100,8 @@ openvr_math_pose_to_matrix (TrackedDevicePose_t *pose,
     }
   else if (pose->bPoseIsValid)
     {
-      float mat4x4[16] = {
-        pose->mDeviceToAbsoluteTracking.m[0][0],
-        pose->mDeviceToAbsoluteTracking.m[1][0],
-        pose->mDeviceToAbsoluteTracking.m[2][0],
-        0,
-        pose->mDeviceToAbsoluteTracking.m[0][1],
-        pose->mDeviceToAbsoluteTracking.m[1][1],
-        pose->mDeviceToAbsoluteTracking.m[2][1],
-        0,
-        pose->mDeviceToAbsoluteTracking.m[0][2],
-        pose->mDeviceToAbsoluteTracking.m[1][2],
-        pose->mDeviceToAbsoluteTracking.m[2][2],
-        0,
-        pose->mDeviceToAbsoluteTracking.m[0][3],
-        pose->mDeviceToAbsoluteTracking.m[1][3],
-        pose->mDeviceToAbsoluteTracking.m[2][3],
-        1
-      };
-
-      graphene_matrix_init_from_float (transform, mat4x4);
-
+      openvr_math_matrix34_to_graphene (&pose->mDeviceToAbsoluteTracking,
+                                        transform);
       return TRUE;
     }
   else
