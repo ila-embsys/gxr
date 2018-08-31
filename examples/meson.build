@@ -30,7 +30,7 @@ executable(
 
 executable(
   'overlay_move', ['overlay_move.c', '../res/tests.c'],
-  dependencies: [gtk3_dep, openvr_dep, cairo_dep, graphene_dep],
+  dependencies: [gtk3_dep, openvr_dep, cairo_dep, graphene_dep, m_dep],
   link_with: openvr_glib_lib,
   include_directories: openvr_glib_inc,
   install: false)

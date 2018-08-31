@@ -14,6 +14,7 @@
 #include <glib/gprintf.h>
 
 #include <openvr-glib.h>
+#include <math.h>
 
 #include "openvr-context.h"
 #include "openvr-compositor.h"
@@ -24,11 +25,16 @@
 
 #include "cairo_content.h"
 
+#define GRID_WIDTH 6
+#define GRID_HEIGHT 5
+
 OpenVRVulkanTexture *texture;
 
 GSList *controllers = NULL;
 
 GSList *cat_overlays = NULL;
+
+GSList *textures_to_free = NULL;
 
 OpenVROverlay *pointer;
 OpenVROverlay *intersection;
@@ -38,9 +44,8 @@ OpenVROverlay *current_grab_overlay = NULL;
 graphene_matrix_t *current_grab_matrix = NULL;
 graphene_matrix_t *current_hover_matrix = NULL;
 
-OpenVRVulkanTexture *cairo_texture;
-
-OpenVROverlay *control_overlay = NULL;
+OpenVROverlay *control_overlay_reset = NULL;
+OpenVROverlay *control_overlay_sphere = NULL;
 
 GMainLoop *loop;
 
@@ -168,8 +173,9 @@ _test_overlay_intersection (OpenVRMotion3DEvent *event)
   if (!found_intersection)
     {
       graphene_point3d_t intersection_point;
-      if (openvr_overlay_test_intersection (control_overlay, &event->transform,
-                                            &intersection_point))
+      if (openvr_overlay_test_intersection (control_overlay_reset,
+                                           &event->transform,
+                                           &intersection_point))
         {
           found_intersection = TRUE;
 
@@ -180,11 +186,35 @@ _test_overlay_intersection (OpenVRMotion3DEvent *event)
               openvr_overlay_set_color (current_hover_overlay, &unmarked_color);
             }
 
-          current_hover_overlay = control_overlay;
+          current_hover_overlay = control_overlay_reset;
 
           graphene_vec3_t marked_color;
           graphene_vec3_init (&marked_color, .2f, .2f, .8f);
-          openvr_overlay_set_color (control_overlay, &marked_color);
+          openvr_overlay_set_color (control_overlay_reset, &marked_color);
+        }
+    }
+
+  if (!found_intersection)
+    {
+      graphene_point3d_t intersection_point;
+      if (openvr_overlay_test_intersection (control_overlay_sphere,
+                                           &event->transform,
+                                           &intersection_point))
+        {
+          found_intersection = TRUE;
+
+          if (current_hover_overlay != NULL)
+            {
+              graphene_vec3_t unmarked_color;
+              graphene_vec3_init (&unmarked_color, 1.f, 1.f, 1.f);
+              openvr_overlay_set_color (current_hover_overlay, &unmarked_color);
+            }
+
+          current_hover_overlay = control_overlay_sphere;
+
+          graphene_vec3_t marked_color;
+          graphene_vec3_init (&marked_color, .2f, .2f, .8f);
+          openvr_overlay_set_color (control_overlay_sphere, &marked_color);
         }
     }
 
@@ -228,14 +258,16 @@ _motion_3d_cb (OpenVRController    *controller,
       graphene_point3d_init (&translation_point, .0f, .0f, -distance);
 
       graphene_matrix_t transformation_matrix;
-      graphene_matrix_init_translate (&transformation_matrix, &translation_point);
+      graphene_matrix_init_translate (&transformation_matrix,
+                                      &translation_point);
 
       graphene_matrix_t transformed;
       graphene_matrix_multiply (&transformation_matrix,
                                 &event->transform,
                                 &transformed);
 
-      openvr_overlay_set_transform_absolute (current_grab_overlay, &transformed);
+      openvr_overlay_set_transform_absolute (current_grab_overlay,
+                                             &transformed);
     }
   else
     {
@@ -264,6 +296,77 @@ _intersection_cb (OpenVROverlay           *overlay,
   free (event);
 }
 
+typedef struct TransformTransition {
+  OpenVROverlay *overlay;
+  graphene_matrix_t from;
+  graphene_matrix_t to;
+  float interpolate;
+} TransformTransition;
+
+
+void
+_interpolate_matrix (graphene_matrix_t *from,
+                     graphene_matrix_t *to,
+                     float interpolation,
+                     graphene_matrix_t *result)
+{
+  float from_f[16];
+  float to_f[16];
+  float interpolated_f[16];
+
+  graphene_matrix_to_float (from, from_f);
+  graphene_matrix_to_float (to, to_f);
+
+  for (uint32_t i = 0; i < 16; i++)
+    interpolated_f[i] = from_f[i] * (1.0f - interpolation) +
+                        to_f[i] * interpolation;
+
+  graphene_matrix_init_from_float (result, interpolated_f);
+}
+
+bool
+_matrix_equals (graphene_matrix_t *a,
+                graphene_matrix_t *b)
+{
+  float a_f[16];
+  float b_f[16];
+
+  graphene_matrix_to_float (a, a_f);
+  graphene_matrix_to_float (b, b_f);
+
+  for (uint32_t i = 0; i < 16; i++)
+    if (a_f[i] != b_f[i])
+      return FALSE;
+
+  return TRUE;
+}
+
+gboolean
+_interpolate_cb (gpointer _transition)
+{
+  TransformTransition *transition = (TransformTransition *) _transition;
+
+  graphene_matrix_t interpolated;
+  _interpolate_matrix (&transition->from,
+                       &transition->to,
+                       transition->interpolate,
+                       &interpolated);
+
+  openvr_overlay_set_transform_absolute (transition->overlay, &interpolated);
+
+  transition->interpolate += 0.03f;
+
+  if (transition->interpolate > 1)
+    {
+      openvr_overlay_set_transform_absolute (transition->overlay,
+                                             &transition->to);
+      g_free (transition);
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
 static void
 _reset_cat_overlays ()
 {
@@ -271,28 +374,121 @@ _reset_cat_overlays ()
   for (l = cat_overlays; l != NULL; l = l->next)
     {
       OpenVROverlay *overlay = (OpenVROverlay*) l->data;
+
+      TransformTransition *transition = g_malloc (sizeof *transition);
+
       graphene_matrix_t *transform =
         g_hash_table_lookup (initial_overlay_transforms, overlay);
-      openvr_overlay_set_transform_absolute (overlay, transform);
+
+      openvr_overlay_get_transform_absolute (overlay, &transition->from);
+
+      if (!_matrix_equals (&transition->from, transform))
+        {
+          transition->interpolate = 0;
+          transition->overlay = overlay;
+
+          graphene_matrix_init_from_matrix (&transition->to, transform);
+
+          g_timeout_add (20, _interpolate_cb, transition);
+        }
+      else
+        {
+          g_free (transition);
+        }
     }
 }
+
+gboolean
+_position_cat_overlays_sphere ()
+{
+  float theta_start = M_PI / 2.0f;
+  float theta_end = M_PI - M_PI / 8.0f;
+  float theta_range = theta_end - theta_start;
+  float theta_step = theta_range / GRID_HEIGHT;
+
+  float phi_start = 0;
+  float phi_end = M_PI;
+  float phi_range = phi_end - phi_start;
+  float phi_step = phi_range / GRID_WIDTH;
+
+  guint i = 0;
+
+  for (float theta = theta_start; theta < theta_end; theta += theta_step)
+    {
+      /* TODO: don't need hack 0.01 to check phi range */
+      for (float phi = phi_start; phi < phi_end - 0.01; phi += phi_step)
+        {
+          TransformTransition *transition = g_malloc (sizeof *transition);
+
+          float radius = 3.0f;
+
+          float const x = sin (theta) * cos (phi);
+          float const y = cos (theta);
+          float const z = sin (phi) * sin (theta);
+
+          graphene_matrix_t transform;
+
+          graphene_vec3_t position;
+          graphene_vec3_init (&position,
+                              x * radius,
+                              y * radius,
+                              z * radius);
+
+          graphene_matrix_init_look_at (&transform,
+                                        &position,
+                                        graphene_vec3_zero (),
+                                        graphene_vec3_y_axis ());
+
+          OpenVROverlay *overlay =
+            (OpenVROverlay*) g_slist_nth_data (cat_overlays, i);
+
+          if (overlay == NULL)
+            {
+              g_printerr ("Overlay %d does not exist!\n", i);
+              return FALSE;
+            }
+
+          i++;
+
+          openvr_overlay_get_transform_absolute (overlay, &transition->from);
+
+          if (!_matrix_equals (&transition->from, &transform))
+            {
+              transition->interpolate = 0;
+              transition->overlay = overlay;
+
+              graphene_matrix_init_from_matrix (&transition->to, &transform);
+
+              g_timeout_add (20, _interpolate_cb, transition);
+            }
+          else
+            {
+              g_free (transition);
+            }
+        }
+    }
+
+  return TRUE;
+}
+
 
 static void
 _press_cb (OpenVRController *controller, GdkEventButton *event, gpointer data)
 {
   (void) controller;
   (void) data;
-  g_print ("press: %d %f %f (%d)\n",
-           event->button, event->x, event->y, event->time);
 
   if (event->button == OPENVR_BUTTON_TRIGGER)
     {
       if (current_hover_overlay != NULL)
         {
-          if (current_hover_overlay == control_overlay)
+          if (current_hover_overlay == control_overlay_reset)
             {
-              g_print ("Control clicked.\n");
               _reset_cat_overlays ();
+            }
+          else if (current_hover_overlay == control_overlay_sphere)
+            {
+              _position_cat_overlays_sphere ();
             }
           else
             {
@@ -317,8 +513,6 @@ _release_cb (OpenVRController *controller, GdkEventButton *event, gpointer data)
 {
   (void) controller;
   (void) data;
-  g_print ("release: %d %f %f (%d)\n",
-           event->button, event->x, event->y, event->time);
 
   if (event->button == OPENVR_BUTTON_TRIGGER)
     {
@@ -453,8 +647,8 @@ _init_cat_overlays (OpenVRVulkanUploader *uploader)
 
   initial_overlay_transforms = g_hash_table_new (g_direct_hash, g_direct_equal);
 
-  for (float x = 0; x < 5 * width; x += width)
-    for (float y = 0; y < 5 * height; y += height)
+  for (float x = 0; x < GRID_WIDTH * width; x += width)
+    for (float y = 0; y < GRID_HEIGHT * height; y += height)
       {
         OpenVROverlay *cat = openvr_overlay_new ();
 
@@ -495,8 +689,8 @@ _init_cat_overlays (OpenVRVulkanUploader *uploader)
 
         g_signal_connect (cat, "intersection-event",
                           (GCallback) _intersection_cb, NULL);
-
         i++;
+
       }
 
   g_object_unref (pixbuf);
@@ -536,9 +730,22 @@ _init_intersection_overlay (OpenVRVulkanUploader *uploader)
   return TRUE;
 }
 
-void
-_draw_cairo (cairo_t *cr, unsigned width, unsigned height, const gchar* text)
+cairo_surface_t*
+_create_cairo_surface (unsigned char *image, uint32_t width,
+                       uint32_t height, const gchar *text)
 {
+  cairo_surface_t *surface =
+    cairo_image_surface_create_for_data (image,
+                                         CAIRO_FORMAT_ARGB32,
+                                         width, height,
+                                         width * 4);
+
+  cairo_t *cr = cairo_create (surface);
+
+  cairo_rectangle (cr, 0, 0, width, height);
+  cairo_set_source_rgb (cr, 1, 1, 1);
+  cairo_fill (cr);
+
   double r0;
   if (width < height)
     r0 = (double) width / 3.0;
@@ -579,25 +786,6 @@ _draw_cairo (cairo_t *cr, unsigned width, unsigned height, const gchar* text)
                  center_y  - extents.height / 2);
   cairo_set_source_rgb (cr, 0.9, 0.9, 0.9);
   cairo_show_text (cr, text);
-}
-
-cairo_surface_t*
-_create_cairo_surface (unsigned char *image, uint32_t width,
-                       uint32_t height, const gchar *text)
-{
-  cairo_surface_t *surface =
-    cairo_image_surface_create_for_data (image,
-                                         CAIRO_FORMAT_ARGB32,
-                                         width, height,
-                                         width * 4);
-
-  cairo_t *cr = cairo_create (surface);
-
-  cairo_rectangle (cr, 0, 0, width, height);
-  cairo_set_source_rgb (cr, 1, 1, 1);
-  cairo_fill (cr);
-
-  _draw_cairo (cr, width, height, text);
 
   cairo_destroy (cr);
 
@@ -605,13 +793,16 @@ _create_cairo_surface (unsigned char *image, uint32_t width,
 }
 
 gboolean
-_init_control_overlays (OpenVRVulkanUploader *uploader)
+_init_control_overlay (OpenVROverlay **overlay,
+                       OpenVRVulkanUploader *uploader,
+                       gchar* id, const gchar* text,
+                       graphene_matrix_t *transform)
 {
   guint width = 200;
   guint height = 200;
   unsigned char image[4 * width * height];
   cairo_surface_t* surface = _create_cairo_surface (image, width,
-                                                    height, "Reset");
+                                                    height, text);
 
   if (surface == NULL) {
     fprintf (stderr, "Could not create cairo surface.\n");
@@ -621,25 +812,40 @@ _init_control_overlays (OpenVRVulkanUploader *uploader)
   if (!openvr_vulkan_uploader_init_vulkan (uploader, true))
   {
     g_printerr ("Unable to initialize Vulkan!\n");
-    return false;
+    return FALSE;
   }
 
-  cairo_texture = openvr_vulkan_texture_new ();
+  OpenVRVulkanTexture *cairo_texture = openvr_vulkan_texture_new ();
 
   openvr_vulkan_client_load_cairo_surface (OPENVR_VULKAN_CLIENT (uploader),
                                            cairo_texture, surface);
 
   /* create openvr overlay */
-  control_overlay = openvr_overlay_new ();
-  openvr_overlay_create_width (control_overlay, "cairo.control",
-                               "Cairo Control", 0.5f);
+  *overlay = openvr_overlay_new ();
+  openvr_overlay_create_width (*overlay, id, id, 0.5f);
 
-  if (!openvr_overlay_is_valid (control_overlay))
+  if (!openvr_overlay_is_valid (*overlay))
   {
     g_printerr ("Overlay unavailable.\n");
-    return -1;
+    return FALSE;
   }
 
+  openvr_vulkan_uploader_submit_frame (uploader,
+                                       *overlay, cairo_texture);
+
+  textures_to_free = g_slist_append (textures_to_free, cairo_texture);
+
+  openvr_overlay_set_transform_absolute (*overlay, transform);
+
+  if (!openvr_overlay_show (*overlay))
+    return -1;
+
+  return TRUE;
+}
+
+gboolean
+_init_control_overlays (OpenVRVulkanUploader *uploader)
+{
   graphene_point3d_t position = {
     .x =  0.0f,
     .y =  0.0f,
@@ -648,15 +854,23 @@ _init_control_overlays (OpenVRVulkanUploader *uploader)
 
   graphene_matrix_t transform;
   graphene_matrix_init_translate (&transform, &position);
-  openvr_overlay_set_transform_absolute (control_overlay, &transform);
 
-  // openvr_overlay_set_mouse_scale (overlay, (float) WIDTH, (float) HEIGHT);
+  if (!_init_control_overlay (&control_overlay_reset, uploader,
+                              "control.reset", "Reset", &transform))
+    return FALSE;
 
-  if (!openvr_overlay_show (control_overlay))
-    return -1;
+  graphene_point3d_t position_sphere = {
+    .x =  0.5f,
+    .y =  0.0f,
+    .z = -1.0f
+  };
 
-  openvr_vulkan_uploader_submit_frame (uploader,
-                                       control_overlay, cairo_texture);
+  graphene_matrix_t transform_sphere;
+  graphene_matrix_init_translate (&transform_sphere, &position_sphere);
+
+  if (!_init_control_overlay (&control_overlay_sphere, uploader,
+                              "control.sphere", "Sphere", &transform_sphere))
+    return FALSE;
 
   return TRUE;
 }
@@ -718,6 +932,7 @@ main ()
 
   g_slist_free_full (controllers, g_object_unref);
   g_slist_free_full (cat_overlays, g_object_unref);
+  g_slist_free_full (textures_to_free, g_object_unref);
 
   OpenVRContext *context = openvr_context_get_instance ();
   g_object_unref (context);
