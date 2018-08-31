@@ -431,6 +431,24 @@ openvr_overlay_set_transform_absolute (OpenVROverlay *self,
 }
 
 gboolean
+openvr_overlay_get_transform_absolute (OpenVROverlay *self,
+                                       graphene_matrix_t *mat)
+{
+  GET_OVERLAY_FUNCTIONS
+
+  HmdMatrix34_t translation34;
+
+  err = f->GetOverlayTransformAbsolute (self->overlay_handle,
+                                       &context->origin,
+                                       &translation34);
+
+  openvr_math_matrix34_to_graphene (&translation34, mat);
+
+  OVERLAY_CHECK_ERROR ("GetOverlayTransformAbsolute", err);
+  return TRUE;
+}
+
+gboolean
 openvr_overlay_intersects (OpenVROverlay      *overlay,
                            graphene_point3d_t *intersection_point,
                            graphene_matrix_t  *transform)

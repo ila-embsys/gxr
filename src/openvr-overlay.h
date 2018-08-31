@@ -165,6 +165,10 @@ openvr_overlay_test_intersection (OpenVROverlay      *self,
                                   graphene_matrix_t  *pose,
                                   graphene_point3d_t *point);
 
+gboolean
+openvr_overlay_get_transform_absolute (OpenVROverlay *self,
+                                       graphene_matrix_t *mat);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_OVERLAY_H_ */
