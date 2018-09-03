@@ -122,6 +122,9 @@ _test_overlay_intersection (OpenVRMotion3DEvent *event)
 {
   GSList *l;
   gboolean found_intersection = FALSE;
+  OpenVROverlay *nearest_intersected = NULL;
+  float nearest_dist = 100000.;
+
   for (l = cat_overlays; l != NULL; l = l->next)
     {
       OpenVROverlay *overlay = (OpenVROverlay*) l->data;
@@ -131,22 +134,6 @@ _test_overlay_intersection (OpenVRMotion3DEvent *event)
                                             &intersection_point))
         {
           found_intersection = TRUE;
-
-          if (current_hover_overlay != NULL)
-            {
-              graphene_vec3_t unmarked_color;
-              graphene_vec3_init (&unmarked_color, 1.f, 1.f, 1.f);
-              openvr_overlay_set_color (current_hover_overlay, &unmarked_color);
-            }
-
-          current_hover_overlay = overlay;
-
-          graphene_matrix_init_from_matrix (current_hover_matrix,
-                                            &event->transform);
-
-          graphene_vec3_t marked_color;
-          graphene_vec3_init (&marked_color, .8f, .2f, .2f);
-          openvr_overlay_set_color (overlay, &marked_color);
 
           /* Distance */
           graphene_vec3_t intersection_vec;
@@ -166,7 +153,35 @@ _test_overlay_intersection (OpenVRMotion3DEvent *event)
 
           distance = graphene_vec3_length (&distance_vec);
           // g_print ("distance %.2f\n", distance);
+
+          if (distance < nearest_dist)
+            {
+              nearest_intersected = overlay;
+              nearest_dist = distance;
+            }
         }
+    }
+
+  // if we had highlighted an overlay previously, unhighlight it
+  if (current_hover_overlay != NULL)
+    {
+      graphene_vec3_t unmarked_color;
+      graphene_vec3_init (&unmarked_color, 1.f, 1.f, 1.f);
+      openvr_overlay_set_color (current_hover_overlay, &unmarked_color);
+    }
+
+  // nearest intersected overlay is null when we don't hover over an overlay
+  current_hover_overlay = nearest_intersected;
+
+  // if we now hover over an overlay, highlight it
+  if (current_hover_overlay != NULL)
+    {
+      graphene_matrix_init_from_matrix (current_hover_matrix,
+                                        &event->transform);
+
+      graphene_vec3_t marked_color;
+      graphene_vec3_init (&marked_color, .8f, .2f, .2f);
+      openvr_overlay_set_color (current_hover_overlay, &marked_color);
     }
 
   /* Test control overlays */
