@@ -60,6 +60,18 @@ _sigint_cb (int sig_num)
     g_main_loop_quit (loop);
 }
 
+float pointer_default_length = 5.0;
+// assuming the initial length is 1 unit/meter
+static void
+_move_pointer(graphene_matrix_t *transform, float length)
+{
+  graphene_matrix_t scale_matrix;
+  graphene_matrix_init_scale (&scale_matrix, 1.0f, 1.0f, length);
+  graphene_matrix_t scaled;
+  graphene_matrix_multiply (&scale_matrix, transform, &scaled);
+  openvr_overlay_set_transform_absolute (pointer, &scaled);
+}
+
 static void
 _controller_poll (gpointer controller, gpointer unused)
 {
@@ -117,9 +129,10 @@ _update_intersection_position (OpenVROverlay *overlay,
   openvr_overlay_show (overlay);
 }
 
-void
+gboolean
 _test_overlay_intersection (OpenVRMotion3DEvent *event)
 {
+  gboolean has_intersection = FALSE;
   GSList *l;
   gboolean found_intersection = FALSE;
   OpenVROverlay *nearest_intersected = NULL;
@@ -176,12 +189,14 @@ _test_overlay_intersection (OpenVRMotion3DEvent *event)
   // if we now hover over an overlay, highlight it
   if (current_hover_overlay != NULL)
     {
+      has_intersection = TRUE;
       graphene_matrix_init_from_matrix (current_hover_matrix,
                                         &event->transform);
 
       graphene_vec3_t marked_color;
       graphene_vec3_init (&marked_color, .8f, .2f, .2f);
       openvr_overlay_set_color (current_hover_overlay, &marked_color);
+      _move_pointer (&event->transform, nearest_dist);
     }
 
   /* Test control overlays */
@@ -245,6 +260,8 @@ _test_overlay_intersection (OpenVRMotion3DEvent *event)
 
       openvr_overlay_hide (intersection);
     }
+
+  return has_intersection;
 }
 
 static void
@@ -254,17 +271,6 @@ _motion_3d_cb (OpenVRController    *controller,
 {
   (void) controller;
   (void) data;
-
-  /* Transform Pointer */
-  {
-    graphene_matrix_t scale_matrix;
-    graphene_matrix_init_scale (&scale_matrix, 1.0f, 1.0f, 5.0f);
-
-    graphene_matrix_t scaled;
-    graphene_matrix_multiply (&scale_matrix, &event->transform, &scaled);
-
-    openvr_overlay_set_transform_absolute (pointer, &scaled);
-  }
 
   /* Drag */
   if (current_grab_overlay != NULL)
@@ -283,10 +289,13 @@ _motion_3d_cb (OpenVRController    *controller,
 
       openvr_overlay_set_transform_absolute (current_grab_overlay,
                                              &transformed);
+      _move_pointer (&event->transform, distance);
     }
   else
     {
-      _test_overlay_intersection (event);
+      gboolean has_intersection = _test_overlay_intersection (event);
+      if (!has_intersection)
+          _move_pointer (&event->transform, pointer_default_length);
     }
 
   free (event);
