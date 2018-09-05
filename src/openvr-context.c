@@ -21,6 +21,9 @@ G_DEFINE_TYPE (OpenVRContext, openvr_context, G_TYPE_OBJECT)
   target = (struct VR_IVR##type##_FnTable*) ptr; \
 }
 
+// singleton variable that can be set to NULL again when finalizing the context
+static OpenVRContext *context = NULL;
+
 static void
 openvr_context_finalize (GObject *gobject);
 
@@ -46,6 +49,8 @@ openvr_context_finalize (GObject *gobject)
 {
   VR_ShutdownInternal();
 
+  context = NULL;
+
   G_OBJECT_CLASS (openvr_context_parent_class)->finalize (gobject);
 }
 
@@ -58,12 +63,10 @@ openvr_context_new (void)
 OpenVRContext *
 openvr_context_get_instance ()
 {
-  static OpenVRContext *self = NULL;
+  if (context == NULL)
+    context = openvr_context_new ();
 
-  if (self == NULL)
-    self = openvr_context_new ();
-
-  return self;
+  return context;
 }
 
 gboolean
