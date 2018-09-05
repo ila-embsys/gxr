@@ -367,12 +367,19 @@ main ()
   g_object_unref (pointer);
   g_object_unref (intersection);
   g_object_unref (texture);
+
+  /* destroy context before uploader because context finalization calls
+   * VR_ShutdownInternal() which accesses the vulkan device that is being
+   * destroyed by uploader finalization
+   */
+
+  OpenVRContext *context = openvr_context_get_instance ();
+  g_object_unref (context);
+
   g_object_unref (uploader);
 
   g_slist_free_full (controllers, g_object_unref);
 
-  OpenVRContext *context = openvr_context_get_instance ();
-  g_object_unref (context);
 
   return 0;
 }
