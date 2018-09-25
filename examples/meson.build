@@ -36,6 +36,13 @@ executable(
   install: false)
 
 executable(
+  'actions', ['actions.c', test_resources],
+  dependencies: [gtk3_dep, openvr_dep, cairo_dep, graphene_dep, m_dep],
+  link_with: openvr_glib_lib,
+  include_directories: openvr_glib_inc,
+  install: false)
+
+executable(
   'overlay_cairo', ['overlay_cairo.c'],
   dependencies: [gtk3_dep, cairo_dep, graphene_dep],
   link_with: openvr_glib_lib,
