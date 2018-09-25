@@ -1,35 +1,35 @@
 # OpenVR GLib samples
 
 executable(
-  'overlay_pixbuf', ['overlay_pixbuf.c', '../res/tests.c'],
+  'overlay_pixbuf', ['overlay_pixbuf.c', test_resources],
   dependencies: [gtk3_dep, openvr_dep, cairo_dep, graphene_dep],
   link_with: openvr_glib_lib,
   include_directories: openvr_glib_inc,
   install: false)
 
 executable(
-  'overlay_multi', ['overlay_multi.c', '../res/tests.c'],
+  'overlay_multi', ['overlay_multi.c', test_resources],
   dependencies: [gtk3_dep, openvr_dep, cairo_dep, graphene_dep],
   link_with: openvr_glib_lib,
   include_directories: openvr_glib_inc,
   install: false)
 
 executable(
-  'overlay_pointer', ['overlay_pointer.c', '../res/tests.c'],
+  'overlay_pointer', ['overlay_pointer.c', test_resources],
   dependencies: [gtk3_dep, openvr_dep, cairo_dep, graphene_dep],
   link_with: openvr_glib_lib,
   include_directories: openvr_glib_inc,
   install: false)
 
 executable(
-  'overlay_models', ['overlay_models.c', '../res/tests.c'],
+  'overlay_models', ['overlay_models.c', test_resources],
   dependencies: [gtk3_dep, openvr_dep, cairo_dep, graphene_dep],
   link_with: openvr_glib_lib,
   include_directories: openvr_glib_inc,
   install: false)
 
 executable(
-  'overlay_move', ['overlay_move.c', '../res/tests.c'],
+  'overlay_move', ['overlay_move.c', test_resources],
   dependencies: [gtk3_dep, openvr_dep, cairo_dep, graphene_dep, m_dep],
   link_with: openvr_glib_lib,
   include_directories: openvr_glib_inc,
@@ -76,7 +76,7 @@ if libdrm_amdgpu_dep.found()
 
   if glfw_dep.found()
     executable(
-      'glfw_dmabuf', ['glfw_dmabuf.c', '../shaders/shaders.c'],
+      'glfw_dmabuf', ['glfw_dmabuf.c', shader_resources],
       dependencies: [gtk3_dep, vulkan_dep, libdrm_dep,
                      libdrm_amdgpu_dep, glfw_dep, graphene_dep],
       link_with: openvr_glib_lib,
@@ -87,7 +87,7 @@ endif
 
 if glfw_dep.found()
   executable(
-    'glfw_pixbuf', ['glfw_pixbuf.c', '../res/tests.c', '../shaders/shaders.c'],
+    'glfw_pixbuf', ['glfw_pixbuf.c', test_resources, shader_resources],
     dependencies: [gtk3_dep, vulkan_dep, glfw_dep, graphene_dep],
     link_with: openvr_glib_lib,
     include_directories: openvr_glib_inc,

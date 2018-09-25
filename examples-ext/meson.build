@@ -3,7 +3,7 @@
 examples_inc_dir = include_directories('../examples')
 
 gtk_pixbuf = executable(
-  'gtk_pixbuf', ['gtk_pixbuf.c', '../res/tests.c'],
+  'gtk_pixbuf', ['gtk_pixbuf.c', test_resources],
   dependencies: gtk3_dep,
   install: false)
 

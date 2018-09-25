@@ -12,16 +12,8 @@ if glslang.found()
     endif
   endforeach
 
-  # generate gresources
-  r = run_command('glib-compile-resources',
-                  '--target=shaders.c',
-                  '--sourcedir=.',
-                  '--generate-source',
-                  'shaders.gresource.xml')
-
-  if r.returncode() != 0
-    message('Could not compile resources:')
-    message(r.stderr().strip())
-  endif
+  shader_resources = gnome.compile_resources(
+    'shader_resources', 'shaders.gresource.xml',
+    source_dir : '.')
 
 endif

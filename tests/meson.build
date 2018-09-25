@@ -15,7 +15,7 @@ test_system = executable(
 test('test_system', test_system)
 
 test_overlay_pixbuf = executable(
-  'test_overlay_pixbuf', ['test_overlay_pixbuf.c', '../res/tests.c'],
+  'test_overlay_pixbuf', ['test_overlay_pixbuf.c', test_resources],
   dependencies: [openvr_glib_deps],
   link_with: openvr_glib_lib,
   include_directories: openvr_glib_inc,
@@ -47,7 +47,7 @@ test_vulkan_client = executable(
 test('test_vulkan_client', test_vulkan_client)
 
 test_vulkan_texture = executable(
-  'test_vulkan_texture', ['test_vulkan_texture.c', '../res/tests.c'],
+  'test_vulkan_texture', ['test_vulkan_texture.c', test_resources],
   dependencies: [vulkan_dep, openvr_glib_deps],
   link_with: openvr_glib_lib,
   include_directories: openvr_glib_inc,
@@ -56,8 +56,8 @@ test('test_vulkan_texture', test_vulkan_texture)
 
 if glfw_dep.found()
   test_vulkan_renderer = executable(
-    'test_vulkan_renderer', ['test_vulkan_renderer.c', '../res/tests.c',
-                             '../shaders/shaders.c'],
+    'test_vulkan_renderer', ['test_vulkan_renderer.c', test_resources,
+                             shader_resources],
     dependencies: [vulkan_dep, openvr_glib_deps, glfw_dep],
     link_with: openvr_glib_lib,
     include_directories: openvr_glib_inc,
@@ -66,7 +66,7 @@ test('test_vulkan_renderer', test_vulkan_renderer)
 endif
 
 test_vulkan_uploader = executable(
-  'test_vulkan_uploader', ['test_vulkan_uploader.c', '../res/tests.c'],
+  'test_vulkan_uploader', ['test_vulkan_uploader.c', test_resources],
   dependencies: [vulkan_dep, openvr_glib_deps],
   link_with: openvr_glib_lib,
   include_directories: openvr_glib_inc,
