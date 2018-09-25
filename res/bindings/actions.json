@@ -1,0 +1,60 @@
+{
+   "default_bindings":[
+      {
+         "controller_type":"vive_controller",
+         "binding_url":"bindings_vive_controller.json"
+      }
+   ],
+   "actions":[
+      {
+         "name":"/actions/wm/in/grab_window",
+         "type":"boolean"
+      },
+      {
+         "name":"/actions/wm/in/push_pull",
+         "type": "vector2"
+      },
+      {
+        "name": "/actions/wm/in/hand_primary",
+        "type": "pose"
+      },
+      {
+        "name": "/actions/wm/in/hand_secondary",
+        "type": "pose"
+      },
+      {
+        "name": "/actions/wm/out/haptic_primary",
+        "type": "vibration"
+      },
+      {
+        "name": "/actions/wm/out/haptic_secondary",
+        "type": "vibration"
+      },
+      {
+         "name":"/actions/mouse_synth/in/left_click",
+         "type":"boolean"
+      },
+      {
+         "name":"/actions/mouse_synth/in/right_click",
+         "type":"boolean"
+      },
+      {
+         "name":"/actions/mouse_synth/in/scroll",
+         "type": "vector2"
+      }
+   ],
+   "localization":[
+      {
+         "language_tag":"en_US",
+         "/actions/wm/in/grab_window":"Grab Window",
+         "/actions/wm/in/push_pull":"Move window along Z axis",
+         "/actions/wm/in/hand_primary" : "Dominant Hand Pose",
+         "/actions/wm/in/hand_secondary" : "Secondary Hand Pose",
+         "/actions/wm/out/haptic_primary" : "Dominant Hand Haptic Feedback",
+         "/actions/wm/out/haptic_secondary" : "Secondary Hand Haptic Feedback",
+         "/actions/mouse_synth/in/left_click" : "Left Click",
+         "/actions/mouse_synth/in/right_click" : "Right Click",
+         "/actions/mouse_synth/in/scroll" : "Scroll"
+      }
+   ]
+}
