@@ -17,18 +17,21 @@
 #include <openvr-glib.h>
 
 #include "openvr-context.h"
+#include "openvr-io.h"
 #include "openvr-compositor.h"
 #include "openvr-controller.h"
 #include "openvr-math.h"
 #include "openvr-overlay.h"
 #include "openvr-vulkan-uploader.h"
+#include "openvr-action.h"
+#include "openvr-action-set.h"
 
 typedef struct Example
 {
   OpenVRVulkanUploader *uploader;
   OpenVRVulkanTexture *texture;
 
-  GSList *controllers;
+  OpenVRActionSet *wm_action_set;
 
   OpenVROverlay *pointer;
   OpenVROverlay *intersection;
@@ -45,24 +48,14 @@ _sigint_cb (gpointer _self)
   return TRUE;
 }
 
-static void
-_controller_poll (gpointer controller, gpointer overlay)
-{
-  openvr_overlay_poll_controller_event ((OpenVROverlay*) overlay,
-                                        (OpenVRController*) controller);
-}
-
 gboolean
-_overlay_event_cb (gpointer _self)
+_poll_events_cb (gpointer _self)
 {
   Example *self = (Example*) _self;
-  // TODO: Controllers should be registered in the system event callback
-  if (self->controllers == NULL)
-    self->controllers = openvr_controller_enumerate ();
 
-  g_slist_foreach (self->controllers, _controller_poll, self->cat);
+  if (!openvr_action_set_poll (self->wm_action_set))
+    return FALSE;
 
-  openvr_overlay_poll_event (self->cat);
   return TRUE;
 }
 
@@ -74,7 +67,7 @@ load_gdk_pixbuf (const gchar* name)
 
   if (error != NULL)
     {
-      fprintf (stderr, "Unable to read file: %s\n", error->message);
+      g_printerr ("Unable to read file: %s\n", error->message);
       g_error_free (error);
       return NULL;
     }
@@ -85,16 +78,18 @@ load_gdk_pixbuf (const gchar* name)
 }
 
 void
-_update_intersection_position (OpenVROverlay *overlay,
-                               OpenVRIntersectionEvent *event)
+_update_intersection_position (OpenVROverlay      *overlay,
+                               graphene_matrix_t  *pose,
+                               graphene_point3d_t *intersection_point)
 {
   graphene_matrix_t transform;
-  graphene_matrix_init_from_matrix (&transform, &event->transform);
-  openvr_math_matrix_set_translation (&transform, &event->intersection_point);
+  graphene_matrix_init_from_matrix (&transform, pose);
+  openvr_math_matrix_set_translation (&transform, intersection_point);
   openvr_overlay_set_transform_absolute (overlay, &transform);
   openvr_overlay_show (overlay);
 }
 
+/*
 static void
 _intersection_cb (OpenVROverlay           *overlay,
                   OpenVRIntersectionEvent *event,
@@ -110,18 +105,11 @@ _intersection_cb (OpenVROverlay           *overlay,
   else
     openvr_overlay_hide (self->intersection);
 
-  graphene_matrix_t scale_matrix;
-  graphene_matrix_init_scale (&scale_matrix, 1.0f, 1.0f, 5.0f);
-
-  graphene_matrix_t scaled;
-  graphene_matrix_multiply (&scale_matrix, &event->transform, &scaled);
-
-  openvr_overlay_set_transform_absolute (self->pointer, &scaled);
-
   // TODO: because this is a custom event with a struct that has been allocated
   // specifically for us, we need to free it. Maybe reuse?
   free (event);
 }
+
 
 static void
 _scroll_cb (OpenVROverlay *overlay, GdkEventScroll *event, gpointer data)
@@ -158,6 +146,7 @@ _destroy_cb (OpenVROverlay *overlay, gpointer data)
   GMainLoop *loop = (GMainLoop *)data;
   g_main_loop_quit (loop);
 }
+*/
 
 GdkPixbuf *
 _create_empty_pixbuf (uint32_t width, uint32_t height)
@@ -227,31 +216,6 @@ _init_pointer_overlay ()
   return overlay;
 }
 
-bool
-_init_openvr ()
-{
-  if (!openvr_context_is_installed ())
-    {
-      g_printerr ("VR Runtime not installed.\n");
-      return false;
-    }
-
-  OpenVRContext *context = openvr_context_get_instance ();
-  if (!openvr_context_init_overlay (context))
-    {
-      g_printerr ("Could not init OpenVR.\n");
-      return false;
-    }
-
-  if (!openvr_context_is_valid (context))
-    {
-      g_printerr ("Could not load OpenVR function pointers.\n");
-      return false;
-    }
-
-  return true;
-}
-
 gboolean
 _init_cat_overlay (Example *self)
 {
@@ -297,6 +261,7 @@ _init_cat_overlay (Example *self)
                                        self->cat, self->texture);
 
   /* connect glib callbacks */
+  /*
   g_signal_connect (self->cat, "intersection-event",
                     (GCallback)_intersection_cb,
                     self);
@@ -312,7 +277,7 @@ _init_cat_overlay (Example *self)
   g_signal_connect (self->cat, "destroy",
                     (GCallback)_destroy_cb,
                     self->loop);
-
+  */
   return TRUE;
 }
 
@@ -359,6 +324,8 @@ _cleanup (Example *self)
   g_object_unref (self->intersection);
   g_object_unref (self->texture);
 
+  g_object_unref (self->wm_action_set);
+
   /* destroy context before uploader because context finalization calls
    * VR_ShutdownInternal() which accesses the vulkan device that is being
    * destroyed by uploader finalization
@@ -369,24 +336,92 @@ _cleanup (Example *self)
 
   g_object_unref (self->uploader);
 
-  g_slist_free_full (self->controllers, g_object_unref);
+}
+
+gboolean
+_cache_bindings (GString *actions_path)
+{
+  GString* cache_path = openvr_io_get_cache_path ("openvr-glib");
+
+  if (!openvr_io_create_directory_if_needed (cache_path->str))
+    return FALSE;
+
+  if (!openvr_io_write_resource_to_file ("/res/bindings", cache_path->str,
+                                         "actions.json", actions_path))
+    return FALSE;
+
+  GString *bindings_path = g_string_new ("");
+  if (!openvr_io_write_resource_to_file ("/res/bindings", cache_path->str,
+                                         "bindings_vive_controller.json",
+                                         bindings_path))
+    return FALSE;
+
+  g_string_free (bindings_path, TRUE);
+  g_string_free (cache_path, TRUE);
+
+  return TRUE;
+}
+
+static void
+_dominant_hand_cb (OpenVRAction    *action,
+                   OpenVRPoseEvent *event,
+                   Example         *self)
+{
+  (void) action;
+
+  /* Update pointer */
+  graphene_matrix_t scale_matrix;
+  graphene_matrix_init_scale (&scale_matrix, 1.0f, 1.0f, 5.0f);
+
+  graphene_matrix_t scaled;
+  graphene_matrix_multiply (&scale_matrix, &event->pose, &scaled);
+
+  openvr_overlay_set_transform_absolute (self->pointer, &scaled);
+
+  /* update intersection */
+  graphene_point3d_t intersection_point;
+  gboolean intersects =
+    openvr_overlay_test_intersection (self->cat,
+                                     &event->pose,
+                                     &intersection_point);
+
+  // if we have an intersection point, move the pointer overlay there
+  if (intersects)
+    _update_intersection_position (self->intersection,
+                                  &event->pose,
+                                  &intersection_point);
+  else
+    openvr_overlay_hide (self->intersection);
+
+  g_free (event);
 }
 
 int
 main ()
 {
-  Example self = {
-    .loop = g_main_loop_new (NULL, FALSE),
-    .controllers = NULL,
-    .uploader = openvr_vulkan_uploader_new (),
-  };
-
   OpenVRContext *context = openvr_context_get_instance ();
   if (!openvr_context_init_overlay (context))
     {
       g_printerr ("Could not init OpenVR.\n");
       return false;
     }
+
+  GString *action_manifest_path = g_string_new ("");
+  if (!_cache_bindings (action_manifest_path))
+    return FALSE;
+
+  g_print ("Resulting manifest path: %s", action_manifest_path->str);
+
+  if (!openvr_action_load_manifest (action_manifest_path->str))
+    return FALSE;
+
+  g_string_free (action_manifest_path, TRUE);
+
+  Example self = {
+    .loop = g_main_loop_new (NULL, FALSE),
+    .wm_action_set = openvr_action_set_new_from_url ("/actions/wm"),
+    .uploader = openvr_vulkan_uploader_new (),
+  };
 
   if (!openvr_vulkan_uploader_init_vulkan (self.uploader, true))
     {
@@ -402,7 +437,11 @@ main ()
   if (!_init_cat_overlay (&self))
     return -1;
 
-  g_timeout_add (20, _overlay_event_cb, &self);
+  openvr_action_set_register (self.wm_action_set, OPENVR_ACTION_POSE,
+                              "/actions/wm/in/hand_primary",
+                              (GCallback) _dominant_hand_cb, &self);
+
+  g_timeout_add (20, _poll_events_cb, &self);
 
   g_unix_signal_add (SIGINT, _sigint_cb, &self);
 
