@@ -25,12 +25,14 @@
 
 #include "cairo_content.h"
 
+#include "openvr-io.h"
+#include "openvr-action.h"
+#include "openvr-action-set.h"
+
 #define GRID_WIDTH 6
 #define GRID_HEIGHT 5
 
 OpenVRVulkanTexture *texture;
-
-GSList *controllers = NULL;
 
 GSList *cat_overlays = NULL;
 
@@ -53,6 +55,8 @@ GHashTable *initial_overlay_transforms = NULL;
 
 float distance = 1.f;
 
+OpenVRActionSet *wm_action_set;
+
 void
 _sigint_cb (int sig_num)
 {
@@ -72,28 +76,14 @@ _move_pointer(graphene_matrix_t *transform, float length)
   openvr_overlay_set_transform_absolute (pointer, &scaled);
 }
 
-static void
-_controller_poll (gpointer controller, gpointer unused)
-{
-  (void) unused;
-  openvr_controller_poll_event ((OpenVRController*) controller);
-}
-
-static void
-_register_controller_events (gpointer controller, gpointer unused);
 
 gboolean
-_overlay_event_cb (gpointer unused)
+_poll_events_cb (gpointer unused)
 {
   (void) unused;
-  // TODO: Controllers should be registered in the system event callback
-  if (controllers == NULL)
-    {
-      controllers = openvr_controller_enumerate ();
-      g_slist_foreach (controllers, _register_controller_events, NULL);
-    }
 
-  g_slist_foreach (controllers, _controller_poll, NULL);
+  if (!openvr_action_set_poll (wm_action_set))
+    return FALSE;
 
   // openvr_overlay_poll_event (overlay);
   return TRUE;
@@ -130,7 +120,7 @@ _update_intersection_position (OpenVROverlay *overlay,
 }
 
 gboolean
-_test_overlay_intersection (OpenVRMotion3DEvent *event)
+_test_overlay_intersection (graphene_matrix_t *pose)
 {
   gboolean has_intersection = FALSE;
   GSList *l;
@@ -143,7 +133,7 @@ _test_overlay_intersection (OpenVRMotion3DEvent *event)
       OpenVROverlay *overlay = (OpenVROverlay*) l->data;
 
       graphene_point3d_t intersection_point;
-      if (openvr_overlay_poll_3d_intersection_compat (overlay, &event->transform,
+      if (openvr_overlay_poll_3d_intersection_compat (overlay, pose,
                                                      &intersection_point))
         {
           found_intersection = TRUE;
@@ -157,7 +147,7 @@ _test_overlay_intersection (OpenVRMotion3DEvent *event)
 
           graphene_vec3_t controller_position;
           openvr_math_vec3_init_from_matrix (&controller_position,
-                                             &event->transform);
+                                             pose);
 
           graphene_vec3_t distance_vec;
           graphene_vec3_subtract (&controller_position,
@@ -191,12 +181,12 @@ _test_overlay_intersection (OpenVRMotion3DEvent *event)
     {
       has_intersection = TRUE;
       graphene_matrix_init_from_matrix (current_hover_matrix,
-                                        &event->transform);
+                                        pose);
 
       graphene_vec3_t marked_color;
       graphene_vec3_init (&marked_color, .8f, .2f, .2f);
       openvr_overlay_set_color (current_hover_overlay, &marked_color);
-      _move_pointer (&event->transform, nearest_dist);
+      _move_pointer (pose, nearest_dist);
     }
 
   /* Test control overlays */
@@ -204,7 +194,7 @@ _test_overlay_intersection (OpenVRMotion3DEvent *event)
     {
       graphene_point3d_t intersection_point;
       if (openvr_overlay_poll_3d_intersection_compat (control_overlay_reset,
-                                                     &event->transform,
+                                                      pose,
                                                      &intersection_point))
         {
           found_intersection = TRUE;
@@ -228,7 +218,7 @@ _test_overlay_intersection (OpenVRMotion3DEvent *event)
     {
       graphene_point3d_t intersection_point;
       if (openvr_overlay_poll_3d_intersection_compat (control_overlay_sphere,
-                                                     &event->transform,
+                                                      pose,
                                                      &intersection_point))
         {
           found_intersection = TRUE;
@@ -262,43 +252,6 @@ _test_overlay_intersection (OpenVRMotion3DEvent *event)
     }
 
   return has_intersection;
-}
-
-static void
-_motion_3d_cb (OpenVRController    *controller,
-               OpenVRMotion3DEvent *event,
-               gpointer             data)
-{
-  (void) controller;
-  (void) data;
-
-  /* Drag */
-  if (current_grab_overlay != NULL)
-    {
-      graphene_point3d_t translation_point;
-      graphene_point3d_init (&translation_point, .0f, .0f, -distance);
-
-      graphene_matrix_t transformation_matrix;
-      graphene_matrix_init_translate (&transformation_matrix,
-                                      &translation_point);
-
-      graphene_matrix_t transformed;
-      graphene_matrix_multiply (&transformation_matrix,
-                                &event->transform,
-                                &transformed);
-
-      openvr_overlay_set_transform_absolute (current_grab_overlay,
-                                             &transformed);
-      _move_pointer (&event->transform, distance);
-    }
-  else
-    {
-      gboolean has_intersection = _test_overlay_intersection (event);
-      if (!has_intersection)
-          _move_pointer (&event->transform, pointer_default_length);
-    }
-
-  free (event);
 }
 
 static void
@@ -495,61 +448,6 @@ _position_cat_overlays_sphere ()
   return TRUE;
 }
 
-
-static void
-_press_cb (OpenVRController *controller, GdkEventButton *event, gpointer data)
-{
-  (void) controller;
-  (void) data;
-
-  if (event->button == OPENVR_BUTTON_TRIGGER)
-    {
-      if (current_hover_overlay != NULL)
-        {
-          if (current_hover_overlay == control_overlay_reset)
-            {
-              _reset_cat_overlays ();
-            }
-          else if (current_hover_overlay == control_overlay_sphere)
-            {
-              _position_cat_overlays_sphere ();
-            }
-          else
-            {
-              current_grab_overlay = current_hover_overlay;
-
-              graphene_matrix_init_from_matrix (current_grab_matrix,
-                                                current_hover_matrix);
-
-              openvr_overlay_hide (intersection);
-
-              graphene_vec3_t marked_color;
-              graphene_vec3_init (&marked_color, .2f, .8f, .2f);
-              openvr_overlay_set_color (current_grab_overlay, &marked_color);
-            }
-        }
-    }
-
-}
-
-static void
-_release_cb (OpenVRController *controller, GdkEventButton *event, gpointer data)
-{
-  (void) controller;
-  (void) data;
-
-  if (event->button == OPENVR_BUTTON_TRIGGER)
-    {
-      if (current_grab_overlay != NULL)
-        {
-          graphene_vec3_t unmarked_color;
-          graphene_vec3_init (&unmarked_color, 1.f, 1.f, 1.f);
-          openvr_overlay_set_color (current_grab_overlay, &unmarked_color);
-        }
-      current_grab_overlay = NULL;
-    }
-
-}
 
 GdkPixbuf *
 _create_empty_pixbuf (uint32_t width, uint32_t height)
@@ -899,14 +797,138 @@ _init_control_overlays (OpenVRVulkanUploader *uploader)
   return TRUE;
 }
 
-static void
-_register_controller_events (gpointer controller, gpointer unused)
+gboolean
+_cache_bindings (GString *actions_path)
 {
-  (void) unused;
-  OpenVRController* c = (OpenVRController*) controller;
-  g_signal_connect (c, "motion-3d-event", (GCallback) _motion_3d_cb, NULL);
-  g_signal_connect (c, "button-press-event", (GCallback) _press_cb, NULL);
-  g_signal_connect (c, "button-release-event", (GCallback) _release_cb, NULL);
+  GString* cache_path = openvr_io_get_cache_path ("openvr-glib");
+
+  if (!openvr_io_create_directory_if_needed (cache_path->str))
+    return FALSE;
+
+  if (!openvr_io_write_resource_to_file ("/res/bindings", cache_path->str,
+                                         "actions.json", actions_path))
+    return FALSE;
+
+  GString *bindings_path = g_string_new ("");
+  if (!openvr_io_write_resource_to_file ("/res/bindings", cache_path->str,
+                                         "bindings_vive_controller.json",
+                                         bindings_path))
+    return FALSE;
+
+  g_string_free (bindings_path, TRUE);
+  g_string_free (cache_path, TRUE);
+
+  return TRUE;
+}
+
+static void
+_dominant_hand_cb (OpenVRAction    *action,
+                   OpenVRPoseEvent *event,
+                   gpointer        *self)
+{
+  (void) action;
+  (void) self;
+
+  /* Update pointer */
+  graphene_matrix_t scale_matrix;
+  graphene_matrix_init_scale (&scale_matrix, 1.0f, 1.0f, 5.0f);
+
+  graphene_matrix_t scaled;
+  graphene_matrix_multiply (&scale_matrix, &event->pose, &scaled);
+
+#if 0
+  openvr_overlay_set_transform_absolute (self->pointer, &scaled);
+
+  /* update intersection */
+  openvr_overlay_poll_3d_intersection (self->cat, &event->pose);
+#endif
+
+  /* Drag */
+  if (current_grab_overlay != NULL)
+    {
+      graphene_point3d_t translation_point;
+      graphene_point3d_init (&translation_point, .0f, .0f, -distance);
+
+      graphene_matrix_t transformation_matrix;
+      graphene_matrix_init_translate (&transformation_matrix,
+                                      &translation_point);
+
+      graphene_matrix_t transformed;
+      graphene_matrix_multiply (&transformation_matrix,
+                                &event->pose,
+                                &transformed);
+
+      openvr_overlay_set_transform_absolute (current_grab_overlay,
+                                             &transformed);
+      _move_pointer (&event->pose, distance);
+    }
+  else
+    {
+      gboolean has_intersection = _test_overlay_intersection (&event->pose);
+      if (!has_intersection)
+          _move_pointer (&event->pose, pointer_default_length);
+    }
+
+  g_free (event);
+}
+
+static void
+_grab_cb (OpenVRAction       *action,
+          OpenVRDigitalEvent *event,
+          gpointer            _self)
+{
+  (void) action;
+  (void) _self;
+
+  //g_print ("grab: Active %d | State %d | Changed %d\n",
+  //         event->active, event->state, event->changed);
+
+  if (event->changed)
+    {
+      if (event->state == 1)
+        {
+          // Press
+          if (current_hover_overlay != NULL)
+            {
+              if (current_hover_overlay == control_overlay_reset)
+                {
+                  _reset_cat_overlays ();
+                }
+              else if (current_hover_overlay == control_overlay_sphere)
+                {
+                  _position_cat_overlays_sphere ();
+                }
+              else
+                {
+                  current_grab_overlay = current_hover_overlay;
+
+                  graphene_matrix_init_from_matrix (current_grab_matrix,
+                                                    current_hover_matrix);
+
+                  openvr_overlay_hide (intersection);
+
+                  graphene_vec3_t marked_color;
+                  graphene_vec3_init (&marked_color, .2f, .8f, .2f);
+                  openvr_overlay_set_color (current_grab_overlay, &marked_color);
+                }
+            }
+        }
+      else
+        {
+          // Releae
+          if (current_grab_overlay != NULL)
+            {
+              graphene_vec3_t unmarked_color;
+              graphene_vec3_init (&unmarked_color, 1.f, 1.f, 1.f);
+              openvr_overlay_set_color (current_grab_overlay, &unmarked_color);
+            }
+          current_grab_overlay = NULL;
+          //
+        }
+
+    }
+
+  g_free (event);
 }
 
 int
@@ -920,6 +942,28 @@ main ()
   /* init openvr */
   if (!_init_openvr ())
     return -1;
+
+
+  GString *action_manifest_path = g_string_new ("");
+  if (!_cache_bindings (action_manifest_path))
+    return FALSE;
+
+  g_print ("Resulting manifest path: %s", action_manifest_path->str);
+
+  if (!openvr_action_load_manifest (action_manifest_path->str))
+    return FALSE;
+
+  g_string_free (action_manifest_path, TRUE);
+
+  wm_action_set = openvr_action_set_new_from_url ("/actions/wm");
+
+  openvr_action_set_register (wm_action_set, OPENVR_ACTION_POSE,
+                              "/actions/wm/in/hand_primary",
+                              (GCallback) _dominant_hand_cb, NULL);
+
+  openvr_action_set_register (wm_action_set, OPENVR_ACTION_DIGITAL,
+                              "/actions/wm/in/grab_window",
+                              (GCallback) _grab_cb, NULL);
 
   OpenVRVulkanUploader *uploader = openvr_vulkan_uploader_new ();
   if (!openvr_vulkan_uploader_init_vulkan (uploader, true))
@@ -939,7 +983,7 @@ main ()
   if (!_init_control_overlays (uploader))
     return -1;
 
-  g_timeout_add (20, _overlay_event_cb, NULL);
+  g_timeout_add (20, _poll_events_cb, NULL);
 
   signal (SIGINT, _sigint_cb);
 
@@ -954,7 +998,8 @@ main ()
   g_object_unref (texture);
   g_object_unref (uploader);
 
-  g_slist_free_full (controllers, g_object_unref);
+  g_object_unref (wm_action_set);
+
   g_slist_free_full (cat_overlays, g_object_unref);
   g_slist_free_full (textures_to_free, g_object_unref);
 
