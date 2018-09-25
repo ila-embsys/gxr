@@ -161,9 +161,13 @@ gboolean
 openvr_overlay_enable_mouse_input (OpenVROverlay *self);
 
 gboolean
-openvr_overlay_test_intersection (OpenVROverlay      *self,
-                                  graphene_matrix_t  *pose,
-                                  graphene_point3d_t *point);
+openvr_overlay_poll_3d_intersection_compat (OpenVROverlay      *self,
+                                            graphene_matrix_t  *pose,
+                                            graphene_point3d_t *point);
+
+void
+openvr_overlay_poll_3d_intersection (OpenVROverlay      *self,
+                                     graphene_matrix_t  *pose);
 
 gboolean
 openvr_overlay_get_transform_absolute (OpenVROverlay *self,

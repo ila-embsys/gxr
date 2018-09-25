@@ -682,7 +682,6 @@ openvr_overlay_get_2d_intersection (OpenVROverlay      *overlay,
  * the user is pointing at an overlay.
  * mote that we malloc() it here, so the client needs to free it.
  */
-
 void
 _emit_intersection_event (OpenVROverlay      *overlay,
                           gboolean            intersects,
@@ -705,6 +704,7 @@ _emit_intersection_event (OpenVROverlay      *overlay,
 
   g_signal_emit (overlay, overlay_signals[INTERSECTION_EVENT], 0, event);
 }
+
 
 void
 _check_press_release (OpenVROverlay    *self,
@@ -779,16 +779,35 @@ _emit_controller_events (OpenVROverlay       *self,
   controller->last_pressed_state = pressed_state;
 }
 
+
 gboolean
-openvr_overlay_test_intersection (OpenVROverlay      *self,
-                                  graphene_matrix_t  *pose,
-                                  graphene_point3d_t *point)
+openvr_overlay_poll_3d_intersection_compat (OpenVROverlay      *self,
+                                            graphene_matrix_t  *pose,
+                                            graphene_point3d_t *point)
 {
   gboolean intersects = openvr_overlay_intersects (self, point, pose);
   if (intersects)
     _emit_intersection_event (self, intersects, pose, point);
 
   return intersects;
+}
+
+
+void
+openvr_overlay_poll_3d_intersection (OpenVROverlay      *self,
+                                     graphene_matrix_t  *pose)
+{
+  OpenVRIntersectionEvent *event = malloc (sizeof (OpenVRIntersectionEvent));
+
+  gboolean intersects = openvr_overlay_intersects (self,
+                                                   &event->intersection_point,
+                                                   pose);
+
+  graphene_matrix_init_from_matrix (&event->transform, pose);
+
+  event->has_intersection = intersects;
+
+  g_signal_emit (self, overlay_signals[INTERSECTION_EVENT], 0, event);
 }
 
 gboolean
@@ -806,7 +825,8 @@ openvr_overlay_poll_controller_event (OpenVROverlay    *self,
   openvr_controller_get_transformation (controller, &transform);
 
   graphene_point3d_t intersection_point;
-  if (!openvr_overlay_test_intersection (self, &transform, &intersection_point))
+  if (!openvr_overlay_poll_3d_intersection_compat (self, &transform,
+                                                  &intersection_point))
     return FALSE;
 
   /* GetOpenVRController is deprecated but simpler to use than actions */

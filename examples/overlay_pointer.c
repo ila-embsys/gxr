@@ -89,7 +89,7 @@ _update_intersection_position (OpenVROverlay      *overlay,
   openvr_overlay_show (overlay);
 }
 
-/*
+
 static void
 _intersection_cb (OpenVROverlay           *overlay,
                   OpenVRIntersectionEvent *event,
@@ -101,7 +101,9 @@ _intersection_cb (OpenVROverlay           *overlay,
 
   // if we have an intersection point, move the pointer overlay there
   if (event->has_intersection)
-    _update_intersection_position (self->intersection, event);
+    _update_intersection_position (self->intersection,
+                                  &event->transform,
+                                  &event->intersection_point);
   else
     openvr_overlay_hide (self->intersection);
 
@@ -110,7 +112,7 @@ _intersection_cb (OpenVROverlay           *overlay,
   free (event);
 }
 
-
+/*
 static void
 _scroll_cb (OpenVROverlay *overlay, GdkEventScroll *event, gpointer data)
 {
@@ -261,10 +263,11 @@ _init_cat_overlay (Example *self)
                                        self->cat, self->texture);
 
   /* connect glib callbacks */
-  /*
+
   g_signal_connect (self->cat, "intersection-event",
                     (GCallback)_intersection_cb,
                     self);
+  /*
   g_signal_connect (self->cat, "button-press-event",
                     (GCallback)_press_cb,
                     self->loop);
@@ -379,19 +382,7 @@ _dominant_hand_cb (OpenVRAction    *action,
   openvr_overlay_set_transform_absolute (self->pointer, &scaled);
 
   /* update intersection */
-  graphene_point3d_t intersection_point;
-  gboolean intersects =
-    openvr_overlay_test_intersection (self->cat,
-                                     &event->pose,
-                                     &intersection_point);
-
-  // if we have an intersection point, move the pointer overlay there
-  if (intersects)
-    _update_intersection_position (self->intersection,
-                                  &event->pose,
-                                  &intersection_point);
-  else
-    openvr_overlay_hide (self->intersection);
+  openvr_overlay_poll_3d_intersection (self->cat, &event->pose);
 
   g_free (event);
 }
