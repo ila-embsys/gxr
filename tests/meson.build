@@ -54,6 +54,14 @@ test_vulkan_texture = executable(
   install: false)
 test('test_vulkan_texture', test_vulkan_texture)
 
+test_io = executable(
+  'test_io', ['test_io.c', test_resources],
+  dependencies: [openvr_glib_deps],
+  link_with: openvr_glib_lib,
+  include_directories: openvr_glib_inc,
+  install: false)
+test('test_io', test_io)
+
 if glfw_dep.found()
   test_vulkan_renderer = executable(
     'test_vulkan_renderer', ['test_vulkan_renderer.c', test_resources,
