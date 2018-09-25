@@ -48,6 +48,10 @@ openvr_context_print_model_list (OpenVRContext *self);
 GSList *
 openvr_context_get_model_list (OpenVRContext *self);
 
+
+const gchar*
+openvr_input_error_string (EVRInputError err);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_CONTEXT_H_ */
