@@ -151,8 +151,6 @@ openvr_vulkan_client_load_raw (OpenVRVulkanClient   *self,
   if (!openvr_vulkan_client_submit_res_cmd_buffer (self, &buffer))
     return false;
 
-  openvr_vulkan_texture_free_staging_memory (texture);
-
   return true;
 }
 

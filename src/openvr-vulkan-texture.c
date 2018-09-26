@@ -33,6 +33,9 @@ openvr_vulkan_texture_finalize (GObject *gobject)
 {
   OpenVRVulkanTexture *self = OPENVR_VULKAN_TEXTURE (gobject);
   VkDevice device = self->device->device;
+
+  openvr_vulkan_texture_free_staging_memory (self);
+
   vkDestroyImageView (device, self->image_view, NULL);
   vkDestroyImage (device, self->image, NULL);
   vkFreeMemory (device, self->image_memory, NULL);
@@ -55,32 +58,16 @@ openvr_vulkan_texture_class_init (OpenVRVulkanTextureClass *klass)
 }
 
 bool
-openvr_vulkan_texture_from_pixels (OpenVRVulkanTexture *self,
-                                   OpenVRVulkanDevice  *device,
-                                   VkCommandBuffer      cmd_buffer,
-                                   guchar              *pixels,
-                                   guint                width,
-                                   guint                height,
-                                   gsize                size,
-                                   VkFormat             format)
+openvr_vulkan_texture_allocate (OpenVRVulkanTexture *self,
+                                OpenVRVulkanDevice  *device,
+                                guint                width,
+                                guint                height,
+                                gsize                size,
+                                VkFormat             format)
 {
   self->width = width;
   self->height = height;
-
   self->device = device;
-  VkBufferImageCopy buffer_image_copy = {
-    .imageSubresource = {
-      .baseArrayLayer = 0,
-      .layerCount = 1,
-      .mipLevel = 0,
-      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-    },
-    .imageExtent = {
-      .width = width,
-      .height = height,
-      .depth = 1,
-    }
-  };
 
   VkImageCreateInfo image_info = {
     .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
@@ -147,8 +134,16 @@ openvr_vulkan_texture_from_pixels (OpenVRVulkanTexture *self,
                                           &self->staging_buffer,
                                           &self->staging_buffer_memory))
     return false;
+  return true;
+}
 
-  if (!openvr_vulkan_device_map_memory (device, pixels, size,
+bool
+openvr_vulkan_texture_upload_pixels (OpenVRVulkanTexture *self,
+                                     VkCommandBuffer      cmd_buffer,
+                                     guchar              *pixels,
+                                     gsize                size)
+{
+  if (!openvr_vulkan_device_map_memory (self->device, pixels, size,
                                         self->staging_buffer_memory))
     return false;
 
@@ -163,18 +158,32 @@ openvr_vulkan_texture_from_pixels (OpenVRVulkanTexture *self,
     .subresourceRange = {
       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
       .baseMipLevel = 0,
-      .levelCount = image_info.mipLevels,
+      .levelCount = 1, //image_info.mipLevels,
       .baseArrayLayer = 0,
       .layerCount = 1,
     },
-    .srcQueueFamilyIndex = device->queue_family_index,
-    .dstQueueFamilyIndex = device->queue_family_index
+    .srcQueueFamilyIndex = self->device->queue_family_index,
+    .dstQueueFamilyIndex = self->device->queue_family_index
   };
 
   vkCmdPipelineBarrier (cmd_buffer,
                         VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
                         VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 0, NULL, 1,
                         &image_memory_barrier);
+
+  VkBufferImageCopy buffer_image_copy = {
+    .imageSubresource = {
+      .baseArrayLayer = 0,
+      .layerCount = 1,
+      .mipLevel = 0,
+      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+    },
+    .imageExtent = {
+      .width = self->width,
+      .height = self->height,
+      .depth = 1,
+    }
+  };
 
   vkCmdCopyBufferToImage (cmd_buffer,
                           self->staging_buffer, self->image,
@@ -190,6 +199,26 @@ openvr_vulkan_texture_from_pixels (OpenVRVulkanTexture *self,
                         VK_PIPELINE_STAGE_TRANSFER_BIT,
                         VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 0,
                         NULL, 1, &image_memory_barrier);
+  return true;
+}
+
+bool
+openvr_vulkan_texture_from_pixels (OpenVRVulkanTexture *self,
+                                   OpenVRVulkanDevice  *device,
+                                   VkCommandBuffer      cmd_buffer,
+                                   guchar              *pixels,
+                                   guint                width,
+                                   guint                height,
+                                   gsize                size,
+                                   VkFormat             format)
+{
+
+  if (!openvr_vulkan_texture_allocate (self, device, width,
+                                       height, size, format))
+    return false;
+
+  if (!openvr_vulkan_texture_upload_pixels (self, cmd_buffer, pixels, size))
+    return false;
   return true;
 }
 

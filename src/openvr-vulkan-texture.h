@@ -63,6 +63,12 @@ openvr_vulkan_texture_transfer_layout (OpenVRVulkanTexture *self,
                                        VkImageLayout        old,
                                        VkImageLayout        new);
 
+bool
+openvr_vulkan_texture_upload_pixels (OpenVRVulkanTexture *self,
+                                     VkCommandBuffer      cmd_buffer,
+                                     guchar              *pixels,
+                                     gsize                size);
+
 void
 openvr_vulkan_texture_free_staging_memory (OpenVRVulkanTexture *self);
 
