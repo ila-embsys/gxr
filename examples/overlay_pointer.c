@@ -139,8 +139,11 @@ _intersection_cb (OpenVROverlay           *overlay,
       float x = graphene_vec2_get_x (&position_2d);
       float y = graphene_vec2_get_y (&position_2d);
 
-      int window_x = 500 * x;
-      int window_y = 500 * y;
+      guint width = (guint) gdk_pixbuf_get_width (self->draw_pixbuf);
+      guint height = (guint) gdk_pixbuf_get_height (self->draw_pixbuf);
+
+      int window_x = width * x;
+      int window_y = height * y;
 
       g_print ("2D coords [%d %d]\n", window_x, window_y);
 
@@ -151,7 +154,7 @@ _intersection_cb (OpenVROverlay           *overlay,
       g_print ("width meters: %f\n", width_meters);
 
       int x_i = window_x;
-      int y_i = 500 - window_y;
+      int y_i = height - window_y;
 
       guchar *p = pixels3 + y_i * rowstride3 + x_i * n_channels3;
 
@@ -160,9 +163,23 @@ _intersection_cb (OpenVROverlay           *overlay,
       p[2] = 0;
       p[3] = 255;
 
-      openvr_vulkan_client_load_pixbuf (OPENVR_VULKAN_CLIENT (self->uploader),
-                                        self->texture,
-                                        self->draw_pixbuf);
+      guchar *pixels = gdk_pixbuf_get_pixels (self->draw_pixbuf);
+      gsize size = gdk_pixbuf_get_byte_length (self->draw_pixbuf);
+
+      OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (self->uploader);
+
+
+      FencedCommandBuffer buffer = {};
+      if (!openvr_vulkan_client_begin_res_cmd_buffer (client, &buffer))
+        return;
+
+      if (!openvr_vulkan_texture_upload_pixels (self->texture,
+                                                buffer.cmd_buffer,
+                                                pixels, size))
+        return;
+
+      if (!openvr_vulkan_client_submit_res_cmd_buffer (client, &buffer))
+        return;
 
       openvr_vulkan_uploader_submit_frame (self->uploader,
                                            self->cat, self->texture);
