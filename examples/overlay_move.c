@@ -452,7 +452,7 @@ _position_cat_overlays_sphere ()
 GdkPixbuf *
 _create_empty_pixbuf (uint32_t width, uint32_t height)
 {
-  guchar pixels[height * width * 4];
+  guchar *pixels = (guchar*) malloc (sizeof (guchar) * height * width * 4);
   memset (pixels, 0, height * width * 4 * sizeof (guchar));
   GdkPixbuf *pixbuf = gdk_pixbuf_new_from_data (pixels, GDK_COLORSPACE_RGB,
                                                 TRUE, 8, width, height,
