@@ -734,11 +734,18 @@ _check_press_release (OpenVROverlay    *self,
           signal = BUTTON_RELEASE_EVENT;
         }
 
+
       GdkEvent *event = gdk_event_new (type);
       event->button.x = graphene_vec2_get_x (position_2d);
       event->button.y = graphene_vec2_get_y (position_2d);
       event->button.button = button;
       g_signal_emit (self, overlay_signals[signal], 0, event);
+
+      g_print ("Emitting event: [%f %f] -> [%f %f]\n",
+               graphene_vec2_get_x (position_2d),
+               graphene_vec2_get_y (position_2d),
+               event->button.x,
+               event->button.y);
     }
 }
 

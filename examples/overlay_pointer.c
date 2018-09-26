@@ -37,6 +37,8 @@ typedef struct Example
   OpenVROverlay *intersection;
   OpenVROverlay *cat;
 
+  GdkPixbuf *draw_pixbuf;
+
   GMainLoop *loop;
 } Example;
 
@@ -59,6 +61,27 @@ _poll_events_cb (gpointer _self)
   return TRUE;
 }
 
+int n_channels3;
+int rowstride3;
+guchar *pixels3;
+
+GdkPixbuf *
+_create_draw_pixbuf (uint32_t width, uint32_t height)
+{
+  guchar * pixels = (guchar*) malloc (sizeof (guchar) * height * width * 4);
+  memset (pixels, 255, height * width * 4 * sizeof (guchar));
+
+  GdkPixbuf *pixbuf = gdk_pixbuf_new_from_data (pixels, GDK_COLORSPACE_RGB,
+                                                TRUE, 8, width, height,
+                                                4 * width, NULL, NULL);
+
+  n_channels3 = gdk_pixbuf_get_n_channels (pixbuf);
+  rowstride3 = gdk_pixbuf_get_rowstride (pixbuf);
+  pixels3 = gdk_pixbuf_get_pixels (pixbuf);
+
+  return pixbuf;
+}
+
 GdkPixbuf *
 load_gdk_pixbuf (const gchar* name)
 {
@@ -77,6 +100,7 @@ load_gdk_pixbuf (const gchar* name)
   return pixbuf;
 }
 
+
 void
 _update_intersection_position (OpenVROverlay      *overlay,
                                graphene_matrix_t  *pose,
@@ -89,66 +113,67 @@ _update_intersection_position (OpenVROverlay      *overlay,
   openvr_overlay_show (overlay);
 }
 
-
 static void
 _intersection_cb (OpenVROverlay           *overlay,
                   OpenVRIntersectionEvent *event,
                   gpointer                 _self)
 {
-  (void) overlay;
-
   Example *self = (Example*) _self;
 
   // if we have an intersection point, move the pointer overlay there
   if (event->has_intersection)
-    _update_intersection_position (self->intersection,
-                                  &event->transform,
-                                  &event->intersection_point);
-  else
-    openvr_overlay_hide (self->intersection);
+    {
+      _update_intersection_position (self->intersection,
+                                    &event->transform,
+                                    &event->intersection_point);
 
-  // TODO: because this is a custom event with a struct that has been allocated
-  // specifically for us, we need to free it. Maybe reuse?
+      graphene_vec2_t position_2d;
+      if (!openvr_overlay_get_2d_intersection (overlay,
+                                              &event->intersection_point,
+                                              &position_2d))
+        return;
+
+      openvr_overlay_get_transform_absolute (overlay, &overlay->transform);
+      graphene_matrix_print (&overlay->transform);
+
+      float x = graphene_vec2_get_x (&position_2d);
+      float y = graphene_vec2_get_y (&position_2d);
+
+      int window_x = 500 * x;
+      int window_y = 500 * y;
+
+      g_print ("2D coords [%d %d]\n", window_x, window_y);
+
+      float width_meters;
+      if (!openvr_overlay_get_width_meters (overlay, &width_meters))
+        return;
+
+      g_print ("width meters: %f\n", width_meters);
+
+      int x_i = window_x;
+      int y_i = 500 - window_y;
+
+      guchar *p = pixels3 + y_i * rowstride3 + x_i * n_channels3;
+
+      p[0] = 0;
+      p[1] = 0;
+      p[2] = 0;
+      p[3] = 255;
+
+      openvr_vulkan_client_load_pixbuf (OPENVR_VULKAN_CLIENT (self->uploader),
+                                        self->texture,
+                                        self->draw_pixbuf);
+
+      openvr_vulkan_uploader_submit_frame (self->uploader,
+                                           self->cat, self->texture);
+    }
+  else
+    {
+      openvr_overlay_hide (self->intersection);
+    }
+
   free (event);
 }
-
-/*
-static void
-_scroll_cb (OpenVROverlay *overlay, GdkEventScroll *event, gpointer data)
-{
-  (void) overlay;
-  (void) data;
-  g_print ("scroll: %s %f\n",
-           event->direction == GDK_SCROLL_UP ? "up" : "down", event->y);
-}
-
-static void
-_press_cb (OpenVROverlay *overlay, GdkEventButton *event, gpointer data)
-{
-  (void) overlay;
-  (void) data;
-  g_print ("press: %d %f %f (%d)\n",
-           event->button, event->x, event->y, event->time);
-}
-
-static void
-_release_cb (OpenVROverlay *overlay, GdkEventButton *event, gpointer data)
-{
-  (void) overlay;
-  (void) data;
-  g_print ("release: %d %f %f (%d)\n",
-           event->button, event->x, event->y, event->time);
-}
-
-static void
-_destroy_cb (OpenVROverlay *overlay, gpointer data)
-{
-  (void) overlay;
-  g_print ("destroy\n");
-  GMainLoop *loop = (GMainLoop *)data;
-  g_main_loop_quit (loop);
-}
-*/
 
 GdkPixbuf *
 _create_empty_pixbuf (uint32_t width, uint32_t height)
@@ -221,9 +246,9 @@ _init_pointer_overlay ()
 gboolean
 _init_cat_overlay (Example *self)
 {
-  GdkPixbuf *pixbuf = load_gdk_pixbuf ("/res/cat.jpg");
-  if (pixbuf == NULL)
-    return -1;
+  self->draw_pixbuf = _create_draw_pixbuf (500, 500);
+  if (self->draw_pixbuf == NULL)
+    return FALSE;
 
   self->cat = openvr_overlay_new ();
   openvr_overlay_create (self->cat, "vulkan.cat", "Vulkan Cat");
@@ -244,10 +269,6 @@ _init_cat_overlay (Example *self)
   graphene_matrix_init_translate (&transform, &position);
   openvr_overlay_set_transform_absolute (self->cat, &transform);
 
-  openvr_overlay_set_mouse_scale (self->cat,
-                                  (float) gdk_pixbuf_get_width (pixbuf),
-                                  (float) gdk_pixbuf_get_height (pixbuf));
-
   if (!openvr_overlay_show (self->cat))
     return -1;
 
@@ -255,32 +276,15 @@ _init_cat_overlay (Example *self)
 
   openvr_vulkan_client_load_pixbuf (OPENVR_VULKAN_CLIENT (self->uploader),
                                     self->texture,
-                                    pixbuf);
-
-  g_object_unref (pixbuf);
+                                    self->draw_pixbuf);
 
   openvr_vulkan_uploader_submit_frame (self->uploader,
                                        self->cat, self->texture);
 
   /* connect glib callbacks */
-
   g_signal_connect (self->cat, "intersection-event",
                     (GCallback)_intersection_cb,
                     self);
-  /*
-  g_signal_connect (self->cat, "button-press-event",
-                    (GCallback)_press_cb,
-                    self->loop);
-  g_signal_connect (self->cat, "scroll-event",
-                    (GCallback)_scroll_cb,
-                    self->loop);
-  g_signal_connect (self->cat, "button-release-event",
-                    (GCallback)_release_cb,
-                    NULL);
-  g_signal_connect (self->cat, "destroy",
-                    (GCallback)_destroy_cb,
-                    self->loop);
-  */
   return TRUE;
 }
 
