@@ -7,6 +7,11 @@ gtk_pixbuf = executable(
   dependencies: gtk3_dep,
   install: false)
 
+gtk_pixbuf = executable(
+  'gdk_pixbuf_paint', ['gdk_pixbuf_paint.c', test_resources],
+  dependencies: gtk3_dep,
+  install: false)
+
 gtk_cairo = executable(
   'gtk_cairo', ['gtk_cairo.c'],
   dependencies: gtk3_dep,
