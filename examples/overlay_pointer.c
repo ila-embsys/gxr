@@ -33,9 +33,9 @@ typedef struct Example
 
   OpenVRActionSet *wm_action_set;
 
-  OpenVROverlay *pointer;
-  OpenVROverlay *intersection;
-  OpenVROverlay *cat;
+  OpenVROverlay *pointer_overlay;
+  OpenVROverlay *intersection_overlay;
+  OpenVROverlay *paint_overlay;
 
   GdkPixbuf *draw_pixbuf;
 
@@ -123,7 +123,7 @@ _update_vulkan_texture (Example *self, guchar *pixels)
     return FALSE;
 
   openvr_vulkan_uploader_submit_frame (self->uploader,
-                                       self->cat, self->texture);
+                                       self->paint_overlay, self->texture);
 
   return TRUE;
 }
@@ -159,7 +159,7 @@ _intersection_cb (OpenVROverlay           *overlay,
   // if we have an intersection point, move the pointer overlay there
   if (event->has_intersection)
     {
-      _update_intersection_position (self->intersection,
+      _update_intersection_position (self->intersection_overlay,
                                     &event->transform,
                                     &event->intersection_point);
 
@@ -184,7 +184,7 @@ _intersection_cb (OpenVROverlay           *overlay,
     }
   else
     {
-      openvr_overlay_hide (self->intersection);
+      openvr_overlay_hide (self->intersection_overlay);
     }
 
   free (event);
@@ -265,16 +265,16 @@ _init_draw_overlay (Example *self)
   if (self->draw_pixbuf == NULL)
     return FALSE;
 
-  self->cat = openvr_overlay_new ();
-  openvr_overlay_create (self->cat, "vulkan.cat", "Vulkan Cat");
+  self->paint_overlay = openvr_overlay_new ();
+  openvr_overlay_create (self->paint_overlay, "vulkan.cat", "Vulkan Cat");
 
-  if (!openvr_overlay_is_valid (self->cat))
+  if (!openvr_overlay_is_valid (self->paint_overlay))
     {
       fprintf (stderr, "Overlay unavailable.\n");
       return -1;
     }
 
-  if (!openvr_overlay_set_width_meters (self->cat, 3.37f))
+  if (!openvr_overlay_set_width_meters (self->paint_overlay, 3.37f))
     return FALSE;
 
   graphene_point3d_t position = {
@@ -285,9 +285,9 @@ _init_draw_overlay (Example *self)
 
   graphene_matrix_t transform;
   graphene_matrix_init_translate (&transform, &position);
-  openvr_overlay_set_transform_absolute (self->cat, &transform);
+  openvr_overlay_set_transform_absolute (self->paint_overlay, &transform);
 
-  if (!openvr_overlay_show (self->cat))
+  if (!openvr_overlay_show (self->paint_overlay))
     return -1;
 
   self->texture = openvr_vulkan_texture_new ();
@@ -297,10 +297,10 @@ _init_draw_overlay (Example *self)
                                     self->draw_pixbuf);
 
   openvr_vulkan_uploader_submit_frame (self->uploader,
-                                       self->cat, self->texture);
+                                       self->paint_overlay, self->texture);
 
   /* connect glib callbacks */
-  g_signal_connect (self->cat, "intersection-event",
+  g_signal_connect (self->paint_overlay, "intersection-event",
                     (GCallback)_intersection_cb,
                     self);
   return TRUE;
@@ -318,11 +318,12 @@ _init_intersection_overlay (Example *self)
                                     intersection_texture, pixbuf);
   g_object_unref (pixbuf);
 
-  self->intersection = openvr_overlay_new ();
-  openvr_overlay_create_width (self->intersection, "pointer.intersection",
+  self->intersection_overlay = openvr_overlay_new ();
+  openvr_overlay_create_width (self->intersection_overlay,
+                               "pointer.intersection",
                                "Interection", 0.15);
 
-  if (!openvr_overlay_is_valid (self->intersection))
+  if (!openvr_overlay_is_valid (self->intersection_overlay))
     {
       g_printerr ("Overlay unavailable.\n");
       return FALSE;
@@ -330,10 +331,10 @@ _init_intersection_overlay (Example *self)
 
   // for now: The crosshair should always be visible, except the pointer can
   // occlude it. The pointer has max sort order, so the crosshair gets max -1
-  openvr_overlay_set_sort_order (self->intersection, UINT32_MAX - 1);
+  openvr_overlay_set_sort_order (self->intersection_overlay, UINT32_MAX - 1);
 
   openvr_vulkan_uploader_submit_frame (self->uploader,
-                                       self->intersection,
+                                       self->intersection_overlay,
                                        intersection_texture);
 
   return TRUE;
@@ -344,9 +345,9 @@ _cleanup (Example *self)
 {
   g_print ("bye\n");
 
-  g_object_unref (self->cat);
-  g_object_unref (self->pointer);
-  g_object_unref (self->intersection);
+  g_object_unref (self->intersection_overlay);
+  g_object_unref (self->pointer_overlay);
+  g_object_unref (self->intersection_overlay);
   g_object_unref (self->texture);
 
   g_object_unref (self->wm_action_set);
@@ -401,10 +402,10 @@ _dominant_hand_cb (OpenVRAction    *action,
   graphene_matrix_t scaled;
   graphene_matrix_multiply (&scale_matrix, &event->pose, &scaled);
 
-  openvr_overlay_set_transform_absolute (self->pointer, &scaled);
+  openvr_overlay_set_transform_absolute (self->pointer_overlay, &scaled);
 
   /* update intersection */
-  openvr_overlay_poll_3d_intersection (self->cat, &event->pose);
+  openvr_overlay_poll_3d_intersection (self->paint_overlay, &event->pose);
 
   g_free (event);
 }
@@ -442,7 +443,7 @@ main ()
       return false;
     }
 
-  self.pointer = _init_pointer_overlay ();
+  self.pointer_overlay = _init_pointer_overlay ();
 
   if (!_init_intersection_overlay (&self))
     return -1;
