@@ -144,8 +144,7 @@ _test_overlay_intersection (graphene_matrix_t *pose)
                                intersection_point.z);
 
           graphene_vec3_t controller_position;
-          openvr_math_vec3_init_from_matrix (&controller_position,
-                                             pose);
+          openvr_math_matrix_get_translation (pose, &controller_position);
 
           graphene_vec3_t distance_vec;
           graphene_vec3_subtract (&controller_position,

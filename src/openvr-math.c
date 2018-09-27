@@ -112,7 +112,7 @@ openvr_math_pose_to_matrix (TrackedDevicePose_t *pose,
 }
 
 void
-openvr_math_matrix_set_translation (graphene_matrix_t *matrix,
+openvr_math_matrix_set_translation (graphene_matrix_t  *matrix,
                                     graphene_point3d_t *point)
 {
   float m[16];
@@ -125,15 +125,13 @@ openvr_math_matrix_set_translation (graphene_matrix_t *matrix,
   graphene_matrix_init_from_float (matrix, m);
 }
 
-// translation vector
-gboolean
-openvr_math_vec3_init_from_matrix (graphene_vec3_t   *vec,
-                                   graphene_matrix_t *matrix)
+void
+openvr_math_matrix_get_translation (graphene_matrix_t *matrix,
+                                    graphene_vec3_t   *vec)
 {
   graphene_vec3_init (vec,
                       graphene_matrix_get_value (matrix, 3, 0),
                       graphene_matrix_get_value (matrix, 3, 1),
                       graphene_matrix_get_value (matrix, 3, 2));
-  return TRUE;
 }
 

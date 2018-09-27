@@ -19,10 +19,6 @@ void
 openvr_math_graphene_to_matrix34 (graphene_matrix_t *mat, HmdMatrix34_t *mat34);
 
 gboolean
-openvr_math_vec3_init_from_matrix (graphene_vec3_t   *vec,
-                                   graphene_matrix_t *matrix);
-
-gboolean
 openvr_math_direction_from_matrix_vec3 (graphene_matrix_t *matrix,
                                         graphene_vec3_t   *start,
                                         graphene_vec3_t   *direction);
@@ -40,6 +36,10 @@ openvr_math_vec3_to_string (graphene_vec3_t *vec);
 
 void
 openvr_math_print_point3d (graphene_point3d_t *point);
+
+void
+openvr_math_matrix_get_translation (graphene_matrix_t *matrix,
+                                    graphene_vec3_t   *vec);
 
 void
 openvr_math_matrix_set_translation (graphene_matrix_t *matrix,
