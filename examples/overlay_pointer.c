@@ -168,9 +168,6 @@ _intersection_cb (OpenVROverlay           *overlay,
                                               &position_2d))
         return;
 
-      openvr_overlay_get_transform_absolute (overlay, &overlay->transform);
-      // graphene_matrix_print (&overlay->transform);
-
       float x = graphene_vec2_get_x (&position_2d);
       float y = graphene_vec2_get_y (&position_2d);
 

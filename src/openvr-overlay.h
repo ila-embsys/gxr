@@ -35,10 +35,6 @@ struct _OpenVROverlay
 
   VROverlayHandle_t overlay_handle;
   VROverlayHandle_t thumbnail_handle;
-
-  // describes where the overlay is displayed in VR
-  // needs to be updated by the application when the overlay is moved
-  graphene_matrix_t transform;
 };
 
 typedef struct PixelSize
@@ -124,6 +120,7 @@ openvr_overlay_intersects (OpenVROverlay      *overlay,
                            graphene_point3d_t *intersection_point,
                            graphene_matrix_t  *transform);
 
+#if 0
 // extends the overlay to an infinite plane, then calculates the intersection
 // useful when implementing grab&move of overlays along their current axes
 // via pointing a controller to the desired destination
@@ -131,6 +128,7 @@ gboolean
 openvr_overlay_intersects_ray (OpenVROverlay      *overlay,
                                graphene_ray_t     *ray,
                                graphene_point3d_t *intersection_point);
+#endif
 
 gboolean
 openvr_overlay_set_raw (OpenVROverlay *self, guchar *pixels,

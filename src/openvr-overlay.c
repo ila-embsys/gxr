@@ -485,6 +485,7 @@ openvr_overlay_intersects (OpenVROverlay      *overlay,
   return intersects;
 }
 
+#if 0
 gboolean
 openvr_overlay_intersects_ray (OpenVROverlay      *overlay,
                                graphene_ray_t     *ray,
@@ -538,6 +539,7 @@ openvr_overlay_intersects_ray (OpenVROverlay      *overlay,
 
   return TRUE;
 }
+#endif
 
 gboolean
 openvr_overlay_set_gdk_pixbuf_raw (OpenVROverlay *self, GdkPixbuf * pixbuf)
@@ -653,8 +655,11 @@ openvr_overlay_get_2d_intersection (OpenVROverlay      *overlay,
   if (!openvr_overlay_get_size_meters (overlay, &size_meters))
     return FALSE;
 
+  graphene_matrix_t transform;
+  openvr_overlay_get_transform_absolute (overlay, &transform);
+
   graphene_matrix_t inverted;
-  graphene_matrix_inverse (&overlay->transform, &inverted);
+  graphene_matrix_inverse (&transform, &inverted);
 
   graphene_point3d_t transformed_intersection;
   graphene_matrix_transform_point3d (&inverted,
