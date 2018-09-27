@@ -15,7 +15,7 @@ executable(
   install: false)
 
 executable(
-  'overlay_pointer', ['overlay_pointer.c', test_resources],
+  'overlay_paint', ['overlay_paint.c', test_resources],
   dependencies: [gtk3_dep, openvr_dep, cairo_dep, graphene_dep],
   link_with: openvr_glib_lib,
   include_directories: openvr_glib_inc,
