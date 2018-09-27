@@ -5,7 +5,6 @@ api_path = 'openvr-glib-' + api_version
 openvr_glib_sources = [
   'openvr-system.c',
   'openvr-overlay.c',
-  'openvr-controller.c',
   'openvr-vulkan-uploader.c',
   'openvr-compositor.c',
   'openvr-vulkan-instance.c',
@@ -25,7 +24,6 @@ openvr_glib_headers = [
   'openvr-glib.h',
   'openvr-system.h',
   'openvr-overlay.h',
-  'openvr-controller.h',
   'openvr-vulkan-uploader.h',
   'openvr-compositor.h',
   'openvr-vulkan-instance.h',

@@ -16,8 +16,6 @@
 #include <openvr_capi.h>
 #include <graphene.h>
 
-#include "openvr-controller.h"
-
 typedef struct OpenVRIntersectionEvent {
   graphene_matrix_t transform;
   gboolean has_intersection;
@@ -120,16 +118,6 @@ openvr_overlay_intersects (OpenVROverlay      *overlay,
                            graphene_point3d_t *intersection_point,
                            graphene_matrix_t  *transform);
 
-#if 0
-// extends the overlay to an infinite plane, then calculates the intersection
-// useful when implementing grab&move of overlays along their current axes
-// via pointing a controller to the desired destination
-gboolean
-openvr_overlay_intersects_ray (OpenVROverlay      *overlay,
-                               graphene_ray_t     *ray,
-                               graphene_point3d_t *intersection_point);
-#endif
-
 gboolean
 openvr_overlay_set_raw (OpenVROverlay *self, guchar *pixels,
                         uint32_t width, uint32_t height, uint32_t depth);
@@ -151,13 +139,6 @@ openvr_overlay_get_2d_intersection (OpenVROverlay      *overlay,
                                     graphene_point3d_t *intersection_point,
                                     PixelSize          *size_pixels,
                                     graphene_point_t   *position_2d);
-
-#if 0
-gboolean
-openvr_overlay_poll_controller_event (OpenVROverlay    *self,
-                                      OpenVRController *controller);
-#endif
-
 gboolean
 openvr_overlay_enable_mouse_input (OpenVROverlay *self);
 

@@ -19,7 +19,6 @@
 #include "openvr-context.h"
 #include "openvr-io.h"
 #include "openvr-compositor.h"
-#include "openvr-controller.h"
 #include "openvr-math.h"
 #include "openvr-overlay.h"
 #include "openvr-vulkan-uploader.h"

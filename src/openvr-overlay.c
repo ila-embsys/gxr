@@ -17,7 +17,6 @@
 
 #include "openvr-time.h"
 #include "openvr-math.h"
-#include "openvr-controller.h"
 
 G_DEFINE_TYPE (OpenVROverlay, openvr_overlay, G_TYPE_OBJECT)
 
@@ -485,61 +484,6 @@ openvr_overlay_intersects (OpenVROverlay      *overlay,
   return intersects;
 }
 
-#if 0
-gboolean
-openvr_overlay_intersects_ray (OpenVROverlay      *overlay,
-                               graphene_ray_t     *ray,
-                               graphene_point3d_t *intersection_point)
-{
-  // if controller is "too near", we don't have an intersection
-  float epsilon = 0.00001;
-
-  graphene_vec3_t overlay_translation;
-  openvr_math_vec3_init_from_matrix (&overlay_translation, &overlay->transform);
-  graphene_point3d_t overlay_origin;
-  graphene_point3d_init_from_vec3 (&overlay_origin, &overlay_translation);
-
-  // the normal of an overlay in xy plane faces the "backwards" direction +z
-  graphene_vec3_t overlay_normal;
-  graphene_vec3_init (&overlay_normal, 0, 0, 1);
-  // now rotate the normal with the current overlay orientation
-  openvr_math_direction_from_matrix_vec3 (&overlay->transform, &overlay_normal,
-                                          &overlay_normal);
-
-  graphene_plane_t plane;
-  graphene_plane_init_from_point (&plane, &overlay_normal, &overlay_origin);
-
-  OpenVRContext *context = openvr_context_get_instance ();
-
-  TrackedDevicePose_t pose[k_unMaxTrackedDeviceCount];
-  context->system->GetDeviceToAbsoluteTrackingPose (
-    context->origin, 0, pose, k_unMaxTrackedDeviceCount);
-
-  float dist = graphene_ray_get_distance_to_plane (ray, &plane);
-  if (dist == INFINITY)
-    {
-      // g_print("No intersection!\n");
-      return FALSE;
-    }
-  if (dist < epsilon)
-    {
-      g_print ("Too near for intersection: %f < %f!\n", dist, epsilon);
-      return FALSE;
-    }
-
-  graphene_ray_get_position_at (ray, dist, intersection_point);
-
-  /*
-  g_print("intersection! %f %f %f\n",
-    intersection_point->x,
-    intersection_point->y,
-    intersection_point->z
-  );
-  */
-
-  return TRUE;
-}
-#endif
 
 gboolean
 openvr_overlay_set_gdk_pixbuf_raw (OpenVROverlay *self, GdkPixbuf * pixbuf)
@@ -731,88 +675,6 @@ _emit_intersection_event (OpenVROverlay      *overlay,
   g_signal_emit (overlay, overlay_signals[INTERSECTION_EVENT], 0, event);
 }
 
-
-void
-_check_press_release (OpenVROverlay    *self,
-                      OpenVRController *controller,
-                      uint64_t          pressed_state,
-                      OpenVRButton      button,
-                      graphene_vec2_t  *position_2d)
-{
-  EVRButtonId button_id = openvr_controller_to_evr_button (button);
-
-  uint64_t is_pressed = openvr_controller_is_pressed (pressed_state, button_id);
-  uint64_t was_pressed =
-    openvr_controller_is_pressed (controller->last_pressed_state, button_id);
-
-  if (is_pressed != was_pressed)
-    {
-      GdkEventType type;
-      guint signal;
-      if (is_pressed)
-        {
-          type = GDK_BUTTON_PRESS;
-          signal = BUTTON_PRESS_EVENT;
-        }
-      else
-        {
-          type = GDK_BUTTON_RELEASE;
-          signal = BUTTON_RELEASE_EVENT;
-        }
-
-
-      GdkEvent *event = gdk_event_new (type);
-      event->button.x = graphene_vec2_get_x (position_2d);
-      event->button.y = graphene_vec2_get_y (position_2d);
-      event->button.button = button;
-      g_signal_emit (self, overlay_signals[signal], 0, event);
-
-      g_print ("Emitting event: [%f %f] -> [%f %f]\n",
-               graphene_vec2_get_x (position_2d),
-               graphene_vec2_get_y (position_2d),
-               event->button.x,
-               event->button.y);
-    }
-}
-
-void
-_emit_controller_events (OpenVROverlay       *self,
-                         OpenVRController    *controller,
-                         VRControllerState_t *state,
-                         graphene_vec2_t     *position_2d)
-{
-  /* Motion event */
-  GdkEvent *event = gdk_event_new (GDK_MOTION_NOTIFY);
-  event->motion.x = graphene_vec2_get_x (position_2d);
-  event->motion.y = graphene_vec2_get_y (position_2d);
-  g_signal_emit (self, overlay_signals[MOTION_NOTIFY_EVENT], 0, event);
-
-  /* Press / release events */
-  uint64_t pressed_state = state->ulButtonPressed;
-  _check_press_release (self, controller, pressed_state,
-                        OPENVR_BUTTON_TRIGGER, position_2d);
-  _check_press_release (self, controller, pressed_state,
-                        OPENVR_BUTTON_MENU, position_2d);
-  _check_press_release (self, controller, pressed_state,
-                        OPENVR_BUTTON_GRIP, position_2d);
-
-  /* Scroll event from touchpad */
-  if (openvr_controller_is_pressed (pressed_state, EVRButtonId_k_EButton_Axis0))
-    {
-      GdkEvent *event = gdk_event_new (GDK_SCROLL);
-      event->scroll.y = state->rAxis[0].y;
-      event->scroll.direction =
-        state->rAxis[0].y > 0 ? GDK_SCROLL_UP : GDK_SCROLL_DOWN;
-      g_signal_emit (self, overlay_signals[SCROLL_EVENT], 0, event);
-      // g_print ("touchpad x %f y %f\n",
-      //          state->rAxis[0].x,
-      //          state->rAxis[0].y);
-    }
-
-  controller->last_pressed_state = pressed_state;
-}
-
-
 gboolean
 openvr_overlay_poll_3d_intersection_compat (OpenVROverlay      *self,
                                             graphene_matrix_t  *pose,
@@ -842,46 +704,3 @@ openvr_overlay_poll_3d_intersection (OpenVROverlay      *self,
 
   g_signal_emit (self, overlay_signals[INTERSECTION_EVENT], 0, event);
 }
-
-#if 0
-gboolean
-openvr_overlay_poll_controller_event (OpenVROverlay    *self,
-                                      OpenVRController *controller)
-{
-  if (!controller->initialized)
-    {
-      g_printerr ("openvr_controller_poll_event()"
-                  " called with invalid controller!\n");
-      return FALSE;
-    }
-
-  graphene_matrix_t transform;
-  openvr_controller_get_transformation (controller, &transform);
-
-  graphene_point3d_t intersection_point;
-  if (!openvr_overlay_poll_3d_intersection_compat (self, &transform,
-                                                  &intersection_point))
-    return FALSE;
-
-  /* GetOpenVRController is deprecated but simpler to use than actions */
-  OpenVRContext *context = openvr_context_get_instance ();
-  VRControllerState_t controller_state;
-  if (!context->system->GetControllerState (controller->index,
-                                           &controller_state,
-                                            sizeof (controller_state)))
-    {
-      g_printerr ("GetControllerState returned error.\n");
-      return FALSE;
-    }
-
-  graphene_vec2_t position_2d;
-  if (!openvr_overlay_get_2d_intersection (self,
-                                          &intersection_point,
-                                          &position_2d))
-    return FALSE;
-
-  _emit_controller_events (self, controller, &controller_state, &position_2d);
-
-  return TRUE;
-}
-#endif
