@@ -129,13 +129,14 @@ _update_vulkan_texture (Example *self, guchar *pixels)
 }
 
 gboolean
-_draw_at_2d_position (Example *self, int x, int y)
+_draw_at_2d_position (Example *self, graphene_point_t *position_2d)
 {
   int n_channels = gdk_pixbuf_get_n_channels (self->draw_pixbuf);
   int rowstride = gdk_pixbuf_get_rowstride (self->draw_pixbuf);
   guchar *pixels = gdk_pixbuf_get_pixels (self->draw_pixbuf);
 
-  guchar *p = pixels + y * rowstride + x * n_channels;
+  guchar *p = pixels + (int) position_2d->y * rowstride
+                     + (int) position_2d->x * n_channels;
 
   p[0] = 0;
   p[1] = 0;
@@ -162,43 +163,24 @@ _intersection_cb (OpenVROverlay           *overlay,
                                     &event->transform,
                                     &event->intersection_point);
 
-      graphene_vec2_t position_2d;
+      PixelSize size_pixels = {
+        .width = (guint) gdk_pixbuf_get_width (self->draw_pixbuf),
+        .height = (guint) gdk_pixbuf_get_height (self->draw_pixbuf)
+      };
+
+      graphene_point_t position_2d;
       if (!openvr_overlay_get_2d_intersection (overlay,
                                               &event->intersection_point,
+                                              &size_pixels,
                                               &position_2d))
         return;
 
-      float x = graphene_vec2_get_x (&position_2d);
-      float y = graphene_vec2_get_y (&position_2d);
-
-      guint width = (guint) gdk_pixbuf_get_width (self->draw_pixbuf);
-      guint height = (guint) gdk_pixbuf_get_height (self->draw_pixbuf);
-
-      float width_meters;
-      if (!openvr_overlay_get_width_meters (overlay, &width_meters))
-        return;
-
-      graphene_vec2_t size_meters;
-      if (!openvr_overlay_get_size_meters (overlay, &size_meters))
-        return;
-
-      float window_x = width * x / graphene_vec2_get_x (&size_meters);
-      float window_y = height * y / graphene_vec2_get_y (&size_meters);
-
-      g_print ("2D coords [%f %f]\n", window_x, window_y);
-
-      g_print ("width meters: %f\n", width_meters);
-
-      // graphene_point_t position_22d;
-
       /* check bounds */
-      if (window_x < 0 || window_x > width || window_y < 0 || window_y > height)
+      if (position_2d.x < 0 || position_2d.x > size_pixels.width ||
+          position_2d.y < 0 || position_2d.y > size_pixels.height)
         return;
 
-      int x_i = window_x;
-      int y_i = height - window_y;
-
-      _draw_at_2d_position (self, x_i, y_i);
+      _draw_at_2d_position (self, &position_2d);
     }
   else
     {

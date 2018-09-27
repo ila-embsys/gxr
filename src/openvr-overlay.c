@@ -649,33 +649,54 @@ openvr_overlay_get_size_meters (OpenVROverlay *self, graphene_vec2_t *size)
 gboolean
 openvr_overlay_get_2d_intersection (OpenVROverlay      *overlay,
                                     graphene_point3d_t *intersection_point,
-                                    graphene_vec2_t    *result)
+                                    PixelSize          *size_pixels,
+                                    graphene_point_t   *position_2d)
 {
+  /* transform intersection point to origin */
+  graphene_matrix_t transform;
+  openvr_overlay_get_transform_absolute (overlay, &transform);
+
+  graphene_matrix_t inverse_transform;
+  graphene_matrix_inverse (&transform, &inverse_transform);
+
+  graphene_point3d_t intersection_origin;
+  graphene_matrix_transform_point3d (&inverse_transform,
+                                      intersection_point,
+                                     &intersection_origin);
+
+  graphene_vec2_t position_2d_vec;
+  graphene_vec2_init (&position_2d_vec,
+                      intersection_origin.x,
+                      intersection_origin.y);
+
+  /* normalize coordinates to [0 - 1, 0 - 1] */
   graphene_vec2_t size_meters;
   if (!openvr_overlay_get_size_meters (overlay, &size_meters))
     return FALSE;
 
-  graphene_matrix_t transform;
-  openvr_overlay_get_transform_absolute (overlay, &transform);
+  graphene_vec2_divide (&position_2d_vec, &size_meters, &position_2d_vec);
 
-  graphene_matrix_t inverted;
-  graphene_matrix_inverse (&transform, &inverted);
+  /* move origin from cetner to corner of overlay */
+  graphene_vec2_t center_normalized;
+  graphene_vec2_init (&center_normalized, 0.5f, 0.5f);
 
-  graphene_point3d_t transformed_intersection;
-  graphene_matrix_transform_point3d (&inverted,
-                                      intersection_point,
-                                     &transformed_intersection);
-  gfloat x = transformed_intersection.x
-           + graphene_vec2_get_x (&size_meters) / 2.f;
-  gfloat y = transformed_intersection.y
-           + graphene_vec2_get_y (&size_meters) / 2.f;
-  /*
-  g_print ("transformed %f %f %f -> %f %f %f\n",
-           intersection_point.x, intersection_point.y, intersection_point.z,
-           x, y, transformed_intersection.z);
-  */
+  graphene_vec2_add (&position_2d_vec, &center_normalized, &position_2d_vec);
 
-  graphene_vec2_init (result, x, y);
+  /* invert y axis */
+  graphene_vec2_init (&position_2d_vec,
+                      graphene_vec2_get_x (&position_2d_vec),
+                      1.0f - graphene_vec2_get_y (&position_2d_vec));
+
+  /* scale to pixel coordinates */
+  graphene_vec2_t size_pixels_vec;
+  graphene_vec2_init (&size_pixels_vec,
+                      size_pixels->width,
+                      size_pixels->height);
+
+  graphene_vec2_multiply (&position_2d_vec, &size_pixels_vec, &position_2d_vec);
+
+  /* return point_t */
+  graphene_point_init_from_vec2 (position_2d, &position_2d_vec);
 
   return TRUE;
 }
@@ -822,6 +843,7 @@ openvr_overlay_poll_3d_intersection (OpenVROverlay      *self,
   g_signal_emit (self, overlay_signals[INTERSECTION_EVENT], 0, event);
 }
 
+#if 0
 gboolean
 openvr_overlay_poll_controller_event (OpenVROverlay    *self,
                                       OpenVRController *controller)
@@ -862,3 +884,4 @@ openvr_overlay_poll_controller_event (OpenVROverlay    *self,
 
   return TRUE;
 }
+#endif

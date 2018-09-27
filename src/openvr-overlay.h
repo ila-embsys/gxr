@@ -149,11 +149,14 @@ openvr_overlay_get_size_meters (OpenVROverlay *self, graphene_vec2_t *size);
 gboolean
 openvr_overlay_get_2d_intersection (OpenVROverlay      *overlay,
                                     graphene_point3d_t *intersection_point,
-                                    graphene_vec2_t    *result);
+                                    PixelSize          *size_pixels,
+                                    graphene_point_t   *position_2d);
 
+#if 0
 gboolean
 openvr_overlay_poll_controller_event (OpenVROverlay    *self,
                                       OpenVRController *controller);
+#endif
 
 gboolean
 openvr_overlay_enable_mouse_input (OpenVROverlay *self);
