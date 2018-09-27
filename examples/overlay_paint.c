@@ -128,23 +128,78 @@ _update_vulkan_texture (Example *self, guchar *pixels)
   return TRUE;
 }
 
-gboolean
-_draw_at_2d_position (Example *self, graphene_point_t *position_2d)
+typedef struct ColorRGBA
 {
+  guchar r;
+  guchar g;
+  guchar b;
+  guchar a;
+} ColorRGBA;
+
+void
+_place_pixel (guchar    *pixels,
+              int        n_channels,
+              int        rowstride,
+              int        x,
+              int        y,
+              ColorRGBA *color)
+{
+  guchar *p = pixels + y * rowstride
+                     + x * n_channels;
+
+  p[0] = color->r;
+  p[1] = color->g;
+  p[2] = color->b;
+  p[3] = color->a;
+}
+
+gboolean
+_draw_at_2d_position (Example          *self,
+                      PixelSize        *size_pixels,
+                      graphene_point_t *position_2d,
+                      ColorRGBA        *color,
+                      uint32_t          brush_radius)
+{
+  static GMutex paint_mutex;
+
   int n_channels = gdk_pixbuf_get_n_channels (self->draw_pixbuf);
   int rowstride = gdk_pixbuf_get_rowstride (self->draw_pixbuf);
   guchar *pixels = gdk_pixbuf_get_pixels (self->draw_pixbuf);
 
-  guchar *p = pixels + (int) position_2d->y * rowstride
-                     + (int) position_2d->x * n_channels;
+  g_mutex_lock (&paint_mutex);
 
-  p[0] = 0;
-  p[1] = 0;
-  p[2] = 0;
-  p[3] = 255;
+  for (float x = position_2d->x - (float) brush_radius;
+       x <= position_2d->x + (float) brush_radius;
+       x++)
+    {
+      for (float y = position_2d->y - (float) brush_radius;
+           y <= position_2d->y + (float) brush_radius;
+           y++)
+        {
+          /* check bounds */
+          if (x >= 0 && x <= (float) size_pixels->width &&
+              y >= 0 && y <= (float) size_pixels->height)
+            {
+              graphene_vec2_t put_position;
+              graphene_vec2_init (&put_position, x, y);
+
+              graphene_vec2_t brush_center;
+              graphene_point_to_vec2 (position_2d, &brush_center);
+
+              graphene_vec2_t distance;
+              graphene_vec2_subtract (&put_position, &brush_center, &distance);
+
+              if (graphene_vec2_length (&distance) < brush_radius)
+                _place_pixel (pixels, n_channels, rowstride,
+                              (int) x, (int) y, color);
+            }
+        }
+    }
 
   if (!_update_vulkan_texture (self, pixels))
     return FALSE;
+
+  g_mutex_unlock (&paint_mutex);
 
   return TRUE;
 }
@@ -180,7 +235,14 @@ _intersection_cb (OpenVROverlay           *overlay,
           position_2d.y < 0 || position_2d.y > size_pixels.height)
         return;
 
-      _draw_at_2d_position (self, &position_2d);
+      ColorRGBA color = {
+        .r = 0,
+        .g = 0,
+        .b = 0,
+        .a = 255
+      };
+
+      _draw_at_2d_position (self, &size_pixels, &position_2d, &color, 5);
     }
   else
     {
