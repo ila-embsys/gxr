@@ -20,8 +20,6 @@
 
 G_DEFINE_TYPE (OpenVROverlay, openvr_overlay, G_TYPE_OBJECT)
 
-
-
 #define GET_OVERLAY_FUNCTIONS \
   EVROverlayError err; \
   OpenVRContext *context = openvr_context_get_instance (); \
@@ -644,49 +642,6 @@ openvr_overlay_get_2d_intersection (OpenVROverlay      *overlay,
 
   return TRUE;
 }
-
-/*
- * This shows how to create a custom event, e.g. for sending
- * graphene data structures to a client application in this case it is the
- * transform matrix of the controller and a 3D intersection point, in case
- * the user is pointing at an overlay.
- * mote that we malloc() it here, so the client needs to free it.
- */
-void
-_emit_intersection_event (OpenVROverlay      *overlay,
-                          gboolean            intersects,
-                          graphene_matrix_t  *transform,
-                          graphene_point3d_t *intersection_point)
-{
-  OpenVRIntersectionEvent *event = malloc (sizeof (OpenVRIntersectionEvent));
-  graphene_matrix_init_from_matrix (&event->transform, transform);
-
-  event->has_intersection = intersects;
-
-  if (intersects)
-    {
-      graphene_point3d_init_from_point (&event->intersection_point,
-                                        intersection_point);
-
-      // g_print("Intersects at point %f %f %f\n", intersection_point.x,
-      //         intersection_point.y, intersection_point.z);
-    }
-
-  g_signal_emit (overlay, overlay_signals[INTERSECTION_EVENT], 0, event);
-}
-
-gboolean
-openvr_overlay_poll_3d_intersection_compat (OpenVROverlay      *self,
-                                            graphene_matrix_t  *pose,
-                                            graphene_point3d_t *point)
-{
-  gboolean intersects = openvr_overlay_intersects (self, point, pose);
-  if (intersects)
-    _emit_intersection_event (self, intersects, pose, point);
-
-  return intersects;
-}
-
 
 void
 openvr_overlay_poll_3d_intersection (OpenVROverlay      *self,

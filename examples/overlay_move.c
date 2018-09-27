@@ -132,8 +132,7 @@ _test_overlay_intersection (graphene_matrix_t *pose)
       OpenVROverlay *overlay = (OpenVROverlay*) l->data;
 
       graphene_point3d_t intersection_point;
-      if (openvr_overlay_poll_3d_intersection_compat (overlay, pose,
-                                                     &intersection_point))
+      if (openvr_overlay_intersects (overlay, &intersection_point, pose))
         {
           found_intersection = TRUE;
 
@@ -192,9 +191,9 @@ _test_overlay_intersection (graphene_matrix_t *pose)
   if (!found_intersection)
     {
       graphene_point3d_t intersection_point;
-      if (openvr_overlay_poll_3d_intersection_compat (control_overlay_reset,
-                                                      pose,
-                                                     &intersection_point))
+      if (openvr_overlay_intersects (control_overlay_reset,
+                                    &intersection_point,
+                                     pose))
         {
           found_intersection = TRUE;
 
@@ -216,9 +215,9 @@ _test_overlay_intersection (graphene_matrix_t *pose)
   if (!found_intersection)
     {
       graphene_point3d_t intersection_point;
-      if (openvr_overlay_poll_3d_intersection_compat (control_overlay_sphere,
-                                                      pose,
-                                                     &intersection_point))
+      if (openvr_overlay_intersects (control_overlay_sphere,
+                                    &intersection_point,
+                                     pose))
         {
           found_intersection = TRUE;
 
