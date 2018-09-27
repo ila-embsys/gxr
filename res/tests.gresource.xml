@@ -5,5 +5,7 @@
     <file>crosshair.png</file>
     <file>bindings/actions.json</file>
     <file>bindings/bindings_vive_controller.json</file>
+    <file>bindings/example_model_actions.json</file>
+    <file>bindings/example_model_bindings_vive_controller.json</file>
   </gresource>
 </gresources>
