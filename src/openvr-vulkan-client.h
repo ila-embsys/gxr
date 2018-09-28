@@ -67,37 +67,32 @@ openvr_vulkan_client_submit_res_cmd_buffer (OpenVRVulkanClient  *self,
                                             FencedCommandBuffer *buffer);
 
 bool
-openvr_vulkan_client_load_raw (OpenVRVulkanClient   *self,
-                               OpenVRVulkanTexture  *texture,
-                               guchar               *pixels,
-                               guint                 width,
-                               guint                 height,
-                               gsize                 size,
-                               VkFormat              format);
+openvr_vulkan_client_upload_pixels (OpenVRVulkanClient   *self,
+                                    OpenVRVulkanTexture  *texture,
+                                    guchar               *pixels,
+                                    gsize                 size);
 
 bool
-openvr_vulkan_client_load_dmabuf (OpenVRVulkanClient   *self,
-                                  OpenVRVulkanTexture  *texture,
-                                  int                   fd,
-                                  guint                 width,
-                                  guint                 height,
-                                  VkFormat              format);
+openvr_vulkan_client_upload_pixbuf (OpenVRVulkanClient   *self,
+                                    OpenVRVulkanTexture  *texture,
+                                    GdkPixbuf            *pixbuf);
 
 bool
-openvr_vulkan_client_load_pixbuf (OpenVRVulkanClient   *self,
-                                  OpenVRVulkanTexture  *texture,
-                                  GdkPixbuf            *pixbuf);
-
-bool
-openvr_vulkan_client_load_cairo_surface (OpenVRVulkanClient  *self,
-                                         OpenVRVulkanTexture *texture,
-                                         cairo_surface_t     *surface);
+openvr_vulkan_client_upload_cairo_surface (OpenVRVulkanClient  *self,
+                                           OpenVRVulkanTexture *texture,
+                                           cairo_surface_t     *surface);
 
 bool
 openvr_vulkan_client_init_vulkan (OpenVRVulkanClient *self,
                                   GSList             *instance_extensions,
                                   GSList             *device_extensions,
                                   bool                enable_validation);
+
+bool
+openvr_vulkan_client_transfer_layout (OpenVRVulkanClient  *self,
+                                      OpenVRVulkanTexture *texture,
+                                      VkImageLayout        old,
+                                      VkImageLayout        new);
 
 bool
 openvr_vulkan_client_init_command_pool (OpenVRVulkanClient *self);

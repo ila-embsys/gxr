@@ -155,10 +155,12 @@ test_cat_overlay ()
     return false;
   }
 
-  texture = openvr_vulkan_texture_new ();
+  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (uploader);
 
-  openvr_vulkan_client_load_cairo_surface (OPENVR_VULKAN_CLIENT (uploader),
-                                           texture, surface);
+  texture = openvr_vulkan_texture_new_from_cairo_surface (client->device,
+                                                          surface);
+
+  openvr_vulkan_client_upload_cairo_surface (client, texture, surface);
 
   /* create openvr overlay */
   OpenVROverlay *overlay = openvr_overlay_new ();

@@ -203,11 +203,12 @@ main () {
       return -1;
     }
 
-  example.texture = openvr_vulkan_texture_new ();
+  example.texture =
+    openvr_vulkan_texture_new_from_dmabuf (client->device,
+                                           fd, width, height,
+                                           VK_FORMAT_B8G8R8A8_UNORM);
 
-  if (!openvr_vulkan_client_load_dmabuf (client, example.texture,
-                                         fd, width, height,
-                                         VK_FORMAT_B8G8R8A8_UNORM))
+  if (example.texture == NULL)
     {
       g_printerr ("Unable to initialize vulkan dmabuf texture.\n");
       return -1;

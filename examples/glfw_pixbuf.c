@@ -155,9 +155,10 @@ main () {
       return -1;
     }
 
-  example.texture = openvr_vulkan_texture_new ();
+  example.texture = openvr_vulkan_texture_new_from_pixbuf (client->device,
+                                                           pixbuf);
 
-  openvr_vulkan_client_load_pixbuf (client, example.texture, pixbuf);
+  openvr_vulkan_client_upload_pixbuf (client, example.texture, pixbuf);
 
   if (!openvr_vulkan_renderer_init_rendering (example.renderer,
                                               example.surface,

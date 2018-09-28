@@ -41,10 +41,11 @@ _test_pixbuf_texture ()
 
   g_assert (openvr_vulkan_client_init_vulkan (client, NULL, NULL, true));
 
-  OpenVRVulkanTexture *texture = openvr_vulkan_texture_new ();
+  OpenVRVulkanTexture *texture =
+    openvr_vulkan_texture_new_from_pixbuf (client->device, pixbuf);
   g_assert_nonnull (texture);
 
-  openvr_vulkan_client_load_pixbuf (client, texture, pixbuf);
+  openvr_vulkan_client_upload_pixbuf (client, texture, pixbuf);
 
   g_object_unref (texture);
   g_object_unref (client);

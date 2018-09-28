@@ -546,9 +546,11 @@ _init_cat_overlays (OpenVRVulkanUploader *uploader)
   if (pixbuf == NULL)
     return -1;
 
-  texture = openvr_vulkan_texture_new ();
-  openvr_vulkan_client_load_pixbuf (OPENVR_VULKAN_CLIENT (uploader), texture,
-                                    pixbuf);
+  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (uploader);
+
+  texture = openvr_vulkan_texture_new_from_pixbuf (client->device, pixbuf);
+
+  openvr_vulkan_client_upload_pixbuf (client, texture, pixbuf);
 
   float width = .5f;
 
@@ -624,9 +626,13 @@ _init_intersection_overlay (OpenVRVulkanUploader *uploader)
   if (pixbuf == NULL)
     return FALSE;
 
-  OpenVRVulkanTexture *intersection_texture = openvr_vulkan_texture_new ();
-  openvr_vulkan_client_load_pixbuf (OPENVR_VULKAN_CLIENT (uploader),
-                                    intersection_texture, pixbuf);
+  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (uploader);
+
+  OpenVRVulkanTexture *intersection_texture =
+    openvr_vulkan_texture_new_from_pixbuf (client->device, pixbuf);
+
+  openvr_vulkan_client_upload_pixbuf (client, intersection_texture, pixbuf);
+
   g_object_unref (pixbuf);
 
   intersection = openvr_overlay_new ();
@@ -734,10 +740,12 @@ _init_control_overlay (OpenVROverlay **overlay,
     return FALSE;
   }
 
-  OpenVRVulkanTexture *cairo_texture = openvr_vulkan_texture_new ();
+  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (uploader);
 
-  openvr_vulkan_client_load_cairo_surface (OPENVR_VULKAN_CLIENT (uploader),
-                                           cairo_texture, surface);
+  OpenVRVulkanTexture *cairo_texture =
+    openvr_vulkan_texture_new_from_cairo_surface (client->device, surface);
+
+  openvr_vulkan_client_upload_cairo_surface (client, cairo_texture, surface);
 
   /* create openvr overlay */
   *overlay = openvr_overlay_new ();

@@ -187,13 +187,23 @@ main ()
     return false;
   }
 
-  texture = openvr_vulkan_texture_new ();
-  if (!openvr_vulkan_uploader_load_dmabuf (uploader, texture,
-                                           fd, width, height,
-                                           VK_FORMAT_B8G8R8A8_UNORM))
+  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (uploader);
+
+  texture = openvr_vulkan_texture_new_from_dmabuf (client->device,
+                                                   fd, width, height,
+                                                   VK_FORMAT_B8G8R8A8_UNORM);
+  if (texture == NULL)
     {
       g_printerr ("Unable to initialize vulkan dmabuf texture.\n");
       return -1;
+    }
+
+  if (!openvr_vulkan_client_transfer_layout (client,
+                                        texture,
+                                        VK_IMAGE_LAYOUT_PREINITIALIZED,
+                                        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL))
+    {
+      g_printerr ("Unable to transfer layout.\n");
     }
 
   OpenVROverlay *overlay = openvr_overlay_new ();
@@ -204,12 +214,6 @@ main ()
       g_printerr ("Overlay unavailable.\n");
       return -1;
     }
-
-  /*
-  openvr_overlay_set_mouse_scale (overlay,
-                                  (float) gdk_pixbuf_get_width (pixbuf),
-                                  (float) gdk_pixbuf_get_height (pixbuf));
-  */
 
   g_signal_connect (overlay, "button-press-event", (GCallback) _press_cb, loop);
   g_signal_connect (overlay, "show", (GCallback) _show_cb, uploader);

@@ -166,8 +166,10 @@ _test_init_rendering ()
   GdkPixbuf *pixbuf = load_gdk_pixbuf ();
   g_assert_nonnull (pixbuf);
 
-  OpenVRVulkanTexture *texture = openvr_vulkan_texture_new ();
-  openvr_vulkan_client_load_pixbuf (client, texture, pixbuf);
+  OpenVRVulkanTexture *texture =
+    openvr_vulkan_texture_new_from_pixbuf (client->device, pixbuf);
+
+  openvr_vulkan_client_upload_pixbuf (client, texture, pixbuf);
   g_object_unref (pixbuf);
 
   g_assert (openvr_vulkan_renderer_init_rendering (renderer, surface, texture));

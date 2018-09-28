@@ -82,11 +82,13 @@ test_overlay_pixbuf ()
 
   g_assert (openvr_vulkan_uploader_init_vulkan (uploader, true));
 
-  OpenVRVulkanTexture *texture = openvr_vulkan_texture_new ();
+  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (uploader);
+
+  OpenVRVulkanTexture *texture =
+    openvr_vulkan_texture_new_from_pixbuf (client->device, pixbuf);
   g_assert_nonnull (texture);
 
-  openvr_vulkan_client_load_pixbuf (OPENVR_VULKAN_CLIENT (uploader),
-                                    texture, pixbuf);
+  openvr_vulkan_client_upload_pixbuf (client, texture, pixbuf);
 
   OpenVROverlay *overlay = openvr_overlay_new ();
   g_assert_nonnull (overlay);

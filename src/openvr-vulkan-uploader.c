@@ -59,36 +59,6 @@ openvr_vulkan_uploader_finalize (GObject *gobject)
 }
 
 bool
-openvr_vulkan_uploader_load_dmabuf (OpenVRVulkanUploader *self,
-                                    OpenVRVulkanTexture  *texture,
-                                    int                   fd,
-                                    guint                 width,
-                                    guint                 height,
-                                    VkFormat              format)
-{
-  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (self);
-
-  FencedCommandBuffer cmd_buffer = {};
-  if (!openvr_vulkan_client_begin_res_cmd_buffer (client, &cmd_buffer))
-    return false;
-
-  if (!openvr_vulkan_texture_from_dmabuf (texture,
-                                          client->device,
-                                          fd, width, height, format))
-    return false;
-
-  openvr_vulkan_texture_transfer_layout (texture, client->device,
-                                         cmd_buffer.cmd_buffer,
-                                         VK_IMAGE_LAYOUT_PREINITIALIZED,
-                                         VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-
-  if (!openvr_vulkan_client_submit_res_cmd_buffer (client, &cmd_buffer))
-    return false;
-
-  return true;
-}
-
-bool
 openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
                                     bool enable_validation)
 {

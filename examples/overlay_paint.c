@@ -103,30 +103,6 @@ _update_intersection_position (OpenVROverlay      *overlay,
   openvr_overlay_show (overlay);
 }
 
-gboolean
-_update_vulkan_texture (Example *self, guchar *pixels)
-{
-  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (self->uploader);
-
-  FencedCommandBuffer buffer = {};
-  if (!openvr_vulkan_client_begin_res_cmd_buffer (client, &buffer))
-    return FALSE;
-
-  gsize size = gdk_pixbuf_get_byte_length (self->draw_pixbuf);
-  if (!openvr_vulkan_texture_upload_pixels (self->texture,
-                                            buffer.cmd_buffer,
-                                            pixels, size))
-    return FALSE;
-
-  if (!openvr_vulkan_client_submit_res_cmd_buffer (client, &buffer))
-    return FALSE;
-
-  openvr_vulkan_uploader_submit_frame (self->uploader,
-                                       self->paint_overlay, self->texture);
-
-  return TRUE;
-}
-
 typedef struct ColorRGBA
 {
   guchar r;
@@ -195,8 +171,13 @@ _draw_at_2d_position (Example          *self,
         }
     }
 
-  if (!_update_vulkan_texture (self, pixels))
+  if (!openvr_vulkan_client_upload_pixbuf (OPENVR_VULKAN_CLIENT (self->uploader),
+                                           self->texture,
+                                           self->draw_pixbuf))
     return FALSE;
+
+  openvr_vulkan_uploader_submit_frame (self->uploader,
+                                       self->paint_overlay, self->texture);
 
   g_mutex_unlock (&paint_mutex);
 
@@ -351,11 +332,12 @@ _init_draw_overlay (Example *self)
   if (!openvr_overlay_show (self->paint_overlay))
     return -1;
 
-  self->texture = openvr_vulkan_texture_new ();
+  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (self->uploader);
 
-  openvr_vulkan_client_load_pixbuf (OPENVR_VULKAN_CLIENT (self->uploader),
-                                    self->texture,
-                                    self->draw_pixbuf);
+  self->texture =
+    openvr_vulkan_texture_new_from_pixbuf (client->device, self->draw_pixbuf);
+
+  openvr_vulkan_client_upload_pixbuf (client, self->texture, self->draw_pixbuf);
 
   openvr_vulkan_uploader_submit_frame (self->uploader,
                                        self->paint_overlay, self->texture);
@@ -374,9 +356,13 @@ _init_intersection_overlay (Example *self)
   if (pixbuf == NULL)
     return FALSE;
 
-  OpenVRVulkanTexture *intersection_texture = openvr_vulkan_texture_new ();
-  openvr_vulkan_client_load_pixbuf (OPENVR_VULKAN_CLIENT (self->uploader),
-                                    intersection_texture, pixbuf);
+  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (self->uploader);
+
+  OpenVRVulkanTexture *intersection_texture =
+    openvr_vulkan_texture_new_from_pixbuf (client->device, pixbuf);
+
+  openvr_vulkan_client_upload_pixbuf (client, intersection_texture, pixbuf);
+
   g_object_unref (pixbuf);
 
   self->intersection_overlay = openvr_overlay_new ();

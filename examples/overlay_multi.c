@@ -253,10 +253,11 @@ test_cat_overlay ()
     return false;
   }
 
-  texture = openvr_vulkan_texture_new ();
+  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (uploader);
 
-  openvr_vulkan_client_load_pixbuf (OPENVR_VULKAN_CLIENT (uploader),
-                                    texture, pixbuf);
+  texture = openvr_vulkan_texture_new_from_pixbuf (client->device, pixbuf);
+
+  openvr_vulkan_client_upload_pixbuf (client, texture, pixbuf);
 
   OpenVROverlay *overlay = openvr_overlay_new ();
   openvr_overlay_create (overlay, "vulkan.cat", "Vulkan Cat");

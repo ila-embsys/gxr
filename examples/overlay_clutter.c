@@ -23,7 +23,7 @@
 
 #include "openvr-vulkan-uploader.h"
 
-OpenVRVulkanTexture *texture;
+OpenVRVulkanTexture *texture = NULL;
 OpenVRVulkanUploader *uploader;
 
 gboolean
@@ -108,10 +108,14 @@ repaint_cb (gpointer user_data)
   guchar* pixels = clutter_stage_read_pixels
     (CLUTTER_STAGE(data->stage), 0, 0, width, height);
 
-  openvr_vulkan_client_load_raw (OPENVR_VULKAN_CLIENT (uploader),
-                                 texture, pixels,
-                                 width, height, size,
-                                 VK_FORMAT_R8G8B8A8_UNORM);
+  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (uploader);
+
+  if (texture == NULL)
+    texture = openvr_vulkan_texture_new (client->device,
+                                         width, height, size,
+                                         VK_FORMAT_R8G8B8A8_UNORM);
+
+  openvr_vulkan_client_upload_pixels (client, texture, pixels,size);
 
   openvr_vulkan_uploader_submit_frame (uploader, data->overlay, texture);
 
@@ -166,8 +170,6 @@ test_cat_overlay (int argc, char *argv[])
       g_printerr ("Unable to initialize Vulkan!\n");
       return false;
     }
-
-  texture = openvr_vulkan_texture_new ();
 
   OpenVROverlay *overlay = openvr_overlay_new ();
   openvr_overlay_create_for_dashboard (overlay, "example.clutter", "Clutter");

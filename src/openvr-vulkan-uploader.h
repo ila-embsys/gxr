@@ -48,14 +48,6 @@ openvr_vulkan_uploader_submit_frame (OpenVRVulkanUploader *self,
                                      OpenVROverlay        *overlay,
                                      OpenVRVulkanTexture  *texture);
 
-bool
-openvr_vulkan_uploader_load_dmabuf (OpenVRVulkanUploader *self,
-                                    OpenVRVulkanTexture  *texture,
-                                    int                   fd,
-                                    guint                 width,
-                                    guint                 height,
-                                    VkFormat              format);
-
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_VULKAN_UPLOADER_H_ */

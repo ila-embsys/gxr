@@ -130,22 +130,17 @@ openvr_vulkan_client_submit_res_cmd_buffer (OpenVRVulkanClient  *self,
 }
 
 bool
-openvr_vulkan_client_load_raw (OpenVRVulkanClient   *self,
-                               OpenVRVulkanTexture  *texture,
-                               guchar               *pixels,
-                               guint                 width,
-                               guint                 height,
-                               gsize                 size,
-                               VkFormat              format)
+openvr_vulkan_client_upload_pixels (OpenVRVulkanClient   *self,
+                                    OpenVRVulkanTexture  *texture,
+                                    guchar               *pixels,
+                                    gsize                 size)
 {
   FencedCommandBuffer buffer = {};
   if (!openvr_vulkan_client_begin_res_cmd_buffer (self, &buffer))
     return false;
 
-  if (!openvr_vulkan_texture_from_pixels (texture,
-                                          self->device,
-                                          buffer.cmd_buffer,
-                                          pixels, width, height, size, format))
+  if (!openvr_vulkan_texture_upload_pixels (texture, buffer.cmd_buffer,
+                                            pixels, size))
     return false;
 
   if (!openvr_vulkan_client_submit_res_cmd_buffer (self, &buffer))
@@ -155,73 +150,45 @@ openvr_vulkan_client_load_raw (OpenVRVulkanClient   *self,
 }
 
 bool
-openvr_vulkan_client_load_dmabuf (OpenVRVulkanClient   *self,
-                                  OpenVRVulkanTexture  *texture,
-                                  int                   fd,
-                                  guint                 width,
-                                  guint                 height,
-                                  VkFormat              format)
+openvr_vulkan_client_upload_pixbuf (OpenVRVulkanClient   *self,
+                                    OpenVRVulkanTexture  *texture,
+                                    GdkPixbuf            *pixbuf)
 {
-  if (!openvr_vulkan_texture_from_dmabuf (texture, self->device,
-                                          fd, width, height, format))
+  guchar *pixels = gdk_pixbuf_get_pixels (pixbuf);
+  gsize size = gdk_pixbuf_get_byte_length (pixbuf);
+
+  return openvr_vulkan_client_upload_pixels (self, texture, pixels, size);
+}
+
+bool
+openvr_vulkan_client_transfer_layout (OpenVRVulkanClient  *self,
+                                      OpenVRVulkanTexture *texture,
+                                      VkImageLayout        old,
+                                      VkImageLayout        new)
+{
+  FencedCommandBuffer cmd_buffer = {};
+  if (!openvr_vulkan_client_begin_res_cmd_buffer (self, &cmd_buffer))
+    return false;
+
+  openvr_vulkan_texture_transfer_layout (texture, self->device,
+                                         cmd_buffer.cmd_buffer, old, new);
+
+  if (!openvr_vulkan_client_submit_res_cmd_buffer (self, &cmd_buffer))
     return false;
 
   return true;
 }
 
 bool
-openvr_vulkan_client_load_pixbuf (OpenVRVulkanClient   *self,
-                                  OpenVRVulkanTexture  *texture,
-                                  GdkPixbuf            *pixbuf)
+openvr_vulkan_client_upload_cairo_surface (OpenVRVulkanClient  *self,
+                                           OpenVRVulkanTexture *texture,
+                                           cairo_surface_t     *surface)
 {
-  guint width = (guint) gdk_pixbuf_get_width (pixbuf);
-  guint height = (guint) gdk_pixbuf_get_height (pixbuf);
-  guchar *pixels = gdk_pixbuf_get_pixels (pixbuf);
-  gsize size = gdk_pixbuf_get_byte_length (pixbuf);
-
-  return openvr_vulkan_client_load_raw (self, texture, pixels,
-                                        width, height, size,
-                                        VK_FORMAT_R8G8B8A8_UNORM);
-}
-
-bool
-openvr_vulkan_client_load_cairo_surface (OpenVRVulkanClient  *self,
-                                         OpenVRVulkanTexture *texture,
-                                         cairo_surface_t     *surface)
-{
-  guint width = cairo_image_surface_get_width (surface);
-  guint height = cairo_image_surface_get_height (surface);
-
-  VkFormat format;
-  cairo_format_t cr_format = cairo_image_surface_get_format (surface);
-  switch (cr_format)
-    {
-    case CAIRO_FORMAT_ARGB32:
-      format = VK_FORMAT_B8G8R8A8_UNORM;
-      break;
-    case CAIRO_FORMAT_RGB24:
-    case CAIRO_FORMAT_A8:
-    case CAIRO_FORMAT_A1:
-    case CAIRO_FORMAT_RGB16_565:
-    case CAIRO_FORMAT_RGB30:
-      g_printerr ("Unsupported Cairo format\n");
-      return FALSE;
-    case CAIRO_FORMAT_INVALID:
-      g_printerr ("Invalid Cairo format\n");
-      return FALSE;
-    default:
-      g_printerr ("Unknown Cairo format\n");
-      return FALSE;
-    }
-
   guchar *pixels = cairo_image_surface_get_data (surface);
+  gsize size = cairo_image_surface_get_stride (surface) *
+               cairo_image_surface_get_height (surface);
 
-  int stride = cairo_image_surface_get_stride (surface);
-
-  gsize size = stride * height;
-
-  return openvr_vulkan_client_load_raw (self, texture, pixels,
-                                        width, height, size, format);
+  return openvr_vulkan_client_upload_pixels (self, texture, pixels, size);
 }
 
 bool

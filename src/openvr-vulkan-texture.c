@@ -22,12 +22,6 @@ openvr_vulkan_texture_init (OpenVRVulkanTexture *self)
   self->staging_buffer_memory = VK_NULL_HANDLE;
 }
 
-OpenVRVulkanTexture *
-openvr_vulkan_texture_new (void)
-{
-  return (OpenVRVulkanTexture*) g_object_new (OPENVR_TYPE_VULKAN_TEXTURE, 0);
-}
-
 static void
 openvr_vulkan_texture_finalize (GObject *gobject)
 {
@@ -57,14 +51,64 @@ openvr_vulkan_texture_class_init (OpenVRVulkanTextureClass *klass)
   object_class->finalize = openvr_vulkan_texture_finalize;
 }
 
-bool
-openvr_vulkan_texture_allocate (OpenVRVulkanTexture *self,
-                                OpenVRVulkanDevice  *device,
-                                guint                width,
-                                guint                height,
-                                gsize                size,
-                                VkFormat             format)
+OpenVRVulkanTexture *
+openvr_vulkan_texture_new_from_pixbuf (OpenVRVulkanDevice  *device,
+                                       GdkPixbuf           *pixbuf)
 {
+  guint width = (guint) gdk_pixbuf_get_width (pixbuf);
+  guint height = (guint) gdk_pixbuf_get_height (pixbuf);
+  gsize size = gdk_pixbuf_get_byte_length (pixbuf);
+
+  return openvr_vulkan_texture_new (device, width, height, size,
+                                    VK_FORMAT_R8G8B8A8_UNORM);
+}
+
+OpenVRVulkanTexture *
+openvr_vulkan_texture_new_from_cairo_surface (OpenVRVulkanDevice  *device,
+                                                cairo_surface_t     *surface)
+{
+  guint width = cairo_image_surface_get_width (surface);
+  guint height = cairo_image_surface_get_height (surface);
+
+  VkFormat format;
+  cairo_format_t cr_format = cairo_image_surface_get_format (surface);
+  switch (cr_format)
+    {
+    case CAIRO_FORMAT_ARGB32:
+      format = VK_FORMAT_B8G8R8A8_UNORM;
+      break;
+    case CAIRO_FORMAT_RGB24:
+    case CAIRO_FORMAT_A8:
+    case CAIRO_FORMAT_A1:
+    case CAIRO_FORMAT_RGB16_565:
+    case CAIRO_FORMAT_RGB30:
+      g_printerr ("Unsupported Cairo format\n");
+      return NULL;
+    case CAIRO_FORMAT_INVALID:
+      g_printerr ("Invalid Cairo format\n");
+      return NULL;
+    default:
+      g_printerr ("Unknown Cairo format\n");
+      return NULL;
+    }
+
+  int stride = cairo_image_surface_get_stride (surface);
+
+  gsize size = stride * height;
+
+  return openvr_vulkan_texture_new (device, width, height, size, format);
+}
+
+OpenVRVulkanTexture *
+openvr_vulkan_texture_new (OpenVRVulkanDevice  *device,
+                           guint                width,
+                           guint                height,
+                           gsize                size,
+                           VkFormat             format)
+{
+  OpenVRVulkanTexture *self =
+    (OpenVRVulkanTexture*) g_object_new (OPENVR_TYPE_VULKAN_TEXTURE, 0);
+
   self->width = width;
   self->height = height;
   self->device = device;
@@ -133,8 +177,8 @@ openvr_vulkan_texture_allocate (OpenVRVulkanTexture *self,
                                            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
                                           &self->staging_buffer,
                                           &self->staging_buffer_memory))
-    return false;
-  return true;
+    return NULL;
+  return self;
 }
 
 bool
@@ -202,34 +246,16 @@ openvr_vulkan_texture_upload_pixels (OpenVRVulkanTexture *self,
   return true;
 }
 
-bool
-openvr_vulkan_texture_from_pixels (OpenVRVulkanTexture *self,
-                                   OpenVRVulkanDevice  *device,
-                                   VkCommandBuffer      cmd_buffer,
-                                   guchar              *pixels,
-                                   guint                width,
-                                   guint                height,
-                                   gsize                size,
-                                   VkFormat             format)
+OpenVRVulkanTexture *
+openvr_vulkan_texture_new_from_dmabuf (OpenVRVulkanDevice  *device,
+                                       int                  fd,
+                                       guint                width,
+                                       guint                height,
+                                       VkFormat             format)
 {
+  OpenVRVulkanTexture *self =
+    (OpenVRVulkanTexture*) g_object_new (OPENVR_TYPE_VULKAN_TEXTURE, 0);
 
-  if (!openvr_vulkan_texture_allocate (self, device, width,
-                                       height, size, format))
-    return false;
-
-  if (!openvr_vulkan_texture_upload_pixels (self, cmd_buffer, pixels, size))
-    return false;
-  return true;
-}
-
-bool
-openvr_vulkan_texture_from_dmabuf (OpenVRVulkanTexture *self,
-                                   OpenVRVulkanDevice  *device,
-                                   int                  fd,
-                                   guint                width,
-                                   guint                height,
-                                   VkFormat             format)
-{
   self->width = width;
   self->height = height;
   self->device = device;
@@ -304,7 +330,7 @@ openvr_vulkan_texture_from_dmabuf (OpenVRVulkanTexture *self,
                            NULL, &self->image_view);
   vk_check_error ("vkCreateImageView", res);
 
-  return true;
+  return self;
 }
 
 void

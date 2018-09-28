@@ -19,7 +19,7 @@
 #include "openvr-time.h"
 #include "openvr-vulkan-uploader.h"
 
-OpenVRVulkanTexture *texture;
+OpenVRVulkanTexture *texture = NULL;
 OpenVRVulkanUploader *uploader;
 
 static gboolean
@@ -44,8 +44,13 @@ _damage_cb (GtkWidget *widget, GdkEventExpose *event, OpenVROverlay *overlay)
     GdkPixbuf *pixbuf = gdk_pixbuf_add_alpha (offscreen_pixbuf, false, 0, 0, 0);
     g_object_unref (offscreen_pixbuf);
 
-    openvr_vulkan_client_load_pixbuf (OPENVR_VULKAN_CLIENT (uploader),
-                                      texture, pixbuf);
+      OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (uploader);
+
+    if (texture == NULL)
+      texture = openvr_vulkan_texture_new_from_pixbuf (client->device, pixbuf);
+
+    openvr_vulkan_client_upload_pixbuf (client, texture, pixbuf);
+
     openvr_vulkan_uploader_submit_frame (uploader, overlay, texture);
 
     g_object_unref (pixbuf);
@@ -194,7 +199,7 @@ main (int argc, char *argv[])
   gtk_box_pack_start (GTK_BOX (box), labels.time_label, TRUE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (box), labels.fps_label, FALSE, FALSE, 0);
 
-  gtk_widget_set_size_request (window , 300, 200);
+  gtk_widget_set_size_request (window , 500, 300);
   gtk_container_add (GTK_CONTAINER (window), box);
 
   gtk_widget_show_all (window);
@@ -209,8 +214,6 @@ main (int argc, char *argv[])
     g_printerr ("Unable to initialize Vulkan!\n");
     return false;
   }
-
-  texture = openvr_vulkan_texture_new ();
 
   OpenVROverlay *overlay = openvr_overlay_new ();
   openvr_overlay_create_for_dashboard (overlay, "openvr.example.gtk", "GTK+");
