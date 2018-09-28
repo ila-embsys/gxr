@@ -147,31 +147,6 @@ _destroy_cb (OpenVROverlay *overlay,
   g_main_loop_quit (loop);
 }
 
-bool
-_init_openvr ()
-{
-  if (!openvr_context_is_installed ())
-    {
-      g_printerr ("VR Runtime not installed.\n");
-      return false;
-    }
-
-  OpenVRContext *context = openvr_context_get_instance ();
-  if (!openvr_context_init_overlay (context))
-    {
-      g_printerr ("Could not init OpenVR.\n");
-      return false;
-    }
-
-  if (!openvr_context_is_valid (context))
-    {
-      g_printerr ("Could not load OpenVR function pointers.\n");
-      return false;
-    }
-
-  return true;
-}
-
 int
 test_overlay ()
 {
@@ -181,21 +156,23 @@ test_overlay ()
 
   struct RenderContext render_context;
 
-  /* init openvr */
-  if (!_init_openvr ())
-    return -1;
+  OpenVRContext *context = openvr_context_get_instance ();
+  if (!openvr_context_init_overlay (context))
+    {
+      g_printerr ("Could not init OpenVR.\n");
+      return false;
+    }
 
-  /* Upload vulkan texture */
   OpenVRVulkanUploader *uploader = openvr_vulkan_uploader_new ();
   if (!openvr_vulkan_uploader_init_vulkan (uploader, true))
   {
-    g_printerr ("Unable to initialize Vulkan!\n");
+    g_printerr ("Unable to initialize Vulkan uploader!\n");
     return -1;
   }
 
-  /* create openvr overlay */
+  /* create cairo overlay */
   OpenVROverlay *overlay = openvr_overlay_new ();
-  openvr_overlay_create (overlay, "examples.cairo", "Gradient");
+  openvr_overlay_create (overlay, "examples.cairo", "Cairo Animation");
 
   if (!openvr_overlay_is_valid (overlay))
   {
@@ -223,7 +200,6 @@ test_overlay ()
   g_object_unref (overlay);
   g_object_unref (uploader);
 
-  OpenVRContext *context = openvr_context_get_instance ();
   g_object_unref (context);
 
   return 0;
