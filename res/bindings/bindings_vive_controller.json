@@ -33,6 +33,15 @@
             },
             {
                "inputs" : {
+                  "click" : {
+                     "output" : "/actions/wm/in/show_window"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/user/hand/right/input/application_menu"
+            },
+            {
+               "inputs" : {
                   "scroll" : {
                      "output" : "/actions/wm/in/push_pull"
                   }

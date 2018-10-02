@@ -15,6 +15,11 @@
          "type":"boolean"
       },
       {
+         "name":"/actions/wm/in/show_keyboard",
+         "type":"boolean"
+      },
+
+      {
          "name":"/actions/wm/in/push_pull",
          "type": "vector3"
       },
