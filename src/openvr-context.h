@@ -52,6 +52,12 @@ openvr_context_get_model_list (OpenVRContext *self);
 const gchar*
 openvr_input_error_string (EVRInputError err);
 
+void
+openvr_context_poll_event (OpenVRContext *self);
+
+void
+openvr_context_show_system_keyboard (OpenVRContext *self);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_CONTEXT_H_ */

@@ -200,7 +200,7 @@ openvr_action_poll_analog (OpenVRAction *self)
 
   if (err != EVRInputError_VRInputError_None)
     {
-      g_printerr ("ERROR: GetDigitalActionData: %s\n",
+      g_printerr ("ERROR: GetAnalogActionData: %s\n",
                   openvr_input_error_string (err));
       return FALSE;
     }
@@ -235,7 +235,7 @@ openvr_action_poll_pose (OpenVRAction *self)
 
   if (err != EVRInputError_VRInputError_None)
     {
-      g_printerr ("ERROR: GetDigitalActionData: %s\n",
+      g_printerr ("ERROR: GetPoseActionData: %s\n",
                   openvr_input_error_string (err));
       return FALSE;
     }

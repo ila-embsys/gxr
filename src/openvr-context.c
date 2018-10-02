@@ -2,6 +2,7 @@
  * OpenVR GLib
  * Copyright 2018 Collabora Ltd.
  * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
+ * Author: Christoph Haag <christoph.haag@collabora.com>
  * SPDX-License-Identifier: MIT
  */
 
@@ -9,6 +10,8 @@
 
 #include <glib/gprintf.h>
 #include "openvr_capi_global.h"
+
+#include <gdk/gdk.h>
 
 G_DEFINE_TYPE (OpenVRContext, openvr_context, G_TYPE_OBJECT)
 
@@ -21,6 +24,15 @@ G_DEFINE_TYPE (OpenVRContext, openvr_context, G_TYPE_OBJECT)
   target = (struct VR_IVR##type##_FnTable*) ptr; \
 }
 
+enum {
+  KEYBOARD_CHAR_INPUT_EVENT,
+  KEYBOARD_CLOSED_EVENT,
+  QUIT_EVENT,
+  LAST_SIGNAL
+};
+
+static guint context_signals[LAST_SIGNAL] = { 0 };
+
 // singleton variable that can be set to NULL again when finalizing the context
 static OpenVRContext *context = NULL;
 
@@ -32,6 +44,25 @@ openvr_context_class_init (OpenVRContextClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   object_class->finalize = openvr_context_finalize;
+
+  context_signals[KEYBOARD_CHAR_INPUT_EVENT] =
+    g_signal_new ("keyboard-char-input-event",
+                   G_TYPE_FROM_CLASS (klass),
+                   G_SIGNAL_RUN_LAST,
+                   0, NULL, NULL, NULL, G_TYPE_NONE,
+                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+  context_signals[KEYBOARD_CLOSED_EVENT] =
+    g_signal_new ("keyboard-closed-event",
+                   G_TYPE_FROM_CLASS (klass),
+                   G_SIGNAL_RUN_LAST,
+                   0, NULL, NULL, NULL, G_TYPE_NONE,
+                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+  context_signals[QUIT_EVENT] =
+    g_signal_new ("quit-event",
+                   G_TYPE_FROM_CLASS (klass),
+                   G_SIGNAL_RUN_LAST,
+                   0, NULL, NULL, NULL, G_TYPE_NONE,
+                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
 }
 
 static void
@@ -213,4 +244,57 @@ openvr_input_error_string (EVRInputError err)
       default:
         return "UNKNOWN EVRInputError";
     }
+}
+
+void
+openvr_context_poll_event (OpenVRContext *self)
+{
+  struct VREvent_t vr_event;
+  while (self->system->PollNextEvent (&vr_event, sizeof (vr_event)))
+  {
+    switch (vr_event.eventType)
+    {
+      case EVREventType_VREvent_KeyboardCharInput:
+      {
+        // TODO: https://github.com/ValveSoftware/openvr/issues/289
+        char *new_input = (char*) vr_event.data.keyboard.cNewInput;
+
+        int len = 0;
+        for (; len < 8 && new_input[len] != 0; len++);
+
+        GdkEvent *event = gdk_event_new (GDK_KEY_PRESS);
+        event->key.state = TRUE;
+        event->key.string = new_input;
+        event->key.length = len;
+        g_signal_emit (self, context_signals[KEYBOARD_CHAR_INPUT_EVENT], 0,
+                       event);
+      } break;
+
+      case EVREventType_VREvent_KeyboardClosed:
+      {
+        GdkEvent *event = gdk_event_new (GDK_DESTROY);
+        g_signal_emit (self, context_signals[KEYBOARD_CLOSED_EVENT], 0, event);
+      } break;
+
+      case EVREventType_VREvent_Quit:
+      {
+        GdkEvent *event = gdk_event_new (GDK_DESTROY);
+        g_signal_emit (self, context_signals[QUIT_EVENT], 0, event);
+      } break;
+
+    default:
+      //g_print ("Context: Unhandled OpenVR system event: %s\n",
+      //         self->system->GetEventTypeNameFromEnum (vr_event.eventType));
+      break;
+    }
+  }
+}
+
+void
+openvr_context_show_system_keyboard (OpenVRContext *self)
+{
+  self->overlay->ShowKeyboard (
+    EGamepadTextInputMode_k_EGamepadTextInputModeNormal,
+    EGamepadTextInputLineMode_k_EGamepadTextInputLineModeSingleLine,
+    "OpenVR System Keyboard", 1, "", "true", 0);
 }

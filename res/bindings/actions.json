@@ -56,6 +56,7 @@
       {
          "language_tag":"en_US",
          "/actions/wm/in/grab_window":"Grab Window",
+         "/actions/wm/in/show_keyboard":"Show On Screen Keyboard",
          "/actions/wm/in/push_pull":"Move window along Z axis",
          "/actions/wm/in/hand_primary" : "Dominant Hand Pose",
          "/actions/wm/in/hand_secondary" : "Secondary Hand Pose",

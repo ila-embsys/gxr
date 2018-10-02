@@ -63,6 +63,13 @@ executable(
   include_directories: openvr_glib_inc,
   install: false)
 
+executable(
+  'overlay_gtk_keyboard', ['overlay_gtk_keyboard.c', test_resources],
+  dependencies: [gtk3_dep, vulkan_dep, graphene_dep],
+  link_with: openvr_glib_lib,
+  include_directories: openvr_glib_inc,
+  install: false)
+
 if clutter_dep.found()
   executable(
     'overlay_clutter', ['overlay_clutter.c'],

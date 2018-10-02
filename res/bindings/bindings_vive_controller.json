@@ -34,7 +34,7 @@
             {
                "inputs" : {
                   "click" : {
-                     "output" : "/actions/wm/in/show_window"
+                     "output" : "/actions/wm/in/show_keyboard"
                   }
                },
                "mode" : "button",
