@@ -119,12 +119,13 @@ load_gdk_pixbuf (const gchar* name)
 
 
 void
-_update_intersection_position (OpenVROverlay *overlay,
-                               OpenVRIntersectionEvent *event)
+_update_intersection_position (OpenVROverlay      *overlay,
+                               graphene_matrix_t  *pose,
+                               graphene_point3d_t *intersection_point)
 {
   graphene_matrix_t transform;
-  graphene_matrix_init_from_matrix (&transform, &event->transform);
-  openvr_math_matrix_set_translation (&transform, &event->intersection_point);
+  graphene_matrix_init_from_matrix (&transform, pose);
+  openvr_math_matrix_set_translation (&transform, intersection_point);
   openvr_overlay_set_transform_absolute (overlay, &transform);
   openvr_overlay_show (overlay);
 }
@@ -142,6 +143,7 @@ _test_overlay_intersection (Example *self, graphene_matrix_t *pose)
     {
       OpenVROverlay *overlay = (OpenVROverlay*) l->data;
 
+      /* TODO: Use intersection callback for this. */
       graphene_point3d_t intersection_point;
       if (openvr_overlay_intersects (overlay, &intersection_point, pose))
         {
@@ -170,6 +172,10 @@ _test_overlay_intersection (Example *self, graphene_matrix_t *pose)
               nearest_intersected = overlay;
               nearest_dist = self->distance;
             }
+
+          _update_intersection_position (self->intersection,
+                                         pose,
+                                        &intersection_point);
         }
     }
 
@@ -277,7 +283,9 @@ _intersection_cb (OpenVROverlay           *overlay,
 
   // if we have an intersection point, move the pointer overlay there
   if (event->has_intersection)
-    _update_intersection_position (self->intersection, event);
+    _update_intersection_position (self->intersection,
+                                  &event->transform,
+                                  &event->intersection_point);
   else
     openvr_overlay_hide (self->intersection);
 
@@ -627,7 +635,7 @@ _init_cat_overlays (Example *self)
           return -1;
 
         g_signal_connect (cat, "intersection-event",
-                          (GCallback) _intersection_cb, NULL);
+                          (GCallback) _intersection_cb, self);
         i++;
 
       }
@@ -863,13 +871,6 @@ _dominant_hand_cb (OpenVRAction    *action,
   graphene_matrix_t scaled;
   graphene_matrix_multiply (&scale_matrix, &event->pose, &scaled);
 
-#if 0
-  openvr_overlay_set_transform_absolute (self->pointer, &scaled);
-
-  /* update intersection */
-  openvr_overlay_poll_3d_intersection (self->cat, &event->pose);
-#endif
-
   /* Drag */
   if (self->current_grab_overlay != NULL)
     {
@@ -959,7 +960,6 @@ _grab_cb (OpenVRAction       *action,
           self->current_grab_overlay = NULL;
           //
         }
-
     }
 
   g_free (event);
@@ -1014,14 +1014,6 @@ main ()
     .pointer_default_length = 5.0
   };
 
-  openvr_action_set_register (self.wm_action_set, OPENVR_ACTION_POSE,
-                              "/actions/wm/in/hand_primary",
-                              (GCallback) _dominant_hand_cb, &self);
-
-  openvr_action_set_register (self.wm_action_set, OPENVR_ACTION_DIGITAL,
-                              "/actions/wm/in/grab_window",
-                              (GCallback) _grab_cb, &self);
-
   self.uploader = openvr_vulkan_uploader_new ();
   if (!openvr_vulkan_uploader_init_vulkan (self.uploader, true))
     {
@@ -1039,6 +1031,14 @@ main ()
 
   if (!_init_control_overlays (&self))
     return -1;
+
+  openvr_action_set_register (self.wm_action_set, OPENVR_ACTION_POSE,
+                              "/actions/wm/in/hand_primary",
+                              (GCallback) _dominant_hand_cb, &self);
+
+  openvr_action_set_register (self.wm_action_set, OPENVR_ACTION_DIGITAL,
+                              "/actions/wm/in/grab_window",
+                              (GCallback) _grab_cb, &self);
 
   g_timeout_add (20, _poll_events_cb, &self);
 
