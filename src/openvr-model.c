@@ -7,7 +7,7 @@
 
 #include "openvr-model.h"
 
-G_DEFINE_TYPE (OpenVRModel, openvr_model, G_TYPE_OBJECT)
+G_DEFINE_TYPE (OpenVRModel, openvr_model, OPENVR_TYPE_OVERLAY)
 
 static void
 openvr_model_finalize (GObject *gobject);

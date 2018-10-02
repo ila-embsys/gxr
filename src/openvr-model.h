@@ -10,16 +10,23 @@
 
 #include <glib-object.h>
 
+#include "openvr-overlay.h"
+
 G_BEGIN_DECLS
 
 #define OPENVR_TYPE_MODEL openvr_model_get_type()
-G_DECLARE_FINAL_TYPE (OpenVRModel, openvr_model, OPENVR, MODEL, GObject)
+G_DECLARE_FINAL_TYPE (OpenVRModel, openvr_model, OPENVR, MODEL, OpenVROverlay)
 
 struct _OpenVRModel
 {
-  GObject parent;
+  OpenVROverlay parent_type;
 
   guint index;
+};
+
+struct _OpenVRModelClass
+{
+  OpenVROverlayClass parent_class;
 };
 
 OpenVRModel *openvr_model_new (void);
