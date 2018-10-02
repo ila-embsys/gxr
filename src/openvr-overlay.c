@@ -27,6 +27,8 @@ enum {
   SHOW,
   DESTROY,
   SCROLL_EVENT,
+  KEYBOARD_CHAR_INPUT_EVENT,
+  KEYBOARD_CLOSED_EVENT,
   GRAB_EVENT,
   RELEASE_EVENT,
   HOVER_EVENT,
@@ -86,24 +88,34 @@ openvr_overlay_class_init (OpenVROverlayClass *klass)
                   0, NULL, NULL, NULL, G_TYPE_NONE,
                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
 
+  overlay_signals[KEYBOARD_CHAR_INPUT_EVENT] =
+    g_signal_new ("keyboard-char-input-event",
+                   G_TYPE_FROM_CLASS (klass),
+                   G_SIGNAL_RUN_LAST,
+                   0, NULL, NULL, NULL, G_TYPE_NONE,
+                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+  overlay_signals[KEYBOARD_CLOSED_EVENT] =
+    g_signal_new ("keyboard-closed-event",
+                   G_TYPE_FROM_CLASS (klass),
+                   G_SIGNAL_RUN_LAST,
+                   0, NULL, NULL, NULL, G_TYPE_NONE,
+                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+
   overlay_signals[GRAB_EVENT] =
     g_signal_new ("grab-event",
                    G_TYPE_FROM_CLASS (klass),
                    G_SIGNAL_RUN_FIRST,
                    0, NULL, NULL, NULL, G_TYPE_NONE, 0);
-
   overlay_signals[RELEASE_EVENT] =
     g_signal_new ("release-event",
                    G_TYPE_FROM_CLASS (klass),
                    G_SIGNAL_RUN_FIRST,
                    0, NULL, NULL, NULL, G_TYPE_NONE, 0);
-
   overlay_signals[HOVER_END_EVENT] =
     g_signal_new ("hover-end-event",
                    G_TYPE_FROM_CLASS (klass),
                    G_SIGNAL_RUN_FIRST,
                    0, NULL, NULL, NULL, G_TYPE_NONE, 0);
-
   overlay_signals[HOVER_EVENT] =
     g_signal_new ("hover-event",
                   G_TYPE_FROM_CLASS (klass),
@@ -312,6 +324,29 @@ openvr_overlay_poll_event (OpenVROverlay *self)
       case EVREventType_VREvent_Quit:
         g_signal_emit (self, overlay_signals[DESTROY], 0);
         break;
+
+      // TODO: code duplication with system keyboard in OpenVRContext
+      case EVREventType_VREvent_KeyboardCharInput:
+      {
+        // TODO: https://github.com/ValveSoftware/openvr/issues/289
+        char *new_input = (char*) vr_event.data.keyboard.cNewInput;
+
+        int len = 0;
+        for (; len < 8 && new_input[len] != 0; len++);
+
+        GdkEvent *event = gdk_event_new (GDK_KEY_PRESS);
+        event->key.state = TRUE;
+        event->key.string = new_input;
+        event->key.length = len;
+        g_signal_emit (self, overlay_signals[KEYBOARD_CHAR_INPUT_EVENT], 0,
+                       event);
+      } break;
+
+      case EVREventType_VREvent_KeyboardClosed:
+      {
+        GdkEvent *event = gdk_event_new (GDK_DESTROY);
+        g_signal_emit (self, overlay_signals[KEYBOARD_CLOSED_EVENT], 0, event);
+      } break;
     }
   }
 }
@@ -647,6 +682,17 @@ openvr_overlay_get_2d_intersection (OpenVROverlay      *overlay,
   graphene_point_init_from_vec2 (position_2d, &position_2d_vec);
 
   return TRUE;
+}
+
+void
+openvr_overlay_show_overlay_keyboard (OpenVROverlay *self)
+{
+  OpenVRContext *context = openvr_context_get_instance ();
+  context->overlay->ShowKeyboardForOverlay (
+    self->overlay_handle,
+    EGamepadTextInputMode_k_EGamepadTextInputModeNormal,
+    EGamepadTextInputLineMode_k_EGamepadTextInputLineModeSingleLine,
+    "OpenVR Overlay Keyboard", 1, "", "true", 0);
 }
 
 gboolean

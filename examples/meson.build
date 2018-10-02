@@ -64,7 +64,16 @@ executable(
   install: false)
 
 executable(
-  'overlay_gtk_keyboard', ['overlay_gtk_keyboard.c', test_resources],
+  'overlay_gtk_system_keyboard',
+  ['overlay_gtk_system_keyboard.c', test_resources],
+  dependencies: [gtk3_dep, vulkan_dep, graphene_dep],
+  link_with: openvr_glib_lib,
+  include_directories: openvr_glib_inc,
+  install: false)
+
+executable(
+  'overlay_gtk_overlay_keyboard',
+  ['overlay_gtk_overlay_keyboard.c', test_resources],
   dependencies: [gtk3_dep, vulkan_dep, graphene_dep],
   link_with: openvr_glib_lib,
   include_directories: openvr_glib_inc,
