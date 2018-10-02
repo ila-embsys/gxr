@@ -48,4 +48,14 @@ openvr_math_matrix_set_translation (graphene_matrix_t *matrix,
 void
 openvr_math_matrix34_to_graphene (HmdMatrix34_t *mat34, graphene_matrix_t *mat);
 
+void
+openvr_math_matrix_interpolate (graphene_matrix_t *from,
+                                graphene_matrix_t *to,
+                                float interpolation,
+                                graphene_matrix_t *result);
+
+bool
+openvr_math_matrix_equals (graphene_matrix_t *a,
+                           graphene_matrix_t *b);
+
 #endif /* OPENVR_GLIB_MATH_H_ */

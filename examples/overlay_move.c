@@ -301,54 +301,16 @@ typedef struct TransformTransition {
   float interpolate;
 } TransformTransition;
 
-
-void
-_interpolate_matrix (graphene_matrix_t *from,
-                     graphene_matrix_t *to,
-                     float interpolation,
-                     graphene_matrix_t *result)
-{
-  float from_f[16];
-  float to_f[16];
-  float interpolated_f[16];
-
-  graphene_matrix_to_float (from, from_f);
-  graphene_matrix_to_float (to, to_f);
-
-  for (uint32_t i = 0; i < 16; i++)
-    interpolated_f[i] = from_f[i] * (1.0f - interpolation) +
-                        to_f[i] * interpolation;
-
-  graphene_matrix_init_from_float (result, interpolated_f);
-}
-
-bool
-_matrix_equals (graphene_matrix_t *a,
-                graphene_matrix_t *b)
-{
-  float a_f[16];
-  float b_f[16];
-
-  graphene_matrix_to_float (a, a_f);
-  graphene_matrix_to_float (b, b_f);
-
-  for (uint32_t i = 0; i < 16; i++)
-    if (a_f[i] != b_f[i])
-      return FALSE;
-
-  return TRUE;
-}
-
 gboolean
 _interpolate_cb (gpointer _transition)
 {
   TransformTransition *transition = (TransformTransition *) _transition;
 
   graphene_matrix_t interpolated;
-  _interpolate_matrix (&transition->from,
-                       &transition->to,
-                       transition->interpolate,
-                       &interpolated);
+  openvr_math_matrix_interpolate (&transition->from,
+                                  &transition->to,
+                                   transition->interpolate,
+                                  &interpolated);
 
   openvr_overlay_set_transform_absolute (transition->overlay, &interpolated);
 
@@ -380,7 +342,7 @@ _reset_cat_overlays (Example *self)
 
       openvr_overlay_get_transform_absolute (overlay, &transition->from);
 
-      if (!_matrix_equals (&transition->from, transform))
+      if (!openvr_math_matrix_equals (&transition->from, transform))
         {
           transition->interpolate = 0;
           transition->overlay = overlay;
@@ -450,7 +412,7 @@ _position_cat_overlays_sphere (Example *self)
 
           openvr_overlay_get_transform_absolute (overlay, &transition->from);
 
-          if (!_matrix_equals (&transition->from, &transform))
+          if (!openvr_math_matrix_equals (&transition->from, &transform))
             {
               transition->interpolate = 0;
               transition->overlay = overlay;

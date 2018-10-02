@@ -135,3 +135,39 @@ openvr_math_matrix_get_translation (graphene_matrix_t *matrix,
                       graphene_matrix_get_value (matrix, 3, 2));
 }
 
+void
+openvr_math_matrix_interpolate (graphene_matrix_t *from,
+                                graphene_matrix_t *to,
+                                float interpolation,
+                                graphene_matrix_t *result)
+{
+  float from_f[16];
+  float to_f[16];
+  float interpolated_f[16];
+
+  graphene_matrix_to_float (from, from_f);
+  graphene_matrix_to_float (to, to_f);
+
+  for (uint32_t i = 0; i < 16; i++)
+    interpolated_f[i] = from_f[i] * (1.0f - interpolation) +
+                        to_f[i] * interpolation;
+
+  graphene_matrix_init_from_float (result, interpolated_f);
+}
+
+bool
+openvr_math_matrix_equals (graphene_matrix_t *a,
+                           graphene_matrix_t *b)
+{
+  float a_f[16];
+  float b_f[16];
+
+  graphene_matrix_to_float (a, a_f);
+  graphene_matrix_to_float (b, b_f);
+
+  for (uint32_t i = 0; i < 16; i++)
+    if (a_f[i] != b_f[i])
+      return FALSE;
+
+  return TRUE;
+}
