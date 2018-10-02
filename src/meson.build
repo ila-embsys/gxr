@@ -17,7 +17,11 @@ openvr_glib_sources = [
   'openvr-context.c',
   'openvr-action.c',
   'openvr-action-set.c',
-  'openvr-io.c'
+  'openvr-io.c',
+  'openvr-model.c',
+  'openvr-button.c',
+  'openvr-intersection.c',
+  'openvr-pointer.c',
 ]
 
 openvr_glib_headers = [
@@ -36,7 +40,11 @@ openvr_glib_headers = [
   'openvr-context.h',
   'openvr-action.h',
   'openvr-action-set.h',
-  'openvr-io.h'
+  'openvr-io.h',
+  'openvr-model.h',
+  'openvr-button.h',
+  'openvr-intersection.h',
+  'openvr-pointer.h'
 ]
 
 version_split = meson.project_version().split('.')
