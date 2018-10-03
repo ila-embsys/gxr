@@ -22,7 +22,8 @@ struct _OpenVRButton
   OpenVROverlay parent;
 };
 
-OpenVRButton *openvr_button_new (void);
+OpenVRButton *
+openvr_button_new (gchar *id, gchar *text);
 
 G_END_DECLS
 

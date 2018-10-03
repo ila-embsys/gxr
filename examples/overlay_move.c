@@ -31,6 +31,7 @@
 #include "openvr-action-set.h"
 #include "openvr-pointer.h"
 #include "openvr-intersection.h"
+#include "openvr-button.h"
 
 #define GRID_WIDTH 6
 #define GRID_HEIGHT 5
@@ -41,8 +42,6 @@ typedef struct Example
 
   GSList *cat_overlays;
 
-  GSList *textures_to_free;
-
   OpenVRPointer *pointer_overlay;
   OpenVRIntersection *intersection;
 
@@ -51,8 +50,8 @@ typedef struct Example
   graphene_matrix_t *current_grab_matrix;
   graphene_matrix_t *current_hover_matrix;
 
-  OpenVROverlay *control_overlay_reset;
-  OpenVROverlay *control_overlay_sphere;
+  OpenVRButton *button_reset;
+  OpenVRButton *button_sphere;
 
   GMainLoop *loop;
 
@@ -181,7 +180,7 @@ _test_overlay_intersection (Example *self, graphene_matrix_t *pose)
   if (!found_intersection)
     {
       graphene_point3d_t intersection_point;
-      if (openvr_overlay_intersects (self->control_overlay_reset,
+      if (openvr_overlay_intersects (OPENVR_OVERLAY (self->button_reset),
                                     &intersection_point,
                                      pose))
         {
@@ -195,18 +194,19 @@ _test_overlay_intersection (Example *self, graphene_matrix_t *pose)
                                        &unmarked_color);
             }
 
-          self->current_hover_overlay = self->control_overlay_reset;
+          self->current_hover_overlay = OPENVR_OVERLAY (self->button_reset);
 
           graphene_vec3_t marked_color;
           graphene_vec3_init (&marked_color, .2f, .2f, .8f);
-          openvr_overlay_set_color (self->control_overlay_reset, &marked_color);
+          openvr_overlay_set_color (OPENVR_OVERLAY (self->button_reset),
+                                   &marked_color);
         }
     }
 
   if (!found_intersection)
     {
       graphene_point3d_t intersection_point;
-      if (openvr_overlay_intersects (self->control_overlay_sphere,
+      if (openvr_overlay_intersects (OPENVR_OVERLAY (self->button_sphere),
                                     &intersection_point,
                                      pose))
         {
@@ -220,11 +220,11 @@ _test_overlay_intersection (Example *self, graphene_matrix_t *pose)
                                        &unmarked_color);
             }
 
-          self->current_hover_overlay = self->control_overlay_sphere;
+          self->current_hover_overlay = OPENVR_OVERLAY (self->button_sphere);
 
           graphene_vec3_t marked_color;
           graphene_vec3_init (&marked_color, .2f, .2f, .8f);
-          openvr_overlay_set_color (self->control_overlay_sphere,
+          openvr_overlay_set_color (OPENVR_OVERLAY (self->button_sphere),
                                    &marked_color);
         }
     }
@@ -512,117 +512,6 @@ _init_cat_overlays (Example *self)
   return TRUE;
 }
 
-cairo_surface_t*
-_create_cairo_surface (unsigned char *image, uint32_t width,
-                       uint32_t height, const gchar *text)
-{
-  cairo_surface_t *surface =
-    cairo_image_surface_create_for_data (image,
-                                         CAIRO_FORMAT_ARGB32,
-                                         width, height,
-                                         width * 4);
-
-  cairo_t *cr = cairo_create (surface);
-
-  cairo_rectangle (cr, 0, 0, width, height);
-  cairo_set_source_rgb (cr, 1, 1, 1);
-  cairo_fill (cr);
-
-  double r0;
-  if (width < height)
-    r0 = (double) width / 3.0;
-  else
-    r0 = (double) height / 3.0;
-
-  double radius = r0 * 3.0;
-  double r1 = r0 * 5.0;
-
-  double center_x = (double) width / 2.0;
-  double center_y = (double) height / 2.0;
-
-  double cx0 = center_x - r0 / 2.0;
-  double cy0 = center_y - r0;
-  double cx1 = center_x - r0;
-  double cy1 = center_y - r0;
-
-  cairo_pattern_t *pat = cairo_pattern_create_radial (cx0, cy0, r0,
-                                                      cx1, cy1, r1);
-  cairo_pattern_add_color_stop_rgba (pat, 0, .3, .3, .3, 1);
-  cairo_pattern_add_color_stop_rgba (pat, 1, 0, 0, 0, 1);
-  cairo_set_source (cr, pat);
-  cairo_arc (cr, center_x, center_y, radius, 0, 2 * M_PI);
-  cairo_fill (cr);
-  cairo_pattern_destroy (pat);
-
-  cairo_select_font_face (cr, "Sans",
-      CAIRO_FONT_SLANT_NORMAL,
-      CAIRO_FONT_WEIGHT_NORMAL);
-
-  cairo_set_font_size (cr, 52.0);
-
-  cairo_text_extents_t extents;
-  cairo_text_extents (cr, text, &extents);
-
-  cairo_move_to (cr,
-                 center_x - extents.width / 2,
-                 center_y  - extents.height / 2);
-  cairo_set_source_rgb (cr, 0.9, 0.9, 0.9);
-  cairo_show_text (cr, text);
-
-  cairo_destroy (cr);
-
-  return surface;
-}
-
-gboolean
-_init_control_overlay (Example              *self,
-                       OpenVROverlay       **overlay,
-                       gchar                *id,
-                       const gchar          *text,
-                       graphene_matrix_t    *transform)
-{
-  guint width = 200;
-  guint height = 200;
-  unsigned char image[4 * width * height];
-  cairo_surface_t* surface = _create_cairo_surface (image, width,
-                                                    height, text);
-
-  if (surface == NULL) {
-    fprintf (stderr, "Could not create cairo surface.\n");
-    return -1;
-  }
-
-  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (self->uploader);
-
-  OpenVRVulkanTexture *cairo_texture =
-    openvr_vulkan_texture_new_from_cairo_surface (client->device, surface);
-
-  openvr_vulkan_client_upload_cairo_surface (client, cairo_texture, surface);
-
-  /* create openvr overlay */
-  *overlay = openvr_overlay_new ();
-  openvr_overlay_create_width (*overlay, id, id, 0.5f);
-
-  if (!openvr_overlay_is_valid (*overlay))
-  {
-    g_printerr ("Overlay unavailable.\n");
-    return FALSE;
-  }
-
-  openvr_vulkan_uploader_submit_frame (self->uploader,
-                                       *overlay, cairo_texture);
-
-  self->textures_to_free = g_slist_append (self->textures_to_free,
-                                           cairo_texture);
-
-  openvr_overlay_set_transform_absolute (*overlay, transform);
-
-  if (!openvr_overlay_show (*overlay))
-    return -1;
-
-  return TRUE;
-}
-
 gboolean
 _init_control_overlays (Example *self)
 {
@@ -635,8 +524,15 @@ _init_control_overlays (Example *self)
   graphene_matrix_t transform;
   graphene_matrix_init_translate (&transform, &position);
 
-  if (!_init_control_overlay (self, &self->control_overlay_reset,
-                              "control.reset", "Reset", &transform))
+  self->button_reset = openvr_button_new ("control.reset", "Reset");
+  if (self->button_reset == NULL)
+    return FALSE;
+
+  openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (self->button_reset),
+                                        &transform);
+
+  if (!openvr_overlay_set_width_meters (
+        OPENVR_OVERLAY (self->button_reset), 0.5f))
     return FALSE;
 
   graphene_point3d_t position_sphere = {
@@ -648,8 +544,15 @@ _init_control_overlays (Example *self)
   graphene_matrix_t transform_sphere;
   graphene_matrix_init_translate (&transform_sphere, &position_sphere);
 
-  if (!_init_control_overlay (self, &self->control_overlay_sphere,
-                              "control.sphere", "Sphere", &transform_sphere))
+  self->button_sphere = openvr_button_new ("control.sphere", "Sphere");
+  if (self->button_sphere == NULL)
+    return FALSE;
+
+  openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (self->button_sphere),
+                                        &transform_sphere);
+
+  if (!openvr_overlay_set_width_meters (
+        OPENVR_OVERLAY (self->button_sphere), 0.5f))
     return FALSE;
 
   return TRUE;
@@ -745,12 +648,13 @@ _grab_cb (OpenVRAction       *action,
           // Press
           if (self->current_hover_overlay != NULL)
             {
-              if (self->current_hover_overlay == self->control_overlay_reset)
+              if (self->current_hover_overlay
+                  == OPENVR_OVERLAY (self->button_reset))
                 {
                   _reset_cat_overlays (self);
                 }
               else if (self->current_hover_overlay
-                       == self->control_overlay_sphere)
+                       == OPENVR_OVERLAY (self->button_sphere))
                 {
                   _position_cat_overlays_sphere (self);
                 }
@@ -800,10 +704,12 @@ _cleanup (Example *self)
   g_object_unref (self->texture);
   g_object_unref (self->uploader);
 
+  g_object_unref (self->button_reset);
+  g_object_unref (self->button_sphere);
+
   g_object_unref (self->wm_action_set);
 
   g_slist_free_full (self->cat_overlays, g_object_unref);
-  g_slist_free_full (self->textures_to_free, g_object_unref);
 
   OpenVRContext *context = openvr_context_get_instance ();
   g_object_unref (context);
