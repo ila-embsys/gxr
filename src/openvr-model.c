@@ -51,20 +51,35 @@ openvr_model_new (gchar* key, gchar* name)
 {
   OpenVRModel *self = (OpenVRModel*) g_object_new (OPENVR_TYPE_MODEL, 0);
 
+  if (!openvr_model_initialize (self, key, name))
+    return NULL;
+
+  return self;
+}
+
+/*
+ * TODO: Not sure how the parent _new constructor can be shared with
+ *       OpenVRPointer. Casting to the child class is not allowed.
+ *       As a workaround I am introducting this initialization method.
+ */
+
+gboolean
+openvr_model_initialize (OpenVRModel *self, gchar* key, gchar* name)
+{
   OpenVROverlay *overlay = OPENVR_OVERLAY (self);
 
   if (!openvr_overlay_create (overlay, key, name))
-    return NULL;
+    return FALSE;
 
   if (!openvr_overlay_is_valid (overlay))
     {
       g_printerr ("Model overlay %s %s unavailable.\n", key, name);
-      return NULL;
+      return FALSE;
     }
 
   GdkPixbuf *pixbuf = _create_empty_pixbuf (10, 10);
   if (pixbuf == NULL)
-    return NULL;
+    return FALSE;
 
   /*
    * Overlay needs a texture to be set to show model
@@ -76,7 +91,7 @@ openvr_model_new (gchar* key, gchar* name)
   if (!openvr_overlay_set_alpha (overlay, 0.0f))
     return FALSE;
 
-  return self;
+  return TRUE;
 }
 
 static void

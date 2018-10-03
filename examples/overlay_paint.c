@@ -24,7 +24,7 @@
 #include "openvr-vulkan-uploader.h"
 #include "openvr-action.h"
 #include "openvr-action-set.h"
-#include "openvr-model.h"
+#include "openvr-pointer.h"
 
 typedef struct Example
 {
@@ -33,7 +33,7 @@ typedef struct Example
 
   OpenVRActionSet *wm_action_set;
 
-  OpenVRModel *pointer_overlay;
+  OpenVRPointer *pointer_overlay;
   OpenVROverlay *intersection_overlay;
   OpenVROverlay *paint_overlay;
 
@@ -234,38 +234,6 @@ _intersection_cb (OpenVROverlay           *overlay,
 }
 
 gboolean
-_init_pointer_overlay (Example *self)
-{
-  self->pointer_overlay = openvr_model_new ("pointer", "Pointer");
-
-  // TODO: wrap the uint32 of the sort order in some sort of hierarchy
-  // for now: The pointer itself should *always* be visible on top of overlays,
-  // so use the max value here
-  openvr_overlay_set_sort_order (OPENVR_OVERLAY (self->pointer_overlay),
-                                 UINT32_MAX);
-
-  struct HmdColor_t color = {
-    .r = 1.0f,
-    .g = 1.0f,
-    .b = 1.0f,
-    .a = 1.0f
-  };
-
-  if (!openvr_model_set_model (self->pointer_overlay, "{system}laser_pointer",
-                              &color))
-    return FALSE;
-
-  if (!openvr_overlay_set_width_meters (OPENVR_OVERLAY (self->pointer_overlay),
-                                        0.01f))
-    return FALSE;
-
-  if (!openvr_overlay_show (OPENVR_OVERLAY (self->pointer_overlay)))
-    return FALSE;
-
-  return TRUE;
-}
-
-gboolean
 _init_draw_overlay (Example *self)
 {
   self->draw_pixbuf = _create_draw_pixbuf (1000, 500);
@@ -373,7 +341,6 @@ _cleanup (Example *self)
   g_object_unref (context);
 
   g_object_unref (self->uploader);
-
 }
 
 gboolean
@@ -456,7 +423,8 @@ main ()
       return false;
     }
 
-  if (!_init_pointer_overlay (&self))
+  self.pointer_overlay = openvr_pointer_new ();
+  if (self.pointer_overlay == NULL)
     return -1;
 
   if (!_init_intersection_overlay (&self))

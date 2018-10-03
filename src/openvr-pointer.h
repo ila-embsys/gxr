@@ -9,17 +9,17 @@
 #define OPENVR_GLIB_POINTER_H_
 
 #include <glib-object.h>
+#include "openvr-model.h"
 
 G_BEGIN_DECLS
 
 #define OPENVR_TYPE_POINTER openvr_pointer_get_type()
-G_DECLARE_FINAL_TYPE (OpenVRPointer, openvr_pointer, OPENVR, POINTER, GObject)
+G_DECLARE_FINAL_TYPE (OpenVRPointer, openvr_pointer, OPENVR, POINTER,
+                      OpenVRModel)
 
 struct _OpenVRPointer
 {
-  GObject parent;
-
-  guint index;
+  OpenVRModel parent;
 };
 
 OpenVRPointer *openvr_pointer_new (void);

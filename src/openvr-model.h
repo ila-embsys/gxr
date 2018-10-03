@@ -37,6 +37,9 @@ gboolean
 openvr_model_get_model (OpenVRModel *self, gchar *name,
                         struct HmdColor_t *color, uint32_t *id);
 
+gboolean
+openvr_model_initialize (OpenVRModel *self, gchar* key, gchar* name);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_MODEL_H_ */
