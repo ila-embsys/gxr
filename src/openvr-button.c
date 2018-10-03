@@ -7,7 +7,7 @@
 
 #include "openvr-button.h"
 
-G_DEFINE_TYPE (OpenVRButton, openvr_button, G_TYPE_OBJECT)
+G_DEFINE_TYPE (OpenVRButton, openvr_button, OPENVR_TYPE_OVERLAY)
 
 static void
 openvr_button_finalize (GObject *gobject);
@@ -23,7 +23,7 @@ openvr_button_class_init (OpenVRButtonClass *klass)
 static void
 openvr_button_init (OpenVRButton *self)
 {
-  self->index = 1337;
+  (void) self;
 }
 
 OpenVRButton *

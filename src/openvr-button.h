@@ -9,17 +9,17 @@
 #define OPENVR_GLIB_BUTTON_H_
 
 #include <glib-object.h>
+#include "openvr-overlay.h"
 
 G_BEGIN_DECLS
 
 #define OPENVR_TYPE_BUTTON openvr_button_get_type()
-G_DECLARE_FINAL_TYPE (OpenVRButton, openvr_button, OPENVR, BUTTON, GObject)
+G_DECLARE_FINAL_TYPE (OpenVRButton, openvr_button, OPENVR, BUTTON,
+                      OpenVROverlay)
 
 struct _OpenVRButton
 {
-  GObject parent;
-
-  guint index;
+  OpenVROverlay parent;
 };
 
 OpenVRButton *openvr_button_new (void);
