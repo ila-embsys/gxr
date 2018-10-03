@@ -25,6 +25,7 @@
 #include "openvr-action.h"
 #include "openvr-action-set.h"
 #include "openvr-pointer.h"
+#include "openvr-intersection.h"
 
 typedef struct Example
 {
@@ -34,7 +35,7 @@ typedef struct Example
   OpenVRActionSet *wm_action_set;
 
   OpenVRPointer *pointer_overlay;
-  OpenVROverlay *intersection_overlay;
+  OpenVRIntersection *intersection_overlay;
   OpenVROverlay *paint_overlay;
 
   GdkPixbuf *draw_pixbuf;
@@ -195,7 +196,7 @@ _intersection_cb (OpenVROverlay           *overlay,
   // if we have an intersection point, move the pointer overlay there
   if (event->has_intersection)
     {
-      _update_intersection_position (self->intersection_overlay,
+      _update_intersection_position (OPENVR_OVERLAY (self->intersection_overlay),
                                     &event->transform,
                                     &event->intersection_point);
 
@@ -227,7 +228,7 @@ _intersection_cb (OpenVROverlay           *overlay,
     }
   else
     {
-      openvr_overlay_hide (self->intersection_overlay);
+      openvr_overlay_hide (OPENVR_OVERLAY (self->intersection_overlay));
     }
 
   free (event);
@@ -279,44 +280,6 @@ _init_draw_overlay (Example *self)
   g_signal_connect (self->paint_overlay, "intersection-event",
                     (GCallback)_intersection_cb,
                     self);
-  return TRUE;
-}
-
-gboolean
-_init_intersection_overlay (Example *self)
-{
-  GdkPixbuf *pixbuf = load_gdk_pixbuf ("/res/crosshair.png");
-  if (pixbuf == NULL)
-    return FALSE;
-
-  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (self->uploader);
-
-  OpenVRVulkanTexture *intersection_texture =
-    openvr_vulkan_texture_new_from_pixbuf (client->device, pixbuf);
-
-  openvr_vulkan_client_upload_pixbuf (client, intersection_texture, pixbuf);
-
-  g_object_unref (pixbuf);
-
-  self->intersection_overlay = openvr_overlay_new ();
-  openvr_overlay_create_width (self->intersection_overlay,
-                               "pointer.intersection",
-                               "Interection", 0.15);
-
-  if (!openvr_overlay_is_valid (self->intersection_overlay))
-    {
-      g_printerr ("Overlay unavailable.\n");
-      return FALSE;
-    }
-
-  // for now: The crosshair should always be visible, except the pointer can
-  // occlude it. The pointer has max sort order, so the crosshair gets max -1
-  openvr_overlay_set_sort_order (self->intersection_overlay, UINT32_MAX - 1);
-
-  openvr_vulkan_uploader_submit_frame (self->uploader,
-                                       self->intersection_overlay,
-                                       intersection_texture);
-
   return TRUE;
 }
 
@@ -427,7 +390,8 @@ main ()
   if (self.pointer_overlay == NULL)
     return -1;
 
-  if (!_init_intersection_overlay (&self))
+  self.intersection_overlay = openvr_intersection_new ("/res/crosshair.png");
+  if (self.intersection_overlay == NULL)
     return -1;
 
   if (!_init_draw_overlay (&self))

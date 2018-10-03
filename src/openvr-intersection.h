@@ -9,20 +9,20 @@
 #define OPENVR_GLIB_INTERSECTION_H_
 
 #include <glib-object.h>
+#include "openvr-overlay.h"
 
 G_BEGIN_DECLS
 
 #define OPENVR_TYPE_INTERSECTION openvr_intersection_get_type()
-G_DECLARE_FINAL_TYPE (OpenVRIntersection, openvr_intersection, OPENVR, INTERSECTION, GObject)
+G_DECLARE_FINAL_TYPE (OpenVRIntersection, openvr_intersection, OPENVR,
+                      INTERSECTION, OpenVROverlay)
 
 struct _OpenVRIntersection
 {
-  GObject parent;
-
-  guint index;
+  OpenVROverlay parent;
 };
 
-OpenVRIntersection *openvr_intersection_new (void);
+OpenVRIntersection *openvr_intersection_new (const gchar* name);
 
 G_END_DECLS
 

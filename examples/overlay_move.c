@@ -30,6 +30,7 @@
 #include "openvr-action.h"
 #include "openvr-action-set.h"
 #include "openvr-pointer.h"
+#include "openvr-intersection.h"
 
 #define GRID_WIDTH 6
 #define GRID_HEIGHT 5
@@ -43,7 +44,7 @@ typedef struct Example
   GSList *textures_to_free;
 
   OpenVRPointer *pointer_overlay;
-  OpenVROverlay *intersection;
+  OpenVRIntersection *intersection;
 
   OpenVROverlay *current_hover_overlay;
   OpenVROverlay *current_grab_overlay;
@@ -160,7 +161,7 @@ _test_overlay_intersection (Example *self, graphene_matrix_t *pose)
               nearest_dist = self->distance;
             }
 
-          _update_intersection_position (self->intersection,
+          _update_intersection_position (OPENVR_OVERLAY (self->intersection),
                                          pose,
                                         &intersection_point);
         }
@@ -253,7 +254,7 @@ _test_overlay_intersection (Example *self, graphene_matrix_t *pose)
           self->current_hover_overlay = NULL;
         }
 
-      openvr_overlay_hide (self->intersection);
+      openvr_overlay_hide (OPENVR_OVERLAY (self->intersection));
     }
 
   return has_intersection;
@@ -270,11 +271,11 @@ _intersection_cb (OpenVROverlay           *overlay,
 
   // if we have an intersection point, move the pointer overlay there
   if (event->has_intersection)
-    _update_intersection_position (self->intersection,
+    _update_intersection_position (OPENVR_OVERLAY (self->intersection),
                                   &event->transform,
                                   &event->intersection_point);
   else
-    openvr_overlay_hide (self->intersection);
+    openvr_overlay_hide (OPENVR_OVERLAY (self->intersection));
 
   // TODO: because this is a custom event with a struct that has been allocated
   // specifically for us, we need to free it. Maybe reuse?
@@ -521,43 +522,6 @@ _init_cat_overlays (Example *self)
       }
 
   g_object_unref (pixbuf);
-
-  return TRUE;
-}
-
-gboolean
-_init_intersection_overlay (Example *self)
-{
-  GdkPixbuf *pixbuf = load_gdk_pixbuf ("/res/crosshair.png");
-  if (pixbuf == NULL)
-    return FALSE;
-
-  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (self->uploader);
-
-  OpenVRVulkanTexture *intersection_texture =
-    openvr_vulkan_texture_new_from_pixbuf (client->device, pixbuf);
-
-  openvr_vulkan_client_upload_pixbuf (client, intersection_texture, pixbuf);
-
-  g_object_unref (pixbuf);
-
-  self->intersection = openvr_overlay_new ();
-  openvr_overlay_create_width (self->intersection, "pointer.intersection",
-                               "Interection", 0.15);
-
-  if (!openvr_overlay_is_valid (self->intersection))
-    {
-      g_printerr ("Overlay unavailable.\n");
-      return FALSE;
-    }
-
-  // for now: The crosshair should always be visible, except the pointer can
-  // occlude it. The pointer has max sort order, so the crosshair gets max -1
-  openvr_overlay_set_sort_order (self->intersection, UINT32_MAX - 1);
-
-  openvr_vulkan_uploader_submit_frame (self->uploader,
-                                       self->intersection,
-                                       intersection_texture);
 
   return TRUE;
 }
@@ -817,7 +781,7 @@ _grab_cb (OpenVRAction       *action,
                   graphene_matrix_init_from_matrix (self->current_grab_matrix,
                                                     self->current_hover_matrix);
 
-                  openvr_overlay_hide (self->intersection);
+                  openvr_overlay_hide (OPENVR_OVERLAY (self->intersection));
 
                   graphene_vec3_t marked_color;
                   graphene_vec3_init (&marked_color, .2f, .8f, .2f);
@@ -904,7 +868,8 @@ main ()
   if (self.pointer_overlay == NULL)
     return -1;
 
-  if (!_init_intersection_overlay (&self))
+  self.intersection = openvr_intersection_new ("/res/crosshair.png");
+  if (self.intersection == NULL)
     return -1;
 
   if (!_init_cat_overlays (&self))
