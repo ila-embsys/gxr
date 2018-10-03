@@ -115,6 +115,10 @@ openvr_overlay_set_raw (OpenVROverlay *self, guchar *pixels,
                         uint32_t width, uint32_t height, uint32_t depth);
 
 gboolean
+openvr_overlay_set_cairo_surface_raw (OpenVROverlay   *self,
+                                      cairo_surface_t *surface);
+
+gboolean
 openvr_overlay_set_gdk_pixbuf_raw (OpenVROverlay *self, GdkPixbuf * pixbuf);
 
 gboolean

@@ -451,6 +451,41 @@ openvr_overlay_set_gdk_pixbuf_raw (OpenVROverlay *self, GdkPixbuf * pixbuf)
   return openvr_overlay_set_raw (self, pixels, width, height, depth);
 }
 
+gboolean
+openvr_overlay_set_cairo_surface_raw (OpenVROverlay   *self,
+                                      cairo_surface_t *surface)
+{
+  guchar *pixels = cairo_image_surface_get_data (surface);
+
+  guint width = cairo_image_surface_get_width (surface);
+  guint height = cairo_image_surface_get_height (surface);
+
+  uint32_t depth;
+  cairo_format_t cr_format = cairo_image_surface_get_format (surface);
+  switch (cr_format)
+    {
+    case CAIRO_FORMAT_ARGB32:
+      depth = 4;
+      break;
+    case CAIRO_FORMAT_RGB24:
+      depth = 3;
+      break;
+    case CAIRO_FORMAT_A8:
+    case CAIRO_FORMAT_A1:
+    case CAIRO_FORMAT_RGB16_565:
+    case CAIRO_FORMAT_RGB30:
+      g_printerr ("Unsupported Cairo format\n");
+      return FALSE;
+    case CAIRO_FORMAT_INVALID:
+      g_printerr ("Invalid Cairo format\n");
+      return FALSE;
+    default:
+      g_printerr ("Unknown Cairo format\n");
+      return FALSE;
+    }
+
+  return openvr_overlay_set_raw (self, pixels, width, height, depth);
+}
 
 gboolean
 openvr_overlay_set_raw (OpenVROverlay *self, guchar *pixels,
