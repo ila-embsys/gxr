@@ -592,12 +592,6 @@ _init_control_overlay (Example              *self,
     return -1;
   }
 
-  if (!openvr_vulkan_uploader_init_vulkan (self->uploader, true))
-  {
-    g_printerr ("Unable to initialize Vulkan!\n");
-    return FALSE;
-  }
-
   OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (self->uploader);
 
   OpenVRVulkanTexture *cairo_texture =
