@@ -20,8 +20,6 @@ G_DECLARE_FINAL_TYPE (OpenVRModel, openvr_model, OPENVR, MODEL, OpenVROverlay)
 struct _OpenVRModel
 {
   OpenVROverlay parent_type;
-
-  guint index;
 };
 
 struct _OpenVRModelClass
@@ -29,7 +27,15 @@ struct _OpenVRModelClass
   OpenVROverlayClass parent_class;
 };
 
-OpenVRModel *openvr_model_new (void);
+OpenVRModel *openvr_model_new (gchar* key, gchar* name);
+
+gboolean
+openvr_model_set_model (OpenVRModel *self, gchar *name,
+                        struct HmdColor_t *color);
+
+gboolean
+openvr_model_get_model (OpenVRModel *self, gchar *name,
+                        struct HmdColor_t *color, uint32_t *id);
 
 G_END_DECLS
 

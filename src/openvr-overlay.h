@@ -87,14 +87,6 @@ gboolean
 openvr_overlay_set_sort_order (OpenVROverlay *self, uint32_t sort_order);
 
 gboolean
-openvr_overlay_set_model (OpenVROverlay *self, gchar *name,
-                          struct HmdColor_t *color);
-
-gboolean
-openvr_overlay_get_model (OpenVROverlay *self, gchar *name,
-                          struct HmdColor_t *color, uint32_t *id);
-
-gboolean
 openvr_overlay_clear_texture (OpenVROverlay *self);
 
 gboolean
@@ -151,5 +143,21 @@ openvr_overlay_get_transform_absolute (OpenVROverlay *self,
                                        graphene_matrix_t *mat);
 
 G_END_DECLS
+
+#define GET_OVERLAY_FUNCTIONS \
+  EVROverlayError err; \
+  OpenVRContext *context = openvr_context_get_instance (); \
+  struct VR_IVROverlay_FnTable *f = context->overlay;
+
+#define OVERLAY_CHECK_ERROR(fun, res) \
+{ \
+  EVROverlayError r = (res); \
+  if (r != EVROverlayError_VROverlayError_None) \
+    { \
+      g_printerr ("ERROR: " fun ": failed with %s in %s:%d\n", \
+                  f->GetOverlayErrorNameFromEnum (r), __FILE__, __LINE__); \
+      return FALSE; \
+    } \
+}
 
 #endif /* OPENVR_GLIB_OVERLAY_H_ */

@@ -20,22 +20,6 @@
 
 G_DEFINE_TYPE (OpenVROverlay, openvr_overlay, G_TYPE_OBJECT)
 
-#define GET_OVERLAY_FUNCTIONS \
-  EVROverlayError err; \
-  OpenVRContext *context = openvr_context_get_instance (); \
-  struct VR_IVROverlay_FnTable *f = context->overlay;
-
-#define OVERLAY_CHECK_ERROR(fun, res) \
-{ \
-  EVROverlayError r = (res); \
-  if (r != EVROverlayError_VROverlayError_None) \
-    { \
-      g_printerr ("ERROR: " fun ": failed with %s in %s:%d\n", \
-                  f->GetOverlayErrorNameFromEnum (r), __FILE__, __LINE__); \
-      return FALSE; \
-    } \
-}
-
 enum {
   MOTION_NOTIFY_EVENT,
   BUTTON_PRESS_EVENT,
@@ -315,37 +299,6 @@ openvr_overlay_set_mouse_scale (OpenVROverlay *self, float width, float height)
   err = f->SetOverlayMouseScale (self->overlay_handle, &mouse_scale);
 
   OVERLAY_CHECK_ERROR ("SetOverlayMouseScale", err);
-  return TRUE;
-}
-
-/*
- * Sets render model to draw behind this overlay and the vertex color to use,
- * pass NULL for color to match the overlays vertex color
- */
-
-gboolean
-openvr_overlay_set_model (OpenVROverlay *self, gchar *name,
-                          struct HmdColor_t *color)
-{
-  GET_OVERLAY_FUNCTIONS
-
-  err = f->SetOverlayRenderModel (self->overlay_handle, name, color);
-
-  OVERLAY_CHECK_ERROR ("SetOverlayRenderModel", err);
-  return TRUE;
-}
-
-gboolean
-openvr_overlay_get_model (OpenVROverlay *self, gchar *name,
-                          struct HmdColor_t *color, uint32_t *id)
-{
-  GET_OVERLAY_FUNCTIONS
-
-  *id = f->GetOverlayRenderModel (self->overlay_handle,
-                                  name, k_unMaxPropertyStringSize,
-                                  color, &err);
-
-  OVERLAY_CHECK_ERROR ("GetOverlayRenderModel", err);
   return TRUE;
 }
 

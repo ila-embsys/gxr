@@ -12,11 +12,12 @@
 #include "openvr-overlay.h"
 #include "openvr-io.h"
 #include "openvr-action-set.h"
+#include "openvr-model.h"
 
 typedef struct Example
 {
   GSList *controllers;
-  OpenVROverlay *model_overlay;
+  OpenVRModel *model_overlay;
   GMainLoop *loop;
   guint current_model_list_index;
   GSList *models;
@@ -53,7 +54,8 @@ _pose_cb (OpenVRAction    *action,
                             &event->pose,
                             &transformed);
 
-  openvr_overlay_set_transform_absolute (self->model_overlay, &transformed);
+  openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (self->model_overlay),
+                                        &transformed);
 
   free (event);
 }
@@ -74,8 +76,8 @@ _update_model (Example *self)
            self->current_model_list_index + 1,
            g_slist_length (self->models));
 
-  if (!openvr_overlay_set_model (self->model_overlay,
-                                 (gchar *) name->data, &color))
+  if (!openvr_model_set_model (self->model_overlay,
+                               (gchar *) name->data, &color))
     return FALSE;
 
   return TRUE;
@@ -145,40 +147,10 @@ _poll_events_cb (gpointer _self)
 }
 
 
-GdkPixbuf *
-_create_empty_pixbuf (uint32_t width, uint32_t height)
-{
-  guchar pixels[height * width * 4];
-  memset (pixels, 0, height * width * 4 * sizeof (guchar));
-  GdkPixbuf *pixbuf = gdk_pixbuf_new_from_data (pixels, GDK_COLORSPACE_RGB,
-                                                TRUE, 8, width, height,
-                                                4 * width, NULL, NULL);
-  return pixbuf;
-}
-
 gboolean
 _init_model_overlay (Example *self)
 {
-  self->model_overlay = openvr_overlay_new ();
-  openvr_overlay_create_width (self->model_overlay, "model",
-                               "A 3D model overlay", 0.5f);
-
-  if (!openvr_overlay_is_valid (self->model_overlay))
-    {
-      g_printerr ("Overlay unavailable.\n");
-      return FALSE;
-    }
-
-  GdkPixbuf *pixbuf = _create_empty_pixbuf (10, 10);
-  if (pixbuf == NULL)
-    return FALSE;
-
-  /*
-   * Overlay needs a texture to be set to show model
-   * See https://github.com/ValveSoftware/openvr/issues/496
-   */
-  openvr_overlay_set_gdk_pixbuf_raw (self->model_overlay, pixbuf);
-  g_object_unref (pixbuf);
+  self->model_overlay = openvr_model_new ("model", "A 3D model overlay");
 
   struct HmdColor_t color = {
     .r = 1.0f,
@@ -189,26 +161,24 @@ _init_model_overlay (Example *self)
 
   GSList* model_name = g_slist_nth (self->models,
                                     self->current_model_list_index);
-  if (!openvr_overlay_set_model (self->model_overlay,
-                                 (gchar *) model_name->data, &color))
+  if (!openvr_model_set_model (self->model_overlay,
+                               (gchar *) model_name->data, &color))
     return FALSE;
 
   char name_ret[k_unMaxPropertyStringSize];
   struct HmdColor_t color_ret = {};
 
   uint32_t id;
-  if (!openvr_overlay_get_model (self->model_overlay, name_ret, &color_ret, &id))
+  if (!openvr_model_get_model (self->model_overlay, name_ret, &color_ret, &id))
     return FALSE;
 
   g_print ("GetOverlayRenderModel returned id %d name: %s\n", id, name_ret);
 
-  if (!openvr_overlay_set_alpha (self->model_overlay, 0.0f))
+  if (!openvr_overlay_set_width_meters (OPENVR_OVERLAY (self->model_overlay),
+                                        0.5f))
     return FALSE;
 
-  if (!openvr_overlay_set_width_meters (self->model_overlay, 0.5f))
-    return FALSE;
-
-  if (!openvr_overlay_show (self->model_overlay))
+  if (!openvr_overlay_show (OPENVR_OVERLAY (self->model_overlay)))
     return FALSE;
 
   return TRUE;

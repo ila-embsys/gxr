@@ -24,6 +24,7 @@
 #include "openvr-vulkan-uploader.h"
 #include "openvr-action.h"
 #include "openvr-action-set.h"
+#include "openvr-model.h"
 
 typedef struct Example
 {
@@ -32,7 +33,7 @@ typedef struct Example
 
   OpenVRActionSet *wm_action_set;
 
-  OpenVROverlay *pointer_overlay;
+  OpenVRModel *pointer_overlay;
   OpenVROverlay *intersection_overlay;
   OpenVROverlay *paint_overlay;
 
@@ -232,41 +233,16 @@ _intersection_cb (OpenVROverlay           *overlay,
   free (event);
 }
 
-GdkPixbuf *
-_create_empty_pixbuf (uint32_t width, uint32_t height)
+gboolean
+_init_pointer_overlay (Example *self)
 {
-  guchar *pixels = (guchar*) malloc (sizeof (guchar) * height * width * 4);
-  memset (pixels, 0, height * width * 4 * sizeof (guchar));
-  GdkPixbuf *pixbuf = gdk_pixbuf_new_from_data (pixels, GDK_COLORSPACE_RGB,
-                                                TRUE, 8, width, height,
-                                                4 * width, NULL, NULL);
-  return pixbuf;
-}
-
-OpenVROverlay *
-_init_pointer_overlay ()
-{
-  OpenVROverlay *overlay = openvr_overlay_new ();
-
-  openvr_overlay_create_width (overlay, "pointer", "Pointer", 0.01f);
-
-  if (!openvr_overlay_is_valid (overlay))
-    {
-      g_printerr ("Overlay unavailable.\n");
-      return NULL;
-    }
+  self->pointer_overlay = openvr_model_new ("pointer", "Pointer");
 
   // TODO: wrap the uint32 of the sort order in some sort of hierarchy
   // for now: The pointer itself should *always* be visible on top of overlays,
   // so use the max value here
-  openvr_overlay_set_sort_order (overlay, UINT32_MAX);
-
-  GdkPixbuf *pixbuf = _create_empty_pixbuf (10, 10);
-  if (pixbuf == NULL)
-    return NULL;
-
-  openvr_overlay_set_gdk_pixbuf_raw (overlay, pixbuf);
-  g_object_unref (pixbuf);
+  openvr_overlay_set_sort_order (OPENVR_OVERLAY (self->pointer_overlay),
+                                 UINT32_MAX);
 
   struct HmdColor_t color = {
     .r = 1.0f,
@@ -275,29 +251,18 @@ _init_pointer_overlay ()
     .a = 1.0f
   };
 
-  if (!openvr_overlay_set_model (overlay, "{system}laser_pointer", &color))
-    return NULL;
+  if (!openvr_model_set_model (self->pointer_overlay, "{system}laser_pointer",
+                              &color))
+    return FALSE;
 
-  char name_ret[k_unMaxPropertyStringSize];
-  struct HmdColor_t color_ret = {};
+  if (!openvr_overlay_set_width_meters (OPENVR_OVERLAY (self->pointer_overlay),
+                                        0.01f))
+    return FALSE;
 
-  uint32_t id;
-  if (!openvr_overlay_get_model (overlay, name_ret, &color_ret, &id))
-    return NULL;
+  if (!openvr_overlay_show (OPENVR_OVERLAY (self->pointer_overlay)))
+    return FALSE;
 
-  g_print ("GetOverlayRenderModel returned id %d\n", id);
-  g_print ("GetOverlayRenderModel name %s\n", name_ret);
-
-  if (!openvr_overlay_set_width_meters (overlay, 0.01f))
-    return NULL;
-
-  if (!openvr_overlay_set_alpha (overlay, 0.0f))
-    return NULL;
-
-  if (!openvr_overlay_show (overlay))
-    return NULL;
-
-  return overlay;
+  return TRUE;
 }
 
 gboolean
@@ -449,7 +414,8 @@ _dominant_hand_cb (OpenVRAction    *action,
   graphene_matrix_t scaled;
   graphene_matrix_multiply (&scale_matrix, &event->pose, &scaled);
 
-  openvr_overlay_set_transform_absolute (self->pointer_overlay, &scaled);
+  openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (self->pointer_overlay),
+                                        &scaled);
 
   /* update intersection */
   openvr_overlay_poll_3d_intersection (self->paint_overlay, &event->pose);
@@ -490,7 +456,8 @@ main ()
       return false;
     }
 
-  self.pointer_overlay = _init_pointer_overlay ();
+  if (!_init_pointer_overlay (&self))
+    return -1;
 
   if (!_init_intersection_overlay (&self))
     return -1;
