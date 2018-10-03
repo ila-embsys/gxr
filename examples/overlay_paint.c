@@ -92,19 +92,6 @@ load_gdk_pixbuf (const gchar* name)
   return pixbuf;
 }
 
-
-void
-_update_intersection_position (OpenVROverlay      *overlay,
-                               graphene_matrix_t  *pose,
-                               graphene_point3d_t *intersection_point)
-{
-  graphene_matrix_t transform;
-  graphene_matrix_init_from_matrix (&transform, pose);
-  openvr_math_matrix_set_translation (&transform, intersection_point);
-  openvr_overlay_set_transform_absolute (overlay, &transform);
-  openvr_overlay_show (overlay);
-}
-
 typedef struct ColorRGBA
 {
   guchar r;
@@ -196,9 +183,9 @@ _intersection_cb (OpenVROverlay           *overlay,
   // if we have an intersection point, move the pointer overlay there
   if (event->has_intersection)
     {
-      _update_intersection_position (OPENVR_OVERLAY (self->intersection_overlay),
-                                    &event->transform,
-                                    &event->intersection_point);
+      openvr_intersection_update (self->intersection_overlay,
+                                 &event->transform,
+                                 &event->intersection_point);
 
       PixelSize size_pixels = {
         .width = (guint) gdk_pixbuf_get_width (self->draw_pixbuf),

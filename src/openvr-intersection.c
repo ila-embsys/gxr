@@ -6,6 +6,7 @@
  */
 
 #include "openvr-intersection.h"
+#include "openvr-math.h"
 
 G_DEFINE_TYPE (OpenVRIntersection, openvr_intersection, OPENVR_TYPE_OVERLAY)
 
@@ -79,4 +80,16 @@ openvr_intersection_finalize (GObject *gobject)
 {
   OpenVRIntersection *self = OPENVR_INTERSECTION (gobject);
   (void) self;
+}
+
+void
+openvr_intersection_update (OpenVRIntersection *self,
+                            graphene_matrix_t  *pose,
+                            graphene_point3d_t *intersection_point)
+{
+  graphene_matrix_t transform;
+  graphene_matrix_init_from_matrix (&transform, pose);
+  openvr_math_matrix_set_translation (&transform, intersection_point);
+  openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (self), &transform);
+  openvr_overlay_show (OPENVR_OVERLAY (self));
 }

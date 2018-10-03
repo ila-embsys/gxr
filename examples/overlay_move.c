@@ -105,19 +105,6 @@ load_gdk_pixbuf (const gchar* name)
   return pixbuf;
 }
 
-
-void
-_update_intersection_position (OpenVROverlay      *overlay,
-                               graphene_matrix_t  *pose,
-                               graphene_point3d_t *intersection_point)
-{
-  graphene_matrix_t transform;
-  graphene_matrix_init_from_matrix (&transform, pose);
-  openvr_math_matrix_set_translation (&transform, intersection_point);
-  openvr_overlay_set_transform_absolute (overlay, &transform);
-  openvr_overlay_show (overlay);
-}
-
 gboolean
 _test_overlay_intersection (Example *self, graphene_matrix_t *pose)
 {
@@ -161,9 +148,8 @@ _test_overlay_intersection (Example *self, graphene_matrix_t *pose)
               nearest_dist = self->distance;
             }
 
-          _update_intersection_position (OPENVR_OVERLAY (self->intersection),
-                                         pose,
-                                        &intersection_point);
+          openvr_intersection_update (self->intersection, pose,
+                                     &intersection_point);
         }
     }
 
@@ -271,9 +257,9 @@ _intersection_cb (OpenVROverlay           *overlay,
 
   // if we have an intersection point, move the pointer overlay there
   if (event->has_intersection)
-    _update_intersection_position (OPENVR_OVERLAY (self->intersection),
-                                  &event->transform,
-                                  &event->intersection_point);
+    openvr_intersection_update (self->intersection,
+                               &event->transform,
+                               &event->intersection_point);
   else
     openvr_overlay_hide (OPENVR_OVERLAY (self->intersection));
 

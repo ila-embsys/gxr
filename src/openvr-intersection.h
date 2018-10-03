@@ -24,6 +24,11 @@ struct _OpenVRIntersection
 
 OpenVRIntersection *openvr_intersection_new (const gchar* name);
 
+void
+openvr_intersection_update (OpenVRIntersection *self,
+                            graphene_matrix_t  *pose,
+                            graphene_point3d_t *intersection_point);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_INTERSECTION_H_ */
