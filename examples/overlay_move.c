@@ -74,20 +74,6 @@ _sigint_cb (gpointer _self)
   return TRUE;
 }
 
-// assuming the initial length is 1 unit/meter
-static void
-_move_pointer (OpenVROverlay     *overlay,
-               graphene_matrix_t *transform,
-               float              length)
-{
-  graphene_matrix_t scale_matrix;
-  graphene_matrix_init_scale (&scale_matrix, 1.0f, 1.0f, length);
-  graphene_matrix_t scaled;
-  graphene_matrix_multiply (&scale_matrix, transform, &scaled);
-  openvr_overlay_set_transform_absolute (overlay, &scaled);
-}
-
-
 gboolean
 _poll_events_cb (gpointer _self)
 {
@@ -201,8 +187,7 @@ _test_overlay_intersection (Example *self, graphene_matrix_t *pose)
       graphene_vec3_t marked_color;
       graphene_vec3_init (&marked_color, .8f, .2f, .2f);
       openvr_overlay_set_color (self->current_hover_overlay, &marked_color);
-      _move_pointer (OPENVR_OVERLAY (self->pointer_overlay),
-                     pose, nearest_dist);
+      openvr_pointer_move (self->pointer_overlay, pose, nearest_dist);
     }
 
   /* Test control overlays */
@@ -783,17 +768,15 @@ _dominant_hand_cb (OpenVRAction    *action,
 
       openvr_overlay_set_transform_absolute (self->current_grab_overlay,
                                              &transformed);
-      _move_pointer (OPENVR_OVERLAY (self->pointer_overlay),
-                    &event->pose, self->distance);
+      openvr_pointer_move (self->pointer_overlay, &event->pose, self->distance);
     }
   else
     {
       gboolean has_intersection = _test_overlay_intersection (self,
                                                               &event->pose);
       if (!has_intersection)
-          _move_pointer (OPENVR_OVERLAY (self->pointer_overlay),
-                        &event->pose,
-                         self->pointer_default_length);
+          openvr_pointer_move (self->pointer_overlay, &event->pose,
+                               self->pointer_default_length);
     }
 
   g_free (event);

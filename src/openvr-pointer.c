@@ -66,3 +66,15 @@ openvr_pointer_finalize (GObject *gobject)
   OpenVRPointer *self = OPENVR_POINTER (gobject);
   (void) self;
 }
+
+void
+openvr_pointer_move (OpenVRPointer     *self,
+                     graphene_matrix_t *transform,
+                     float              distance)
+{
+  graphene_matrix_t scale_matrix;
+  graphene_matrix_init_scale (&scale_matrix, 1.0f, 1.0f, distance);
+  graphene_matrix_t scaled;
+  graphene_matrix_multiply (&scale_matrix, transform, &scaled);
+  openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (self), &scaled);
+}

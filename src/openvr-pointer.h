@@ -24,6 +24,11 @@ struct _OpenVRPointer
 
 OpenVRPointer *openvr_pointer_new (void);
 
+void
+openvr_pointer_move (OpenVRPointer     *self,
+                     graphene_matrix_t *transform,
+                     float              distance);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_POINTER_H_ */
