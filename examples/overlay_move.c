@@ -12,7 +12,6 @@
 #include <gdk/gdk.h>
 #include <glib.h>
 #include <graphene.h>
-#include <signal.h>
 #include <glib/gprintf.h>
 
 #include <openvr-glib.h>
@@ -23,9 +22,6 @@
 #include "openvr-math.h"
 #include "openvr-overlay.h"
 #include "openvr-vulkan-uploader.h"
-
-#include "cairo_content.h"
-
 #include "openvr-io.h"
 #include "openvr-action.h"
 #include "openvr-action-set.h"
@@ -82,7 +78,6 @@ _poll_events_cb (gpointer _self)
   if (!openvr_action_set_poll (self->wm_action_set))
     return FALSE;
 
-  // openvr_overlay_poll_event (overlay);
   return TRUE;
 }
 
@@ -94,7 +89,7 @@ load_gdk_pixbuf (const gchar* name)
 
   if (error != NULL)
     {
-      fprintf (stderr, "Unable to read file: %s\n", error->message);
+      g_printerr ("Unable to read file: %s\n", error->message);
       g_error_free (error);
       return NULL;
     }
@@ -103,6 +98,7 @@ load_gdk_pixbuf (const gchar* name)
   g_object_unref (pixbuf_rgb);
   return pixbuf;
 }
+
 
 gboolean
 _test_overlay_intersection (Example *self, graphene_matrix_t *pose)
@@ -255,7 +251,7 @@ _intersection_cb (OpenVROverlay           *overlay,
 
   Example *self = (Example*) _self;
 
-  // if we have an intersection point, move the pointer overlay there
+  /* If we have an intersection point, move the pointer overlay there */
   if (event->has_intersection)
     openvr_intersection_update (self->intersection,
                                &event->transform,
@@ -263,8 +259,6 @@ _intersection_cb (OpenVROverlay           *overlay,
   else
     openvr_overlay_hide (OPENVR_OVERLAY (self->intersection));
 
-  // TODO: because this is a custom event with a struct that has been allocated
-  // specifically for us, we need to free it. Maybe reuse?
   free (event);
 }
 
@@ -405,31 +399,6 @@ _position_cat_overlays_sphere (Example *self)
   return TRUE;
 }
 
-bool
-_init_openvr ()
-{
-  if (!openvr_context_is_installed ())
-    {
-      g_printerr ("VR Runtime not installed.\n");
-      return false;
-    }
-
-  OpenVRContext *context = openvr_context_get_instance ();
-  if (!openvr_context_init_overlay (context))
-    {
-      g_printerr ("Could not init OpenVR.\n");
-      return false;
-    }
-
-  if (!openvr_context_is_valid (context))
-    {
-      g_printerr ("Could not load OpenVR function pointers.\n");
-      return false;
-    }
-
-  return true;
-}
-
 gboolean
 _init_cat_overlays (Example *self)
 {
@@ -513,7 +482,7 @@ _init_cat_overlays (Example *self)
 }
 
 gboolean
-_init_control_overlays (Example *self)
+_init_buttons (Example *self)
 {
   graphene_point3d_t position = {
     .x =  0.0f,
@@ -591,13 +560,6 @@ _dominant_hand_cb (OpenVRAction    *action,
 
   Example *self = (Example*) _self;
 
-  /* Update pointer */
-  graphene_matrix_t scale_matrix;
-  graphene_matrix_init_scale (&scale_matrix, 1.0f, 1.0f, 5.0f);
-
-  graphene_matrix_t scaled;
-  graphene_matrix_multiply (&scale_matrix, &event->pose, &scaled);
-
   /* Drag */
   if (self->current_grab_overlay != NULL)
     {
@@ -629,6 +591,51 @@ _dominant_hand_cb (OpenVRAction    *action,
   g_free (event);
 }
 
+void
+_grab_press (Example *self)
+{
+  if (self->current_hover_overlay == NULL)
+    return;
+
+  /* Reset button pressed */
+  if (self->current_hover_overlay == OPENVR_OVERLAY (self->button_reset))
+    {
+      _reset_cat_overlays (self);
+    }
+  /* Sphere button pressed */
+  else if (self->current_hover_overlay  == OPENVR_OVERLAY (self->button_sphere))
+    {
+      _position_cat_overlays_sphere (self);
+    }
+  /* Overlay grabbed */
+  else
+    {
+      self->current_grab_overlay = self->current_hover_overlay;
+
+      graphene_matrix_init_from_matrix (self->current_grab_matrix,
+                                        self->current_hover_matrix);
+
+      openvr_overlay_hide (OPENVR_OVERLAY (self->intersection));
+
+      graphene_vec3_t marked_color;
+      graphene_vec3_init (&marked_color, .2f, .8f, .2f);
+      openvr_overlay_set_color (self->current_grab_overlay, &marked_color);
+    }
+}
+
+void
+_grab_release (Example *self)
+{
+  if (self->current_grab_overlay != NULL)
+    {
+      graphene_vec3_t unmarked_color;
+      graphene_vec3_init (&unmarked_color, 1.f, 1.f, 1.f);
+      openvr_overlay_set_color (self->current_grab_overlay,
+                               &unmarked_color);
+     }
+  self->current_grab_overlay = NULL;
+}
+
 static void
 _grab_cb (OpenVRAction       *action,
           OpenVRDigitalEvent *event,
@@ -638,55 +645,12 @@ _grab_cb (OpenVRAction       *action,
 
   Example *self = (Example*) _self;
 
-  //g_print ("grab: Active %d | State %d | Changed %d\n",
-  //         event->active, event->state, event->changed);
-
   if (event->changed)
     {
       if (event->state == 1)
-        {
-          // Press
-          if (self->current_hover_overlay != NULL)
-            {
-              if (self->current_hover_overlay
-                  == OPENVR_OVERLAY (self->button_reset))
-                {
-                  _reset_cat_overlays (self);
-                }
-              else if (self->current_hover_overlay
-                       == OPENVR_OVERLAY (self->button_sphere))
-                {
-                  _position_cat_overlays_sphere (self);
-                }
-              else
-                {
-                  self->current_grab_overlay = self->current_hover_overlay;
-
-                  graphene_matrix_init_from_matrix (self->current_grab_matrix,
-                                                    self->current_hover_matrix);
-
-                  openvr_overlay_hide (OPENVR_OVERLAY (self->intersection));
-
-                  graphene_vec3_t marked_color;
-                  graphene_vec3_init (&marked_color, .2f, .8f, .2f);
-                  openvr_overlay_set_color (self->current_grab_overlay,
-                                           &marked_color);
-                }
-            }
-        }
+        _grab_press (self);
       else
-        {
-          // Releae
-          if (self->current_grab_overlay != NULL)
-            {
-              graphene_vec3_t unmarked_color;
-              graphene_vec3_init (&unmarked_color, 1.f, 1.f, 1.f);
-              openvr_overlay_set_color (self->current_grab_overlay,
-                                       &unmarked_color);
-            }
-          self->current_grab_overlay = NULL;
-          //
-        }
+        _grab_release (self);
     }
 
   g_free (event);
@@ -715,13 +679,15 @@ _cleanup (Example *self)
   g_object_unref (context);
 }
 
-
 int
 main ()
 {
-  /* init openvr */
-  if (!_init_openvr ())
-    return -1;
+  OpenVRContext *context = openvr_context_get_instance ();
+  if (!openvr_context_init_overlay (context))
+    {
+      g_printerr ("Could not init OpenVR.\n");
+      return false;
+    }
 
   GString *action_manifest_path = g_string_new ("");
   if (!_cache_bindings (action_manifest_path))
@@ -761,7 +727,7 @@ main ()
   if (!_init_cat_overlays (&self))
     return -1;
 
-  if (!_init_control_overlays (&self))
+  if (!_init_buttons (&self))
     return -1;
 
   openvr_action_set_register (self.wm_action_set, OPENVR_ACTION_POSE,
