@@ -58,4 +58,8 @@ bool
 openvr_math_matrix_equals (graphene_matrix_t *a,
                            graphene_matrix_t *b);
 
+float
+openvr_math_point_matrix_distance (graphene_point3d_t *intersection_point,
+                                   graphene_matrix_t  *pose);
+
 #endif /* OPENVR_GLIB_MATH_H_ */

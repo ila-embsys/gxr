@@ -171,3 +171,21 @@ openvr_math_matrix_equals (graphene_matrix_t *a,
 
   return TRUE;
 }
+
+float
+openvr_math_point_matrix_distance (graphene_point3d_t *intersection_point,
+                                   graphene_matrix_t  *pose)
+{
+  graphene_vec3_t intersection_vec;
+  graphene_point3d_to_vec3 (intersection_point, &intersection_vec);
+
+  graphene_vec3_t pose_translation;
+  openvr_math_matrix_get_translation (pose, &pose_translation);
+
+  graphene_vec3_t distance_vec;
+  graphene_vec3_subtract (&pose_translation,
+                          &intersection_vec,
+                          &distance_vec);
+
+  return graphene_vec3_length (&distance_vec);
+}

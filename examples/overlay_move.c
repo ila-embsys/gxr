@@ -121,24 +121,6 @@ load_gdk_pixbuf (const gchar* name)
   return pixbuf;
 }
 
-float
-_point_matrix_distance (graphene_point3d_t *intersection_point,
-                        graphene_matrix_t  *pose)
-{
-  graphene_vec3_t intersection_vec;
-  graphene_point3d_to_vec3 (intersection_point, &intersection_vec);
-
-  graphene_vec3_t pose_translation;
-  openvr_math_matrix_get_translation (pose, &pose_translation);
-
-  graphene_vec3_t distance_vec;
-  graphene_vec3_subtract (&pose_translation,
-                          &intersection_vec,
-                          &distance_vec);
-
-  return graphene_vec3_length (&distance_vec);
-}
-
 void
 _overlay_unmark (OpenVROverlay *overlay)
 {
@@ -477,7 +459,8 @@ _test_overlay_intersection (Example *self, graphene_matrix_t *pose)
       graphene_point3d_t intersection_point;
       if (openvr_overlay_intersects (overlay, &intersection_point, pose))
         {
-          float distance = _point_matrix_distance (&intersection_point, pose);
+          float distance =
+            openvr_math_point_matrix_distance (&intersection_point, pose);
           if (distance < nearest_intersection.distance)
             {
               nearest_intersection.overlay = overlay;
