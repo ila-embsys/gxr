@@ -5,9 +5,10 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "openvr-io.h"
-
 #include <gio/gio.h>
+
+#include "openvr-io.h"
+#include "openvr-action.h"
 
 GString*
 openvr_io_get_cache_path (const gchar* dir_name)
@@ -18,7 +19,8 @@ openvr_io_get_cache_path (const gchar* dir_name)
 }
 
 gboolean
-openvr_io_write_resource_to_file (gchar *res_base_path, gchar *cache_path,
+openvr_io_write_resource_to_file (const gchar *res_base_path,
+                                  gchar *cache_path,
                                   const gchar *file_name,
                                   GString *file_path)
 {
@@ -95,6 +97,58 @@ openvr_io_create_directory_if_needed (gchar *path)
     }
 
   g_object_unref (directory);
+
+  return TRUE;
+}
+
+gboolean
+openvr_io_load_cached_action_manifest (const char* cache_name,
+                                       const char* resource_path,
+                                       const char* manifest_name,
+                                       const char* first_binding,
+                                       ...)
+{
+  /* Create cache directory if needed */
+  GString* cache_path = openvr_io_get_cache_path (cache_name);
+  if (!openvr_io_create_directory_if_needed (cache_path->str))
+    return FALSE;
+
+  /* Cache actions manifest */
+  GString *actions_path = g_string_new ("");
+  if (!openvr_io_write_resource_to_file (resource_path,
+                                         cache_path->str,
+                                         manifest_name,
+                                         actions_path))
+    return FALSE;
+
+  va_list args;
+
+  const char* current = first_binding;
+
+  va_start (args, first_binding);
+
+  while (current != NULL)
+    {
+      GString *bindings_path = g_string_new ("");
+      if (!openvr_io_write_resource_to_file (resource_path,
+                                             cache_path->str,
+                                             current,
+                                             bindings_path))
+        return FALSE;
+
+      g_string_free (bindings_path, TRUE);
+
+      current = va_arg (args, const char*);
+    }
+
+  va_end (args);
+
+  g_string_free (cache_path, TRUE);
+
+  if (!openvr_action_load_manifest (actions_path->str))
+    return FALSE;
+
+  g_string_free (actions_path, TRUE);
 
   return TRUE;
 }
