@@ -10,6 +10,7 @@
 
 #include <glib-object.h>
 #include <openvr_capi.h>
+#include <graphene.h>
 
 G_BEGIN_DECLS
 
@@ -58,6 +59,9 @@ openvr_context_poll_event (OpenVRContext *self);
 void
 openvr_context_show_system_keyboard (OpenVRContext *self);
 
+void
+openvr_context_set_system_keyboard_transform (OpenVRContext *self,
+                                              graphene_matrix_t *transform);
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_CONTEXT_H_ */

@@ -144,8 +144,13 @@ gboolean
 openvr_overlay_get_transform_absolute (OpenVROverlay *self,
                                        graphene_matrix_t *mat);
 
-void
+gboolean
 openvr_overlay_show_overlay_keyboard (OpenVROverlay *self);
+
+void
+openvr_overlay_set_overlay_keyboard_position (OpenVROverlay *self,
+                                              graphene_vec2_t *top_left,
+                                              graphene_vec2_t *bottom_right);
 
 gboolean
 openvr_overlay_set_translation (OpenVROverlay      *self,

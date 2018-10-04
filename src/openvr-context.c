@@ -13,6 +13,8 @@
 
 #include <gdk/gdk.h>
 
+#include "openvr-math.h"
+
 G_DEFINE_TYPE (OpenVRContext, openvr_context, G_TYPE_OBJECT)
 
 #define INIT_FN_TABLE(target, type) \
@@ -297,4 +299,13 @@ openvr_context_show_system_keyboard (OpenVRContext *self)
     EGamepadTextInputMode_k_EGamepadTextInputModeNormal,
     EGamepadTextInputLineMode_k_EGamepadTextInputLineModeSingleLine,
     "OpenVR System Keyboard", 1, "", "true", 0);
+}
+
+void
+openvr_context_set_system_keyboard_transform (OpenVRContext *self,
+                                              graphene_matrix_t *transform)
+{
+  HmdMatrix34_t openvr_transform;
+  openvr_math_graphene_to_matrix34 (transform, &openvr_transform);
+  self->overlay->SetKeyboardTransformAbsolute (self->origin, &openvr_transform);
 }

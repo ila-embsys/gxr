@@ -684,15 +684,41 @@ openvr_overlay_get_2d_intersection (OpenVROverlay      *overlay,
   return TRUE;
 }
 
-void
+gboolean
 openvr_overlay_show_overlay_keyboard (OpenVROverlay *self)
 {
-  OpenVRContext *context = openvr_context_get_instance ();
-  context->overlay->ShowKeyboardForOverlay (
+  GET_OVERLAY_FUNCTIONS
+
+  err = f->ShowKeyboardForOverlay (
     self->overlay_handle,
     EGamepadTextInputMode_k_EGamepadTextInputModeNormal,
     EGamepadTextInputLineMode_k_EGamepadTextInputLineModeSingleLine,
     "OpenVR Overlay Keyboard", 1, "", "true", 0);
+
+  OVERLAY_CHECK_ERROR ("ShowKeyboardForOverlay", err);
+
+  return TRUE;
+}
+
+void
+openvr_overlay_set_overlay_keyboard_position (OpenVROverlay *self,
+                                              graphene_vec2_t *top_left,
+                                              graphene_vec2_t *bottom_right)
+{
+  GET_OVERLAY_FUNCTIONS
+  (void) err;
+
+  HmdRect2_t rect = {
+    .vTopLeft = {
+      .v[0] = graphene_vec2_get_x (top_left),
+      .v[1] = graphene_vec2_get_y (top_left)
+    },
+    .vBottomRight = {
+      .v[0] = graphene_vec2_get_x (bottom_right),
+      .v[1] = graphene_vec2_get_y (bottom_right)
+    }
+  };
+  f->SetKeyboardPositionForOverlay (self->overlay_handle, rect);
 }
 
 gboolean
@@ -703,19 +729,16 @@ openvr_overlay_set_translation (OpenVROverlay      *self,
   graphene_matrix_init_translate (&transform, translation);
   return openvr_overlay_set_transform_absolute (self, &transform);
 }
-
 void
 openvr_overlay_emit_grab (OpenVROverlay *self)
 {
   g_signal_emit (self, overlay_signals[GRAB_EVENT], 0);
 }
-
 void
 openvr_overlay_emit_release (OpenVROverlay *self)
 {
   g_signal_emit (self, overlay_signals[RELEASE_EVENT], 0);
 }
-
 void
 openvr_overlay_emit_hover_end (OpenVROverlay *self)
 {
