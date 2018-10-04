@@ -163,6 +163,7 @@ _overlay_mark_green (OpenVROverlay *overlay)
   openvr_overlay_set_color (overlay, &marked_color);
 }
 
+#if 0
 static void
 _intersection_cb (OpenVROverlay           *overlay,
                   OpenVRIntersectionEvent *event,
@@ -182,6 +183,7 @@ _intersection_cb (OpenVROverlay           *overlay,
 
   free (event);
 }
+#endif
 
 gboolean
 _interpolate_cb (gpointer _transition)
@@ -389,8 +391,10 @@ _init_cat_overlays (Example *self)
         if (!openvr_overlay_show (cat))
           return -1;
 
+#if 0
         g_signal_connect (cat, "intersection-event",
                           (GCallback) _intersection_cb, self);
+#endif
         i++;
 
       }
