@@ -453,47 +453,6 @@ _init_buttons (Example *self)
 }
 
 gboolean
-_cache_bindings (GString *actions_path)
-{
-  GString* cache_path = openvr_io_get_cache_path ("openvr-glib");
-
-  if (!openvr_io_create_directory_if_needed (cache_path->str))
-    return FALSE;
-
-  if (!openvr_io_write_resource_to_file ("/res/bindings", cache_path->str,
-                                         "actions.json", actions_path))
-    return FALSE;
-
-  GString *bindings_path = g_string_new ("");
-  if (!openvr_io_write_resource_to_file ("/res/bindings", cache_path->str,
-                                         "bindings_vive_controller.json",
-                                         bindings_path))
-    return FALSE;
-
-  g_string_free (bindings_path, TRUE);
-  g_string_free (cache_path, TRUE);
-
-  return TRUE;
-}
-
-gboolean
-_load_actions_manifest ()
-{
-  GString *action_manifest_path = g_string_new ("");
-  if (!_cache_bindings (action_manifest_path))
-    return FALSE;
-
-  g_print ("Resulting manifest path: %s", action_manifest_path->str);
-
-  if (!openvr_action_load_manifest (action_manifest_path->str))
-    return FALSE;
-
-  g_string_free (action_manifest_path, TRUE);
-
-  return TRUE;
-}
-
-gboolean
 _test_overlay_intersection (Example *self, graphene_matrix_t *pose)
 {
   /* If we had highlighted an overlay previously, unhighlight it */
@@ -681,7 +640,11 @@ main ()
       return false;
     }
 
-  if (!_load_actions_manifest ())
+  if (!openvr_io_load_cached_action_manifest ("openvr-glib",
+                                              "/res/bindings",
+                                              "actions.json",
+                                              "bindings_vive_controller.json",
+                                              NULL))
     return -1;
 
   Example self = {
