@@ -662,7 +662,6 @@ _cleanup (Example *self)
   g_object_unref (self->pointer_overlay);
   g_object_unref (self->intersection);
   g_object_unref (self->texture);
-  g_object_unref (self->uploader);
 
   g_object_unref (self->button_reset);
   g_object_unref (self->button_sphere);
@@ -673,6 +672,8 @@ _cleanup (Example *self)
 
   OpenVRContext *context = openvr_context_get_instance ();
   g_object_unref (context);
+
+  g_object_unref (self->uploader);
 }
 
 int
