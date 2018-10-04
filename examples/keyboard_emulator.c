@@ -18,7 +18,9 @@
 
 #include <graphene.h>
 
+#define XK_XKB_KEYS
 #define XK_MISCELLANY
+#define XK_LATIN1
 #include <X11/keysymdef.h>
 
 #include <X11/Xlib.h>
@@ -26,6 +28,22 @@
 
 Display *dpy;
 graphene_matrix_t keyboard_position;
+
+typedef struct KeySymTable {
+  KeySym *table;
+  int min_keycode;
+  //int max_keycode;
+  int keysyms_per_keycode;
+  int num_elements;
+
+  XModifierKeymap *modmap;
+} KeySymTable;
+
+typedef struct ModifierKeyCodes {
+  // there are only up to 8 modifier keys
+  KeyCode key_codes[8];
+  int length;
+} ModifierKeyCodes;
 
 gboolean
 timeout_callback (OpenVRContext *context)
@@ -105,6 +123,168 @@ _keyboard_input (OpenVRContext  *context,
     }
 }
 
+KeySymTable *
+_init_keysym_table (Display *dpy)
+{
+  int min_keycode;
+  int max_keycode;
+  int keysyms_per_keycode;
+  XDisplayKeycodes (dpy, &min_keycode, &max_keycode);
+  g_print ("Keycodes: min %d, max %d\n", min_keycode, max_keycode);
+
+  int keycode_count = max_keycode - min_keycode + 1;
+  KeySym *keysyms = XGetKeyboardMapping (dpy, min_keycode, keycode_count,
+                                         &keysyms_per_keycode);
+  g_print ("Key Syms per key code: %d\n", keysyms_per_keycode);
+  int num_elements = keycode_count * keysyms_per_keycode;
+
+  g_print ("Key code: syms\n");
+  for (int keycode = min_keycode; keycode < num_elements / keysyms_per_keycode;
+       keycode++)
+    {
+      g_print ("%3d ", keycode);
+      for (int keysym_num = 0; keysym_num < keysyms_per_keycode; keysym_num++)
+        {
+          int index = (keycode - min_keycode) * keysyms_per_keycode +
+            keysym_num;
+
+          KeySym sym = keysyms[index];
+          g_print ("| %-22s", sym == NoSymbol ? "" : XKeysymToString(sym));
+        }
+      g_print ("\n");
+    }
+
+  XModifierKeymap *modmap = XGetModifierMapping(dpy);
+  g_print ("Modifiers (max %d keys per mod):\n", modmap->max_keypermod);
+  for (int modifier = 0; modifier < 8; modifier++)
+    {
+      for (int mod_key = 0; mod_key < modmap->max_keypermod; mod_key++)
+        {
+          KeyCode keycode = modmap->modifiermap[modifier * modmap->max_keypermod + mod_key];
+          int syms;
+          if (keycode == 0) continue;
+          KeySym *sym = XGetKeyboardMapping (dpy, keycode, 1, &syms);
+          for (int i = 0; i < syms; i++)
+            {
+              if (sym[i] == NoSymbol) continue;
+              g_print ("| %3d %-22s", keycode, XKeysymToString(sym[i]));
+            }
+        }
+      g_print ("\n");
+    }
+
+  KeySymTable *keysym_table = malloc (sizeof (KeySymTable));
+  keysym_table->table = keysyms;
+  keysym_table->min_keycode = min_keycode;
+  //keysym_table->max_keycode = max_keycode;
+  keysym_table->keysyms_per_keycode = keysyms_per_keycode;
+  keysym_table->num_elements = num_elements;
+  keysym_table->modmap = modmap;
+
+  return keysym_table;
+}
+
+int
+_find_modifier_num (KeySymTable *keysym_table, KeySym sym)
+{
+  int min_keycode = keysym_table->min_keycode;
+  int num_elements = keysym_table->num_elements;
+  int keysyms_per_keycode = keysym_table->keysyms_per_keycode;
+  KeySym *keysyms = keysym_table->table;
+  for (int keycode = min_keycode; keycode < num_elements / keysyms_per_keycode;
+     keycode++)
+    {
+      for (int keysym_num = 0; keysym_num < keysyms_per_keycode; keysym_num++)
+        {
+          int index = (keycode - min_keycode) * keysyms_per_keycode +
+            keysym_num;
+          if (keysyms[index] == sym)
+            {
+              int modifier_num = keysym_num;
+              return modifier_num;
+            }
+        }
+    }
+  return -1;
+}
+
+ModifierKeyCodes
+_modifier_keycode_for (KeySym sym, KeySymTable *keysym_table)
+{
+  /* each row of the key sym table is one key code
+   * in each row there are up to "keysyms_per_keycode" key syms that are located
+   * on the same physical key in the current layout
+   *
+   * for example in the german layout the row for the q key looks like this
+   * key code 24; key syms: q, Q, q, Q, at, Greek_OMEGA, at
+   * (note that XKeysymToString() omits the XK_ prefix that can be found in the
+   * #define in keysymdef.h, e.g. the "at" key sym is defined as XK_at)
+   *
+   * _find_modifier_num() finds the index of the first applicable sym:
+   * XK_q => 0
+   * XK_Q => 1
+   * XK_at => 4
+   */
+  int modifier_num = _find_modifier_num (keysym_table, sym);
+
+  if (modifier_num == -1) {
+    g_print ("ERROR: Did not find key sym!\n");
+    return (ModifierKeyCodes) { .length = 0 };
+  } else {
+    g_print ("Found key sym with mod number %d!\n", modifier_num);
+  }
+
+  /* There are up to 8 modifiers that can be enumerated (shift, ctrl, etc.)
+   *
+   * each of these 8 keys has up to "max_keypermod" "equivalent" modifiers
+   * (e.g. left shift, right shift, etc.)
+   *
+   * TODO:
+   * from XK_at appearing in column 4 of the table above we know that XK_at
+   * can be achieved by q + modifier "4" and
+   * I know from my keyboard that modifier 4 is the alt gr key (which has keysym
+   * XK_ISO_Level3_Shift) but I do not know how to programatically find wich
+   * entry of the XModifierKeymap entries below corresponds to e.g. column 4
+   *
+   * If modmap->modifiermap[modmap_index(4)] was XK_ISO_Level3_Shift we would
+   * have solved the problem
+
+  XModifierKeymap *modmap = keysym_table->modmap;
+  // + 0: There are modmap->max_keypermod "equivalent" modifier keys.
+  int modmap_index = modifier_num * modmap->max_keypermod + 0;
+  KeyCode key_code = modmap->modifiermap[modmap_index];
+  return key_code;
+  */
+
+  // for now hardcode the modifier key
+  switch (modifier_num) {
+  case 0:
+    return (ModifierKeyCodes) {
+      .key_codes[0] = XKeysymToKeycode (dpy, NoSymbol),
+      .length = 1
+    };
+  case 1:
+    return (ModifierKeyCodes) {
+      .key_codes[0] = XKeysymToKeycode (dpy, XK_Shift_L),
+      .length = 1
+    };
+    // 2 and 3 are the same as 1 and 2 for me
+  case 4:
+    return (ModifierKeyCodes) {
+      .key_codes[0] = XKeysymToKeycode (dpy, XK_ISO_Level3_Shift),
+      .length = 1
+    };
+  case 5:
+    return (ModifierKeyCodes) {
+      .key_codes[0] = XKeysymToKeycode (dpy, XK_Shift_L),
+      .key_codes[1] = XKeysymToKeycode (dpy, XK_ISO_Level3_Shift),
+      .length = 2
+    };
+  default:
+    return (ModifierKeyCodes) { .length = 0 };
+  }
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -112,11 +292,32 @@ main (int argc, char *argv[])
   (void) argv;
   GMainLoop *loop = g_main_loop_new (NULL, FALSE);
 
-  /* init openvr */
+  dpy = XOpenDisplay (NULL);
+
+  KeySymTable *keysym_table = _init_keysym_table (dpy);
+  KeySym test_key = XK_at;
+  ModifierKeyCodes modifier_key_code =
+    _modifier_keycode_for (test_key, keysym_table);
+
+  g_print ("Got %d modifier key codes: ", modifier_key_code.length);
+  for (int i = 0; i < modifier_key_code.length; i++)
+    {
+      int syms;
+      KeySym *sym =
+        XGetKeyboardMapping (dpy, modifier_key_code.key_codes[i], 1, &syms);
+      for (int i = 0; i < syms; i++)
+        {
+          if (sym[i] == NoSymbol) continue;
+            g_print ("| %-22s", XKeysymToString(sym[i]));
+        }
+      g_print ("\n");
+    }
+
+  return 0;
+
+    /* init openvr */
   if (!_init_openvr ())
     return -1;
-
-  dpy = XOpenDisplay (NULL);
 
   OpenVRContext *context = openvr_context_get_instance ();
   openvr_context_show_system_keyboard (context);
