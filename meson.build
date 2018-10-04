@@ -37,6 +37,7 @@ graphene_dep = dependency('graphene-1.0')
 
 ## Optional
 x11_dep = dependency('x11', required : false)
+xtst_dep = dependency('xtst', required : false)
 xi_dep = dependency('xi', required : false)
 clutter_gtk_dep = dependency('clutter-gtk-1.0', required : false)
 clutter_dep = dependency('clutter-1.0', required : false)
