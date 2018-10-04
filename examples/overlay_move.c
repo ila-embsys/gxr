@@ -598,12 +598,7 @@ void
 _grab_release (Example *self)
 {
   if (self->current_grab_overlay != NULL)
-    {
-      graphene_vec3_t unmarked_color;
-      graphene_vec3_init (&unmarked_color, 1.f, 1.f, 1.f);
-      openvr_overlay_set_color (self->current_grab_overlay,
-                               &unmarked_color);
-     }
+    _overlay_unmark (self->current_grab_overlay);
   self->current_grab_overlay = NULL;
 }
 
