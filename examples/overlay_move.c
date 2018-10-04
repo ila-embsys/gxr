@@ -52,6 +52,11 @@ typedef struct HoverState {
   float             distance;
 } HoverState;
 
+typedef struct GrabState {
+  OpenVROverlay    *overlay;
+  graphene_matrix_t pose;
+} GrabState;
+
 typedef struct Example
 {
   OpenVRVulkanTexture *texture;
@@ -63,9 +68,7 @@ typedef struct Example
   OpenVRIntersection *intersection;
 
   HoverState hover_state;
-
-  OpenVROverlay *current_grab_overlay;
-  graphene_matrix_t *current_grab_matrix;
+  GrabState grab_state;
 
   OpenVRButton *button_reset;
   OpenVRButton *button_sphere;
@@ -564,7 +567,7 @@ _drag_overlay (Example *self, graphene_matrix_t *pose)
                              pose,
                             &transformed);
 
-  openvr_overlay_set_transform_absolute (self->current_grab_overlay,
+  openvr_overlay_set_transform_absolute (self->grab_state.overlay,
                                         &transformed);
   openvr_pointer_move (self->pointer_overlay, pose, self->hover_state.distance);
 }
@@ -578,7 +581,7 @@ _dominant_hand_cb (OpenVRAction    *action,
   Example *self = (Example*) _self;
 
   /* Drag test */
-  if (self->current_grab_overlay != NULL)
+  if (self->grab_state.overlay != NULL)
     _drag_overlay (self, &event->pose);
   else
     _test_overlay_intersection (self, &event->pose);
@@ -605,23 +608,23 @@ _grab_press (Example *self)
   /* Overlay grabbed */
   else
     {
-      self->current_grab_overlay = self->hover_state.overlay;
-
-      graphene_matrix_init_from_matrix (self->current_grab_matrix,
-                                       &self->hover_state.pose);
+      /* Copy hover to grab state */
+      self->grab_state.overlay = self->hover_state.overlay;
+      graphene_matrix_init_from_matrix (&self->grab_state.pose,
+                                        &self->hover_state.pose);
 
       openvr_overlay_hide (OPENVR_OVERLAY (self->intersection));
 
-      _overlay_mark_green (self->current_grab_overlay);
+      _overlay_mark_green (self->grab_state.overlay);
     }
 }
 
 void
 _grab_release (Example *self)
 {
-  if (self->current_grab_overlay != NULL)
-    _overlay_unmark (self->current_grab_overlay);
-  self->current_grab_overlay = NULL;
+  if (self->grab_state.overlay != NULL)
+    _overlay_unmark (self->grab_state.overlay);
+  self->grab_state.overlay = NULL;
 }
 
 static void
@@ -683,10 +686,12 @@ main ()
 
   Example self = {
     .loop = g_main_loop_new (NULL, FALSE),
-    .current_grab_matrix = graphene_matrix_alloc (),
     .wm_action_set = openvr_action_set_new_from_url ("/actions/wm"),
     .hover_state = {
       .distance = 1.0f,
+      .overlay = NULL
+    },
+    .grab_state = {
       .overlay = NULL
     },
     .pointer_default_length = 5.0
