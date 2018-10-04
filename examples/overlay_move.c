@@ -37,6 +37,7 @@ typedef struct Example
   OpenVRVulkanTexture *texture;
 
   GSList *cat_overlays;
+  GSList *hover_overlays;
 
   OpenVRPointer *pointer_overlay;
   OpenVRIntersection *intersection;
@@ -126,18 +127,18 @@ _overlay_unmark (OpenVROverlay *overlay)
 }
 
 void
-_overlay_mark_red (OpenVROverlay *overlay)
-{
-  graphene_vec3_t marked_color;
-  graphene_vec3_init (&marked_color, .8f, .2f, .2f);
-  openvr_overlay_set_color (overlay, &marked_color);
-}
-
-void
 _overlay_mark_blue (OpenVROverlay *overlay)
 {
   graphene_vec3_t marked_color;
   graphene_vec3_init (&marked_color, .2f, .2f, .8f);
+  openvr_overlay_set_color (overlay, &marked_color);
+}
+
+void
+_overlay_mark_green (OpenVROverlay *overlay)
+{
+  graphene_vec3_t marked_color;
+  graphene_vec3_init (&marked_color, .2f, .8f, .2f);
   openvr_overlay_set_color (overlay, &marked_color);
 }
 
@@ -147,96 +148,6 @@ typedef struct Intersection
   graphene_point3d_t point;
   float              distance;
 } Intersection;
-
-gboolean
-_test_overlay_intersection (Example *self, graphene_matrix_t *pose)
-{
-  /* If we had highlighted an overlay previously, unhighlight it */
-  if (self->current_hover_overlay != NULL)
-    _overlay_unmark (self->current_hover_overlay);
-
-  /* Test cat overlay intersection */
-  Intersection nearest_intersection = {
-    .distance = FLT_MAX,
-    .overlay = NULL,
-  };
-
-  for (GSList *l = self->cat_overlays; l != NULL; l = l->next)
-    {
-      OpenVROverlay *overlay = (OpenVROverlay*) l->data;
-
-      /* TODO: Use intersection callback for this. */
-      graphene_point3d_t intersection_point;
-      if (openvr_overlay_intersects (overlay, &intersection_point, pose))
-        {
-          float distance = _point_matrix_distance (&intersection_point, pose);
-          if (distance < nearest_intersection.distance)
-            {
-              nearest_intersection.overlay = overlay;
-              nearest_intersection.distance = distance;
-              graphene_point3d_init_from_point (&nearest_intersection.point,
-                                                &intersection_point);
-            }
-        }
-    }
-
-  if (nearest_intersection.overlay != NULL)
-    {
-      /* If we now hover over an overlay */
-      self->distance = nearest_intersection.distance;
-      self->current_hover_overlay = nearest_intersection.overlay;
-      graphene_matrix_init_from_matrix (self->current_hover_matrix, pose);
-
-      /* highlight it */
-      _overlay_mark_red (self->current_hover_overlay);
-
-      /* update pointer and intersection overlays */
-      openvr_intersection_update (self->intersection, pose,
-                                 &nearest_intersection.point);
-      openvr_pointer_move (self->pointer_overlay, pose,
-                           nearest_intersection.distance);
-      return TRUE;
-    }
-
-  /* Test button overlays */
-  graphene_point3d_t intersection_point;
-  if (openvr_overlay_intersects (OPENVR_OVERLAY (self->button_reset),
-                                &intersection_point,
-                                 pose))
-    {
-      self->current_hover_overlay = OPENVR_OVERLAY (self->button_reset);
-      _overlay_mark_blue (OPENVR_OVERLAY (self->button_reset));
-
-      /* update pointer and intersection overlays */
-      openvr_intersection_update (self->intersection, pose,
-                                 &intersection_point);
-      openvr_pointer_move (self->pointer_overlay, pose,
-                           self->pointer_default_length);
-
-      return TRUE;
-    }
-
-  if (openvr_overlay_intersects (OPENVR_OVERLAY (self->button_sphere),
-                                &intersection_point, pose))
-    {
-      self->current_hover_overlay = OPENVR_OVERLAY (self->button_sphere);
-      _overlay_mark_blue (OPENVR_OVERLAY (self->button_sphere));
-
-      /* update pointer and intersection overlays */
-      openvr_intersection_update (self->intersection, pose,
-                                 &intersection_point);
-      openvr_pointer_move (self->pointer_overlay, pose,
-                           self->pointer_default_length);
-
-      return TRUE;
-    }
-
-  /* No intersection was found, nothing is hovered */
-  self->current_hover_overlay = NULL;
-  openvr_overlay_hide (OPENVR_OVERLAY (self->intersection));
-
-  return FALSE;
-}
 
 static void
 _intersection_cb (OpenVROverlay           *overlay,
@@ -404,7 +315,8 @@ _init_cat_overlays (Example *self)
 
   OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (self->uploader);
 
-  self->texture = openvr_vulkan_texture_new_from_pixbuf (client->device, pixbuf);
+  self->texture =
+    openvr_vulkan_texture_new_from_pixbuf (client->device, pixbuf);
 
   openvr_vulkan_client_upload_pixbuf (client, self->texture, pixbuf);
 
@@ -437,7 +349,7 @@ _init_cat_overlays (Example *self)
 
         if (!openvr_overlay_is_valid (cat))
           {
-            fprintf (stderr, "Overlay unavailable.\n");
+            g_printerr ("Overlay unavailable.\n");
             return -1;
           }
 
@@ -461,7 +373,11 @@ _init_cat_overlays (Example *self)
         openvr_vulkan_uploader_submit_frame (self->uploader, cat,
                                              self->texture);
 
+        /* Managed and draggable overlays */
         self->cat_overlays = g_slist_append (self->cat_overlays, cat);
+
+        /* All overlays that can be hovered, includes button overlays */
+        self->hover_overlays = g_slist_append (self->hover_overlays, cat);
 
         if (!openvr_overlay_show (cat))
           return -1;
@@ -496,6 +412,9 @@ _init_buttons (Example *self)
   openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (self->button_reset),
                                         &transform);
 
+  self->hover_overlays = g_slist_append (self->hover_overlays,
+                                         OPENVR_OVERLAY (self->button_reset));
+
   if (!openvr_overlay_set_width_meters (
         OPENVR_OVERLAY (self->button_reset), 0.5f))
     return FALSE;
@@ -515,6 +434,9 @@ _init_buttons (Example *self)
 
   openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (self->button_sphere),
                                         &transform_sphere);
+
+  self->hover_overlays = g_slist_append (self->hover_overlays,
+                                         OPENVR_OVERLAY (self->button_sphere));
 
   if (!openvr_overlay_set_width_meters (
         OPENVR_OVERLAY (self->button_sphere), 0.5f))
@@ -547,42 +469,97 @@ _cache_bindings (GString *actions_path)
   return TRUE;
 }
 
+gboolean
+_test_overlay_intersection (Example *self, graphene_matrix_t *pose)
+{
+  /* If we had highlighted an overlay previously, unhighlight it */
+  if (self->current_hover_overlay != NULL)
+    _overlay_unmark (self->current_hover_overlay);
+
+  /* Test cat overlay intersection */
+  Intersection nearest_intersection = {
+    .distance = FLT_MAX,
+    .overlay = NULL,
+  };
+
+  for (GSList *l = self->hover_overlays; l != NULL; l = l->next)
+    {
+      OpenVROverlay *overlay = (OpenVROverlay*) l->data;
+
+      /* TODO: Use intersection callback for this. */
+      graphene_point3d_t intersection_point;
+      if (openvr_overlay_intersects (overlay, &intersection_point, pose))
+        {
+          float distance = _point_matrix_distance (&intersection_point, pose);
+          if (distance < nearest_intersection.distance)
+            {
+              nearest_intersection.overlay = overlay;
+              nearest_intersection.distance = distance;
+              graphene_point3d_init_from_point (&nearest_intersection.point,
+                                                &intersection_point);
+            }
+        }
+    }
+
+  if (nearest_intersection.overlay != NULL)
+    {
+      /* If we now hover over an overlay */
+      self->distance = nearest_intersection.distance;
+      self->current_hover_overlay = nearest_intersection.overlay;
+      graphene_matrix_init_from_matrix (self->current_hover_matrix, pose);
+
+      /* highlight it */
+      _overlay_mark_blue (self->current_hover_overlay);
+
+      /* update pointer and intersection overlays */
+      openvr_intersection_update (self->intersection, pose,
+                                 &nearest_intersection.point);
+      openvr_pointer_move (self->pointer_overlay, pose,
+                           nearest_intersection.distance);
+      return TRUE;
+    }
+
+  /* No intersection was found, nothing is hovered */
+  self->current_hover_overlay = NULL;
+  openvr_overlay_hide (OPENVR_OVERLAY (self->intersection));
+  openvr_pointer_move (self->pointer_overlay, pose,
+                       self->pointer_default_length);
+
+  return FALSE;
+}
+
+void
+_drag_overlay (Example *self, graphene_matrix_t *pose)
+{
+  graphene_point3d_t translation_point;
+  graphene_point3d_init (&translation_point, .0f, .0f, -self->distance);
+
+  graphene_matrix_t transformation_matrix;
+  graphene_matrix_init_translate (&transformation_matrix, &translation_point);
+
+  graphene_matrix_t transformed;
+  graphene_matrix_multiply (&transformation_matrix,
+                             pose,
+                            &transformed);
+
+  openvr_overlay_set_transform_absolute (self->current_grab_overlay,
+                                        &transformed);
+  openvr_pointer_move (self->pointer_overlay, pose, self->distance);
+}
+
 static void
 _dominant_hand_cb (OpenVRAction    *action,
                    OpenVRPoseEvent *event,
                    gpointer         _self)
 {
   (void) action;
-
   Example *self = (Example*) _self;
 
-  /* Drag */
+  /* Drag test */
   if (self->current_grab_overlay != NULL)
-    {
-      graphene_point3d_t translation_point;
-      graphene_point3d_init (&translation_point, .0f, .0f, -self->distance);
-
-      graphene_matrix_t transformation_matrix;
-      graphene_matrix_init_translate (&transformation_matrix,
-                                      &translation_point);
-
-      graphene_matrix_t transformed;
-      graphene_matrix_multiply (&transformation_matrix,
-                                &event->pose,
-                                &transformed);
-
-      openvr_overlay_set_transform_absolute (self->current_grab_overlay,
-                                             &transformed);
-      openvr_pointer_move (self->pointer_overlay, &event->pose, self->distance);
-    }
+    _drag_overlay (self, &event->pose);
   else
-    {
-      gboolean has_intersection = _test_overlay_intersection (self,
-                                                              &event->pose);
-      if (!has_intersection)
-          openvr_pointer_move (self->pointer_overlay, &event->pose,
-                               self->pointer_default_length);
-    }
+    _test_overlay_intersection (self, &event->pose);
 
   g_free (event);
 }
@@ -613,9 +590,7 @@ _grab_press (Example *self)
 
       openvr_overlay_hide (OPENVR_OVERLAY (self->intersection));
 
-      graphene_vec3_t marked_color;
-      graphene_vec3_init (&marked_color, .2f, .8f, .2f);
-      openvr_overlay_set_color (self->current_grab_overlay, &marked_color);
+      _overlay_mark_green (self->current_grab_overlay);
     }
 }
 
