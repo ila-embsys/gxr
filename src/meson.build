@@ -22,6 +22,7 @@ openvr_glib_sources = [
   'openvr-button.c',
   'openvr-intersection.c',
   'openvr-pointer.c',
+  'openvr-overlay-manager.c'
 ]
 
 openvr_glib_headers = [
@@ -44,7 +45,8 @@ openvr_glib_headers = [
   'openvr-model.h',
   'openvr-button.h',
   'openvr-intersection.h',
-  'openvr-pointer.h'
+  'openvr-pointer.h',
+  'openvr-overlay-manager.h'
 ]
 
 version_split = meson.project_version().split('.')
@@ -77,7 +79,8 @@ openvr_glib_deps = openvr_deps + [
   gdk_pixbuf_dep,
   gtk3_dep,
   vulkan_dep,
-  graphene_dep
+  graphene_dep,
+  m_dep
 ]
 
 openvr_glib_lib = shared_library(api_path,

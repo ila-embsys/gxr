@@ -146,6 +146,10 @@ gboolean
 openvr_overlay_get_transform_absolute (OpenVROverlay *self,
                                        graphene_matrix_t *mat);
 
+gboolean
+openvr_overlay_set_translation (OpenVROverlay      *self,
+                                graphene_point3d_t *translation);
+
 G_END_DECLS
 
 #define GET_OVERLAY_FUNCTIONS \

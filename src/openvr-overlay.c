@@ -639,3 +639,12 @@ openvr_overlay_poll_3d_intersection (OpenVROverlay      *self,
 
   g_signal_emit (self, overlay_signals[INTERSECTION_EVENT], 0, event);
 }
+
+gboolean
+openvr_overlay_set_translation (OpenVROverlay      *self,
+                                graphene_point3d_t *translation)
+{
+  graphene_matrix_t transform;
+  graphene_matrix_init_translate (&transform, translation);
+  return openvr_overlay_set_transform_absolute (self, &transform);
+}
