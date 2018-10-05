@@ -29,7 +29,7 @@ executable(
   install: false)
 
 executable(
-  'overlay_move', ['overlay_move.c', test_resources],
+  'overlay_management', ['overlay_management.c', test_resources],
   dependencies: [gtk3_dep, openvr_dep, cairo_dep, graphene_dep, m_dep],
   link_with: openvr_glib_lib,
   include_directories: openvr_glib_inc,
