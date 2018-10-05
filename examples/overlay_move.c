@@ -184,30 +184,43 @@ _init_cat_overlays (Example *self)
 }
 
 gboolean
+_init_button (OpenVROverlayManager *manager,
+              OpenVRButton        **button,
+              gchar                *id,
+              gchar                *label,
+              graphene_point3d_t   *position)
+{
+  graphene_matrix_t transform;
+  graphene_matrix_init_translate (&transform, position);
+
+  *button = openvr_button_new (id, label);
+  if (*button == NULL)
+    return FALSE;
+
+  openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (*button),
+                                        &transform);
+
+  openvr_overlay_manager_add_overlay (manager,
+                                      OPENVR_OVERLAY (*button),
+                                      OPENVR_OVERLAY_HOVER);
+
+  if (!openvr_overlay_set_width_meters (
+        OPENVR_OVERLAY (*button), 0.5f))
+    return FALSE;
+
+  return TRUE;
+}
+
+gboolean
 _init_buttons (Example *self)
 {
-  graphene_point3d_t position = {
+  graphene_point3d_t position_reset = {
     .x =  0.0f,
     .y =  0.0f,
     .z = -1.0f
   };
-
-  graphene_matrix_t transform;
-  graphene_matrix_init_translate (&transform, &position);
-
-  self->button_reset = openvr_button_new ("control.reset", "Reset");
-  if (self->button_reset == NULL)
-    return FALSE;
-
-  openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (self->button_reset),
-                                        &transform);
-
-  openvr_overlay_manager_add_overlay (self->manager,
-                                      OPENVR_OVERLAY (self->button_reset),
-                                      OPENVR_OVERLAY_HOVER);
-
-  if (!openvr_overlay_set_width_meters (
-        OPENVR_OVERLAY (self->button_reset), 0.5f))
+  if (!_init_button (self->manager, &self->button_reset,
+                     "control.reset", "Reset", &position_reset))
     return FALSE;
 
   graphene_point3d_t position_sphere = {
@@ -215,23 +228,8 @@ _init_buttons (Example *self)
     .y =  0.0f,
     .z = -1.0f
   };
-
-  graphene_matrix_t transform_sphere;
-  graphene_matrix_init_translate (&transform_sphere, &position_sphere);
-
-  self->button_sphere = openvr_button_new ("control.sphere", "Sphere");
-  if (self->button_sphere == NULL)
-    return FALSE;
-
-  openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (self->button_sphere),
-                                        &transform_sphere);
-
-  openvr_overlay_manager_add_overlay (self->manager,
-                                      OPENVR_OVERLAY (self->button_sphere),
-                                      OPENVR_OVERLAY_HOVER);
-
-  if (!openvr_overlay_set_width_meters (
-        OPENVR_OVERLAY (self->button_sphere), 0.5f))
+  if (!_init_button (self->manager, &self->button_sphere,
+                     "control.sphere", "Sphere", &position_sphere))
     return FALSE;
 
   return TRUE;
