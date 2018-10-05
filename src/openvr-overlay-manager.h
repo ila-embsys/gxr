@@ -18,35 +18,23 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (OpenVROverlayManager, openvr_overlay_manager, OPENVR,
                       OVERLAY_MANAGER, GObject)
 
-typedef struct OpenVRHoverEvent
+typedef struct TransformTransition
 {
-  OpenVROverlay     *overlay;
-  graphene_point3d_t point;
-  graphene_matrix_t  pose;
-  float              distance;
-  OpenVROverlay     *previous_overlay;
-} OpenVRHoverEvent;
-
-typedef struct OpenVRNoHoverEvent
-{
-  OpenVROverlay     *previous_overlay;
-  graphene_matrix_t  pose;
-} OpenVRNoHoverEvent;
-
-typedef struct TransformTransition {
   OpenVROverlay *overlay;
   graphene_matrix_t from;
   graphene_matrix_t to;
   float interpolate;
 } TransformTransition;
 
-typedef struct HoverState {
+typedef struct HoverState
+{
   OpenVROverlay    *overlay;
   graphene_matrix_t pose;
   float             distance;
 } HoverState;
 
-typedef struct GrabState {
+typedef struct GrabState
+{
   OpenVROverlay    *overlay;
   graphene_matrix_t pose;
 } GrabState;

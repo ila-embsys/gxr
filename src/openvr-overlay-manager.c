@@ -15,7 +15,6 @@
 G_DEFINE_TYPE (OpenVROverlayManager, openvr_overlay_manager, G_TYPE_OBJECT)
 
 enum {
-  HOVER_EVENT,
   NO_HOVER_EVENT,
   LAST_SIGNAL
 };
@@ -27,19 +26,11 @@ openvr_overlay_manager_finalize (GObject *gobject);
 static void
 openvr_overlay_manager_class_init (OpenVROverlayManagerClass *klass)
 {
-  overlay_manager_signals[HOVER_EVENT] =
-    g_signal_new ("hover-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_LAST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE,
-                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
   overlay_manager_signals[NO_HOVER_EVENT] =
     g_signal_new ("no-hover-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_LAST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE,
-                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+                   G_TYPE_FROM_CLASS (klass),
+                   G_SIGNAL_RUN_FIRST,
+                   0, NULL, NULL, NULL, G_TYPE_NONE, 0);
 
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
@@ -241,8 +232,8 @@ _test_hover (OpenVROverlayManager *self,
 {
   OpenVRHoverEvent *event = g_malloc (sizeof (OpenVRHoverEvent));
   event->distance = FLT_MAX;
-  event->overlay = NULL;
-  event->previous_overlay = NULL;
+
+  OpenVROverlay *closest = NULL;
 
   for (GSList *l = self->hover_overlays; l != NULL; l = l->next)
     {
@@ -255,7 +246,7 @@ _test_hover (OpenVROverlayManager *self,
             openvr_math_point_matrix_distance (&intersection_point, pose);
           if (distance < event->distance)
             {
-              event->overlay = overlay;
+              closest = overlay;
               event->distance = distance;
               graphene_matrix_init_from_matrix (&event->pose, pose);
               graphene_point3d_init_from_point (&event->point,
@@ -264,17 +255,18 @@ _test_hover (OpenVROverlayManager *self,
         }
     }
 
-    if (event->overlay != NULL)
+    if (closest != NULL)
       {
         /* We now hover over an overlay */
-        if (event->overlay != self->hover_state.overlay)
-          event->previous_overlay = self->hover_state.overlay;
+        if (closest != self->hover_state.overlay
+            && self->hover_state.overlay != NULL)
+          openvr_overlay_emit_hover_end (self->hover_state.overlay);
 
         self->hover_state.distance = event->distance;
-        self->hover_state.overlay = event->overlay;
+        self->hover_state.overlay = closest;
         graphene_matrix_init_from_matrix (&self->hover_state.pose, pose);
 
-        g_signal_emit (self, overlay_manager_signals[HOVER_EVENT], 0, event);
+        openvr_overlay_emit_hover (closest, event);
       }
     else
       {
@@ -284,13 +276,9 @@ _test_hover (OpenVROverlayManager *self,
         /* Emit no hover event only if we had hovered something earlier */
         if (self->hover_state.overlay != NULL)
           {
-            OpenVRNoHoverEvent *no_hover_event =
-              g_malloc (sizeof (OpenVRNoHoverEvent));
-            no_hover_event->previous_overlay = self->hover_state.overlay;
+            openvr_overlay_emit_hover_end (self->hover_state.overlay);
             self->hover_state.overlay = NULL;
-            graphene_matrix_init_from_matrix (&no_hover_event->pose, pose);
-            g_signal_emit (self, overlay_manager_signals[NO_HOVER_EVENT],
-                           0, no_hover_event);
+            g_signal_emit (self, overlay_manager_signals[NO_HOVER_EVENT], 0);
           }
       }
 }

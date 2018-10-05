@@ -16,7 +16,8 @@
 #include <openvr_capi.h>
 #include <graphene.h>
 
-typedef struct OpenVRIntersectionEvent {
+typedef struct OpenVRIntersectionEvent
+{
   graphene_matrix_t transform;
   gboolean has_intersection;
   graphene_point3d_t intersection_point;
@@ -40,6 +41,14 @@ typedef struct PixelSize
   uint32_t width;
   uint32_t height;
 } PixelSize;
+
+typedef struct OpenVRHoverEvent
+{
+  graphene_point3d_t point;
+  graphene_matrix_t  pose;
+  float              distance;
+} OpenVRHoverEvent;
+
 
 OpenVROverlay *openvr_overlay_new (void);
 
@@ -155,6 +164,13 @@ openvr_overlay_emit_grab (OpenVROverlay *self);
 
 void
 openvr_overlay_emit_release (OpenVROverlay *self);
+
+void
+openvr_overlay_emit_hover_end (OpenVROverlay *self);
+
+void
+openvr_overlay_emit_hover (OpenVROverlay    *self,
+                           OpenVRHoverEvent *event);
 
 G_END_DECLS
 
