@@ -48,7 +48,7 @@ typedef struct Example
 
   float pointer_default_length;
 
-  OpenVRActionSet *wm_action_set;
+  OpenVRActionSet *action_set;
 
   OpenVRVulkanUploader *uploader;
 } Example;
@@ -66,7 +66,7 @@ _poll_events_cb (gpointer _self)
 {
   Example *self = (Example*) _self;
 
-  if (!openvr_action_set_poll (self->wm_action_set))
+  if (!openvr_action_set_poll (self->action_set))
     return FALSE;
 
   return TRUE;
@@ -366,7 +366,7 @@ _cleanup (Example *self)
   g_object_unref (self->button_reset);
   g_object_unref (self->button_sphere);
 
-  g_object_unref (self->wm_action_set);
+  g_object_unref (self->action_set);
 
   g_object_unref (self->manager);
 
@@ -395,7 +395,7 @@ main ()
 
   Example self = {
     .loop = g_main_loop_new (NULL, FALSE),
-    .wm_action_set = openvr_action_set_new_from_url ("/actions/wm"),
+    .action_set = openvr_action_set_new_from_url ("/actions/wm"),
     .manager = openvr_overlay_manager_new (),
     .pointer_default_length = 5.0
   };
@@ -421,11 +421,11 @@ main ()
   if (!_init_buttons (&self))
     return -1;
 
-  openvr_action_set_register (self.wm_action_set, OPENVR_ACTION_POSE,
+  openvr_action_set_register (self.action_set, OPENVR_ACTION_POSE,
                               "/actions/wm/in/hand_primary",
                               (GCallback) _dominant_hand_cb, &self);
 
-  openvr_action_set_register (self.wm_action_set, OPENVR_ACTION_DIGITAL,
+  openvr_action_set_register (self.action_set, OPENVR_ACTION_DIGITAL,
                               "/actions/wm/in/grab_window",
                               (GCallback) _grab_cb, &self);
 
