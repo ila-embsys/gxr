@@ -88,37 +88,17 @@ openvr_overlay_manager_add_overlay (OpenVROverlayManager *self,
                                     OpenVROverlayFlags    flags);
 
 void
-openvr_overlay_manager_test_hover (OpenVROverlayManager *self,
-                                   graphene_matrix_t    *pose);
-
-float
-openvr_overlay_manager_get_hover_distance (OpenVROverlayManager *self);
-
-void
-openvr_overlay_manager_drag_overlay (OpenVROverlayManager *self,
-                                     graphene_matrix_t    *pose);
-
-gboolean
-openvr_overlay_manager_is_grabbing (OpenVROverlayManager *self);
-
-gboolean
-openvr_overlay_manager_is_hovering (OpenVROverlayManager *self);
-
-gboolean
-openvr_overlay_manager_is_hovered (OpenVROverlayManager *self,
-                                   OpenVROverlay        *overlay);
-
-void
 openvr_overlay_manager_drag_start (OpenVROverlayManager *self);
-
-OpenVROverlay*
-openvr_overlay_manager_grab_end (OpenVROverlayManager *self);
 
 void
 openvr_overlay_manager_check_grab (OpenVROverlayManager *self);
 
 void
 openvr_overlay_manager_check_release (OpenVROverlayManager *self);
+
+void
+opevr_overlay_manager_update_pose (OpenVROverlayManager *self,
+                                   graphene_matrix_t    *pose);
 
 G_END_DECLS
 

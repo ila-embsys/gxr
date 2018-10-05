@@ -236,8 +236,8 @@ openvr_overlay_manager_add_overlay (OpenVROverlayManager *self,
 }
 
 void
-openvr_overlay_manager_test_hover (OpenVROverlayManager *self,
-                                   graphene_matrix_t    *pose)
+_test_hover (OpenVROverlayManager *self,
+             graphene_matrix_t    *pose)
 {
   OpenVRHoverEvent *event = g_malloc (sizeof (OpenVRHoverEvent));
   event->distance = FLT_MAX;
@@ -295,34 +295,9 @@ openvr_overlay_manager_test_hover (OpenVROverlayManager *self,
       }
 }
 
-float
-openvr_overlay_manager_get_hover_distance (OpenVROverlayManager *self)
-{
-  return self->hover_state.distance;
-}
-
-gboolean
-openvr_overlay_manager_is_grabbing (OpenVROverlayManager *self)
-{
-  return self->grab_state.overlay != NULL;
-}
-
-gboolean
-openvr_overlay_manager_is_hovering (OpenVROverlayManager *self)
-{
-  return self->hover_state.overlay != NULL;
-}
-
-gboolean
-openvr_overlay_manager_is_hovered (OpenVROverlayManager *self,
-                                   OpenVROverlay        *overlay)
-{
-  return self->hover_state.overlay == overlay;
-}
-
 void
-openvr_overlay_manager_drag_overlay (OpenVROverlayManager *self,
-                                     graphene_matrix_t    *pose)
+_drag_overlay (OpenVROverlayManager *self,
+               graphene_matrix_t    *pose)
 {
   graphene_point3d_t translation_point;
   graphene_point3d_init (&translation_point,
@@ -349,14 +324,6 @@ openvr_overlay_manager_drag_start (OpenVROverlayManager *self)
                                     &self->hover_state.pose);
 }
 
-OpenVROverlay*
-openvr_overlay_manager_grab_end (OpenVROverlayManager *self)
-{
-  OpenVROverlay *ret = self->grab_state.overlay;
-
-  return ret;
-}
-
 void
 openvr_overlay_manager_check_grab (OpenVROverlayManager *self)
 {
@@ -370,4 +337,15 @@ openvr_overlay_manager_check_release (OpenVROverlayManager *self)
   if (self->grab_state.overlay != NULL)
     openvr_overlay_emit_release (self->grab_state.overlay);
   self->grab_state.overlay = NULL;
+}
+
+void
+opevr_overlay_manager_update_pose (OpenVROverlayManager *self,
+                                   graphene_matrix_t    *pose)
+{
+  /* Drag test */
+  if (self->grab_state.overlay != NULL)
+    _drag_overlay (self, pose);
+  else
+    _test_hover (self, pose);
 }

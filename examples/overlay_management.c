@@ -269,8 +269,6 @@ _init_buttons (Example *self)
                      (GCallback) _button_reset_press_cb))
     return FALSE;
 
-
-
   graphene_point3d_t position_sphere = {
     .x =  0.5f,
     .y =  0.0f,
@@ -328,18 +326,7 @@ _dominant_hand_cb (OpenVRAction    *action,
 {
   (void) action;
   Example *self = (Example*) _self;
-
-  /* Drag test */
-  if (openvr_overlay_manager_is_grabbing (self->manager))
-    {
-      openvr_overlay_manager_drag_overlay (self->manager, &event->pose);
-      float distance =
-        openvr_overlay_manager_get_hover_distance (self->manager);
-      openvr_pointer_set_length (self->pointer_overlay, distance);
-    }
-  else
-    openvr_overlay_manager_test_hover (self->manager, &event->pose);
-
+  opevr_overlay_manager_update_pose (self->manager, &event->pose);
   openvr_pointer_move (self->pointer_overlay, &event->pose);
   g_free (event);
 }
