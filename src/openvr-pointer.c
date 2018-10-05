@@ -23,7 +23,8 @@ openvr_pointer_class_init (OpenVRPointerClass *klass)
 static void
 openvr_pointer_init (OpenVRPointer *self)
 {
-  (void) self;
+  self->default_length = 5.0;
+  self->length = 5.0;
 }
 
 OpenVRPointer *
@@ -69,12 +70,24 @@ openvr_pointer_finalize (GObject *gobject)
 
 void
 openvr_pointer_move (OpenVRPointer     *self,
-                     graphene_matrix_t *transform,
-                     float              distance)
+                     graphene_matrix_t *transform)
 {
   graphene_matrix_t scale_matrix;
-  graphene_matrix_init_scale (&scale_matrix, 1.0f, 1.0f, distance);
+  graphene_matrix_init_scale (&scale_matrix, 1.0f, 1.0f, self->length);
   graphene_matrix_t scaled;
   graphene_matrix_multiply (&scale_matrix, transform, &scaled);
   openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (self), &scaled);
+}
+
+void
+openvr_pointer_set_length (OpenVRPointer *self,
+                           float          length)
+{
+  self->length = length;
+}
+
+void
+openvr_pointer_reset_length (OpenVRPointer *self)
+{
+  self->length = self->default_length;
 }

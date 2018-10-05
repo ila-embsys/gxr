@@ -253,7 +253,7 @@ _hover_cb (OpenVROverlayManager *manager,
 
   /* update pointer and intersection overlays */
   openvr_intersection_update (self->intersection, &event->pose, &event->point);
-  openvr_pointer_move (self->pointer_overlay, &event->pose, event->distance);
+  openvr_pointer_set_length (self->pointer_overlay, event->distance);
 }
 
 void
@@ -269,8 +269,7 @@ _no_hover_cb (OpenVROverlayManager *manager,
 
   Example *self = (Example*) _self;
   openvr_overlay_hide (OPENVR_OVERLAY (self->intersection));
-  openvr_pointer_move (self->pointer_overlay, &event->pose,
-                       self->pointer_default_length);
+  openvr_pointer_reset_length (self->pointer_overlay);
 }
 
 static void
@@ -287,11 +286,12 @@ _dominant_hand_cb (OpenVRAction    *action,
       openvr_overlay_manager_drag_overlay (self->manager, &event->pose);
       float distance =
         openvr_overlay_manager_get_hover_distance (self->manager);
-      openvr_pointer_move (self->pointer_overlay, &event->pose, distance);
+      openvr_pointer_set_length (self->pointer_overlay, distance);
     }
   else
     openvr_overlay_manager_test_hover (self->manager, &event->pose);
 
+  openvr_pointer_move (self->pointer_overlay, &event->pose);
   g_free (event);
 }
 

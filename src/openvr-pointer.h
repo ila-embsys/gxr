@@ -20,14 +20,25 @@ G_DECLARE_FINAL_TYPE (OpenVRPointer, openvr_pointer, OPENVR, POINTER,
 struct _OpenVRPointer
 {
   OpenVRModel parent;
+
+  float default_length;
+  float length;
 };
 
 OpenVRPointer *openvr_pointer_new (void);
 
 void
 openvr_pointer_move (OpenVRPointer     *self,
-                     graphene_matrix_t *transform,
-                     float              distance);
+                     graphene_matrix_t *transform);
+
+void
+openvr_pointer_set_length (OpenVRPointer *self,
+                           float          length);
+
+void
+openvr_pointer_reset_length (OpenVRPointer *self);
+
+
 
 G_END_DECLS
 
