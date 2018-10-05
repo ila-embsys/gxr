@@ -281,13 +281,17 @@ openvr_overlay_manager_test_hover (OpenVROverlayManager *self,
         /* No intersection was found, nothing is hovered */
         g_free (event);
 
-        OpenVRNoHoverEvent *no_hover_event =
-          g_malloc (sizeof (OpenVRNoHoverEvent));
-        no_hover_event->previous_overlay = self->hover_state.overlay;
-        self->hover_state.overlay = NULL;
-        graphene_matrix_init_from_matrix (&no_hover_event->pose, pose);
-        g_signal_emit (self, overlay_manager_signals[NO_HOVER_EVENT],
-                       0, no_hover_event);
+        /* Emit no hover event only if we had hovered something earlier */
+        if (self->hover_state.overlay != NULL)
+          {
+            OpenVRNoHoverEvent *no_hover_event =
+              g_malloc (sizeof (OpenVRNoHoverEvent));
+            no_hover_event->previous_overlay = self->hover_state.overlay;
+            self->hover_state.overlay = NULL;
+            graphene_matrix_init_from_matrix (&no_hover_event->pose, pose);
+            g_signal_emit (self, overlay_manager_signals[NO_HOVER_EVENT],
+                           0, no_hover_event);
+          }
       }
 }
 
