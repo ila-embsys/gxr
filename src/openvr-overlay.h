@@ -150,6 +150,12 @@ gboolean
 openvr_overlay_set_translation (OpenVROverlay      *self,
                                 graphene_point3d_t *translation);
 
+void
+openvr_overlay_emit_grab (OpenVROverlay *self);
+
+void
+openvr_overlay_emit_release (OpenVROverlay *self);
+
 G_END_DECLS
 
 #define GET_OVERLAY_FUNCTIONS \

@@ -114,6 +114,24 @@ _overlay_mark_green (OpenVROverlay *overlay)
   openvr_overlay_set_color (overlay, &marked_color);
 }
 
+void
+_cat_grab_cb (OpenVROverlay *overlay,
+              gpointer      _self)
+{
+  Example *self = (Example*) _self;
+  openvr_overlay_manager_drag_start (self->manager);
+  openvr_overlay_hide (OPENVR_OVERLAY (self->intersection));
+  _overlay_mark_green (overlay);
+}
+
+void
+_cat_release_cb (OpenVROverlay *overlay,
+                  gpointer      unused)
+{
+  (void) unused;
+  _overlay_unmark (overlay);
+}
+
 gboolean
 _init_cat_overlays (Example *self)
 {
@@ -172,6 +190,11 @@ _init_cat_overlays (Example *self)
         openvr_vulkan_uploader_submit_frame (self->uploader, cat,
                                              self->texture);
 
+        g_signal_connect (cat, "grab-event",
+                          (GCallback)_cat_grab_cb, self);
+        g_signal_connect (cat, "release-event",
+                          (GCallback)_cat_release_cb, self);
+
         if (!openvr_overlay_show (cat))
           return -1;
 
@@ -184,11 +207,12 @@ _init_cat_overlays (Example *self)
 }
 
 gboolean
-_init_button (OpenVROverlayManager *manager,
-              OpenVRButton        **button,
-              gchar                *id,
-              gchar                *label,
-              graphene_point3d_t   *position)
+_init_button (Example            *self,
+              OpenVRButton      **button,
+              gchar              *id,
+              gchar              *label,
+              graphene_point3d_t *position,
+              GCallback           callback)
 {
   graphene_matrix_t transform;
   graphene_matrix_init_translate (&transform, position);
@@ -197,18 +221,39 @@ _init_button (OpenVROverlayManager *manager,
   if (*button == NULL)
     return FALSE;
 
-  openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (*button),
-                                        &transform);
+  OpenVROverlay *overlay = OPENVR_OVERLAY (*button);
 
-  openvr_overlay_manager_add_overlay (manager,
-                                      OPENVR_OVERLAY (*button),
+  openvr_overlay_set_transform_absolute (overlay, &transform);
+
+  openvr_overlay_manager_add_overlay (self->manager, overlay,
                                       OPENVR_OVERLAY_HOVER);
 
-  if (!openvr_overlay_set_width_meters (
-        OPENVR_OVERLAY (*button), 0.5f))
+  if (!openvr_overlay_set_width_meters (overlay, 0.5f))
     return FALSE;
 
+  g_signal_connect (overlay, "grab-event", (GCallback) callback, self);
+
   return TRUE;
+}
+
+void
+_button_sphere_press_cb (OpenVROverlay *overlay,
+                         gpointer      _self)
+{
+  (void) overlay;
+  Example *self = (Example*) _self;
+  openvr_overlay_manager_arrange_sphere (self->manager,
+                                         GRID_WIDTH,
+                                         GRID_HEIGHT);
+}
+
+void
+_button_reset_press_cb (OpenVROverlay *overlay,
+                        gpointer      _self)
+{
+  (void) overlay;
+  Example *self = (Example*) _self;
+  openvr_overlay_manager_arrange_reset (self->manager);
 }
 
 gboolean
@@ -219,17 +264,21 @@ _init_buttons (Example *self)
     .y =  0.0f,
     .z = -1.0f
   };
-  if (!_init_button (self->manager, &self->button_reset,
-                     "control.reset", "Reset", &position_reset))
+  if (!_init_button (self, &self->button_reset,
+                     "control.reset", "Reset", &position_reset,
+                     (GCallback) _button_reset_press_cb))
     return FALSE;
+
+
 
   graphene_point3d_t position_sphere = {
     .x =  0.5f,
     .y =  0.0f,
     .z = -1.0f
   };
-  if (!_init_button (self->manager, &self->button_sphere,
-                     "control.sphere", "Sphere", &position_sphere))
+  if (!_init_button (self, &self->button_sphere,
+                     "control.sphere", "Sphere", &position_sphere,
+                     (GCallback) _button_sphere_press_cb))
     return FALSE;
 
   return TRUE;
@@ -295,43 +344,6 @@ _dominant_hand_cb (OpenVRAction    *action,
   g_free (event);
 }
 
-void
-_grab_press (Example *self)
-{
-  if (!openvr_overlay_manager_is_hovering (self->manager))
-    return;
-
-  /* Reset button pressed */
-  if (openvr_overlay_manager_is_hovered (self->manager,
-                                         OPENVR_OVERLAY (self->button_reset)))
-    {
-      openvr_overlay_manager_arrange_reset (self->manager);
-    }
-  /* Sphere button pressed */
-  else if
-  (openvr_overlay_manager_is_hovered (self->manager,
-                                      OPENVR_OVERLAY (self->button_sphere)))
-    {
-      openvr_overlay_manager_arrange_sphere (self->manager,
-                                             GRID_WIDTH, GRID_HEIGHT);
-    }
-  /* Overlay grabbed */
-  else
-    {
-      openvr_overlay_manager_drag_start (self->manager);
-      openvr_overlay_hide (OPENVR_OVERLAY (self->intersection));
-      _overlay_mark_green (self->manager->grab_state.overlay);
-    }
-}
-
-void
-_grab_release (Example *self)
-{
-  OpenVROverlay *last_grabbed = openvr_overlay_manager_grab_end (self->manager);
-  if (last_grabbed != NULL)
-    _overlay_unmark (last_grabbed);
-}
-
 static void
 _grab_cb (OpenVRAction       *action,
           OpenVRDigitalEvent *event,
@@ -344,9 +356,9 @@ _grab_cb (OpenVRAction       *action,
   if (event->changed)
     {
       if (event->state == 1)
-        _grab_press (self);
+        openvr_overlay_manager_check_grab (self->manager);
       else
-        _grab_release (self);
+        openvr_overlay_manager_check_release (self->manager);
     }
 
   g_free (event);

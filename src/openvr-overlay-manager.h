@@ -114,6 +114,12 @@ openvr_overlay_manager_drag_start (OpenVROverlayManager *self);
 OpenVROverlay*
 openvr_overlay_manager_grab_end (OpenVROverlayManager *self);
 
+void
+openvr_overlay_manager_check_grab (OpenVROverlayManager *self);
+
+void
+openvr_overlay_manager_check_release (OpenVROverlayManager *self);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_OVERLAY_MANAGER_H_ */

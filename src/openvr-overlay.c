@@ -28,6 +28,8 @@ enum {
   DESTROY,
   INTERSECTION_EVENT,
   SCROLL_EVENT,
+  GRAB_EVENT,
+  RELEASE_EVENT,
   LAST_SIGNAL
 };
 
@@ -85,6 +87,17 @@ openvr_overlay_class_init (OpenVROverlayClass *klass)
                   0, NULL, NULL, NULL, G_TYPE_NONE,
                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
 
+  overlay_signals[GRAB_EVENT] =
+    g_signal_new ("grab-event",
+                   G_TYPE_FROM_CLASS (klass),
+                   G_SIGNAL_RUN_FIRST,
+                   0, NULL, NULL, NULL, G_TYPE_NONE, 0);
+
+  overlay_signals[RELEASE_EVENT] =
+    g_signal_new ("release-event",
+                   G_TYPE_FROM_CLASS (klass),
+                   G_SIGNAL_RUN_FIRST,
+                   0, NULL, NULL, NULL, G_TYPE_NONE, 0);
 }
 
 static void
@@ -647,4 +660,16 @@ openvr_overlay_set_translation (OpenVROverlay      *self,
   graphene_matrix_t transform;
   graphene_matrix_init_translate (&transform, translation);
   return openvr_overlay_set_transform_absolute (self, &transform);
+}
+
+void
+openvr_overlay_emit_grab (OpenVROverlay *self)
+{
+  g_signal_emit (self, overlay_signals[GRAB_EVENT], 0);
+}
+
+void
+openvr_overlay_emit_release (OpenVROverlay *self)
+{
+  g_signal_emit (self, overlay_signals[RELEASE_EVENT], 0);
 }

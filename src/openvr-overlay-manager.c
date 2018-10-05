@@ -353,6 +353,21 @@ OpenVROverlay*
 openvr_overlay_manager_grab_end (OpenVROverlayManager *self)
 {
   OpenVROverlay *ret = self->grab_state.overlay;
-  self->grab_state.overlay = NULL;
+
   return ret;
+}
+
+void
+openvr_overlay_manager_check_grab (OpenVROverlayManager *self)
+{
+  if (self->hover_state.overlay != NULL)
+    openvr_overlay_emit_grab (self->hover_state.overlay);
+}
+
+void
+openvr_overlay_manager_check_release (OpenVROverlayManager *self)
+{
+  if (self->grab_state.overlay != NULL)
+    openvr_overlay_emit_release (self->grab_state.overlay);
+  self->grab_state.overlay = NULL;
 }
