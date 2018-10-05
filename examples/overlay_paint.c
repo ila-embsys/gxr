@@ -300,15 +300,7 @@ _dominant_hand_cb (OpenVRAction    *action,
 {
   (void) action;
 
-  /* Update pointer */
-  graphene_matrix_t scale_matrix;
-  graphene_matrix_init_scale (&scale_matrix, 1.0f, 1.0f, 5.0f);
-
-  graphene_matrix_t scaled;
-  graphene_matrix_multiply (&scale_matrix, &event->pose, &scaled);
-
-  openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (self->pointer_overlay),
-                                        &scaled);
+  openvr_pointer_move (self->pointer_overlay, &event->pose);
 
   /* update intersection */
   openvr_overlay_poll_3d_intersection (self->paint_overlay, &event->pose);
