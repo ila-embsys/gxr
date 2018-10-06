@@ -89,16 +89,19 @@ _keyboard_closed (OpenVRContext  *context,
   openvr_context_set_system_keyboard_transform (context, &keyboard_position);
 }
 
+ModifierKeyCodes
+_modifier_keycode_for (KeySym sym, KeySymTable *keysym_table);
+
 static void
 _keyboard_input (OpenVRContext  *context,
                  GdkEventKey    *event,
-                 gpointer        data)
+                 KeySymTable    *keysym_table)
 {
   (void) context;
-  (void) data;
   for (int i = 0; i < event->length; i++)
     {
-      char c = event->string[i];
+      unsigned char c = event->string[i];
+      g_print ("Got char %d\n", c);
 
       // TODO: many openvr key codes match Latin 1 keysyms from X11/keysymdef.h
       // lucky coincidence or subject to change?
@@ -114,11 +117,35 @@ _keyboard_input (OpenVRContext  *context,
       if (c == 10)
           key_sym = XK_Return;
 
-      unsigned int key_code = XKeysymToKeycode (dpy, key_sym);
+      ModifierKeyCodes mod_key_codes =
+        _modifier_keycode_for (key_sym, keysym_table);
 
+      if (mod_key_codes.length == -1)
+        {
+          g_print ("There was an error, not synthing %c keysym %d %s\n",
+                   event->string[i], key_sym, XKeysymToString (key_sym));
+          return;
+        }
+
+      for (int i = 0; i < mod_key_codes.length; i++)
+        {
+          KeySym key_code = mod_key_codes.key_codes[i];
+          g_print ("%c: modkey %lu\n", c, key_code);
+          XTestFakeKeyEvent (dpy,key_code, true, 0);
+        }
+
+      unsigned int key_code = XKeysymToKeycode (dpy, key_sym);
       g_print ("%c (%d): keycode %d (keysym %d)\n", c, c, key_code, key_sym);
       XTestFakeKeyEvent (dpy,key_code, true, 0);
       XTestFakeKeyEvent (dpy,key_code, false, 0);
+
+      for (int i = 0; i < mod_key_codes.length; i++)
+        {
+          KeySym key_code = mod_key_codes.key_codes[i];
+          g_print ("%c: modkey %lu\n", c, key_code);
+          XTestFakeKeyEvent (dpy,key_code, false, 0);
+        }
+
       XSync (dpy, false);
     }
 }
@@ -229,7 +256,7 @@ _modifier_keycode_for (KeySym sym, KeySymTable *keysym_table)
 
   if (modifier_num == -1) {
     g_print ("ERROR: Did not find key sym!\n");
-    return (ModifierKeyCodes) { .length = 0 };
+    return (ModifierKeyCodes) { .length = -1 };
   } else {
     g_print ("Found key sym with mod number %d!\n", modifier_num);
   }
@@ -313,9 +340,7 @@ main (int argc, char *argv[])
       g_print ("\n");
     }
 
-  return 0;
-
-    /* init openvr */
+  /* init openvr */
   if (!_init_openvr ())
     return -1;
 
@@ -331,7 +356,7 @@ main (int argc, char *argv[])
   openvr_context_set_system_keyboard_transform (context, &keyboard_position);
 
   g_signal_connect (context, "keyboard-char-input-event",
-                    (GCallback) _keyboard_input, NULL);
+                    (GCallback) _keyboard_input, keysym_table);
   g_signal_connect (context, "keyboard-closed-event",
                     (GCallback) _keyboard_closed, context);
   g_timeout_add (20, G_SOURCE_FUNC (timeout_callback), context);
