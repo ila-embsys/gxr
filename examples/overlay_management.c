@@ -351,7 +351,7 @@ _dominant_hand_cb (OpenVRAction    *action,
 {
   (void) action;
   Example *self = (Example*) _self;
-  opevr_overlay_manager_update_pose (self->manager, &event->pose);
+  openvr_overlay_manager_update_pose (self->manager, &event->pose);
   openvr_pointer_move (self->pointer_overlay, &event->pose);
   g_free (event);
 }
