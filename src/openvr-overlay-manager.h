@@ -85,7 +85,7 @@ void
 openvr_overlay_manager_check_release (OpenVROverlayManager *self);
 
 void
-opevr_overlay_manager_update_pose (OpenVROverlayManager *self,
+openvr_overlay_manager_update_pose (OpenVROverlayManager *self,
                                    graphene_matrix_t    *pose);
 
 G_END_DECLS
