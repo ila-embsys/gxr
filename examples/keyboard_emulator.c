@@ -101,7 +101,7 @@ _keyboard_input (OpenVRContext  *context,
   for (int i = 0; i < event->length; i++)
     {
       unsigned char c = event->string[i];
-      g_print ("Got char %d\n", c);
+      //g_print ("Got char %d\n", c);
 
       // TODO: many openvr key codes match Latin 1 keysyms from X11/keysymdef.h
       // lucky coincidence or subject to change?
@@ -130,19 +130,19 @@ _keyboard_input (OpenVRContext  *context,
       for (int i = 0; i < mod_key_codes.length; i++)
         {
           KeySym key_code = mod_key_codes.key_codes[i];
-          g_print ("%c: modkey %lu\n", c, key_code);
+          //g_print ("%c: modkey %lu\n", c, key_code);
           XTestFakeKeyEvent (dpy,key_code, true, 0);
         }
 
       unsigned int key_code = XKeysymToKeycode (dpy, key_sym);
-      g_print ("%c (%d): keycode %d (keysym %d)\n", c, c, key_code, key_sym);
+      //g_print ("%c (%d): keycode %d (keysym %d)\n", c, c, key_code, key_sym);
       XTestFakeKeyEvent (dpy,key_code, true, 0);
       XTestFakeKeyEvent (dpy,key_code, false, 0);
 
       for (int i = 0; i < mod_key_codes.length; i++)
         {
           KeySym key_code = mod_key_codes.key_codes[i];
-          g_print ("%c: modkey %lu\n", c, key_code);
+          //g_print ("%c: modkey %lu\n", c, key_code);
           XTestFakeKeyEvent (dpy,key_code, false, 0);
         }
 
@@ -157,14 +157,16 @@ _init_keysym_table (Display *dpy)
   int max_keycode;
   int keysyms_per_keycode;
   XDisplayKeycodes (dpy, &min_keycode, &max_keycode);
-  g_print ("Keycodes: min %d, max %d\n", min_keycode, max_keycode);
+
 
   int keycode_count = max_keycode - min_keycode + 1;
   KeySym *keysyms = XGetKeyboardMapping (dpy, min_keycode, keycode_count,
                                          &keysyms_per_keycode);
-  g_print ("Key Syms per key code: %d\n", keysyms_per_keycode);
-  int num_elements = keycode_count * keysyms_per_keycode;
 
+  int num_elements = keycode_count * keysyms_per_keycode;
+/*
+  g_print ("Keycodes: min %d, max %d\n", min_keycode, max_keycode);
+  g_print ("Key Syms per key code: %d\n", keysyms_per_keycode);
   g_print ("Key code: syms\n");
   for (int keycode = min_keycode; keycode < num_elements / keysyms_per_keycode;
        keycode++)
@@ -180,8 +182,10 @@ _init_keysym_table (Display *dpy)
         }
       g_print ("\n");
     }
+*/
 
   XModifierKeymap *modmap = XGetModifierMapping(dpy);
+/*
   g_print ("Modifiers (max %d keys per mod):\n", modmap->max_keypermod);
   for (int modifier = 0; modifier < 8; modifier++)
     {
@@ -199,7 +203,7 @@ _init_keysym_table (Display *dpy)
         }
       g_print ("\n");
     }
-
+*/
   KeySymTable *keysym_table = malloc (sizeof (KeySymTable));
   keysym_table->table = keysyms;
   keysym_table->min_keycode = min_keycode;
@@ -223,6 +227,13 @@ _find_modifier_num (KeySymTable *keysym_table, KeySym sym)
     {
       for (int keysym_num = 0; keysym_num < keysyms_per_keycode; keysym_num++)
         {
+
+          // TODO: 2 (ctr+alt) or 3 (ctrl+alt+shift) are weird
+          // XK_apostrophe (') on the german keyboard is Shift+#, but also the
+          // weird Ctrl+Alt+ä combinatoin, which comes first, but only works in
+          // some (?) apps, so skip the weird ones.
+          if (keysym_num == 2 || keysym_num == 3) continue;
+
           int index = (keycode - min_keycode) * keysyms_per_keycode +
             keysym_num;
           if (keysyms[index] == sym)
@@ -258,7 +269,7 @@ _modifier_keycode_for (KeySym sym, KeySymTable *keysym_table)
     g_print ("ERROR: Did not find key sym!\n");
     return (ModifierKeyCodes) { .length = -1 };
   } else {
-    g_print ("Found key sym with mod number %d!\n", modifier_num);
+    //g_print ("Found key sym with mod number %d!\n", modifier_num);
   }
 
   /* There are up to 8 modifiers that can be enumerated (shift, ctrl, etc.)
@@ -295,7 +306,20 @@ _modifier_keycode_for (KeySym sym, KeySymTable *keysym_table)
       .key_codes[0] = XKeysymToKeycode (dpy, XK_Shift_L),
       .length = 1
     };
-    // 2 and 3 are the same as 1 and 2 for me
+  // TODO: are 2 and 3 correct? They are super weird!
+  case 2:
+    return (ModifierKeyCodes) {
+      .key_codes[0] = XKeysymToKeycode (dpy, XK_Control_L),
+      .key_codes[1] = XKeysymToKeycode (dpy, XK_Alt_L),
+      .length = 2
+    };
+  case 3:
+    return (ModifierKeyCodes) {
+      .key_codes[0] = XKeysymToKeycode (dpy, XK_Shift_L),
+      .key_codes[1] = XKeysymToKeycode (dpy, XK_Control_L),
+      .key_codes[2] = XKeysymToKeycode (dpy, XK_Alt_L),
+      .length = 3
+    };
   case 4:
     return (ModifierKeyCodes) {
       .key_codes[0] = XKeysymToKeycode (dpy, XK_ISO_Level3_Shift),
@@ -322,6 +346,7 @@ main (int argc, char *argv[])
   dpy = XOpenDisplay (NULL);
 
   KeySymTable *keysym_table = _init_keysym_table (dpy);
+/*
   KeySym test_key = XK_at;
   ModifierKeyCodes modifier_key_code =
     _modifier_keycode_for (test_key, keysym_table);
@@ -339,6 +364,7 @@ main (int argc, char *argv[])
         }
       g_print ("\n");
     }
+*/
 
   /* init openvr */
   if (!_init_openvr ())
