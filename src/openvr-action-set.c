@@ -119,11 +119,11 @@ openvr_action_set_update (OpenVRActionSet *self)
 }
 
 gboolean
-openvr_action_set_register (OpenVRActionSet *self,
-                            OpenVRActionType type,
-                            gchar           *url,
-                            GCallback        callback,
-                            gpointer         data)
+openvr_action_set_connect (OpenVRActionSet *self,
+                           OpenVRActionType type,
+                           gchar           *url,
+                           GCallback        callback,
+                           gpointer         data)
 {
   OpenVRAction *action = openvr_action_new_from_type_url (type, url);
 

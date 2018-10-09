@@ -177,22 +177,22 @@ main ()
       openvr_action_new_from_url ("/actions/wm/out/haptic_primary")
   };
 
-  openvr_action_set_register (self.wm_action_set, OPENVR_ACTION_DIGITAL,
-                              "/actions/wm/in/grab_window",
-                              (GCallback) _digital_cb, "grab_window");
+  openvr_action_set_connect (self.wm_action_set, OPENVR_ACTION_DIGITAL,
+                             "/actions/wm/in/grab_window",
+                             (GCallback) _digital_cb, "grab_window");
 
-  openvr_action_set_register (self.wm_action_set, OPENVR_ACTION_ANALOG,
-                              "/actions/wm/in/push_pull",
-                              (GCallback) _analog_cb, "push_pull");
+  openvr_action_set_connect (self.wm_action_set, OPENVR_ACTION_ANALOG,
+                             "/actions/wm/in/push_pull",
+                             (GCallback) _analog_cb, "push_pull");
 
-  openvr_action_set_register (self.wm_action_set, OPENVR_ACTION_POSE,
-                              "/actions/wm/in/hand_primary",
-                              (GCallback) _pose_cb, "hand_primary");
+  openvr_action_set_connect (self.wm_action_set, OPENVR_ACTION_POSE,
+                             "/actions/wm/in/hand_primary",
+                             (GCallback) _pose_cb, "hand_primary");
 
-  openvr_action_set_register (self.mouse_synth_action_set,
-                              OPENVR_ACTION_DIGITAL,
-                              "/actions/mouse_synth/in/left_click",
-                              (GCallback) _digital_cb, "left_click");
+  openvr_action_set_connect (self.mouse_synth_action_set,
+                             OPENVR_ACTION_DIGITAL,
+                             "/actions/mouse_synth/in/left_click",
+                             (GCallback) _digital_cb, "left_click");
 
   g_timeout_add (20, _poll_events_cb, &self);
 

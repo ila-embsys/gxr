@@ -229,17 +229,17 @@ main ()
     .action_set = openvr_action_set_new_from_url ("/actions/model")
   };
 
-  openvr_action_set_register (self.action_set, OPENVR_ACTION_DIGITAL,
-                              "/actions/model/in/next",
-                              (GCallback) _next_cb, &self);
+  openvr_action_set_connect (self.action_set, OPENVR_ACTION_DIGITAL,
+                             "/actions/model/in/next",
+                             (GCallback) _next_cb, &self);
 
-  openvr_action_set_register (self.action_set, OPENVR_ACTION_DIGITAL,
-                              "/actions/model/in/previous",
-                              (GCallback) _previous_cb, &self);
+  openvr_action_set_connect (self.action_set, OPENVR_ACTION_DIGITAL,
+                             "/actions/model/in/previous",
+                             (GCallback) _previous_cb, &self);
 
-  openvr_action_set_register (self.action_set, OPENVR_ACTION_POSE,
-                              "/actions/model/in/hand_primary",
-                              (GCallback) _pose_cb, &self);
+  openvr_action_set_connect (self.action_set, OPENVR_ACTION_POSE,
+                             "/actions/model/in/hand_primary",
+                             (GCallback) _pose_cb, &self);
 
   self.models = openvr_context_get_model_list (context);
   g_slist_foreach (self.models, _print_model, NULL);

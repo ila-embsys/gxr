@@ -445,13 +445,13 @@ main ()
   if (!_init_buttons (&self))
     return -1;
 
-  openvr_action_set_register (self.action_set, OPENVR_ACTION_POSE,
-                              "/actions/wm/in/hand_primary",
-                              (GCallback) _dominant_hand_cb, &self);
+  openvr_action_set_connect (self.action_set, OPENVR_ACTION_POSE,
+                             "/actions/wm/in/hand_primary",
+                             (GCallback) _dominant_hand_cb, &self);
 
-  openvr_action_set_register (self.action_set, OPENVR_ACTION_DIGITAL,
-                              "/actions/wm/in/grab_window",
-                              (GCallback) _grab_cb, &self);
+  openvr_action_set_connect (self.action_set, OPENVR_ACTION_DIGITAL,
+                             "/actions/wm/in/grab_window",
+                             (GCallback) _grab_cb, &self);
 
   g_signal_connect (self.manager, "no-hover-event",
                     (GCallback) _no_hover_cb, &self);

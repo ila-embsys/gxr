@@ -348,9 +348,9 @@ main ()
   if (!_init_draw_overlay (&self))
     return -1;
 
-  openvr_action_set_register (self.wm_action_set, OPENVR_ACTION_POSE,
-                              "/actions/wm/in/hand_primary",
-                              (GCallback) _dominant_hand_cb, &self);
+  openvr_action_set_connect (self.wm_action_set, OPENVR_ACTION_POSE,
+                             "/actions/wm/in/hand_primary",
+                             (GCallback) _dominant_hand_cb, &self);
 
   g_timeout_add (20, _poll_events_cb, &self);
 

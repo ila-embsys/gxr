@@ -41,11 +41,11 @@ gboolean
 openvr_action_set_poll (OpenVRActionSet *self);
 
 gboolean
-openvr_action_set_register (OpenVRActionSet *self,
-                            OpenVRActionType type,
-                            gchar           *url,
-                            GCallback        callback,
-                            gpointer         data);
+openvr_action_set_connect (OpenVRActionSet *self,
+                           OpenVRActionType type,
+                           gchar           *url,
+                           GCallback        callback,
+                           gpointer         data);
 
 G_END_DECLS
 
