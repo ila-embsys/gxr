@@ -309,3 +309,9 @@ openvr_context_set_system_keyboard_transform (OpenVRContext *self,
   openvr_math_graphene_to_matrix34 (transform, &openvr_transform);
   self->overlay->SetKeyboardTransformAbsolute (self->origin, &openvr_transform);
 }
+
+void
+openvr_context_acknowledge_quit (OpenVRContext *self)
+{
+  self->system->AcknowledgeQuit_Exiting ();
+}

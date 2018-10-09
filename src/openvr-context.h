@@ -62,6 +62,10 @@ openvr_context_show_system_keyboard (OpenVRContext *self);
 void
 openvr_context_set_system_keyboard_transform (OpenVRContext *self,
                                               graphene_matrix_t *transform);
+
+void
+openvr_context_acknowledge_quit (OpenVRContext *self);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_CONTEXT_H_ */
