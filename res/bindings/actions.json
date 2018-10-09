@@ -12,7 +12,7 @@
       },
       {
          "name":"/actions/wm/in/push_pull",
-         "type": "vector2"
+         "type": "vector3"
       },
       {
         "name": "/actions/wm/in/hand_primary",
@@ -40,7 +40,7 @@
       },
       {
          "name":"/actions/mouse_synth/in/scroll",
-         "type": "vector2"
+         "type": "vector3"
       }
    ],
    "localization":[

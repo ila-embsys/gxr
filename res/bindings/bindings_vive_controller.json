@@ -33,11 +33,11 @@
             },
             {
                "inputs" : {
-                  "position" : {
+                  "scroll" : {
                      "output" : "/actions/wm/in/push_pull"
                   }
                },
-               "mode" : "trackpad",
+               "mode" : "trackpad_scroll",
                "path" : "/user/hand/right/input/trackpad"
             }
          ]
@@ -46,11 +46,11 @@
          "sources" : [
             {
                "inputs" : {
-                  "position" : {
-                     "output" : "/actions/mouse_synth/in/scroll"
+                  "scroll" : {
+                    "output" : "/actions/mouse_synth/in/scroll"
                   }
                },
-               "mode" : "trackpad",
+               "mode" : "trackpad_scroll",
                "path" : "/user/hand/right/input/trackpad"
             },
             {
