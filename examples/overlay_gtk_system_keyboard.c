@@ -8,6 +8,11 @@
 
 #include <time.h>
 #include <glib.h>
+
+
+#define GETTEXT_PACKAGE "gtk30"
+#include <glib/gi18n-lib.h>
+
 #include <glib/gprintf.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gdk/gdk.h>
@@ -23,6 +28,9 @@
 #include "openvr-io.h"
 #include "openvr-action.h"
 #include "openvr-action-set.h"
+
+
+static gboolean use_system_keyboard = FALSE;
 
 int size_x = 800;
 int size_y = 600;
@@ -229,10 +237,38 @@ _show_keyboard_cb (OpenVRAction       *action,
     }
 }
 
+static GOptionEntry entries[] =
+{
+  { "system-keyboard", 0, 0, G_OPTION_ARG_NONE, &use_system_keyboard,
+    "Use system keyboard", NULL },
+  { NULL }
+};
+
+gboolean
+_parse_options (gint *argc, gchar ***argv)
+{
+  GError *error = NULL;
+  GOptionContext *option_context;
+
+  option_context = g_option_context_new ("OpenVR Keyboard Example");
+  g_option_context_add_main_entries (option_context, entries, GETTEXT_PACKAGE);
+  g_option_context_add_group (option_context, gtk_get_option_group (TRUE));
+  if (!g_option_context_parse (option_context, argc, argv, &error))
+    {
+      g_print ("option parsing failed: %s\n", error->message);
+      return FALSE;
+    }
+  return TRUE;
+}
 
 int
 main (int argc, char *argv[])
 {
+  if (!_parse_options (&argc, &argv))
+    return -1;
+
+  g_print ("Using system keyboard: %d\n", use_system_keyboard);
+
   GMainLoop *loop;
 
   gtk_init (&argc, &argv);
