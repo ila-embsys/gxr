@@ -52,46 +52,7 @@ _dominant_hand_cb (OpenVRAction    *action,
   graphene_matrix_t scaled;
   graphene_matrix_multiply (&scale_matrix, &event->pose, &scaled);
 
-  GList *overlay_node = overlays;
-  while (overlay_node)
-    {
-      OpenVROverlay *overlay = overlay_node->data;
-      openvr_overlay_poll_3d_intersection (overlay, &event->pose);
-      overlay_node = overlay_node->next;
-    }
   g_free (event);
-}
-
-static void
-_intersection_cb (OpenVROverlay           *overlay,
-                  OpenVRIntersectionEvent *event)
-{
-  // if we have an intersection point, move the pointer overlay there
-  if (event->has_intersection)
-    {
-      PixelSize size_pixels;
-      openvr_overlay_get_size_pixels (overlay, &size_pixels);
-
-      graphene_point_t position_2d;
-      if (!openvr_overlay_get_2d_intersection (overlay,
-                                              &event->intersection_point,
-                                              &size_pixels,
-                                              &position_2d))
-        return;
-
-      /* check bounds */
-      if (position_2d.x < 0 || position_2d.x > size_pixels.width ||
-          position_2d.y < 0 || position_2d.y > size_pixels.height)
-        return;
-
-      //g_print ("Intersection at %f,%f\n", position_2d.x, position_2d.y);
-      if (focused_overlay != overlay)
-        {
-          g_print ("Set active overlay: %lu\n", overlay->overlay_handle);
-        }
-      focused_overlay = overlay;
-    }
-  free (event);
 }
 
 static gboolean
@@ -376,9 +337,6 @@ main (int argc, char *argv[])
   g_signal_connect (overlay, "destroy", (GCallback) _destroy_cb, loop);
   g_signal_connect (window, "damage-event", G_CALLBACK (_damage_cb), overlay);
   g_signal_connect (window, "draw", G_CALLBACK (_draw_cb), &labels);
-
-  g_signal_connect (overlay, "intersection-event", (GCallback)_intersection_cb,
-                    NULL);
 
   GString *action_manifest_path = g_string_new ("");
   if (!_cache_bindings (action_manifest_path))
