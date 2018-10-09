@@ -26,11 +26,14 @@
 #include "openvr-action-set.h"
 #include "openvr-pointer.h"
 #include "openvr-intersection.h"
+#include "openvr-overlay-manager.h"
 
 typedef struct Example
 {
   OpenVRVulkanUploader *uploader;
   OpenVRVulkanTexture *texture;
+
+  OpenVROverlayManager *manager;
 
   OpenVRActionSet *wm_action_set;
 
@@ -174,62 +177,56 @@ _draw_at_2d_position (Example          *self,
 }
 
 static void
-_intersection_cb (OpenVROverlay           *overlay,
-                  OpenVRIntersectionEvent *event,
-                  gpointer                 _self)
+_paint_hover_cb (OpenVROverlay    *overlay,
+                 OpenVRHoverEvent *event,
+                 gpointer         _self)
 {
   Example *self = (Example*) _self;
 
-  // if we have an intersection point, move the pointer overlay there
-  if (event->has_intersection)
-    {
-      openvr_intersection_update (self->intersection_overlay,
-                                 &event->transform,
-                                 &event->intersection_point);
+  openvr_intersection_update (self->intersection_overlay,
+                             &event->pose,
+                             &event->point);
 
-      PixelSize size_pixels = {
-        .width = (guint) gdk_pixbuf_get_width (self->draw_pixbuf),
-        .height = (guint) gdk_pixbuf_get_height (self->draw_pixbuf)
-      };
+  PixelSize size_pixels = {
+    .width = (guint) gdk_pixbuf_get_width (self->draw_pixbuf),
+    .height = (guint) gdk_pixbuf_get_height (self->draw_pixbuf)
+  };
 
-      graphene_point_t position_2d;
-      if (!openvr_overlay_get_2d_intersection (overlay,
-                                              &event->intersection_point,
-                                              &size_pixels,
-                                              &position_2d))
-        return;
+  graphene_point_t position_2d;
+  if (!openvr_overlay_get_2d_intersection (overlay,
+                                          &event->point,
+                                          &size_pixels,
+                                          &position_2d))
+    return;
 
-      /* check bounds */
-      if (position_2d.x < 0 || position_2d.x > size_pixels.width ||
-          position_2d.y < 0 || position_2d.y > size_pixels.height)
-        return;
+  /* check bounds */
+  if (position_2d.x < 0 || position_2d.x > size_pixels.width ||
+      position_2d.y < 0 || position_2d.y > size_pixels.height)
+    return;
 
-      ColorRGBA color = {
-        .r = 0,
-        .g = 0,
-        .b = 0,
-        .a = 255
-      };
+  ColorRGBA color = {
+    .r = 0,
+    .g = 0,
+    .b = 0,
+    .a = 255
+  };
 
-      _draw_at_2d_position (self, &size_pixels, &position_2d, &color, 5);
-    }
-  else
-    {
-      openvr_overlay_hide (OPENVR_OVERLAY (self->intersection_overlay));
-    }
+  _draw_at_2d_position (self, &size_pixels, &position_2d, &color, 5);
+
+  openvr_pointer_set_length (self->pointer_overlay, event->distance);
 
   free (event);
 }
 
 gboolean
-_init_draw_overlay (Example *self)
+_init_paint_overlay (Example *self)
 {
   self->draw_pixbuf = _create_draw_pixbuf (1000, 500);
   if (self->draw_pixbuf == NULL)
     return FALSE;
 
   self->paint_overlay = openvr_overlay_new ();
-  openvr_overlay_create (self->paint_overlay, "vulkan.cat", "Vulkan Cat");
+  openvr_overlay_create (self->paint_overlay, "pain", "Paint overlay");
 
   if (!openvr_overlay_is_valid (self->paint_overlay))
     {
@@ -264,9 +261,16 @@ _init_draw_overlay (Example *self)
                                        self->paint_overlay, self->texture);
 
   /* connect glib callbacks */
-  g_signal_connect (self->paint_overlay, "intersection-event",
-                    (GCallback)_intersection_cb,
-                    self);
+  //g_signal_connect (self->paint_overlay, "intersection-event",
+  //                  (GCallback)_intersection_cb,
+  //                  self);
+  //
+  openvr_overlay_manager_add_overlay (self->manager, self->paint_overlay,
+                                      OPENVR_OVERLAY_HOVER);
+
+  g_signal_connect (self->paint_overlay, "hover-event",
+                    (GCallback) _paint_hover_cb, self);
+  //
   return TRUE;
 }
 
@@ -301,11 +305,23 @@ _dominant_hand_cb (OpenVRAction    *action,
   (void) action;
 
   openvr_pointer_move (self->pointer_overlay, &event->pose);
+  openvr_overlay_manager_update_pose (self->manager, &event->pose);
 
   /* update intersection */
-  openvr_overlay_poll_3d_intersection (self->paint_overlay, &event->pose);
+  //openvr_overlay_poll_3d_intersection (self->paint_overlay, &event->pose);
 
   g_free (event);
+}
+
+void
+_no_hover_cb (OpenVROverlayManager *manager,
+              gpointer             _self)
+{
+  (void) manager;
+
+  Example *self = (Example*) _self;
+  openvr_overlay_hide (OPENVR_OVERLAY (self->intersection_overlay));
+  openvr_pointer_reset_length (self->pointer_overlay);
 }
 
 int
@@ -318,16 +334,19 @@ main ()
       return false;
     }
 
-  if (!openvr_io_load_cached_action_manifest ("openvr-glib",
-                                              "/res/bindings",
-                                              "actions.json",
-                                              "bindings_vive_controller.json",
-                                              NULL))
+  if (!openvr_io_load_cached_action_manifest (
+      "openvr-glib",
+      "/res/bindings",
+      "actions.json",
+      "bindings_vive_controller.json",
+      "bindings_knuckles_controller.json",
+      NULL))
     return -1;
 
   Example self = {
     .loop = g_main_loop_new (NULL, FALSE),
     .wm_action_set = openvr_action_set_new_from_url ("/actions/wm"),
+    .manager = openvr_overlay_manager_new (),
     .uploader = openvr_vulkan_uploader_new (),
   };
 
@@ -345,12 +364,15 @@ main ()
   if (self.intersection_overlay == NULL)
     return -1;
 
-  if (!_init_draw_overlay (&self))
+  if (!_init_paint_overlay (&self))
     return -1;
 
   openvr_action_set_connect (self.wm_action_set, OPENVR_ACTION_POSE,
                              "/actions/wm/in/hand_primary",
                              (GCallback) _dominant_hand_cb, &self);
+
+  g_signal_connect (self.manager, "no-hover-event",
+                    (GCallback) _no_hover_cb, &self);
 
   g_timeout_add (20, _poll_events_cb, &self);
 
