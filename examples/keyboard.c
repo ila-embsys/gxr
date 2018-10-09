@@ -145,55 +145,6 @@ _destroy_cb (OpenVROverlay *overlay,
   g_main_loop_quit (loop);
 }
 
-bool
-_init_openvr ()
-{
-  if (!openvr_context_is_installed ())
-    {
-      g_printerr ("VR Runtime not installed.\n");
-      return false;
-    }
-
-  OpenVRContext *context = openvr_context_get_instance ();
-  if (!openvr_context_init_overlay (context))
-    {
-      g_printerr ("Could not init OpenVR.\n");
-      return false;
-    }
-
-  if (!openvr_context_is_valid (context))
-    {
-      g_printerr ("Could not load OpenVR function pointers.\n");
-      return false;
-    }
-
-  return true;
-}
-
-gboolean
-_cache_bindings (GString *actions_path)
-{
-  GString* cache_path = openvr_io_get_cache_path ("openvr-glib");
-
-  if (!openvr_io_create_directory_if_needed (cache_path->str))
-    return FALSE;
-
-  if (!openvr_io_write_resource_to_file ("/res/bindings", cache_path->str,
-                                         "actions.json", actions_path))
-    return FALSE;
-
-  GString *bindings_path = g_string_new ("");
-  if (!openvr_io_write_resource_to_file ("/res/bindings", cache_path->str,
-                                         "bindings_vive_controller.json",
-                                         bindings_path))
-    return FALSE;
-
-  g_string_free (bindings_path, TRUE);
-  g_string_free (cache_path, TRUE);
-
-  return TRUE;
-}
-
 static void
 _system_keyboard_cb (OpenVRContext  *context,
                      GdkEventKey    *event,
@@ -329,8 +280,20 @@ main (int argc, char *argv[])
 
   gtk_widget_show_all (window);
 
-  /* init openvr */
-  if (!_init_openvr ())
+  OpenVRContext *context = openvr_context_get_instance ();
+  if (!openvr_context_init_overlay (context))
+    {
+      g_printerr ("Could not init OpenVR.\n");
+      return -1;
+    }
+
+  if (!openvr_io_load_cached_action_manifest (
+      "openvr-glib",
+      "/res/bindings",
+      "actions.json",
+      "bindings_vive_controller.json",
+      "bindings_knuckles_controller.json",
+      NULL))
     return -1;
 
   uploader = openvr_vulkan_uploader_new ();
@@ -367,17 +330,6 @@ main (int argc, char *argv[])
   g_signal_connect (window, "damage-event", G_CALLBACK (_damage_cb), overlay);
   g_signal_connect (window, "draw", G_CALLBACK (_draw_cb), &labels);
 
-  GString *action_manifest_path = g_string_new ("");
-  if (!_cache_bindings (action_manifest_path))
-    return FALSE;
-
-  g_print ("Resulting manifest path: %s", action_manifest_path->str);
-
-  if (!openvr_action_load_manifest (action_manifest_path->str))
-    return FALSE;
-
-  g_string_free (action_manifest_path, TRUE);
-
   OpenVRActionSet *wm_action_set =
     openvr_action_set_new_from_url ("/actions/wm");
 
@@ -385,7 +337,6 @@ main (int argc, char *argv[])
                              "/actions/wm/in/show_keyboard",
                              (GCallback) _show_keyboard_cb, NULL);
 
-  OpenVRContext *context = openvr_context_get_instance ();
   g_signal_connect (context, "keyboard-char-input-event",
                     (GCallback) _system_keyboard_cb, NULL);
 
