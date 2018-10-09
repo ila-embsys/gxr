@@ -33,12 +33,6 @@ char input_text[300];
 OpenVRVulkanTexture *texture = NULL;
 OpenVRVulkanUploader *uploader;
 
-// list of all overlays in the application
-GList *overlays = NULL;
-
-// currently active overlay (this example activates an overlay by pointing)
-OpenVROverlay *focused_overlay;
-
 static void
 _dominant_hand_cb (OpenVRAction    *action,
                    OpenVRPoseEvent *event)
@@ -214,13 +208,8 @@ _keyboard_input (OpenVRContext  *context,
 {
   (void) context;
   (void) data;
-  if (!focused_overlay)
-    {
-      g_print ("Keyboard input but no focused overlay\n");
-      return;
-    }
-  g_print ("Input str %s (%d) for overlay %lu\n", event->string, event->length,
-           focused_overlay->overlay_handle);
+
+  g_print ("Input str %s (%d)\n", event->string, event->length);
   for (int i = 0; i < event->length; i++)
     {
       // 8 is backspace
@@ -251,13 +240,6 @@ _show_keyboard_cb (OpenVRAction       *action,
   (void) _self;
   if (event->state && event->changed)
     {
-      //g_print ("Hovering: %p\n", current_hover_overlay);
-      if (!focused_overlay)
-        {
-          g_print ("Not opening keyboard when no overlay is focused\n");
-          return;
-        }
-
       OpenVRContext *context = openvr_context_get_instance ();
       openvr_context_show_system_keyboard (context);
     }
@@ -318,8 +300,6 @@ main (int argc, char *argv[])
     fprintf (stderr, "Overlay unavailable.\n");
     return -1;
   }
-
-  overlays = g_list_append (overlays, overlay);
 
   openvr_overlay_set_mouse_scale (overlay, 300.0f, 200.0f);
 
