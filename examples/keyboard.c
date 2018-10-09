@@ -235,6 +235,37 @@ _init_gtk (Labels *labels)
   return TRUE;
 }
 
+gboolean
+_create_overlay (GMainLoop *loop)
+{
+  overlay = openvr_overlay_new ();
+  openvr_overlay_create_width (overlay,
+                               "openvr.example.keyboard",
+                               "Keyboard Test", 5.0);
+
+  if (!openvr_overlay_is_valid (overlay))
+  {
+    g_printerr ("Overlay unavailable.\n");
+    return FALSE;
+  }
+
+  if (!openvr_overlay_show (overlay))
+    return FALSE;
+
+  graphene_point3d_t initial_position = {
+    .x = 0,
+    .y = 1,
+    .z = -2.5
+  };
+  graphene_matrix_t transform;
+  graphene_matrix_init_translate (&transform, &initial_position);
+  openvr_overlay_set_transform_absolute (overlay, &transform);
+
+  g_signal_connect (overlay, "destroy", (GCallback) _destroy_cb, loop);
+
+  return TRUE;
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -274,42 +305,20 @@ main (int argc, char *argv[])
     return false;
   }
 
-  overlay = openvr_overlay_new ();
-  openvr_overlay_create_width (overlay,
-                               "openvr.example.keyboard",
-                               "Keyboard Test", 5.0);
-
-  if (!openvr_overlay_is_valid (overlay))
-  {
-    g_printerr ("Overlay unavailable.\n");
-    return -1;
-  }
-
-  if (!openvr_overlay_show (overlay))
+  if (!_create_overlay (loop))
     return -1;
 
-  graphene_point3d_t initial_position = {
-    .x = 0,
-    .y = 1,
-    .z = -2.5
-  };
-  graphene_matrix_t transform;
-  graphene_matrix_init_translate (&transform, &initial_position);
-  openvr_overlay_set_transform_absolute (overlay, &transform);
-
-  g_signal_connect (overlay, "destroy", (GCallback) _destroy_cb, loop);
-
-  OpenVRActionSet *wm_action_set =
+  OpenVRActionSet *action_set =
     openvr_action_set_new_from_url ("/actions/wm");
 
-  openvr_action_set_connect (wm_action_set, OPENVR_ACTION_DIGITAL,
+  openvr_action_set_connect (action_set, OPENVR_ACTION_DIGITAL,
                              "/actions/wm/in/show_keyboard",
                              (GCallback) _show_keyboard_cb, NULL);
 
   g_signal_connect (context, "keyboard-char-input-event",
                     (GCallback) _system_keyboard_cb, NULL);
 
-  g_timeout_add (20, _poll_events_cb, wm_action_set);
+  g_timeout_add (20, _poll_events_cb, action_set);
 
   g_main_loop_run (loop);
   g_main_loop_unref (loop);
