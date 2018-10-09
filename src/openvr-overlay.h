@@ -16,13 +16,6 @@
 #include <openvr_capi.h>
 #include <graphene.h>
 
-typedef struct OpenVRIntersectionEvent
-{
-  graphene_matrix_t transform;
-  gboolean has_intersection;
-  graphene_point3d_t intersection_point;
-} OpenVRIntersectionEvent;
-
 G_BEGIN_DECLS
 
 #define OPENVR_TYPE_OVERLAY openvr_overlay_get_type()
@@ -146,10 +139,6 @@ openvr_overlay_get_2d_intersection (OpenVROverlay      *overlay,
                                     graphene_point_t   *position_2d);
 gboolean
 openvr_overlay_enable_mouse_input (OpenVROverlay *self);
-
-void
-openvr_overlay_poll_3d_intersection (OpenVROverlay      *self,
-                                     graphene_matrix_t  *pose);
 
 gboolean
 openvr_overlay_get_transform_absolute (OpenVROverlay *self,

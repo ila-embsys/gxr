@@ -26,7 +26,6 @@ enum {
   BUTTON_RELEASE_EVENT,
   SHOW,
   DESTROY,
-  INTERSECTION_EVENT,
   SCROLL_EVENT,
   GRAB_EVENT,
   RELEASE_EVENT,
@@ -74,13 +73,6 @@ openvr_overlay_class_init (OpenVROverlayClass *klass)
                       G_SIGNAL_NO_RECURSE |
                       G_SIGNAL_NO_HOOKS,
                    0, NULL, NULL, NULL, G_TYPE_NONE, 0);
-
-  overlay_signals[INTERSECTION_EVENT] =
-    g_signal_new ("intersection-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_LAST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE,
-                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
 
   overlay_signals[SCROLL_EVENT] =
     g_signal_new ("scroll-event",
@@ -650,23 +642,6 @@ openvr_overlay_get_2d_intersection (OpenVROverlay      *overlay,
   graphene_point_init_from_vec2 (position_2d, &position_2d_vec);
 
   return TRUE;
-}
-
-void
-openvr_overlay_poll_3d_intersection (OpenVROverlay      *self,
-                                     graphene_matrix_t  *pose)
-{
-  OpenVRIntersectionEvent *event = malloc (sizeof (OpenVRIntersectionEvent));
-
-  gboolean intersects = openvr_overlay_intersects (self,
-                                                   &event->intersection_point,
-                                                   pose);
-
-  graphene_matrix_init_from_matrix (&event->transform, pose);
-
-  event->has_intersection = intersects;
-
-  g_signal_emit (self, overlay_signals[INTERSECTION_EVENT], 0, event);
 }
 
 gboolean
