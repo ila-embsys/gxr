@@ -64,16 +64,8 @@ executable(
   install: false)
 
 executable(
-  'overlay_gtk_system_keyboard',
-  ['overlay_gtk_system_keyboard.c', test_resources],
-  dependencies: [gtk3_dep, vulkan_dep, graphene_dep],
-  link_with: openvr_glib_lib,
-  include_directories: openvr_glib_inc,
-  install: false)
-
-executable(
-  'overlay_gtk_overlay_keyboard',
-  ['overlay_gtk_overlay_keyboard.c', test_resources],
+  'keyboard',
+  ['keyboard.c', test_resources],
   dependencies: [gtk3_dep, vulkan_dep, graphene_dep],
   link_with: openvr_glib_lib,
   include_directories: openvr_glib_inc,
@@ -81,8 +73,8 @@ executable(
 
 if x11_dep.found() and xtst_dep.found()
   executable(
-    'keyboard_emulator',
-    ['keyboard_emulator.c', test_resources],
+    'x_keyboard_synthesis',
+    ['x_keyboard_synthesis.c', test_resources],
     dependencies: [gtk3_dep, vulkan_dep, graphene_dep, x11_dep, xtst_dep],
     link_with: openvr_glib_lib,
     include_directories: openvr_glib_inc,
