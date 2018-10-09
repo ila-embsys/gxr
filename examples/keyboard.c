@@ -86,8 +86,6 @@ _damage_cb (GtkWidget *widget, GdkEventExpose *event, gpointer unused)
 typedef struct Labels
 {
   GtkWidget *time_label;
-  GtkWidget *fps_label;
-  struct timespec last_time;
 } Labels;
 
 static gboolean
@@ -95,32 +93,12 @@ _draw_cb (GtkWidget *widget, cairo_t *cr, Labels* labels)
 {
   (void) widget;
   (void) cr;
-  struct timespec now;
-  if (clock_gettime (CLOCK_REALTIME, &now) != 0)
-  {
-    g_printerr ("Could not read system clock\n");
-    return 0;
-  }
-
-  struct timespec diff;
-  openvr_time_substract (&now, &labels->last_time, &diff);
-
-  double diff_s = openvr_time_to_double_secs (&diff);
-  double diff_ms = diff_s * SEC_IN_MSEC_D;
-  double fps = SEC_IN_MSEC_D / diff_ms;
 
   gchar display_str [50];
-  gchar fps_str [50];
 
   g_sprintf (display_str, "<span font=\"24\">%s</span>", input_text);
 
-  g_sprintf (fps_str, "FPS %.2f (%.2fms)", fps, diff_ms);
-
   gtk_label_set_markup (GTK_LABEL (labels->time_label), display_str);
-  gtk_label_set_text (GTK_LABEL (labels->fps_label), fps_str);
-
-  labels->last_time.tv_sec = now.tv_sec;
-  labels->last_time.tv_nsec = now.tv_nsec;
 
   return FALSE;
 }
@@ -240,22 +218,11 @@ _init_gtk (Labels *labels)
 {
   GtkWidget *window = gtk_offscreen_window_new ();
 
-  if (clock_gettime (CLOCK_REALTIME, &labels->last_time) != 0)
-  {
-    g_printerr ("Could not read system clock\n");
-    return FALSE;
-  }
-
   labels->time_label = gtk_label_new ("");
-  labels->fps_label = gtk_label_new ("");
 
   GtkWidget *box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
 
-  GtkWidget *button = gtk_button_new_with_label ("Button");
-
-  gtk_box_pack_start (GTK_BOX (box), button, FALSE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (box), labels->time_label, TRUE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (box), labels->fps_label, FALSE, FALSE, 0);
 
   gtk_widget_set_size_request (window , size_x, size_y);
   gtk_container_add (GTK_CONTAINER (window), box);
@@ -273,8 +240,6 @@ main (int argc, char *argv[])
 {
   if (!_parse_options (&argc, &argv))
     return -1;
-
-  g_print ("Using system keyboard: %d\n", use_system_keyboard);
 
   GMainLoop *loop;
 
@@ -310,15 +275,15 @@ main (int argc, char *argv[])
   }
 
   overlay = openvr_overlay_new ();
-  openvr_overlay_create_width (overlay, "openvr.example.gtk", "GTK+", 5.0);
+  openvr_overlay_create_width (overlay,
+                               "openvr.example.keyboard",
+                               "Keyboard Test", 5.0);
 
   if (!openvr_overlay_is_valid (overlay))
   {
     g_printerr ("Overlay unavailable.\n");
     return -1;
   }
-
-  openvr_overlay_set_mouse_scale (overlay, 300.0f, 200.0f);
 
   if (!openvr_overlay_show (overlay))
     return -1;
