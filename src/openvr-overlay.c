@@ -685,7 +685,7 @@ openvr_overlay_get_2d_intersection (OpenVROverlay      *overlay,
 }
 
 gboolean
-openvr_overlay_show_overlay_keyboard (OpenVROverlay *self)
+openvr_overlay_show_keyboard (OpenVROverlay *self)
 {
   GET_OVERLAY_FUNCTIONS
 
@@ -701,9 +701,9 @@ openvr_overlay_show_overlay_keyboard (OpenVROverlay *self)
 }
 
 void
-openvr_overlay_set_overlay_keyboard_position (OpenVROverlay *self,
-                                              graphene_vec2_t *top_left,
-                                              graphene_vec2_t *bottom_right)
+openvr_overlay_set_keyboard_position (OpenVROverlay   *self,
+                                      graphene_vec2_t *top_left,
+                                      graphene_vec2_t *bottom_right)
 {
   GET_OVERLAY_FUNCTIONS
   (void) err;
@@ -729,16 +729,19 @@ openvr_overlay_set_translation (OpenVROverlay      *self,
   graphene_matrix_init_translate (&transform, translation);
   return openvr_overlay_set_transform_absolute (self, &transform);
 }
+
 void
 openvr_overlay_emit_grab (OpenVROverlay *self)
 {
   g_signal_emit (self, overlay_signals[GRAB_EVENT], 0);
 }
+
 void
 openvr_overlay_emit_release (OpenVROverlay *self)
 {
   g_signal_emit (self, overlay_signals[RELEASE_EVENT], 0);
 }
+
 void
 openvr_overlay_emit_hover_end (OpenVROverlay *self)
 {

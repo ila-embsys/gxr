@@ -225,7 +225,7 @@ _show_keyboard_cb (OpenVRAction       *action,
   (void) _self;
   if (event->state && event->changed)
     {
-      openvr_overlay_show_overlay_keyboard (overlay);
+      openvr_overlay_show_keyboard (overlay);
       g_signal_connect (overlay, "keyboard-char-input-event",
                         (GCallback) _keyboard_input, NULL);
     }
