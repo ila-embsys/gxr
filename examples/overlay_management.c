@@ -376,6 +376,26 @@ _grab_cb (OpenVRAction       *action,
   g_free (event);
 }
 
+#define SCROLL_TO_PUSH_RATIO 2
+
+static void
+_push_pull_cb (OpenVRAction      *action,
+               OpenVRAnalogEvent *event,
+               Example           *self)
+{
+  (void) action;
+
+  if (self->manager->grab_state.overlay != NULL)
+    {
+      self->manager->hover_state.distance +=
+        SCROLL_TO_PUSH_RATIO * graphene_vec3_get_y (&event->state);
+      openvr_pointer_set_length (self->pointer_overlay,
+                                 self->manager->hover_state.distance);
+    }
+
+  g_free (event);
+}
+
 void
 _cleanup (Example *self)
 {
@@ -452,6 +472,10 @@ main ()
   openvr_action_set_connect (self.action_set, OPENVR_ACTION_DIGITAL,
                              "/actions/wm/in/grab_window",
                              (GCallback) _grab_cb, &self);
+
+  openvr_action_set_connect (self.action_set, OPENVR_ACTION_ANALOG,
+                             "/actions/wm/in/push_pull",
+                             (GCallback) _push_pull_cb, &self);
 
   g_signal_connect (self.manager, "no-hover-event",
                     (GCallback) _no_hover_cb, &self);
