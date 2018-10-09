@@ -3,6 +3,10 @@
       {
          "controller_type":"vive_controller",
          "binding_url":"bindings_vive_controller.json"
+      },
+      {
+        "controller_type": "knuckles",
+        "binding_url": "bindings_knuckles_controller.json"
       }
    ],
    "actions":[

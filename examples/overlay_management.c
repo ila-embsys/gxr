@@ -430,11 +430,13 @@ main ()
       return false;
     }
 
-  if (!openvr_io_load_cached_action_manifest ("openvr-glib",
-                                              "/res/bindings",
-                                              "actions.json",
-                                              "bindings_vive_controller.json",
-                                              NULL))
+  if (!openvr_io_load_cached_action_manifest (
+      "openvr-glib",
+      "/res/bindings",
+      "actions.json",
+      "bindings_vive_controller.json",
+      "bindings_knuckles_controller.json",
+      NULL))
     return -1;
 
   Example self = {
