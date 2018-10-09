@@ -161,6 +161,9 @@ void
 openvr_overlay_emit_hover (OpenVROverlay    *self,
                            OpenVRHoverEvent *event);
 
+gboolean
+openvr_overlay_destroy (OpenVROverlay *self);
+
 G_END_DECLS
 
 #define GET_OVERLAY_FUNCTIONS \

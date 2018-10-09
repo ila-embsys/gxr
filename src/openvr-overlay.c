@@ -37,8 +37,13 @@ enum {
 static guint overlay_signals[LAST_SIGNAL] = { 0 };
 
 static void
+openvr_overlay_finalize (GObject *gobject);
+
+static void
 openvr_overlay_class_init (OpenVROverlayClass *klass)
 {
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+  object_class->finalize = openvr_overlay_finalize;
   overlay_signals[MOTION_NOTIFY_EVENT] =
     g_signal_new ("motion-notify-event",
                    G_TYPE_FROM_CLASS (klass),
@@ -678,3 +683,21 @@ openvr_overlay_emit_hover (OpenVROverlay    *self,
   g_signal_emit (self, overlay_signals[HOVER_EVENT], 0, event);
 }
 
+gboolean
+openvr_overlay_destroy (OpenVROverlay *self)
+{
+  GET_OVERLAY_FUNCTIONS
+
+  err = f->DestroyOverlay (self->overlay_handle);
+
+  OVERLAY_CHECK_ERROR ("DestroyOverlay", err);
+
+  return TRUE;
+}
+
+static void
+openvr_overlay_finalize (GObject *gobject)
+{
+  OpenVROverlay *self = OPENVR_OVERLAY (gobject);
+  openvr_overlay_destroy (self);
+}
