@@ -44,9 +44,10 @@ OpenVRVulkanUploader *uploader;
 OpenVROverlay *overlay;
 
 static gboolean
-_damage_cb (GtkWidget *widget, GdkEventExpose *event, OpenVROverlay *overlay)
+_damage_cb (GtkWidget *widget, GdkEventExpose *event, gpointer unused)
 {
   (void) event;
+  (void) unused;
   GdkPixbuf * offscreen_pixbuf =
     gtk_offscreen_window_get_pixbuf ((GtkOffscreenWindow *)widget);
 
@@ -82,15 +83,15 @@ _damage_cb (GtkWidget *widget, GdkEventExpose *event, OpenVROverlay *overlay)
   return TRUE;
 }
 
-struct Labels
+typedef struct Labels
 {
   GtkWidget *time_label;
   GtkWidget *fps_label;
   struct timespec last_time;
-};
+} Labels;
 
 static gboolean
-_draw_cb (GtkWidget *widget, cairo_t *cr, struct Labels* labels)
+_draw_cb (GtkWidget *widget, cairo_t *cr, Labels* labels)
 {
   (void) widget;
   (void) cr;
@@ -122,17 +123,6 @@ _draw_cb (GtkWidget *widget, cairo_t *cr, struct Labels* labels)
   labels->last_time.tv_nsec = now.tv_nsec;
 
   return FALSE;
-}
-
-gboolean
-timeout_callback (gpointer data)
-{
-  OpenVROverlay *overlay = (OpenVROverlay*) data;
-  openvr_overlay_poll_event (overlay);
-
-  OpenVRContext *context = openvr_context_get_instance ();
-  openvr_context_poll_event (context);
-  return TRUE;
 }
 
 static void
@@ -190,6 +180,11 @@ _poll_events_cb (gpointer data)
 
   openvr_action_set_poll (action_set);
 
+  openvr_overlay_poll_event (overlay);
+
+  OpenVRContext *context = openvr_context_get_instance ();
+  openvr_context_poll_event (context);
+
   return TRUE;
 }
 
@@ -240,6 +235,39 @@ _parse_options (gint *argc, gchar ***argv)
   return TRUE;
 }
 
+gboolean
+_init_gtk (Labels *labels)
+{
+  GtkWidget *window = gtk_offscreen_window_new ();
+
+  if (clock_gettime (CLOCK_REALTIME, &labels->last_time) != 0)
+  {
+    g_printerr ("Could not read system clock\n");
+    return FALSE;
+  }
+
+  labels->time_label = gtk_label_new ("");
+  labels->fps_label = gtk_label_new ("");
+
+  GtkWidget *box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
+
+  GtkWidget *button = gtk_button_new_with_label ("Button");
+
+  gtk_box_pack_start (GTK_BOX (box), button, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (box), labels->time_label, TRUE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (box), labels->fps_label, FALSE, FALSE, 0);
+
+  gtk_widget_set_size_request (window , size_x, size_y);
+  gtk_container_add (GTK_CONTAINER (window), box);
+
+  gtk_widget_show_all (window);
+
+  g_signal_connect (window, "damage-event", G_CALLBACK (_damage_cb), NULL);
+  g_signal_connect (window, "draw", G_CALLBACK (_draw_cb), labels);
+
+  return TRUE;
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -254,31 +282,9 @@ main (int argc, char *argv[])
 
   loop = g_main_loop_new (NULL, FALSE);
 
-  GtkWidget *window = gtk_offscreen_window_new ();
-
-  struct Labels labels;
-
-  if (clock_gettime (CLOCK_REALTIME, &labels.last_time) != 0)
-  {
-    g_printerr ("Could not read system clock\n");
-    return 0;
-  }
-
-  labels.time_label = gtk_label_new ("");
-  labels.fps_label = gtk_label_new ("");
-
-  GtkWidget *box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
-
-  GtkWidget *button = gtk_button_new_with_label ("Button");
-
-  gtk_box_pack_start (GTK_BOX (box), button, FALSE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (box), labels.time_label, TRUE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (box), labels.fps_label, FALSE, FALSE, 0);
-
-  gtk_widget_set_size_request (window , size_x, size_y);
-  gtk_container_add (GTK_CONTAINER (window), box);
-
-  gtk_widget_show_all (window);
+  Labels labels = {};
+  if (!_init_gtk (&labels))
+    return FALSE;
 
   OpenVRContext *context = openvr_context_get_instance ();
   if (!openvr_context_init_overlay (context))
@@ -327,8 +333,6 @@ main (int argc, char *argv[])
   openvr_overlay_set_transform_absolute (overlay, &transform);
 
   g_signal_connect (overlay, "destroy", (GCallback) _destroy_cb, loop);
-  g_signal_connect (window, "damage-event", G_CALLBACK (_damage_cb), overlay);
-  g_signal_connect (window, "draw", G_CALLBACK (_draw_cb), &labels);
 
   OpenVRActionSet *wm_action_set =
     openvr_action_set_new_from_url ("/actions/wm");
@@ -340,10 +344,8 @@ main (int argc, char *argv[])
   g_signal_connect (context, "keyboard-char-input-event",
                     (GCallback) _system_keyboard_cb, NULL);
 
-  g_print ("Register %p\n", wm_action_set);
   g_timeout_add (20, _poll_events_cb, wm_action_set);
 
-  g_timeout_add (20, timeout_callback, overlay);
   g_main_loop_run (loop);
   g_main_loop_unref (loop);
 
