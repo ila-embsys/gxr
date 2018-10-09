@@ -33,27 +33,7 @@ char input_text[300];
 OpenVRVulkanTexture *texture = NULL;
 OpenVRVulkanUploader *uploader;
 
-// list of all overlays in the application
-GList *overlays = NULL;
-
-// currently active overlay (this example activates an overlay by pointing)
-OpenVROverlay *focused_overlay;
-
-static void
-_dominant_hand_cb (OpenVRAction    *action,
-                   OpenVRPoseEvent *event)
-{
-  (void) action;
-
-  /* Update pointer */
-  graphene_matrix_t scale_matrix;
-  graphene_matrix_init_scale (&scale_matrix, 1.0f, 1.0f, 5.0f);
-
-  graphene_matrix_t scaled;
-  graphene_matrix_multiply (&scale_matrix, &event->pose, &scaled);
-
-  g_free (event);
-}
+OpenVROverlay *overlay;
 
 static gboolean
 _damage_cb (GtkWidget *widget, GdkEventExpose *event, OpenVROverlay *overlay)
@@ -213,11 +193,7 @@ _keyboard_input (OpenVROverlay  *overlay,
                  gpointer        data)
 {
   (void) data;
-  if (!focused_overlay)
-    {
-      g_print ("Keyboard input but no focused overlay\n");
-      return;
-    }
+
   g_print ("Input str %s (%d) for overlay %lu\n", event->string, event->length,
            overlay->overlay_handle);
   for (int i = 0; i < event->length; i++)
@@ -242,26 +218,18 @@ _poll_events_cb (gpointer data)
 
 static void
 _show_keyboard_cb (OpenVRAction       *action,
-             OpenVRDigitalEvent *event,
-             gpointer           _self)
+                   OpenVRDigitalEvent *event,
+                   gpointer           _self)
 {
-
   (void) action;
   (void) _self;
   if (event->state && event->changed)
     {
-      //g_print ("Hovering: %p\n", current_hover_overlay);
-      if (!focused_overlay)
-        {
-          g_print ("Not opening keyboard when no overlay is focused\n");
-          return;
-        }
-      openvr_overlay_show_overlay_keyboard (focused_overlay);
-      g_signal_connect (focused_overlay, "keyboard-char-input-event",
+      openvr_overlay_show_overlay_keyboard (overlay);
+      g_signal_connect (overlay, "keyboard-char-input-event",
                         (GCallback) _keyboard_input, NULL);
     }
 }
-
 
 int
 main (int argc, char *argv[])
@@ -309,7 +277,7 @@ main (int argc, char *argv[])
     return false;
   }
 
-  OpenVROverlay *overlay = openvr_overlay_new ();
+  overlay = openvr_overlay_new ();
   openvr_overlay_create_width (overlay, "openvr.example.gtk", "GTK+", 5.0);
 
   if (!openvr_overlay_is_valid (overlay))
@@ -317,8 +285,6 @@ main (int argc, char *argv[])
     fprintf (stderr, "Overlay unavailable.\n");
     return -1;
   }
-
-  overlays = g_list_append (overlays, overlay);
 
   openvr_overlay_set_mouse_scale (overlay, 300.0f, 200.0f);
 
@@ -352,9 +318,6 @@ main (int argc, char *argv[])
   OpenVRActionSet *wm_action_set =
     openvr_action_set_new_from_url ("/actions/wm");
 
-  openvr_action_set_connect (wm_action_set, OPENVR_ACTION_POSE,
-                            "/actions/wm/in/hand_primary",
-                            (GCallback) _dominant_hand_cb, NULL);
   openvr_action_set_connect (wm_action_set, OPENVR_ACTION_DIGITAL,
                             "/actions/wm/in/show_keyboard",
                             (GCallback) _show_keyboard_cb, NULL);
