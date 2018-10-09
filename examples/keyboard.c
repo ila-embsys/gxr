@@ -76,7 +76,7 @@ _damage_cb (GtkWidget *widget, GdkEventExpose *event, OpenVROverlay *overlay)
 
     g_object_unref (pixbuf);
   } else {
-    fprintf (stderr, "Could not acquire pixbuf.\n");
+    g_printerr ("Could not acquire pixbuf.\n");
   }
 
   return TRUE;
@@ -97,7 +97,7 @@ _draw_cb (GtkWidget *widget, cairo_t *cr, struct Labels* labels)
   struct timespec now;
   if (clock_gettime (CLOCK_REALTIME, &now) != 0)
   {
-    fprintf (stderr, "Could not read system clock\n");
+    g_printerr ("Could not read system clock\n");
     return 0;
   }
 
@@ -111,8 +111,7 @@ _draw_cb (GtkWidget *widget, cairo_t *cr, struct Labels* labels)
   gchar display_str [50];
   gchar fps_str [50];
 
-  g_sprintf (display_str, "<span font=\"24\">%s</span>",
-             input_text);
+  g_sprintf (display_str, "<span font=\"24\">%s</span>", input_text);
 
   g_sprintf (fps_str, "FPS %.2f (%.2fms)", fps, diff_ms);
 
@@ -310,7 +309,7 @@ main (int argc, char *argv[])
 
   if (clock_gettime (CLOCK_REALTIME, &labels.last_time) != 0)
   {
-    fprintf (stderr, "Could not read system clock\n");
+    g_printerr ("Could not read system clock\n");
     return 0;
   }
 
@@ -346,7 +345,7 @@ main (int argc, char *argv[])
 
   if (!openvr_overlay_is_valid (overlay))
   {
-    fprintf (stderr, "Overlay unavailable.\n");
+    g_printerr ("Overlay unavailable.\n");
     return -1;
   }
 
