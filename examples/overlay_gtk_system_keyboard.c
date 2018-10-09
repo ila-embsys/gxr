@@ -41,6 +41,8 @@ char input_text[300];
 OpenVRVulkanTexture *texture = NULL;
 OpenVRVulkanUploader *uploader;
 
+OpenVROverlay *overlay;
+
 static gboolean
 _damage_cb (GtkWidget *widget, GdkEventExpose *event, OpenVROverlay *overlay)
 {
@@ -194,14 +196,33 @@ _cache_bindings (GString *actions_path)
 }
 
 static void
-_keyboard_input (OpenVRContext  *context,
-                 GdkEventKey    *event,
-                 gpointer        data)
+_system_keyboard_cb (OpenVRContext  *context,
+                     GdkEventKey    *event,
+                     gpointer        data)
 {
   (void) context;
   (void) data;
 
   g_print ("Input str %s (%d)\n", event->string, event->length);
+  for (int i = 0; i < event->length; i++)
+    {
+      // 8 is backspace
+      if (event->string[i] == 8 && text_cursor > 0)
+        input_text[text_cursor--] = 0;
+      else if (text_cursor < 300)
+        input_text[text_cursor++] = event->string[i];
+    }
+}
+
+static void
+_overlay_keyboard_cb (OpenVROverlay  *overlay,
+                      GdkEventKey    *event,
+                      gpointer        data)
+{
+  (void) data;
+
+  g_print ("Input str %s (%d) for overlay %lu\n", event->string, event->length,
+           overlay->overlay_handle);
   for (int i = 0; i < event->length; i++)
     {
       // 8 is backspace
@@ -224,16 +245,24 @@ _poll_events_cb (gpointer data)
 
 static void
 _show_keyboard_cb (OpenVRAction       *action,
-             OpenVRDigitalEvent *event,
-             gpointer           _self)
+                   OpenVRDigitalEvent *event,
+                   gpointer           _self)
 {
-
   (void) action;
   (void) _self;
   if (event->state && event->changed)
     {
-      OpenVRContext *context = openvr_context_get_instance ();
-      openvr_context_show_system_keyboard (context);
+      if (use_system_keyboard)
+        {
+          OpenVRContext *context = openvr_context_get_instance ();
+          openvr_context_show_system_keyboard (context);
+        }
+      else
+        {
+          openvr_overlay_show_keyboard (overlay);
+          g_signal_connect (overlay, "keyboard-char-input-event",
+                            (GCallback) _overlay_keyboard_cb, NULL);
+        }
     }
 }
 
@@ -312,7 +341,7 @@ main (int argc, char *argv[])
     return false;
   }
 
-  OpenVROverlay *overlay = openvr_overlay_new ();
+  overlay = openvr_overlay_new ();
   openvr_overlay_create_width (overlay, "openvr.example.gtk", "GTK+", 5.0);
 
   if (!openvr_overlay_is_valid (overlay))
@@ -359,7 +388,7 @@ main (int argc, char *argv[])
 
   OpenVRContext *context = openvr_context_get_instance ();
   g_signal_connect (context, "keyboard-char-input-event",
-                    (GCallback) _keyboard_input, NULL);
+                    (GCallback) _system_keyboard_cb, NULL);
 
   g_print ("Register %p\n", wm_action_set);
   g_timeout_add (20, _poll_events_cb, wm_action_set);
