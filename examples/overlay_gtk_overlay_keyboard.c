@@ -394,12 +394,12 @@ main (int argc, char *argv[])
   OpenVRActionSet *wm_action_set =
     openvr_action_set_new_from_url ("/actions/wm");
 
-  openvr_action_set_register (wm_action_set, OPENVR_ACTION_POSE,
-                              "/actions/wm/in/hand_primary",
-                              (GCallback) _dominant_hand_cb, NULL);
-  openvr_action_set_register (wm_action_set, OPENVR_ACTION_DIGITAL,
-                              "/actions/wm/in/show_keyboard",
-                              (GCallback) _show_keyboard_cb, NULL);
+  openvr_action_set_connect (wm_action_set, OPENVR_ACTION_POSE,
+                            "/actions/wm/in/hand_primary",
+                            (GCallback) _dominant_hand_cb, NULL);
+  openvr_action_set_connect (wm_action_set, OPENVR_ACTION_DIGITAL,
+                            "/actions/wm/in/show_keyboard",
+                            (GCallback) _show_keyboard_cb, NULL);
 
   OpenVRContext *context = openvr_context_get_instance ();
 
