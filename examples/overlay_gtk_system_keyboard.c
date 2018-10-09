@@ -33,22 +33,6 @@ char input_text[300];
 OpenVRVulkanTexture *texture = NULL;
 OpenVRVulkanUploader *uploader;
 
-static void
-_dominant_hand_cb (OpenVRAction    *action,
-                   OpenVRPoseEvent *event)
-{
-  (void) action;
-
-  /* Update pointer */
-  graphene_matrix_t scale_matrix;
-  graphene_matrix_init_scale (&scale_matrix, 1.0f, 1.0f, 5.0f);
-
-  graphene_matrix_t scaled;
-  graphene_matrix_multiply (&scale_matrix, &event->pose, &scaled);
-
-  g_free (event);
-}
-
 static gboolean
 _damage_cb (GtkWidget *widget, GdkEventExpose *event, OpenVROverlay *overlay)
 {
@@ -333,9 +317,6 @@ main (int argc, char *argv[])
   OpenVRActionSet *wm_action_set =
     openvr_action_set_new_from_url ("/actions/wm");
 
-  openvr_action_set_connect (wm_action_set, OPENVR_ACTION_POSE,
-                             "/actions/wm/in/hand_primary",
-                             (GCallback) _dominant_hand_cb, NULL);
   openvr_action_set_connect (wm_action_set, OPENVR_ACTION_DIGITAL,
                              "/actions/wm/in/show_keyboard",
                              (GCallback) _show_keyboard_cb, NULL);
