@@ -260,14 +260,14 @@ openvr_vulkan_texture_new_from_dmabuf (OpenVRVulkanDevice  *device,
   self->height = height;
   self->device = device;
 
-  VkImportMemoryFdInfoKHR import_memory_info = {
-    .sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_FD_INFO_KHR,
-    .handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT,
-    .fd = fd
+  VkExternalMemoryImageCreateInfoKHR external_memory_image_create_info = {
+    .sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO_KHR,
+    .handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR
   };
 
   VkImageCreateInfo image_info = {
     .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+    .pNext = &external_memory_image_create_info,
     .imageType = VK_IMAGE_TYPE_2D,
     .extent = {
       .width = width,
@@ -279,13 +279,30 @@ openvr_vulkan_texture_new_from_dmabuf (OpenVRVulkanDevice  *device,
     .format = format,
     .tiling = VK_IMAGE_TILING_LINEAR,
     .samples = VK_SAMPLE_COUNT_1_BIT,
-    .usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-    //.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-    .initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED
+    .usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+    .sharingMode = VK_SHARING_MODE_CONCURRENT,
+    /* DMA buffer only allowed to import as UNDEFINED */
+    .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
   };
+
   VkResult res;
   res = vkCreateImage (device->device, &image_info, NULL, &self->image);
   vk_check_error ("vkCreateImage", res);
+
+  VkMemoryDedicatedAllocateInfoKHR dedicated_memory_info = {
+    .sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO_KHR,
+    .pNext = NULL,
+    .image = self->image,
+    .buffer = VK_NULL_HANDLE
+  };
+
+  VkImportMemoryFdInfoKHR import_memory_info = {
+    .sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_FD_INFO_KHR,
+    .pNext = &dedicated_memory_info,
+    .handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT,
+    .fd = fd
+  };
 
   VkMemoryRequirements memory_requirements = {};
   vkGetImageMemoryRequirements (device->device, self->image,
@@ -301,7 +318,7 @@ openvr_vulkan_texture_new_from_dmabuf (OpenVRVulkanDevice  *device,
   openvr_vulkan_device_memory_type_from_properties (
     device,
     memory_requirements.memoryTypeBits,
-    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+    VK_MEMORY_PROPERTY_HOST_CACHED_BIT,
     &memory_info.memoryTypeIndex);
 
   res = vkAllocateMemory (device->device, &memory_info,
@@ -321,7 +338,7 @@ openvr_vulkan_texture_new_from_dmabuf (OpenVRVulkanDevice  *device,
     .subresourceRange = {
       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
       .baseMipLevel = 0,
-      .levelCount = image_info.mipLevels,
+      .levelCount = 1,
       .baseArrayLayer = 0,
       .layerCount = 1,
     }

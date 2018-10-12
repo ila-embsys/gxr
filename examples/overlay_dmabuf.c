@@ -200,7 +200,7 @@ main ()
 
   if (!openvr_vulkan_client_transfer_layout (client,
                                         texture,
-                                        VK_IMAGE_LAYOUT_PREINITIALIZED,
+                                        VK_IMAGE_LAYOUT_UNDEFINED,
                                         VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL))
     {
       g_printerr ("Unable to transfer layout.\n");
