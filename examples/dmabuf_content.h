@@ -13,20 +13,19 @@
 #ifndef OPENVR_GLIB_DMABUF_CONTENT_H_
 #define OPENVR_GLIB_DMABUF_CONTENT_H_
 
+#include <stdint.h>
+
 void
 dma_buf_fill (char *pixels, uint32_t width, uint32_t height, int stride)
 {
   uint32_t i, j;
-  /* paint the buffer with colored tiles */
+  /* paint the buffer with a colored gradient */
   for (j = 0; j < height; j++)
     {
       uint32_t *fb_ptr = (uint32_t*)(pixels + j * stride);
       for (i = 0; i < width; i++)
-        {
-          div_t d = div((int) (i + j), (int) width);
-          fb_ptr[i] = 0x00130502 * ((uint32_t) d.quot >> 6) +
-                      0x000a1120 * ((uint32_t) d.rem >> 6);
-        }
+        fb_ptr[i] = 0xff000000 + 0x00000001 * (i * 255 / width)
+                               + 0x00000100 * (j * 255 / height);
     }
 }
 
