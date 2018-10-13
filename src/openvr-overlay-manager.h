@@ -88,6 +88,10 @@ void
 openvr_overlay_manager_update_pose (OpenVROverlayManager *self,
                                    graphene_matrix_t    *pose);
 
+void
+openvr_overlay_manager_save_reset_transform (OpenVROverlayManager *self,
+                                             OpenVROverlay        *overlay);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_OVERLAY_MANAGER_H_ */

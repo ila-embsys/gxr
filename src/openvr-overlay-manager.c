@@ -204,6 +204,15 @@ openvr_overlay_manager_arrange_sphere (OpenVROverlayManager *self,
 }
 
 void
+openvr_overlay_manager_save_reset_transform (OpenVROverlayManager *self,
+                                             OpenVROverlay        *overlay)
+{
+  graphene_matrix_t *transform =
+    g_hash_table_lookup (self->reset_transforms, overlay);
+  openvr_overlay_get_transform_absolute (overlay, transform);
+}
+
+void
 openvr_overlay_manager_add_overlay (OpenVROverlayManager *self,
                                     OpenVROverlay        *overlay,
                                     OpenVROverlayFlags    flags)
