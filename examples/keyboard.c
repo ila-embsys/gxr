@@ -317,10 +317,10 @@ main (int argc, char *argv[])
                              (GCallback) _show_keyboard_cb, &self);
 
   if (use_system_keyboard)
-    g_signal_connect (context, "keyboard-char-input-event",
+    g_signal_connect (context, "keyboard-press-event",
                       (GCallback) _system_keyboard_cb, &self);
   else
-    g_signal_connect (self.overlay, "keyboard-char-input-event",
+    g_signal_connect (self.overlay, "keyboard-press-event",
                       (GCallback) _overlay_keyboard_cb, &self);
 
   g_timeout_add (20, _poll_events_cb, &self);

@@ -27,7 +27,7 @@ enum {
   SHOW,
   DESTROY,
   SCROLL_EVENT,
-  KEYBOARD_CHAR_INPUT_EVENT,
+  KEYBOARD_PRESS_EVENT,
   KEYBOARD_CLOSED_EVENT,
   GRAB_EVENT,
   RELEASE_EVENT,
@@ -88,8 +88,8 @@ openvr_overlay_class_init (OpenVROverlayClass *klass)
                   0, NULL, NULL, NULL, G_TYPE_NONE,
                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
 
-  overlay_signals[KEYBOARD_CHAR_INPUT_EVENT] =
-    g_signal_new ("keyboard-char-input-event",
+  overlay_signals[KEYBOARD_PRESS_EVENT] =
+    g_signal_new ("keyboard-press-event",
                    G_TYPE_FROM_CLASS (klass),
                    G_SIGNAL_RUN_LAST,
                    0, NULL, NULL, NULL, G_TYPE_NONE,
@@ -338,8 +338,7 @@ openvr_overlay_poll_event (OpenVROverlay *self)
         event->key.state = TRUE;
         event->key.string = new_input;
         event->key.length = len;
-        g_signal_emit (self, overlay_signals[KEYBOARD_CHAR_INPUT_EVENT], 0,
-                       event);
+        g_signal_emit (self, overlay_signals[KEYBOARD_PRESS_EVENT], 0, event);
       } break;
 
       case EVREventType_VREvent_KeyboardClosed:

@@ -27,7 +27,7 @@ G_DEFINE_TYPE (OpenVRContext, openvr_context, G_TYPE_OBJECT)
 }
 
 enum {
-  KEYBOARD_CHAR_INPUT_EVENT,
+  KEYBOARD_PRESS_EVENT,
   KEYBOARD_CLOSED_EVENT,
   QUIT_EVENT,
   LAST_SIGNAL
@@ -47,8 +47,8 @@ openvr_context_class_init (OpenVRContextClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   object_class->finalize = openvr_context_finalize;
 
-  context_signals[KEYBOARD_CHAR_INPUT_EVENT] =
-    g_signal_new ("keyboard-char-input-event",
+  context_signals[KEYBOARD_PRESS_EVENT] =
+    g_signal_new ("keyboard-press-event",
                    G_TYPE_FROM_CLASS (klass),
                    G_SIGNAL_RUN_LAST,
                    0, NULL, NULL, NULL, G_TYPE_NONE,
@@ -268,8 +268,7 @@ openvr_context_poll_event (OpenVRContext *self)
         event->key.state = TRUE;
         event->key.string = new_input;
         event->key.length = len;
-        g_signal_emit (self, context_signals[KEYBOARD_CHAR_INPUT_EVENT], 0,
-                       event);
+        g_signal_emit (self, context_signals[KEYBOARD_PRESS_EVENT], 0, event);
       } break;
 
       case EVREventType_VREvent_KeyboardClosed:
