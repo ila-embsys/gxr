@@ -94,12 +94,12 @@ openvr_overlay_class_init (OpenVROverlayClass *klass)
                    G_SIGNAL_RUN_LAST,
                    0, NULL, NULL, NULL, G_TYPE_NONE,
                    1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+
   overlay_signals[KEYBOARD_CLOSED_EVENT] =
     g_signal_new ("keyboard-closed-event",
                    G_TYPE_FROM_CLASS (klass),
-                   G_SIGNAL_RUN_LAST,
-                   0, NULL, NULL, NULL, G_TYPE_NONE,
-                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+                   G_SIGNAL_RUN_FIRST,
+                   0, NULL, NULL, NULL, G_TYPE_NONE, 0);
 
   overlay_signals[GRAB_EVENT] =
     g_signal_new ("grab-event",
@@ -343,8 +343,7 @@ openvr_overlay_poll_event (OpenVROverlay *self)
 
       case EVREventType_VREvent_KeyboardClosed:
       {
-        GdkEvent *event = gdk_event_new (GDK_DESTROY);
-        g_signal_emit (self, overlay_signals[KEYBOARD_CLOSED_EVENT], 0, event);
+        g_signal_emit (self, overlay_signals[KEYBOARD_CLOSED_EVENT], 0);
       } break;
     }
   }

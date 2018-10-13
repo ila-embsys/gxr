@@ -53,12 +53,13 @@ openvr_context_class_init (OpenVRContextClass *klass)
                    G_SIGNAL_RUN_LAST,
                    0, NULL, NULL, NULL, G_TYPE_NONE,
                    1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+
   context_signals[KEYBOARD_CLOSED_EVENT] =
     g_signal_new ("keyboard-closed-event",
                    G_TYPE_FROM_CLASS (klass),
-                   G_SIGNAL_RUN_LAST,
-                   0, NULL, NULL, NULL, G_TYPE_NONE,
-                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+                   G_SIGNAL_RUN_FIRST,
+                   0, NULL, NULL, NULL, G_TYPE_NONE, 0);
+
   context_signals[QUIT_EVENT] =
     g_signal_new ("quit-event",
                    G_TYPE_FROM_CLASS (klass),
@@ -273,8 +274,7 @@ openvr_context_poll_event (OpenVRContext *self)
 
       case EVREventType_VREvent_KeyboardClosed:
       {
-        GdkEvent *event = gdk_event_new (GDK_DESTROY);
-        g_signal_emit (self, context_signals[KEYBOARD_CLOSED_EVENT], 0, event);
+        g_signal_emit (self, context_signals[KEYBOARD_CLOSED_EVENT], 0);
       } break;
 
       case EVREventType_VREvent_Quit:
