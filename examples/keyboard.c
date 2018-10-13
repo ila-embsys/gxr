@@ -83,22 +83,6 @@ _damage_cb (GtkWidget      *widget,
   return TRUE;
 }
 
-static gboolean
-_draw_cb (GtkWidget *widget,
-          cairo_t   *cr,
-          gpointer _self)
-{
-  (void) widget;
-  (void) cr;
-  Example *self = (Example*) _self;
-
-  gchar markup_str [50];
-  g_sprintf (markup_str, "<span font=\"24\">%s</span>", self->input_text);
-  gtk_label_set_markup (GTK_LABEL (self->label), markup_str);
-
-  return FALSE;
-}
-
 static void
 _destroy_cb (OpenVROverlay *overlay,
              gpointer      _self)
@@ -121,6 +105,10 @@ _process_key_event (Example *self, GdkEventKey *event)
       else if (self->text_cursor < 300)
         self->input_text[self->text_cursor++] = event->string[i];
     }
+
+  gchar markup_str [50];
+  g_sprintf (markup_str, "<span font=\"24\">%s</span>", self->input_text);
+  gtk_label_set_markup (GTK_LABEL (self->label), markup_str);
 }
 
 static void
@@ -218,7 +206,6 @@ _init_gtk (Example *self)
   gtk_widget_show_all (window);
 
   g_signal_connect (window, "damage-event", G_CALLBACK (_damage_cb), self);
-  g_signal_connect (window, "draw", G_CALLBACK (_draw_cb), self);
 
   return TRUE;
 }
