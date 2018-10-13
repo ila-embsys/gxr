@@ -2,6 +2,7 @@
 <gresources>
   <gresource prefix="/res">
     <file>cat.jpg</file>
+    <file>hawk.jpg</file>
     <file>crosshair.png</file>
     <file>bindings/actions.json</file>
     <file>bindings/bindings_vive_controller.json</file>
