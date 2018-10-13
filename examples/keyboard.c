@@ -112,21 +112,39 @@ _process_key_event (Example *self, GdkEventKey *event)
 }
 
 static void
-_system_keyboard_cb (OpenVRContext  *context,
-                     GdkEventKey    *event,
-                     gpointer       _self)
+_system_keyboard_press_cb (OpenVRContext *context,
+                           GdkEventKey   *event,
+                           gpointer      _self)
 {
   (void) context;
   _process_key_event ((Example*) _self, event);
 }
 
 static void
-_overlay_keyboard_cb (OpenVROverlay  *overlay,
-                      GdkEventKey    *event,
-                      gpointer       _self)
+_overlay_keyboard_press_cb (OpenVROverlay *overlay,
+                            GdkEventKey   *event,
+                            gpointer      _self)
 {
   (void) overlay;
   _process_key_event ((Example*) _self, event);
+}
+
+static void
+_system_keyboard_close_cb (OpenVRContext  *context,
+                           gpointer       _self)
+{
+  (void) context;
+  (void) _self;
+  g_print ("System keyboard closed.\n");
+}
+
+static void
+_overlay_keyboard_close_cb (OpenVROverlay  *overlay,
+                            gpointer       _self)
+{
+  (void) overlay;
+  (void) _self;
+  g_print ("Overlay keyboard closed.\n");
 }
 
 gboolean
@@ -304,11 +322,19 @@ main (int argc, char *argv[])
                              (GCallback) _show_keyboard_cb, &self);
 
   if (use_system_keyboard)
-    g_signal_connect (context, "keyboard-press-event",
-                      (GCallback) _system_keyboard_cb, &self);
+    {
+      g_signal_connect (context, "keyboard-press-event",
+                        (GCallback) _system_keyboard_press_cb, &self);
+      g_signal_connect (context, "keyboard-close-event",
+                        (GCallback) _system_keyboard_close_cb, &self);
+    }
   else
-    g_signal_connect (self.overlay, "keyboard-press-event",
-                      (GCallback) _overlay_keyboard_cb, &self);
+    {
+      g_signal_connect (self.overlay, "keyboard-press-event",
+                        (GCallback) _overlay_keyboard_press_cb, &self);
+      g_signal_connect (self.overlay, "keyboard-close-event",
+                        (GCallback) _overlay_keyboard_close_cb, &self);
+    }
 
   g_timeout_add (20, _poll_events_cb, &self);
 
