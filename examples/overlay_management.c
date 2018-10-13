@@ -179,7 +179,7 @@ _hover_end_cb (OpenVROverlay *overlay,
 gboolean
 _init_cat_overlays (Example *self)
 {
-  GdkPixbuf *pixbuf = load_gdk_pixbuf ("/res/cat.jpg");
+  GdkPixbuf *pixbuf = load_gdk_pixbuf ("/res/hawk.jpg");
   if (pixbuf == NULL)
     return -1;
 
@@ -219,6 +219,10 @@ _init_cat_overlays (Example *self)
             g_printerr ("Overlay unavailable.\n");
             return -1;
           }
+
+        openvr_overlay_set_mouse_scale (cat,
+                                        (float) gdk_pixbuf_get_width (pixbuf),
+                                        (float) gdk_pixbuf_get_height (pixbuf));
 
         graphene_point3d_t position = {
           .x = x,

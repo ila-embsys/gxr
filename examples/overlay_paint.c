@@ -221,7 +221,7 @@ _paint_hover_cb (OpenVROverlay    *overlay,
 gboolean
 _init_paint_overlay (Example *self)
 {
-  self->draw_pixbuf = _create_draw_pixbuf (1000, 500);
+  self->draw_pixbuf = _create_draw_pixbuf (1080, 1920);
   if (self->draw_pixbuf == NULL)
     return FALSE;
 
@@ -267,6 +267,11 @@ _init_paint_overlay (Example *self)
   //
   openvr_overlay_manager_add_overlay (self->manager, self->paint_overlay,
                                       OPENVR_OVERLAY_HOVER);
+
+  openvr_overlay_set_mouse_scale (
+    self->paint_overlay,
+    (float) gdk_pixbuf_get_width (self->draw_pixbuf),
+    (float) gdk_pixbuf_get_height (self->draw_pixbuf));
 
   g_signal_connect (self->paint_overlay, "hover-event",
                     (GCallback) _paint_hover_cb, self);
