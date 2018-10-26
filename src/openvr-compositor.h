@@ -13,6 +13,8 @@
 
 #include <vulkan/vulkan.h>
 
+G_BEGIN_DECLS
+
 void
 openvr_compositor_get_instance_extensions (GSList **out_list);
 
