@@ -354,16 +354,16 @@ void
 openvr_vulkan_texture_transfer_layout (OpenVRVulkanTexture *self,
                                        OpenVRVulkanDevice  *device,
                                        VkCommandBuffer      cmd_buffer,
-                                       VkImageLayout        old,
-                                       VkImageLayout        new)
+                                       VkImageLayout        old_layout,
+                                       VkImageLayout        new_layout)
 {
   VkImageMemoryBarrier image_memory_barrier =
   {
     .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
     .srcAccessMask = 0,
     .dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT,
-    .oldLayout = old,
-    .newLayout = new,
+    .oldLayout = old_layout,
+    .newLayout = new_layout,
     .image = self->image,
     .subresourceRange = {
       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,

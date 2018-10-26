@@ -64,8 +64,8 @@ void
 openvr_vulkan_texture_transfer_layout (OpenVRVulkanTexture *self,
                                        OpenVRVulkanDevice  *device,
                                        VkCommandBuffer      cmd_buffer,
-                                       VkImageLayout        old,
-                                       VkImageLayout        new);
+                                       VkImageLayout        old_layout,
+                                       VkImageLayout        new_layout);
 
 bool
 openvr_vulkan_texture_upload_pixels (OpenVRVulkanTexture *self,

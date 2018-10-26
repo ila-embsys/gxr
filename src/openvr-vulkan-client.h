@@ -91,8 +91,8 @@ openvr_vulkan_client_init_vulkan (OpenVRVulkanClient *self,
 bool
 openvr_vulkan_client_transfer_layout (OpenVRVulkanClient  *self,
                                       OpenVRVulkanTexture *texture,
-                                      VkImageLayout        old,
-                                      VkImageLayout        new);
+                                      VkImageLayout        old_layout,
+                                      VkImageLayout        new_layout);
 
 bool
 openvr_vulkan_client_init_command_pool (OpenVRVulkanClient *self);

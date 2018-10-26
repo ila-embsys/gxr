@@ -163,15 +163,16 @@ openvr_vulkan_client_upload_pixbuf (OpenVRVulkanClient   *self,
 bool
 openvr_vulkan_client_transfer_layout (OpenVRVulkanClient  *self,
                                       OpenVRVulkanTexture *texture,
-                                      VkImageLayout        old,
-                                      VkImageLayout        new)
+                                      VkImageLayout        old_layout,
+                                      VkImageLayout        new_layout)
 {
   FencedCommandBuffer cmd_buffer = {};
   if (!openvr_vulkan_client_begin_res_cmd_buffer (self, &cmd_buffer))
     return false;
 
   openvr_vulkan_texture_transfer_layout (texture, self->device,
-                                         cmd_buffer.cmd_buffer, old, new);
+                                         cmd_buffer.cmd_buffer,
+                                         old_layout, new_layout);
 
   if (!openvr_vulkan_client_submit_res_cmd_buffer (self, &cmd_buffer))
     return false;
