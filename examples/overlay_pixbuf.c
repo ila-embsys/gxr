@@ -16,7 +16,7 @@
 #include "openvr-compositor.h"
 #include "openvr-vulkan-uploader.h"
 
-OpenVRVulkanTexture *texture;
+GulkanTexture *texture;
 
 gboolean
 timeout_callback (gpointer data)
@@ -180,11 +180,11 @@ test_cat_overlay ()
     return false;
   }
 
-  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (uploader);
+  GulkanClient *client = GULKAN_CLIENT (uploader);
 
-  texture = openvr_vulkan_texture_new_from_pixbuf (client->device, pixbuf);
+  texture = gulkan_texture_new_from_pixbuf (client->device, pixbuf);
 
-  openvr_vulkan_client_upload_pixbuf (client, texture, pixbuf);
+  gulkan_client_upload_pixbuf (client, texture, pixbuf);
 
   OpenVROverlay *overlay = openvr_overlay_new ();
   openvr_overlay_create_for_dashboard (overlay, "vulkan.cat", "Vulkan Cat");

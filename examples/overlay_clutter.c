@@ -23,7 +23,7 @@
 
 #include "openvr-vulkan-uploader.h"
 
-OpenVRVulkanTexture *texture = NULL;
+GulkanTexture *texture = NULL;
 OpenVRVulkanUploader *uploader;
 
 gboolean
@@ -108,14 +108,14 @@ repaint_cb (gpointer user_data)
   guchar* pixels = clutter_stage_read_pixels
     (CLUTTER_STAGE(data->stage), 0, 0, width, height);
 
-  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (uploader);
+  GulkanClient *client = GULKAN_CLIENT (uploader);
 
   if (texture == NULL)
-    texture = openvr_vulkan_texture_new (client->device,
-                                         width, height, size,
-                                         VK_FORMAT_R8G8B8A8_UNORM);
+    texture = gulkan_texture_new (client->device,
+                                  width, height, size,
+                                  VK_FORMAT_R8G8B8A8_UNORM);
 
-  openvr_vulkan_client_upload_pixels (client, texture, pixels,size);
+  gulkan_client_upload_pixels (client, texture, pixels,size);
 
   openvr_vulkan_uploader_submit_frame (uploader, data->overlay, texture);
 

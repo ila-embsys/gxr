@@ -34,7 +34,7 @@
 
 typedef struct Example
 {
-  OpenVRVulkanTexture *texture;
+  GulkanTexture *texture;
 
   OpenVROverlayManager *manager;
 
@@ -183,12 +183,11 @@ _init_cat_overlays (Example *self)
   if (pixbuf == NULL)
     return -1;
 
-  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (self->uploader);
+  GulkanClient *client = GULKAN_CLIENT (self->uploader);
 
-  self->texture =
-    openvr_vulkan_texture_new_from_pixbuf (client->device, pixbuf);
+  self->texture = gulkan_texture_new_from_pixbuf (client->device, pixbuf);
 
-  openvr_vulkan_client_upload_pixbuf (client, self->texture, pixbuf);
+  gulkan_client_upload_pixbuf (client, self->texture, pixbuf);
 
   float width = .5f;
 

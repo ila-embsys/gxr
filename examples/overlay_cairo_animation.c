@@ -95,7 +95,7 @@ struct RenderContext
 {
   OpenVRVulkanUploader *uploader;
   OpenVROverlay *overlay;
-  OpenVRVulkanTexture *texture;
+  GulkanTexture *texture;
 };
 
 gboolean
@@ -112,13 +112,13 @@ render_callback (gpointer data)
     return FALSE;
   }
 
-  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (context->uploader);
+  GulkanClient *client = GULKAN_CLIENT (context->uploader);
 
   if (context->texture == NULL)
     context->texture =
-      openvr_vulkan_texture_new_from_cairo_surface (client->device, surface);
+      gulkan_texture_new_from_cairo_surface (client->device, surface);
 
-  openvr_vulkan_client_upload_cairo_surface (client, context->texture, surface);
+  gulkan_client_upload_cairo_surface (client, context->texture, surface);
 
   cairo_surface_destroy (surface);
   openvr_vulkan_uploader_submit_frame (context->uploader,

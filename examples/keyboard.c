@@ -33,7 +33,7 @@ typedef struct Example
 
   int text_cursor;
   char input_text[300];
-  OpenVRVulkanTexture *texture;
+  GulkanTexture *texture;
   OpenVRVulkanUploader *uploader;
   OpenVROverlay *overlay;
 
@@ -63,13 +63,12 @@ _damage_cb (GtkWidget      *widget,
     GdkPixbuf *pixbuf = gdk_pixbuf_add_alpha (offscreen_pixbuf, false, 0, 0, 0);
     g_object_unref (offscreen_pixbuf);
 
-    OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (self->uploader);
+    GulkanClient *client = GULKAN_CLIENT (self->uploader);
 
     if (self->texture == NULL)
-      self->texture = openvr_vulkan_texture_new_from_pixbuf (client->device,
-                                                             pixbuf);
+      self->texture = gulkan_texture_new_from_pixbuf (client->device, pixbuf);
 
-    openvr_vulkan_client_upload_pixbuf (client, self->texture, pixbuf);
+    gulkan_client_upload_pixbuf (client, self->texture, pixbuf);
 
     openvr_vulkan_uploader_submit_frame (self->uploader,
                                          self->overlay,

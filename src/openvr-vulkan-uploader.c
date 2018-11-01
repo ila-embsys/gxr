@@ -21,7 +21,7 @@
 
 
 G_DEFINE_TYPE (OpenVRVulkanUploader, openvr_vulkan_uploader,
-               OPENVR_TYPE_VULKAN_CLIENT)
+               GULKAN_TYPE_CLIENT)
 
 static void
 openvr_vulkan_uploader_finalize (GObject *gobject);
@@ -49,7 +49,7 @@ openvr_vulkan_uploader_new (void)
 static void
 openvr_vulkan_uploader_finalize (GObject *gobject)
 {
-  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (gobject);
+  GulkanClient *client = GULKAN_CLIENT (gobject);
 
   /* Idle the device to make sure no work is outstanding */
   if (client->device->device != VK_NULL_HANDLE)
@@ -62,13 +62,13 @@ bool
 openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
                                     bool enable_validation)
 {
-  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (self);
+  GulkanClient *client = GULKAN_CLIENT (self);
   GSList* openvr_instance_extensions = NULL;
   openvr_compositor_get_instance_extensions (&openvr_instance_extensions);
 
-  if (!openvr_vulkan_instance_create (client->instance,
-                                      enable_validation,
-                                      openvr_instance_extensions))
+  if (!gulkan_instance_create (client->instance,
+                               enable_validation,
+                               openvr_instance_extensions))
     {
       g_printerr ("Failed to create instance.\n");
       return false;
@@ -88,16 +88,16 @@ openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
   openvr_compositor_get_device_extensions ((VkPhysicalDevice) physical_device,
                                           &openvr_device_extensions);
 
-  if (!openvr_vulkan_device_create (client->device,
-                                    client->instance,
-                                    (VkPhysicalDevice) physical_device,
-                                    openvr_device_extensions))
+  if (!gulkan_device_create (client->device,
+                             client->instance,
+                             (VkPhysicalDevice) physical_device,
+                             openvr_device_extensions))
     {
       g_printerr ("Failed to create device.\n");
       return false;
     }
 
-  if (!openvr_vulkan_client_init_command_pool (client))
+  if (!gulkan_client_init_command_pool (client))
     {
       g_printerr ("Failed to create command pool.\n");
       return false;
@@ -110,10 +110,10 @@ openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
 void
 openvr_vulkan_uploader_submit_frame (OpenVRVulkanUploader *self,
                                      OpenVROverlay        *overlay,
-                                     OpenVRVulkanTexture  *texture)
+                                     GulkanTexture  *texture)
 {
-  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (self);
-  OpenVRVulkanDevice *device = client->device;
+  GulkanClient *client = GULKAN_CLIENT (self);
+  GulkanDevice *device = client->device;
 
   struct VRVulkanTextureData_t texture_data =
     {

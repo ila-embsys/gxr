@@ -19,7 +19,7 @@
 #include "openvr-time.h"
 #include "openvr-vulkan-uploader.h"
 
-OpenVRVulkanTexture *texture = NULL;
+GulkanTexture *texture = NULL;
 OpenVRVulkanUploader *uploader;
 
 static gboolean
@@ -44,12 +44,12 @@ _damage_cb (GtkWidget *widget, GdkEventExpose *event, OpenVROverlay *overlay)
     GdkPixbuf *pixbuf = gdk_pixbuf_add_alpha (offscreen_pixbuf, false, 0, 0, 0);
     g_object_unref (offscreen_pixbuf);
 
-      OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (uploader);
+      GulkanClient *client = GULKAN_CLIENT (uploader);
 
     if (texture == NULL)
-      texture = openvr_vulkan_texture_new_from_pixbuf (client->device, pixbuf);
+      texture = gulkan_texture_new_from_pixbuf (client->device, pixbuf);
 
-    openvr_vulkan_client_upload_pixbuf (client, texture, pixbuf);
+    gulkan_client_upload_pixbuf (client, texture, pixbuf);
 
     openvr_vulkan_uploader_submit_frame (uploader, overlay, texture);
 

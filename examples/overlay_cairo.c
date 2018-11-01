@@ -24,7 +24,7 @@
 
 #include "cairo_content.h"
 
-OpenVRVulkanTexture *texture;
+GulkanTexture *texture;
 
 void
 draw_cairo (cairo_t *cr, unsigned width, unsigned height)
@@ -155,12 +155,12 @@ test_cat_overlay ()
     return false;
   }
 
-  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (uploader);
+  GulkanClient *client = GULKAN_CLIENT (uploader);
 
-  texture = openvr_vulkan_texture_new_from_cairo_surface (client->device,
+  texture = gulkan_texture_new_from_cairo_surface (client->device,
                                                           surface);
 
-  openvr_vulkan_client_upload_cairo_surface (client, texture, surface);
+  gulkan_client_upload_cairo_surface (client, texture, surface);
 
   /* create openvr overlay */
   OpenVROverlay *overlay = openvr_overlay_new ();

@@ -31,7 +31,7 @@
 typedef struct Example
 {
   OpenVRVulkanUploader *uploader;
-  OpenVRVulkanTexture *texture;
+  GulkanTexture *texture;
 
   OpenVROverlayManager *manager;
 
@@ -163,9 +163,9 @@ _draw_at_2d_position (Example          *self,
         }
     }
 
-  if (!openvr_vulkan_client_upload_pixbuf (OPENVR_VULKAN_CLIENT (self->uploader),
-                                           self->texture,
-                                           self->draw_pixbuf))
+  if (!gulkan_client_upload_pixbuf (GULKAN_CLIENT (self->uploader),
+                                    self->texture,
+                                    self->draw_pixbuf))
     return FALSE;
 
   openvr_vulkan_uploader_submit_frame (self->uploader,
@@ -250,12 +250,12 @@ _init_paint_overlay (Example *self)
   if (!openvr_overlay_show (self->paint_overlay))
     return -1;
 
-  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (self->uploader);
+  GulkanClient *client = GULKAN_CLIENT (self->uploader);
 
   self->texture =
-    openvr_vulkan_texture_new_from_pixbuf (client->device, self->draw_pixbuf);
+    gulkan_texture_new_from_pixbuf (client->device, self->draw_pixbuf);
 
-  openvr_vulkan_client_upload_pixbuf (client, self->texture, self->draw_pixbuf);
+  gulkan_client_upload_pixbuf (client, self->texture, self->draw_pixbuf);
 
   openvr_vulkan_uploader_submit_frame (self->uploader,
                                        self->paint_overlay, self->texture);

@@ -22,7 +22,7 @@
 
 #include "dmabuf_content.h"
 
-OpenVRVulkanTexture *texture;
+GulkanTexture *texture;
 
 gboolean
 timeout_callback (gpointer data)
@@ -187,27 +187,29 @@ main ()
     return false;
   }
 
-  OpenVRVulkanClient *client = OPENVR_VULKAN_CLIENT (uploader);
+  GulkanClient *client = GULKAN_CLIENT (uploader);
 
-  texture = openvr_vulkan_texture_new_from_dmabuf (client->device,
-                                                   fd, width, height,
-                                                   VK_FORMAT_B8G8R8A8_UNORM);
+  texture = gulkan_texture_new_from_dmabuf (client->device,
+                                            fd, width, height,
+                                            VK_FORMAT_B8G8R8A8_UNORM);
   if (texture == NULL)
     {
       g_printerr ("Unable to initialize vulkan dmabuf texture.\n");
       return -1;
     }
 
-  if (!openvr_vulkan_client_transfer_layout (client,
-                                        texture,
-                                        VK_IMAGE_LAYOUT_UNDEFINED,
-                                        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL))
+  if (!gulkan_client_transfer_layout (client,
+                                      texture,
+                                      VK_IMAGE_LAYOUT_UNDEFINED,
+                                      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL))
     {
       g_printerr ("Unable to transfer layout.\n");
     }
 
   OpenVROverlay *overlay = openvr_overlay_new ();
-  openvr_overlay_create_for_dashboard (overlay, "vulkan.dmabuf", "Vulkan DMABUF");
+  openvr_overlay_create_for_dashboard (overlay,
+                                       "vulkan.dmabuf",
+                                       "Vulkan DMABUF");
 
   if (!openvr_overlay_is_valid (overlay))
     {

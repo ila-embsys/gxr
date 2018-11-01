@@ -16,8 +16,9 @@
 
 #include <openvr_capi.h>
 
-#include "openvr-vulkan-client.h"
-#include "openvr-vulkan-texture.h"
+#include <gulkan-client.h>
+#include <gulkan-texture.h>
+
 #include "openvr-overlay.h"
 #include "openvr-system.h"
 
@@ -25,11 +26,11 @@ G_BEGIN_DECLS
 
 #define OPENVR_TYPE_VULKAN_UPLOADER openvr_vulkan_uploader_get_type()
 G_DECLARE_FINAL_TYPE (OpenVRVulkanUploader, openvr_vulkan_uploader,
-                      OPENVR, VULKAN_UPLOADER, OpenVRVulkanClient)
+                      OPENVR, VULKAN_UPLOADER, GulkanClient)
 
 struct _OpenVRVulkanUploader
 {
-  OpenVRVulkanClient parent_type;
+  GulkanClient parent_type;
 };
 
 struct _OpenVRVulkanUploaderClass
@@ -46,7 +47,7 @@ openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
 void
 openvr_vulkan_uploader_submit_frame (OpenVRVulkanUploader *self,
                                      OpenVROverlay        *overlay,
-                                     OpenVRVulkanTexture  *texture);
+                                     GulkanTexture  *texture);
 
 G_END_DECLS
 

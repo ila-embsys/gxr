@@ -7,11 +7,6 @@ openvr_glib_sources = [
   'openvr-overlay.c',
   'openvr-vulkan-uploader.c',
   'openvr-compositor.c',
-  'openvr-vulkan-instance.c',
-  'openvr-vulkan-device.c',
-  'openvr-vulkan-texture.c',
-  'openvr-vulkan-renderer.c',
-  'openvr-vulkan-client.c',
   'openvr-time.c',
   'openvr-math.c',
   'openvr-context.c',
@@ -31,11 +26,6 @@ openvr_glib_headers = [
   'openvr-overlay.h',
   'openvr-vulkan-uploader.h',
   'openvr-compositor.h',
-  'openvr-vulkan-instance.h',
-  'openvr-vulkan-device.h',
-  'openvr-vulkan-texture.h',
-  'openvr-vulkan-renderer.h',
-  'openvr-vulkan-client.h',
   'openvr-time.h',
   'openvr-math.h',
   'openvr-context.h',
@@ -80,7 +70,8 @@ openvr_glib_deps = openvr_deps + [
   gtk3_dep,
   vulkan_dep,
   graphene_dep,
-  m_dep
+  m_dep,
+  gulkan_dep
 ]
 
 openvr_glib_lib = shared_library(api_path,
@@ -91,7 +82,7 @@ openvr_glib_lib = shared_library(api_path,
   install: true,
 )
 
-openvr_glib_inc = include_directories('.')
+openvr_glib_inc = include_directories('.', '/usr/include/gulkan-0.1')
 
 openvr_glib_dep = declare_dependency(
   sources: [],
@@ -124,7 +115,7 @@ if get_option('introspection')
     identifier_prefix: 'OpenVR',
     symbol_prefix: 'openvr',
     export_packages: api_path,
-    includes: [ 'cairo-1.0', 'GdkPixbuf-2.0', 'Gdk-3.0', 'Cogl-1.0'],
+    includes: [ 'cairo-1.0', 'GdkPixbuf-2.0', 'Gdk-3.0'],
     header: 'openvr-glib/openvr-glib.h',
     install: true,
   )
