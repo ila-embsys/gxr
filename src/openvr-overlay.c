@@ -143,7 +143,20 @@ openvr_overlay_create (OpenVROverlay *self, gchar* key, gchar* name)
 {
   GET_OVERLAY_FUNCTIONS
 
-  err = f->CreateOverlay (key, name, &self->overlay_handle);
+  /* k_unVROverlayMaxKeyLength is the limit including the null terminator */
+  if (strlen(key) + 1 > k_unVROverlayMaxKeyLength)
+    {
+      g_printerr ("Overlay key too long, must be shorter than %d characters\n",
+                  k_unMaxSettingsKeyLength - 1);
+      return FALSE;
+    }
+
+
+  char *name_trimmed = strndup(name, k_unVROverlayMaxNameLength - 1);
+
+  err = f->CreateOverlay (key, name_trimmed, &self->overlay_handle);
+
+  free (name_trimmed);
 
   OVERLAY_CHECK_ERROR ("CreateOverlay", err);
 
