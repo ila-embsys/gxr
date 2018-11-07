@@ -236,6 +236,8 @@ openvr_overlay_manager_add_overlay (OpenVROverlayManager *self,
   graphene_matrix_t *transform = graphene_matrix_alloc ();
   openvr_overlay_get_transform_absolute (overlay, transform);
   g_hash_table_insert (self->reset_transforms, overlay, transform);
+
+  g_object_ref (overlay);
 }
 
 void

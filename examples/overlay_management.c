@@ -41,6 +41,8 @@ typedef struct Example
   OpenVRPointer *pointer_overlay;
   OpenVRIntersection *intersection;
 
+  GSList *overlays;
+
   OpenVRButton *button_reset;
   OpenVRButton *button_sphere;
 
@@ -246,6 +248,8 @@ _init_cat_overlays (Example *self)
         g_signal_connect (cat, "hover-end-event",
                           (GCallback) _hover_end_cb, NULL);
 
+        self->overlays = g_slist_prepend (self->overlays, cat);
+
         if (!openvr_overlay_show (cat))
           return -1;
 
@@ -399,12 +403,24 @@ _push_pull_cb (OpenVRAction      *action,
   g_free (event);
 }
 
+static void
+_destroy_overlay (gpointer _overlay,
+                  gpointer _unused)
+{
+  (void) _unused;
+  OpenVROverlay *overlay = _overlay;
+  g_object_unref (overlay);
+}
+
 void
 _cleanup (Example *self)
 {
   g_main_loop_unref (self->loop);
 
   g_print ("bye\n");
+
+  g_slist_foreach (self->overlays, (GFunc) _destroy_overlay, NULL);
+  g_slist_free (self->overlays);
 
   g_object_unref (self->pointer_overlay);
   g_object_unref (self->intersection);
