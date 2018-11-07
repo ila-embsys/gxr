@@ -90,6 +90,7 @@ _interpolate_cb (gpointer _transition)
     {
       openvr_overlay_set_transform_absolute (transition->overlay,
                                              &transition->to);
+      g_object_unref (transition->overlay);
       g_free (transition);
       return FALSE;
     }
@@ -116,6 +117,7 @@ openvr_overlay_manager_arrange_reset (OpenVROverlayManager *self)
         {
           transition->interpolate = 0;
           transition->overlay = overlay;
+          g_object_ref (overlay);
 
           graphene_matrix_init_from_matrix (&transition->to, transform);
 
@@ -188,6 +190,7 @@ openvr_overlay_manager_arrange_sphere (OpenVROverlayManager *self,
             {
               transition->interpolate = 0;
               transition->overlay = overlay;
+              g_object_ref (overlay);
 
               graphene_matrix_init_from_matrix (&transition->to, &transform);
 
@@ -233,6 +236,18 @@ openvr_overlay_manager_add_overlay (OpenVROverlayManager *self,
   graphene_matrix_t *transform = graphene_matrix_alloc ();
   openvr_overlay_get_transform_absolute (overlay, transform);
   g_hash_table_insert (self->reset_transforms, overlay, transform);
+}
+
+void
+openvr_overlay_manager_remove_overlay (OpenVROverlayManager *self,
+                                       OpenVROverlay        *overlay)
+{
+  self->destroy_overlays = g_slist_remove (self->destroy_overlays, overlay);
+  self->grab_overlays = g_slist_remove (self->grab_overlays, overlay);
+  self->hover_overlays = g_slist_remove (self->hover_overlays, overlay);
+  g_hash_table_remove (self->reset_transforms, overlay);
+
+  g_object_unref (overlay);
 }
 
 void

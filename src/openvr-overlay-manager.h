@@ -76,6 +76,10 @@ openvr_overlay_manager_add_overlay (OpenVROverlayManager *self,
                                     OpenVROverlayFlags    flags);
 
 void
+openvr_overlay_manager_remove_overlay (OpenVROverlayManager *self,
+                                       OpenVROverlay        *overlay);
+
+void
 openvr_overlay_manager_drag_start (OpenVROverlayManager *self);
 
 void
