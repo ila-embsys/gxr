@@ -252,6 +252,28 @@ openvr_overlay_manager_remove_overlay (OpenVROverlayManager *self,
   g_object_unref (overlay);
 }
 
+static gboolean
+openvr_overlay_get_2d_offset (OpenVROverlay      *overlay,
+                              graphene_point3d_t *intersection_point,
+                              graphene_point_t   *position_2d)
+{
+  graphene_matrix_t transform;
+  openvr_overlay_get_transform_absolute (overlay, &transform);
+
+  graphene_matrix_t inverse_transform;
+  graphene_matrix_inverse (&transform, &inverse_transform);
+
+  graphene_point3d_t intersection_origin;
+  graphene_matrix_transform_point3d (&inverse_transform,
+                                      intersection_point,
+                                     &intersection_origin);
+
+  graphene_point_init (position_2d,
+                      intersection_origin.x,
+                      intersection_origin.y);
+  return TRUE;
+}
+
 void
 _test_hover (OpenVROverlayManager *self,
              graphene_matrix_t    *pose)
@@ -292,6 +314,9 @@ _test_hover (OpenVROverlayManager *self,
         self->hover_state.overlay = closest;
         graphene_matrix_init_from_matrix (&self->hover_state.pose, pose);
 
+        openvr_overlay_get_2d_offset (closest, &event->point,
+                                      &self->hover_state.intersection_offset);
+
         openvr_overlay_emit_hover (closest, event);
       }
     else
@@ -313,20 +338,51 @@ void
 _drag_overlay (OpenVROverlayManager *self,
                graphene_matrix_t    *pose)
 {
-  graphene_point3d_t translation_point;
-  graphene_point3d_init (&translation_point,
-                         .0f, .0f, -self->hover_state.distance);
+  graphene_vec3_t controller_translation;
+  openvr_math_matrix_get_translation (pose, &controller_translation);
+  graphene_point3d_t controller_translation_point;
+  graphene_point3d_init_from_vec3 (&controller_translation_point,
+                                   &controller_translation);
+  graphene_quaternion_t controller_rotation;
+  graphene_quaternion_init_from_matrix (&controller_rotation, pose);
+
+  graphene_point3d_t distance_translation_point;
+  graphene_point3d_init (&distance_translation_point,
+                         0.f, 0.f, -self->hover_state.distance);
+
 
   graphene_matrix_t transformation_matrix;
-  graphene_matrix_init_translate (&transformation_matrix, &translation_point);
+  graphene_matrix_init_identity (&transformation_matrix);
 
-  graphene_matrix_t transformed;
-  graphene_matrix_multiply (&transformation_matrix,
-                             pose,
-                            &transformed);
+  /* first translate the overlay so that the grab point is the origin */
+  graphene_matrix_translate (&transformation_matrix,
+                             &self->grab_state.offset_translation_point);
+
+  /* then apply the rotation that the overlay had when it was grabbed */
+  graphene_matrix_rotate_quaternion (
+      &transformation_matrix, &self->grab_state.overlay_rotation);
+
+  /* reverse the rotation induced by the controller pose when it was grabbed */
+  graphene_matrix_rotate_quaternion (
+      &transformation_matrix,
+      &self->grab_state.overlay_transformed_rotation_neg);
+
+  /* then translate the overlay to the controller ray distance */
+  graphene_matrix_translate (&transformation_matrix,
+                             &distance_translation_point);
+
+  /* rotate the translated overlay. Because the original controller rotation has
+   * been subtracted, this will only add the diff to the original rotation
+   */
+  graphene_matrix_rotate_quaternion (&transformation_matrix,
+                                     &controller_rotation);
+
+  /* and finally move the whole thing so the controller is the origin */
+  graphene_matrix_translate (&transformation_matrix,
+                             &controller_translation_point);
 
   openvr_overlay_set_transform_absolute (self->grab_state.overlay,
-                                        &transformed);
+                                        &transformation_matrix);
 }
 
 void
@@ -334,8 +390,51 @@ openvr_overlay_manager_drag_start (OpenVROverlayManager *self)
 {
   /* Copy hover to grab state */
   self->grab_state.overlay = self->hover_state.overlay;
-  graphene_matrix_init_from_matrix (&self->grab_state.pose,
-                                    &self->hover_state.pose);
+
+  graphene_quaternion_t controller_rotation;
+  graphene_quaternion_init_from_matrix (&controller_rotation,
+                                        &self->hover_state.pose);
+
+  graphene_matrix_t overlay_transform;
+  openvr_overlay_get_transform_absolute (self->grab_state.overlay,
+                                         &overlay_transform);
+  graphene_quaternion_init_from_matrix (
+      &self->grab_state.overlay_rotation, &overlay_transform);
+
+  graphene_point3d_t distance_translation_point;
+  graphene_point3d_init (&distance_translation_point,
+                         0.f, 0.f, -self->hover_state.distance);
+
+  graphene_point3d_t negative_distance_translation_point;
+  graphene_point3d_init (&negative_distance_translation_point,
+                         0.f, 0.f, +self->hover_state.distance);
+
+  graphene_point3d_init (
+      &self->grab_state.offset_translation_point,
+      -self->hover_state.intersection_offset.x,
+      -self->hover_state.intersection_offset.y,
+      0.f);
+
+  /* Calculate the inverse of the overlay rotatation that is induced by the
+   * controller dragging the overlay in an arc to its current location when it
+   * is grabbed. Multiplying this inverse rotation to the rotation of the
+   * overlay will subtract the initial rotation induced by the controller pose
+   * when the overlay was grabbed.
+   */
+  graphene_matrix_t target_transformation_matrix;
+  graphene_matrix_init_identity (&target_transformation_matrix);
+  graphene_matrix_translate (&target_transformation_matrix,
+                             &distance_translation_point);
+  graphene_matrix_rotate_quaternion (&target_transformation_matrix,
+                                     &controller_rotation);
+  graphene_matrix_translate (&target_transformation_matrix,
+                             &negative_distance_translation_point);
+  graphene_quaternion_t transformed_rotation;
+  graphene_quaternion_init_from_matrix (&transformed_rotation,
+                                        &target_transformation_matrix);
+  graphene_quaternion_invert (
+      &transformed_rotation,
+      &self->grab_state.overlay_transformed_rotation_neg);
 }
 
 void

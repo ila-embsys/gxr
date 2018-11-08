@@ -31,12 +31,16 @@ typedef struct HoverState
   OpenVROverlay    *overlay;
   graphene_matrix_t pose;
   float             distance;
+  graphene_point_t  intersection_offset;
 } HoverState;
 
 typedef struct GrabState
 {
   OpenVROverlay    *overlay;
-  graphene_matrix_t pose;
+  graphene_quaternion_t overlay_rotation;
+  /* the rotation induced by the overlay being moved on the controller arc */
+  graphene_quaternion_t overlay_transformed_rotation_neg;
+  graphene_point3d_t offset_translation_point;
 } GrabState;
 
 typedef enum
