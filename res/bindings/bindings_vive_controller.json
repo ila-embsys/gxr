@@ -1,88 +1,142 @@
 {
    "bindings" : {
-      "/actions/wm" : {
-         "poses" : [
-            {
-               "output" : "/actions/wm/in/hand_primary",
-               "path" : "/user/hand/right/pose/raw"
-            },
-            {
-               "output" : "/actions/wm/in/hand_secondary",
-               "path" : "/user/hand/left/pose/raw"
+    "/actions/mouse_synth": {
+      "sources": [
+        {
+          "path": "/user/hand/right/input/trackpad",
+          "mode": "trackpad_scroll",
+          "inputs": {
+            "scroll": {
+              "output": "/actions/mouse_synth/in/scroll"
             }
-         ],
-         "haptics" : [
-            {
-               "output" : "/actions/wm/out/haptic_primary",
-               "path" : "/user/hand/right/output/haptic"
-            },
-            {
-               "output" : "/actions/wm/out/haptic_secondary",
-               "path" : "/user/hand/left/output/haptic"
+          }
+        },
+        {
+          "path": "/user/hand/right/input/application_menu",
+          "mode": "button",
+          "inputs": {
+            "click": {
+              "output": "/actions/mouse_synth/in/right_click"
             }
-         ],
-         "sources" : [
-            {
-               "inputs" : {
-                  "click" : {
-                     "output" : "/actions/wm/in/grab_window"
-                  }
-               },
-               "mode" : "button",
-               "path" : "/user/hand/right/input/trigger"
-            },
-            {
-               "inputs" : {
-                  "click" : {
-                     "output" : "/actions/wm/in/show_keyboard"
-                  }
-               },
-               "mode" : "button",
-               "path" : "/user/hand/right/input/application_menu"
-            },
-            {
-               "inputs" : {
-                  "scroll" : {
-                     "output" : "/actions/wm/in/push_pull"
-                  }
-               },
-               "mode" : "trackpad_scroll",
-               "path" : "/user/hand/right/input/trackpad"
+          }
+        },
+        {
+          "path": "/user/hand/right/input/trackpad",
+          "mode": "button",
+          "inputs": {
+            "click": {
+              "output": "/actions/mouse_synth/in/left_click"
             }
-         ]
-      },
-      "/actions/mouse_synth" : {
-         "sources" : [
-            {
-               "inputs" : {
-                  "scroll" : {
-                    "output" : "/actions/mouse_synth/in/scroll"
-                  }
-               },
-               "mode" : "trackpad_scroll",
-               "path" : "/user/hand/right/input/trackpad"
-            },
-            {
-               "inputs" : {
-                  "click" : {
-                     "output" : "/actions/mouse_synth/in/right_click"
-                  }
-               },
-               "mode" : "button",
-               "path" : "/user/hand/right/input/application_menu"
-            },
-            {
-               "inputs" : {
-                  "click" : {
-                     "output" : "/actions/mouse_synth/in/left_click"
-                  }
-               },
-               "mode" : "button",
-               "path" : "/user/hand/right/input/trackpad"
+          }
+        },
+        {
+          "path": "/user/hand/left/input/trackpad",
+          "mode": "trackpad_scroll",
+          "inputs": {
+            "scroll": {
+              "output": "/actions/mouse_synth/in/scroll"
             }
-         ]
-      }
-   },
+          }
+        },
+        {
+          "path": "/user/hand/left/input/trackpad",
+          "mode": "button",
+          "inputs": {
+            "click": {
+              "output": "/actions/mouse_synth/in/left_click"
+            }
+          }
+        },
+        {
+          "path": "/user/hand/left/input/application_menu",
+          "mode": "button",
+          "inputs": {
+            "click": {
+              "output": "/actions/mouse_synth/in/right_click"
+            }
+          }
+        }
+      ]
+    },
+    "/actions/wm": {
+      "poses": [
+        {
+          "output": "/actions/wm/in/hand_primary",
+          "path": "/user/hand/right/pose/raw"
+        },
+        {
+          "output": "/actions/wm/in/hand_secondary",
+          "path": "/user/hand/left/pose/raw"
+        }
+      ],
+      "haptics": [
+        {
+          "output": "/actions/wm/out/haptic_primary",
+          "path": "/user/hand/right/output/haptic"
+        },
+        {
+          "output": "/actions/wm/out/haptic_secondary",
+          "path": "/user/hand/left/output/haptic"
+        }
+      ],
+      "sources": [
+        {
+          "path": "/user/hand/right/input/trigger",
+          "mode": "button",
+          "inputs": {
+            "click": {
+              "output": "/actions/wm/in/grab_window"
+            }
+          }
+        },
+        {
+          "path": "/user/hand/right/input/application_menu",
+          "mode": "button",
+          "inputs": {
+            "click": {
+              "output": "/actions/wm/in/show_keyboard"
+            }
+          }
+        },
+        {
+          "path": "/user/hand/right/input/trackpad",
+          "mode": "trackpad_scroll",
+          "inputs": {
+            "scroll": {
+              "output": "/actions/wm/in/push_pull"
+            }
+          }
+        },
+        {
+          "path": "/user/hand/left/input/application_menu",
+          "mode": "button",
+          "inputs": {
+            "click": {
+              "output": "/actions/wm/in/show_keyboard"
+            }
+          }
+        },
+        {
+          "path": "/user/hand/left/input/trigger",
+          "mode": "button",
+          "inputs": {
+            "click": {
+              "output": "/actions/wm/in/grab_window"
+            }
+          }
+        },
+        {
+          "path": "/user/hand/left/input/trackpad",
+          "mode": "trackpad_scroll",
+          "inputs": {
+            "scroll": {
+              "output": "/actions/wm/in/push_pull"
+            }
+          }
+        }
+      ]
+    }
+  },
    "controller_type" : "vive_controller",
    "description" : "GNOME VR bindings for the Vive controller",
    "name" : "GNOME VR Vive Controller"
