@@ -38,8 +38,8 @@ typedef struct Example
 
   OpenVROverlayManager *manager;
 
-  OpenVRPointer *pointer_overlay;
-  OpenVRIntersection *intersection;
+  OpenVRPointer *pointer_overlay[OPENVR_CONTROLLER_COUNT];
+  OpenVRIntersection *intersection[OPENVR_CONTROLLER_COUNT];
 
   GSList *overlays;
 
@@ -54,6 +54,12 @@ typedef struct Example
 
   OpenVRVulkanUploader *uploader;
 } Example;
+
+typedef struct ActionCallbackData
+{
+  Example *self;
+  int      controller_index;
+} ActionCallbackData;
 
 gboolean
 _sigint_cb (gpointer _self)
@@ -124,22 +130,56 @@ _overlay_mark_orange (OpenVROverlay *overlay)
   openvr_overlay_set_color (overlay, &marked_color);
 }
 
+static gboolean
+_is_grabbed (Example *self, OpenVROverlay *overlay)
+{
+  for (int i = 0; i < OPENVR_CONTROLLER_COUNT; i++)
+    if (self->manager->grab_state[i].overlay == overlay)
+      return TRUE;
+  return FALSE;
+}
+
+static gboolean
+_is_hovered (Example *self, OpenVROverlay *overlay)
+{
+  for (int i = 0; i < OPENVR_CONTROLLER_COUNT; i++)
+    if (self->manager->hover_state[i].overlay == overlay)
+      return TRUE;
+  return FALSE;
+}
+
 void
 _cat_grab_cb (OpenVROverlay *overlay,
+              OpenVRGrabEvent *event,
               gpointer      _self)
 {
   Example *self = (Example*) _self;
-  openvr_overlay_manager_drag_start (self->manager);
-  openvr_overlay_hide (OPENVR_OVERLAY (self->intersection));
+
+  /* don't grab if this overlay is already grabbed */
+  if (_is_grabbed (self, overlay))
+    {
+      g_free (event);
+      return;
+    }
+
+  openvr_overlay_manager_drag_start (self->manager, event->controller_index);
+  OpenVRIntersection *intersection =
+      self->intersection[event->controller_index];
+
+  openvr_overlay_hide (OPENVR_OVERLAY (intersection));
   _overlay_mark_green (overlay);
+  g_free (event);
 }
 
 void
 _cat_release_cb (OpenVROverlay *overlay,
-                  gpointer      unused)
+                 OpenVRReleaseEvent *event,
+                 gpointer      _self)
 {
-  (void) unused;
+  (void) event;
+  (void) _self;
   _overlay_unmark (overlay);
+  g_free (event);
 }
 
 void
@@ -149,11 +189,23 @@ _hover_cb (OpenVROverlay    *overlay,
 {
   Example *self = (Example*) _self;
 
+  if (_is_grabbed (self, overlay))
+    {
+      g_free (event);
+      return;
+    }
+
   _overlay_mark_blue (overlay);
 
+  OpenVRPointer *pointer_overlay =
+      self->pointer_overlay[event->controller_index];
+  OpenVRIntersection *intersection =
+      self->intersection[event->controller_index];
+
   /* update pointer length and intersection overlay */
-  openvr_intersection_update (self->intersection, &event->pose, &event->point);
-  openvr_pointer_set_length (self->pointer_overlay, event->distance);
+  openvr_intersection_update (intersection, &event->pose, &event->point);
+  openvr_pointer_set_length (pointer_overlay, event->distance);
+  g_free (event);
 }
 
 void
@@ -165,17 +217,30 @@ _hover_button_cb (OpenVROverlay    *overlay,
 
   _overlay_mark_orange (overlay);
 
+  OpenVRPointer *pointer_overlay =
+      self->pointer_overlay[event->controller_index];
+  OpenVRIntersection *intersection =
+      self->intersection[event->controller_index];
+
   /* update pointer length and intersection overlay */
-  openvr_intersection_update (self->intersection, &event->pose, &event->point);
-  openvr_pointer_set_length (self->pointer_overlay, event->distance);
+  openvr_intersection_update (intersection, &event->pose, &event->point);
+  openvr_pointer_set_length (pointer_overlay, event->distance);
+  g_free (event);
 }
 
 void
 _hover_end_cb (OpenVROverlay *overlay,
-               gpointer       unused)
+               OpenVRHoverEndEvent *event,
+               gpointer       _self)
 {
-  (void) unused;
+  (void) event;
+  Example *self = (Example*) _self;
+
+  /* don't unmark if the other controller is still hovering over this overlay */
+  if (_is_hovered (self, overlay))
+      return;
   _overlay_unmark (overlay);
+  g_free (event);
 }
 
 gboolean
@@ -246,7 +311,7 @@ _init_cat_overlays (Example *self)
         g_signal_connect (cat, "hover-event",
                           (GCallback) _hover_cb, self);
         g_signal_connect (cat, "hover-end-event",
-                          (GCallback) _hover_end_cb, NULL);
+                          (GCallback) _hover_end_cb, self);
 
         self->overlays = g_slist_prepend (self->overlays, cat);
 
@@ -289,16 +354,18 @@ _init_button (Example            *self,
   g_signal_connect (overlay, "grab-event", (GCallback) callback, self);
   g_signal_connect (overlay, "hover-event", (GCallback) _hover_button_cb, self);
   g_signal_connect (overlay, "hover-end-event",
-                    (GCallback) _hover_end_cb, NULL);
+                    (GCallback) _hover_end_cb, self);
 
   return TRUE;
 }
 
 void
-_button_sphere_press_cb (OpenVROverlay *overlay,
-                         gpointer      _self)
+_button_sphere_press_cb (OpenVROverlay   *overlay,
+                         OpenVRGrabEvent *event,
+                         gpointer        _self)
 {
   (void) overlay;
+  (void) event;
   Example *self = (Example*) _self;
   openvr_overlay_manager_arrange_sphere (self->manager,
                                          GRID_WIDTH,
@@ -306,10 +373,12 @@ _button_sphere_press_cb (OpenVROverlay *overlay,
 }
 
 void
-_button_reset_press_cb (OpenVROverlay *overlay,
-                        gpointer      _self)
+_button_reset_press_cb (OpenVROverlay   *overlay,
+                        OpenVRGrabEvent *event,
+                        gpointer        _self)
 {
   (void) overlay;
+  (void) event;
   Example *self = (Example*) _self;
   openvr_overlay_manager_arrange_reset (self->manager);
 }
@@ -342,24 +411,39 @@ _init_buttons (Example *self)
 
 void
 _no_hover_cb (OpenVROverlayManager *manager,
+              OpenVRNoHoverEvent   *event,
               gpointer             _self)
 {
   (void) manager;
 
   Example *self = (Example*) _self;
-  openvr_overlay_hide (OPENVR_OVERLAY (self->intersection));
-  openvr_pointer_reset_length (self->pointer_overlay);
+
+  OpenVRPointer *pointer_overlay =
+      self->pointer_overlay[event->controller_index];
+  OpenVRIntersection *intersection =
+      self->intersection[event->controller_index];
+
+
+  openvr_overlay_hide (OPENVR_OVERLAY (intersection));
+  openvr_pointer_reset_length (pointer_overlay);
+  g_free (event);
 }
 
 static void
-_dominant_hand_cb (OpenVRAction    *action,
-                   OpenVRPoseEvent *event,
-                   gpointer         _self)
+_hand_pose_cb (OpenVRAction    *action,
+               OpenVRPoseEvent *event,
+               gpointer         _self)
 {
   (void) action;
-  Example *self = (Example*) _self;
-  openvr_overlay_manager_update_pose (self->manager, &event->pose);
-  openvr_pointer_move (self->pointer_overlay, &event->pose);
+  ActionCallbackData *data = _self;
+  Example *self = (Example*) data->self;
+
+  OpenVRPointer *pointer_overlay =
+      self->pointer_overlay[data->controller_index];
+
+  openvr_overlay_manager_update_pose (self->manager, &event->pose,
+                                      data->controller_index);
+  openvr_pointer_move (pointer_overlay, &event->pose);
   g_free (event);
 }
 
@@ -370,14 +454,17 @@ _grab_cb (OpenVRAction       *action,
 {
   (void) action;
 
-  Example *self = (Example*) _self;
+  ActionCallbackData *data = _self;
+  Example *self = (Example*) data->self;
 
   if (event->changed)
     {
       if (event->state == 1)
-        openvr_overlay_manager_check_grab (self->manager);
+        openvr_overlay_manager_check_grab (self->manager,
+                                           data->controller_index);
       else
-        openvr_overlay_manager_check_release (self->manager);
+        openvr_overlay_manager_check_release (self->manager,
+                                              data->controller_index);
     }
 
   g_free (event);
@@ -388,16 +475,26 @@ _grab_cb (OpenVRAction       *action,
 static void
 _push_pull_cb (OpenVRAction      *action,
                OpenVRAnalogEvent *event,
-               Example           *self)
+               gpointer          _self)
 {
   (void) action;
 
-  if (self->manager->grab_state.overlay != NULL)
+  ActionCallbackData *data = _self;
+  Example *self = data->self;
+
+  GrabState *grab_state =
+      &self->manager->grab_state[data->controller_index];
+  HoverState *hover_state =
+      &self->manager->hover_state[data->controller_index];
+  OpenVRPointer *pointer_overlay =
+      self->pointer_overlay[data->controller_index];
+
+  if (grab_state->overlay != NULL)
     {
-      self->manager->hover_state.distance +=
+      hover_state->distance +=
         SCROLL_TO_PUSH_RATIO * graphene_vec3_get_y (&event->state);
-      openvr_pointer_set_length (self->pointer_overlay,
-                                 self->manager->hover_state.distance);
+      openvr_pointer_set_length (pointer_overlay,
+                                 hover_state->distance);
     }
 
   g_free (event);
@@ -422,8 +519,11 @@ _cleanup (Example *self)
   g_slist_foreach (self->overlays, (GFunc) _destroy_overlay, NULL);
   g_slist_free (self->overlays);
 
-  g_object_unref (self->pointer_overlay);
-  g_object_unref (self->intersection);
+  for (int i = 0; i < OPENVR_CONTROLLER_COUNT; i++)
+    {
+      g_object_unref (self->pointer_overlay[i]);
+      g_object_unref (self->intersection[i]);
+    }
   g_object_unref (self->texture);
 
   g_object_unref (self->button_reset);
@@ -472,13 +572,15 @@ main ()
       return false;
     }
 
-  self.pointer_overlay = openvr_pointer_new ();
-  if (self.pointer_overlay == NULL)
-    return -1;
-
-  self.intersection = openvr_intersection_new ("/res/crosshair.png");
-  if (self.intersection == NULL)
-    return -1;
+  for (int i = 0; i < OPENVR_CONTROLLER_COUNT; i++)
+    {
+      self.pointer_overlay[i] = openvr_pointer_new (i);
+      if (self.pointer_overlay[i] == NULL)
+        return -1;
+      self.intersection[i] = openvr_intersection_new ("/res/crosshair.png", i);
+      if (self.intersection[i] == NULL)
+        return -1;
+    }
 
   if (!_init_cat_overlays (&self))
     return -1;
@@ -486,17 +588,37 @@ main ()
   if (!_init_buttons (&self))
     return -1;
 
+  ActionCallbackData data_left =
+    {
+      .self = &self,
+      .controller_index = 0
+    };
+  ActionCallbackData data_right =
+    {
+      .self = &self,
+      .controller_index = 1
+    };
+
   openvr_action_set_connect (self.action_set, OPENVR_ACTION_POSE,
-                             "/actions/wm/in/hand_primary",
-                             (GCallback) _dominant_hand_cb, &self);
+                             "/actions/wm/in/hand_pose_left",
+                             (GCallback) _hand_pose_cb, &data_left);
+  openvr_action_set_connect (self.action_set, OPENVR_ACTION_POSE,
+                             "/actions/wm/in/hand_pose_right",
+                             (GCallback) _hand_pose_cb, &data_right);
 
   openvr_action_set_connect (self.action_set, OPENVR_ACTION_DIGITAL,
-                             "/actions/wm/in/grab_window",
-                             (GCallback) _grab_cb, &self);
+                             "/actions/wm/in/grab_window_left",
+                             (GCallback) _grab_cb, &data_left);
+  openvr_action_set_connect (self.action_set, OPENVR_ACTION_DIGITAL,
+                             "/actions/wm/in/grab_window_right",
+                             (GCallback) _grab_cb, &data_right);
 
   openvr_action_set_connect (self.action_set, OPENVR_ACTION_ANALOG,
-                             "/actions/wm/in/push_pull",
-                             (GCallback) _push_pull_cb, &self);
+                             "/actions/wm/in/push_pull_left",
+                             (GCallback) _push_pull_cb, &data_left);
+  openvr_action_set_connect (self.action_set, OPENVR_ACTION_ANALOG,
+                             "/actions/wm/in/push_pull_right",
+                             (GCallback) _push_pull_cb, &data_right);
 
   g_signal_connect (self.manager, "no-hover-event",
                     (GCallback) _no_hover_cb, &self);

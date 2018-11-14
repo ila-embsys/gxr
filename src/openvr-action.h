@@ -18,6 +18,9 @@ G_BEGIN_DECLS
 #define OPENVR_TYPE_ACTION openvr_action_get_type()
 G_DECLARE_FINAL_TYPE (OpenVRAction, openvr_action, OPENVR, ACTION, GObject)
 
+/* TODO: figure out if and how more than 2 controllers should be supported */
+#define OPENVR_CONTROLLER_COUNT 2
+
 typedef enum OpenVRActionType {
   OPENVR_ACTION_DIGITAL,
   OPENVR_ACTION_ANALOG,

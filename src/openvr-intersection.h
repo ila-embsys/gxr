@@ -22,7 +22,8 @@ struct _OpenVRIntersection
   OpenVROverlay parent;
 };
 
-OpenVRIntersection *openvr_intersection_new (const gchar* name);
+OpenVRIntersection *openvr_intersection_new (const gchar* name,
+                                             int controller_index);
 
 void
 openvr_intersection_update (OpenVRIntersection *self,

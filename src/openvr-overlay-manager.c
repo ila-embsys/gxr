@@ -30,7 +30,8 @@ openvr_overlay_manager_class_init (OpenVROverlayManagerClass *klass)
     g_signal_new ("no-hover-event",
                    G_TYPE_FROM_CLASS (klass),
                    G_SIGNAL_RUN_FIRST,
-                   0, NULL, NULL, NULL, G_TYPE_NONE, 0);
+                   0, NULL, NULL, NULL, G_TYPE_NONE,
+                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
 
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
@@ -41,9 +42,12 @@ static void
 openvr_overlay_manager_init (OpenVROverlayManager *self)
 {
   self->reset_transforms = g_hash_table_new (g_direct_hash, g_direct_equal);
-  self->hover_state.distance = 1.0f;
-  self->hover_state.overlay = NULL;
-  self->grab_state.overlay = NULL;
+  for (int i = 0; i < OPENVR_CONTROLLER_COUNT; i++)
+    {
+      self->hover_state[i].distance = 1.0f;
+      self->hover_state[i].overlay = NULL;
+      self->grab_state[i].overlay = NULL;
+    }
 }
 
 OpenVROverlayManager *
@@ -276,10 +280,11 @@ openvr_overlay_get_2d_offset (OpenVROverlay      *overlay,
 
 void
 _test_hover (OpenVROverlayManager *self,
-             graphene_matrix_t    *pose)
+             graphene_matrix_t    *pose,
+             int                   controller_index)
 {
-  OpenVRHoverEvent *event = g_malloc (sizeof (OpenVRHoverEvent));
-  event->distance = FLT_MAX;
+  OpenVRHoverEvent *hover_event = g_malloc (sizeof (OpenVRHoverEvent));
+  hover_event->distance = FLT_MAX;
 
   OpenVROverlay *closest = NULL;
 
@@ -292,52 +297,78 @@ _test_hover (OpenVROverlayManager *self,
         {
           float distance =
             openvr_math_point_matrix_distance (&intersection_point, pose);
-          if (distance < event->distance)
+          if (distance < hover_event->distance)
             {
               closest = overlay;
-              event->distance = distance;
-              graphene_matrix_init_from_matrix (&event->pose, pose);
-              graphene_point3d_init_from_point (&event->point,
+              hover_event->distance = distance;
+              graphene_matrix_init_from_matrix (&hover_event->pose, pose);
+              graphene_point3d_init_from_point (&hover_event->point,
                                                 &intersection_point);
             }
         }
     }
 
-    if (closest != NULL)
-      {
-        /* We now hover over an overlay */
-        if (closest != self->hover_state.overlay
-            && self->hover_state.overlay != NULL)
-          openvr_overlay_emit_hover_end (self->hover_state.overlay);
+  HoverState *hover_state = &self->hover_state[controller_index];
 
-        self->hover_state.distance = event->distance;
-        self->hover_state.overlay = closest;
-        graphene_matrix_init_from_matrix (&self->hover_state.pose, pose);
+  if (closest != NULL)
+    {
+      /* The recipient of the hover_end event should already see that this
+       * overlay is not hovered anymore, so we need to set the hover state
+       * before sending the event */
+      OpenVROverlay *last_hovered_overlay = hover_state->overlay;
+      hover_state->distance = hover_event->distance;
+      hover_state->overlay = closest;
+      graphene_matrix_init_from_matrix (&hover_state->pose, pose);
 
-        openvr_overlay_get_2d_offset (closest, &event->point,
-                                      &self->hover_state.intersection_offset);
+      /* We now hover over an overlay */
+      if (closest != last_hovered_overlay
+          && last_hovered_overlay != NULL)
+        {
+          OpenVRHoverEndEvent *hover_end_event =
+              g_malloc (sizeof (OpenVRHoverEndEvent));
+          hover_end_event->controller_index = controller_index;
+          openvr_overlay_emit_hover_end (last_hovered_overlay, hover_end_event);
+        }
 
-        openvr_overlay_emit_hover (closest, event);
-      }
-    else
-      {
-        /* No intersection was found, nothing is hovered */
-        g_free (event);
+      openvr_overlay_get_2d_offset (closest, &hover_event->point,
+                                    &hover_state->intersection_offset);
 
-        /* Emit no hover event only if we had hovered something earlier */
-        if (self->hover_state.overlay != NULL)
-          {
-            openvr_overlay_emit_hover_end (self->hover_state.overlay);
-            self->hover_state.overlay = NULL;
-            g_signal_emit (self, overlay_manager_signals[NO_HOVER_EVENT], 0);
-          }
-      }
+      hover_event->controller_index = controller_index;
+      openvr_overlay_emit_hover (closest, hover_event);
+    }
+  else
+    {
+      /* No intersection was found, nothing is hovered */
+      g_free (hover_event);
+
+      /* Emit no hover event only if we had hovered something earlier */
+      if (hover_state->overlay != NULL)
+        {
+          OpenVROverlay *last_hovered_overlay = hover_state->overlay;
+          hover_state->overlay = NULL;
+          OpenVRHoverEndEvent *hover_end_event =
+              g_malloc (sizeof (OpenVRHoverEndEvent));
+          hover_end_event->controller_index = controller_index;
+          openvr_overlay_emit_hover_end (last_hovered_overlay,
+                                         hover_end_event);
+
+          OpenVRNoHoverEvent *no_hover_event =
+              g_malloc (sizeof (OpenVRNoHoverEvent));
+          no_hover_event->controller_index = controller_index;
+          g_signal_emit (self, overlay_manager_signals[NO_HOVER_EVENT], 0,
+                         no_hover_event);
+        }
+    }
 }
 
 void
 _drag_overlay (OpenVROverlayManager *self,
-               graphene_matrix_t    *pose)
+               graphene_matrix_t    *pose,
+               int                   controller_index)
 {
+  HoverState *hover_state = &self->hover_state[controller_index];
+  GrabState *grab_state = &self->grab_state[controller_index];
+
   graphene_vec3_t controller_translation;
   openvr_math_matrix_get_translation (pose, &controller_translation);
   graphene_point3d_t controller_translation_point;
@@ -348,7 +379,7 @@ _drag_overlay (OpenVROverlayManager *self,
 
   graphene_point3d_t distance_translation_point;
   graphene_point3d_init (&distance_translation_point,
-                         0.f, 0.f, -self->hover_state.distance);
+                         0.f, 0.f, -hover_state->distance);
 
 
   graphene_matrix_t transformation_matrix;
@@ -356,16 +387,16 @@ _drag_overlay (OpenVROverlayManager *self,
 
   /* first translate the overlay so that the grab point is the origin */
   graphene_matrix_translate (&transformation_matrix,
-                             &self->grab_state.offset_translation_point);
+                             &grab_state->offset_translation_point);
 
   /* then apply the rotation that the overlay had when it was grabbed */
   graphene_matrix_rotate_quaternion (
-      &transformation_matrix, &self->grab_state.overlay_rotation);
+      &transformation_matrix, &grab_state->overlay_rotation);
 
   /* reverse the rotation induced by the controller pose when it was grabbed */
   graphene_matrix_rotate_quaternion (
       &transformation_matrix,
-      &self->grab_state.overlay_transformed_rotation_neg);
+      &grab_state->overlay_transformed_rotation_neg);
 
   /* then translate the overlay to the controller ray distance */
   graphene_matrix_translate (&transformation_matrix,
@@ -381,38 +412,42 @@ _drag_overlay (OpenVROverlayManager *self,
   graphene_matrix_translate (&transformation_matrix,
                              &controller_translation_point);
 
-  openvr_overlay_set_transform_absolute (self->grab_state.overlay,
+  openvr_overlay_set_transform_absolute (grab_state->overlay,
                                         &transformation_matrix);
 }
 
 void
-openvr_overlay_manager_drag_start (OpenVROverlayManager *self)
+openvr_overlay_manager_drag_start (OpenVROverlayManager *self,
+                                   int                   controller_index)
 {
+  HoverState *hover_state = &self->hover_state[controller_index];
+  GrabState *grab_state = &self->grab_state[controller_index];
+
   /* Copy hover to grab state */
-  self->grab_state.overlay = self->hover_state.overlay;
+  grab_state->overlay = hover_state->overlay;
 
   graphene_quaternion_t controller_rotation;
   graphene_quaternion_init_from_matrix (&controller_rotation,
-                                        &self->hover_state.pose);
+                                        &hover_state->pose);
 
   graphene_matrix_t overlay_transform;
-  openvr_overlay_get_transform_absolute (self->grab_state.overlay,
+  openvr_overlay_get_transform_absolute (grab_state->overlay,
                                          &overlay_transform);
   graphene_quaternion_init_from_matrix (
-      &self->grab_state.overlay_rotation, &overlay_transform);
+      &grab_state->overlay_rotation, &overlay_transform);
 
   graphene_point3d_t distance_translation_point;
   graphene_point3d_init (&distance_translation_point,
-                         0.f, 0.f, -self->hover_state.distance);
+                         0.f, 0.f, -hover_state->distance);
 
   graphene_point3d_t negative_distance_translation_point;
   graphene_point3d_init (&negative_distance_translation_point,
-                         0.f, 0.f, +self->hover_state.distance);
+                         0.f, 0.f, +hover_state->distance);
 
   graphene_point3d_init (
-      &self->grab_state.offset_translation_point,
-      -self->hover_state.intersection_offset.x,
-      -self->hover_state.intersection_offset.y,
+      &grab_state->offset_translation_point,
+      -hover_state->intersection_offset.x,
+      -hover_state->intersection_offset.y,
       0.f);
 
   /* Calculate the inverse of the overlay rotatation that is induced by the
@@ -434,31 +469,48 @@ openvr_overlay_manager_drag_start (OpenVROverlayManager *self)
                                         &target_transformation_matrix);
   graphene_quaternion_invert (
       &transformed_rotation,
-      &self->grab_state.overlay_transformed_rotation_neg);
+      &grab_state->overlay_transformed_rotation_neg);
 }
 
 void
-openvr_overlay_manager_check_grab (OpenVROverlayManager *self)
+openvr_overlay_manager_check_grab (OpenVROverlayManager *self,
+                                   int                   controller_index)
 {
-  if (self->hover_state.overlay != NULL)
-    openvr_overlay_emit_grab (self->hover_state.overlay);
+  HoverState *hover_state = &self->hover_state[controller_index];
+
+  if (hover_state->overlay != NULL)
+    {
+      OpenVRGrabEvent *grab_event =
+          g_malloc (sizeof (OpenVRGrabEvent));
+      grab_event->controller_index = controller_index;
+      openvr_overlay_emit_grab (hover_state->overlay, grab_event);
+    }
 }
 
 void
-openvr_overlay_manager_check_release (OpenVROverlayManager *self)
+openvr_overlay_manager_check_release (OpenVROverlayManager *self,
+                                      int                   controller_index)
 {
-  if (self->grab_state.overlay != NULL)
-    openvr_overlay_emit_release (self->grab_state.overlay);
-  self->grab_state.overlay = NULL;
+  GrabState *grab_state = &self->grab_state[controller_index];
+
+  if (grab_state->overlay != NULL)
+    {
+      OpenVRReleaseEvent *release_event =
+          g_malloc (sizeof (OpenVRReleaseEvent));
+      release_event->controller_index = controller_index;
+      openvr_overlay_emit_release (grab_state->overlay, release_event);
+    }
+  grab_state->overlay = NULL;
 }
 
 void
 openvr_overlay_manager_update_pose (OpenVROverlayManager *self,
-                                   graphene_matrix_t    *pose)
+                                    graphene_matrix_t    *pose,
+                                    int                   controller_index)
 {
   /* Drag test */
-  if (self->grab_state.overlay != NULL)
-    _drag_overlay (self, pose);
+  if (self->grab_state[controller_index].overlay != NULL)
+    _drag_overlay (self, pose, controller_index);
   else
-    _test_hover (self, pose);
+    _test_hover (self, pose, controller_index);
 }

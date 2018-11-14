@@ -11,60 +11,99 @@
    ],
    "actions":[
       {
-         "name":"/actions/wm/in/grab_window",
+         "name":"/actions/wm/in/grab_window_left",
          "type":"boolean"
       },
       {
-         "name":"/actions/wm/in/show_keyboard",
+         "name":"/actions/wm/in/grab_window_right",
          "type":"boolean"
       },
-
       {
-         "name":"/actions/wm/in/push_pull",
+         "name":"/actions/wm/in/show_keyboard_left",
+         "type":"boolean"
+      },
+      {
+         "name":"/actions/wm/in/show_keyboard_right",
+         "type":"boolean"
+      },
+      {
+         "name":"/actions/wm/in/push_pull_left",
          "type": "vector3"
       },
       {
-        "name": "/actions/wm/in/hand_primary",
-        "type": "pose"
-      },
-      {
-        "name": "/actions/wm/in/hand_secondary",
-        "type": "pose"
-      },
-      {
-        "name": "/actions/wm/out/haptic_primary",
-        "type": "vibration"
-      },
-      {
-        "name": "/actions/wm/out/haptic_secondary",
-        "type": "vibration"
-      },
-      {
-         "name":"/actions/mouse_synth/in/left_click",
-         "type":"boolean"
-      },
-      {
-         "name":"/actions/mouse_synth/in/right_click",
-         "type":"boolean"
-      },
-      {
-         "name":"/actions/mouse_synth/in/scroll",
+         "name":"/actions/wm/in/push_pull_right",
          "type": "vector3"
+      },
+      {
+        "name": "/actions/wm/in/hand_pose_left",
+        "type": "pose"
+      },
+      {
+        "name": "/actions/wm/in/hand_pose_right",
+        "type": "pose"
+      },
+      {
+        "name": "/actions/wm/out/haptic_left",
+        "type": "vibration"
+      },
+      {
+        "name": "/actions/wm/out/haptic_right",
+        "type": "vibration"
+      },
+      {
+         "name":"/actions/mouse_synth/in/left_click_left",
+         "type":"boolean"
+      },
+      {
+         "name":"/actions/mouse_synth/in/left_click_right",
+         "type":"boolean"
+      },
+      {
+         "name":"/actions/mouse_synth/in/right_click_left",
+         "type":"boolean"
+      },
+      {
+         "name":"/actions/mouse_synth/in/right_click_right",
+         "type":"boolean"
+      },
+      {
+         "name":"/actions/mouse_synth/in/scroll_left",
+         "type": "vector3"
+      },
+      {
+         "name":"/actions/mouse_synth/in/scroll_right",
+         "type": "vector3"
+      }
+   ],
+   "action_sets": [
+      {
+         "name": "/actions/wm",
+         "usage": "leftright"
+      },
+      {
+         "name": "/actions/mouse_synth",
+         "usage": "leftright"
       }
    ],
    "localization":[
       {
          "language_tag":"en_US",
-         "/actions/wm/in/grab_window":"Grab Window",
-         "/actions/wm/in/show_keyboard":"Show On Screen Keyboard",
-         "/actions/wm/in/push_pull":"Move window along Z axis",
-         "/actions/wm/in/hand_primary" : "Dominant Hand Pose",
-         "/actions/wm/in/hand_secondary" : "Secondary Hand Pose",
-         "/actions/wm/out/haptic_primary" : "Dominant Hand Haptic Feedback",
-         "/actions/wm/out/haptic_secondary" : "Secondary Hand Haptic Feedback",
-         "/actions/mouse_synth/in/left_click" : "Left Click",
-         "/actions/mouse_synth/in/right_click" : "Right Click",
-         "/actions/mouse_synth/in/scroll" : "Scroll"
+         "/actions/wm/in/grab_window_left":"Grab Window Left Controller",
+         "/actions/wm/in/show_keyboard_left":"Show On Screen Keyboard Left Controller",
+         "/actions/wm/in/push_pull_left":"Move window along Z axis Left Controller",
+         "/actions/wm/in/hand_pose_left" : "Pose Left Controller",
+         "/actions/wm/out/haptic_left" : "Haptic Feedback Left Controller",
+         "/actions/mouse_synth/in/left_click_left" : "Left Click Left Controller",
+         "/actions/mouse_synth/in/right_click_left" : "Right Click Left Controller",
+         "/actions/mouse_synth/in/scroll_left" : "Scroll Left Controller",
+         "/actions/wm/in/grab_window_right":"Grab Window Right Controller",
+         "/actions/wm/in/show_keyboard_right":"Show On Screen Keyboard Right Controller",
+         "/actions/wm/in/push_pull_right":"Move window along Z axis Right Controller",
+         "/actions/wm/in/hand_pose_right" : "Pose Right Controller",
+         "/actions/wm/out/haptic_right" : "Haptic Feedback Right Controller",
+         "/actions/mouse_synth/in/left_click_right" : "Left Click Right Controller",
+         "/actions/mouse_synth/in/right_click_right" : "Right Click Right Controller",
+         "/actions/mouse_synth/in/scroll_right" : "Scroll Right Controller"
       }
    ]
 }

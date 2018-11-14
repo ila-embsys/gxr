@@ -44,13 +44,17 @@ _load_pixbuf (const gchar* name)
 }
 
 OpenVRIntersection *
-openvr_intersection_new (const gchar* name)
+openvr_intersection_new (const gchar* name, int controller_index)
 {
   OpenVRIntersection *self =
     (OpenVRIntersection*) g_object_new (OPENVR_TYPE_INTERSECTION, 0);
 
+  char key[k_unVROverlayMaxKeyLength];
+  snprintf (key, k_unVROverlayMaxKeyLength - 1, "intersection-%d",
+            controller_index);
+
   openvr_overlay_create_width (OPENVR_OVERLAY (self),
-                               "intersection", "Intersection", 0.15);
+                               key, key, 0.15);
 
   if (!openvr_overlay_is_valid (OPENVR_OVERLAY (self)))
     {

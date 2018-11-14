@@ -11,6 +11,7 @@
 #include <glib-object.h>
 
 #include "openvr-overlay.h"
+#include "openvr-action.h"
 
 G_BEGIN_DECLS
 
@@ -50,6 +51,11 @@ typedef enum
   OPENVR_OVERLAY_DESTROY_WITH_PARENT = 1 << 2
 } OpenVROverlayFlags;
 
+typedef struct OpenVRNoHoverEvent
+{
+  int controller_index;
+} OpenVRNoHoverEvent;
+
 struct _OpenVROverlayManager
 {
   GObject parent;
@@ -58,8 +64,8 @@ struct _OpenVROverlayManager
   GSList *hover_overlays;
   GSList *destroy_overlays;
 
-  HoverState hover_state;
-  GrabState grab_state;
+  HoverState hover_state[OPENVR_CONTROLLER_COUNT];
+  GrabState grab_state[OPENVR_CONTROLLER_COUNT];
 
   GHashTable *reset_transforms;
 };
@@ -84,17 +90,21 @@ openvr_overlay_manager_remove_overlay (OpenVROverlayManager *self,
                                        OpenVROverlay        *overlay);
 
 void
-openvr_overlay_manager_drag_start (OpenVROverlayManager *self);
+openvr_overlay_manager_drag_start (OpenVROverlayManager *self,
+                                   int                   controller_index);
 
 void
-openvr_overlay_manager_check_grab (OpenVROverlayManager *self);
+openvr_overlay_manager_check_grab (OpenVROverlayManager *self,
+                                   int                   controller_index);
 
 void
-openvr_overlay_manager_check_release (OpenVROverlayManager *self);
+openvr_overlay_manager_check_release (OpenVROverlayManager *self,
+                                      int                   controller_index);
 
 void
 openvr_overlay_manager_update_pose (OpenVROverlayManager *self,
-                                   graphene_matrix_t    *pose);
+                                    graphene_matrix_t    *pose,
+                                    int                   controller_index);
 
 void
 openvr_overlay_manager_save_reset_transform (OpenVROverlayManager *self,

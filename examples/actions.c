@@ -15,11 +15,18 @@
 typedef struct Example
 {
   GMainLoop *loop;
-  OpenVRAction *haptic_primary;
+  OpenVRAction *haptic_left;
+  OpenVRAction *haptic_right;
 
   OpenVRActionSet *wm_action_set;
   OpenVRActionSet *mouse_synth_action_set;
 } Example;
+
+typedef struct ActionCallbackData
+{
+  Example     *self;
+  int         controller_index;
+} ActionCallbackData;
 
 gboolean
 _sigint_cb (gpointer _self)
@@ -28,8 +35,6 @@ _sigint_cb (gpointer _self)
   g_main_loop_quit (self->loop);
   return TRUE;
 }
-
-static int haptics_counter = 0;
 
 gboolean
 _poll_events_cb (gpointer _self)
@@ -41,17 +46,6 @@ _poll_events_cb (gpointer _self)
 
   if (!openvr_action_set_poll (self->mouse_synth_action_set))
     return FALSE;
-
-  /* emit vibration every 200 polls */
-  haptics_counter++;
-  if (haptics_counter % 200 == 0)
-    {
-      if (!openvr_action_trigger_haptic (self->haptic_primary,
-                                         0.0f ,1.0f, 4.0f, 1.0f))
-        return FALSE;
-
-      haptics_counter = 0;
-    }
 
   return TRUE;
 }
@@ -83,44 +77,32 @@ _cache_bindings (GString *actions_path)
 static void
 _digital_cb (OpenVRAction       *action,
              OpenVRDigitalEvent *event,
-             const gchar        *name)
+             ActionCallbackData *data)
 {
   (void) action;
 
-  g_print ("DIGITAL: %s: %d | %d\n", name, event->active, event->state);
+  g_print ("DIGITAL (%d): %d | %d\n",
+           data->controller_index, event->active, event->state);
 
+  if (event->changed)
+    {
+      openvr_action_trigger_haptic (
+          (data->controller_index == 0 ?
+           data->self->haptic_left : data->self->haptic_right),
+           0.0f ,1.0f, 4.0f, 1.0f);
+    }
   g_free (event);
 }
 
 static void
-_analog_cb (OpenVRAction      *action,
-            OpenVRAnalogEvent *event,
-            const gchar       *name)
+_hand_pose_cb (OpenVRAction       *action,
+               OpenVRPoseEvent    *event,
+               ActionCallbackData *data)
 {
   (void) action;
 
-  g_print ("ANALOG: %s: %d | %f %f %f | %f %f %f\n",
-           name,
-           event->active,
-           graphene_vec3_get_x (&event->state),
-           graphene_vec3_get_y (&event->state),
-           graphene_vec3_get_z (&event->state),
-           graphene_vec3_get_x (&event->delta),
-           graphene_vec3_get_y (&event->delta),
-           graphene_vec3_get_z (&event->delta));
-
-  g_free (event);
-}
-
-static void
-_pose_cb (OpenVRAction    *action,
-          OpenVRPoseEvent *event,
-          const gchar     *name)
-{
-  (void) action;
-
-  g_print ("POSE: %s: %d | %f %f %f | %f %f %f\n",
-           name,
+  g_print ("POSE (%d): %d | %f %f %f | %f %f %f\n",
+           data->controller_index,
            event->active,
            graphene_vec3_get_x (&event->velocity),
            graphene_vec3_get_y (&event->velocity),
@@ -146,7 +128,8 @@ _cleanup (Example *self)
 
   g_object_unref (self->wm_action_set);
   g_object_unref (self->mouse_synth_action_set);
-  g_object_unref (self->haptic_primary);
+  g_object_unref (self->haptic_left);
+  g_object_unref (self->haptic_right);
 }
 
 int
@@ -173,26 +156,39 @@ main ()
     .wm_action_set = openvr_action_set_new_from_url ("/actions/wm"),
     .mouse_synth_action_set =
       openvr_action_set_new_from_url ("/actions/mouse_synth"),
-    .haptic_primary =
-      openvr_action_new_from_url ("/actions/wm/out/haptic_primary")
+    .haptic_left =
+      openvr_action_new_from_url ("/actions/wm/out/haptic_left"),
+    .haptic_right =
+      openvr_action_new_from_url ("/actions/wm/out/haptic_right")
+
   };
 
-  openvr_action_set_connect (self.wm_action_set, OPENVR_ACTION_DIGITAL,
-                             "/actions/wm/in/grab_window",
-                             (GCallback) _digital_cb, "grab_window");
-
-  openvr_action_set_connect (self.wm_action_set, OPENVR_ACTION_ANALOG,
-                             "/actions/wm/in/push_pull",
-                             (GCallback) _analog_cb, "push_pull");
+  ActionCallbackData data_left =
+    {
+      .self = &self,
+      .controller_index = 0
+    };
+  ActionCallbackData data_right =
+    {
+      .self = &self,
+      .controller_index = 1
+    };
 
   openvr_action_set_connect (self.wm_action_set, OPENVR_ACTION_POSE,
-                             "/actions/wm/in/hand_primary",
-                             (GCallback) _pose_cb, "hand_primary");
+                             "/actions/wm/in/hand_pose_left",
+                             (GCallback) _hand_pose_cb, &data_left);
+  openvr_action_set_connect (self.wm_action_set, OPENVR_ACTION_POSE,
+                             "/actions/wm/in/hand_pose_right",
+                             (GCallback) _hand_pose_cb, &data_right);
 
   openvr_action_set_connect (self.mouse_synth_action_set,
                              OPENVR_ACTION_DIGITAL,
-                             "/actions/mouse_synth/in/left_click",
-                             (GCallback) _digital_cb, "left_click");
+                             "/actions/mouse_synth/in/left_click_left",
+                             (GCallback) _digital_cb, &data_left);
+  openvr_action_set_connect (self.mouse_synth_action_set,
+                             OPENVR_ACTION_DIGITAL,
+                             "/actions/mouse_synth/in/left_click_right",
+                             (GCallback) _digital_cb, &data_right);
 
   g_timeout_add (20, _poll_events_cb, &self);
 

@@ -46,6 +46,12 @@ typedef struct Example
   GMainLoop *loop;
 } Example;
 
+typedef struct ActionCallbackData
+{
+  Example *self;
+  int      controller_index;
+} ActionCallbackData;
+
 gboolean
 _sigint_cb (gpointer _self)
 {
@@ -303,14 +309,16 @@ _cleanup (Example *self)
 }
 
 static void
-_dominant_hand_cb (OpenVRAction    *action,
-                   OpenVRPoseEvent *event,
-                   Example         *self)
+_right_hand_pose_cb (OpenVRAction    *action,
+                     OpenVRPoseEvent *event,
+                     gpointer        _self)
 {
   (void) action;
+  ActionCallbackData *data = _self;
+  Example *self = data->self;
 
   openvr_pointer_move (self->pointer_overlay, &event->pose);
-  openvr_overlay_manager_update_pose (self->manager, &event->pose);
+  openvr_overlay_manager_update_pose (self->manager, &event->pose, 1);
 
   /* update intersection */
   //openvr_overlay_poll_3d_intersection (self->paint_overlay, &event->pose);
@@ -320,6 +328,7 @@ _dominant_hand_cb (OpenVRAction    *action,
 
 void
 _no_hover_cb (OpenVROverlayManager *manager,
+              OpenVRNoHoverEvent   *event,
               gpointer             _self)
 {
   (void) manager;
@@ -327,6 +336,7 @@ _no_hover_cb (OpenVROverlayManager *manager,
   Example *self = (Example*) _self;
   openvr_overlay_hide (OPENVR_OVERLAY (self->intersection_overlay));
   openvr_pointer_reset_length (self->pointer_overlay);
+  g_free (event);
 }
 
 int
@@ -361,20 +371,27 @@ main ()
       return false;
     }
 
-  self.pointer_overlay = openvr_pointer_new ();
+  self.pointer_overlay = openvr_pointer_new (1);
   if (self.pointer_overlay == NULL)
     return -1;
 
-  self.intersection_overlay = openvr_intersection_new ("/res/crosshair.png");
+  self.intersection_overlay =
+      openvr_intersection_new ("/res/crosshair.png", 1);
   if (self.intersection_overlay == NULL)
     return -1;
 
   if (!_init_paint_overlay (&self))
     return -1;
 
+  /* TODO: support two controllers */
+  ActionCallbackData data_right =
+    {
+      .self = &self,
+      .controller_index = 1
+    };
   openvr_action_set_connect (self.wm_action_set, OPENVR_ACTION_POSE,
-                             "/actions/wm/in/hand_primary",
-                             (GCallback) _dominant_hand_cb, &self);
+                             "/actions/wm/in/hand_pose_right",
+                             (GCallback) _right_hand_pose_cb, &data_right);
 
   g_signal_connect (self.manager, "no-hover-event",
                     (GCallback) _no_hover_cb, &self);

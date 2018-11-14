@@ -13,6 +13,8 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <cairo.h>
 
+#include "openvr-action.h"
+
 #include <openvr_capi.h>
 #include <graphene.h>
 
@@ -40,8 +42,23 @@ typedef struct OpenVRHoverEvent
   graphene_point3d_t point;
   graphene_matrix_t  pose;
   float              distance;
+  int                controller_index;
 } OpenVRHoverEvent;
 
+typedef struct OpenVRHoverEndEvent
+{
+  int controller_index;
+} OpenVRHoverEndEvent;
+
+typedef struct OpenVRGrabEvent
+{
+  int controller_index;
+} OpenVRGrabEvent;
+
+typedef struct OpenVRReleaseEvent
+{
+  int controller_index;
+} OpenVRReleaseEvent;
 
 OpenVROverlay *openvr_overlay_new (void);
 
@@ -157,13 +174,13 @@ openvr_overlay_set_translation (OpenVROverlay      *self,
                                 graphene_point3d_t *translation);
 
 void
-openvr_overlay_emit_grab (OpenVROverlay *self);
+openvr_overlay_emit_grab (OpenVROverlay *self, OpenVRGrabEvent *event);
 
 void
-openvr_overlay_emit_release (OpenVROverlay *self);
+openvr_overlay_emit_release (OpenVROverlay *self, OpenVRReleaseEvent *event);
 
 void
-openvr_overlay_emit_hover_end (OpenVROverlay *self);
+openvr_overlay_emit_hover_end (OpenVROverlay *self, OpenVRHoverEndEvent *event);
 
 void
 openvr_overlay_emit_hover (OpenVROverlay    *self,

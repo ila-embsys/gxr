@@ -28,11 +28,15 @@ openvr_pointer_init (OpenVRPointer *self)
 }
 
 OpenVRPointer *
-openvr_pointer_new (void)
+openvr_pointer_new (int controller_index)
 {
   OpenVRPointer *self = (OpenVRPointer*) g_object_new (OPENVR_TYPE_POINTER, 0);
 
-  if (!openvr_model_initialize (OPENVR_MODEL (self), "pointer", "Pointer"))
+  char key[k_unVROverlayMaxKeyLength];
+  snprintf (key, k_unVROverlayMaxKeyLength - 1, "pointer-%d",
+            controller_index);
+
+  if (!openvr_model_initialize (OPENVR_MODEL (self), key, key))
     return NULL;
 
   /*

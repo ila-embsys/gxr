@@ -11,6 +11,8 @@
 #include <glib-object.h>
 #include "openvr-model.h"
 
+#include "openvr-action.h"
+
 G_BEGIN_DECLS
 
 #define OPENVR_TYPE_POINTER openvr_pointer_get_type()
@@ -25,7 +27,7 @@ struct _OpenVRPointer
   float length;
 };
 
-OpenVRPointer *openvr_pointer_new (void);
+OpenVRPointer *openvr_pointer_new (int controller_index);
 
 void
 openvr_pointer_move (OpenVRPointer     *self,

@@ -67,7 +67,7 @@ openvr_action_class_init (OpenVRActionClass *klass)
   action_signals[POSE_EVENT] =
     g_signal_new ("pose-event",
                   G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_LAST,
+                  G_SIGNAL_RUN_FIRST,
                   0, NULL, NULL, NULL, G_TYPE_NONE,
                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
 
@@ -111,13 +111,6 @@ openvr_action_new_from_type_url (OpenVRActionType type, char *url)
       self = NULL;
     }
   return self;
-}
-
-static void
-openvr_action_finalize (GObject *gobject)
-{
-  OpenVRAction *self = OPENVR_ACTION (gobject);
-  (void) self;
 }
 
 gboolean
@@ -282,4 +275,11 @@ openvr_action_trigger_haptic (OpenVRAction *self,
     }
 
   return TRUE;
+}
+
+static void
+openvr_action_finalize (GObject *gobject)
+{
+  OpenVRAction *self = OPENVR_ACTION (gobject);
+  (void) self;
 }

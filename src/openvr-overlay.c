@@ -90,32 +90,35 @@ openvr_overlay_class_init (OpenVROverlayClass *klass)
 
   overlay_signals[KEYBOARD_PRESS_EVENT] =
     g_signal_new ("keyboard-press-event",
-                   G_TYPE_FROM_CLASS (klass),
-                   G_SIGNAL_RUN_LAST,
-                   0, NULL, NULL, NULL, G_TYPE_NONE,
-                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_LAST,
+                  0, NULL, NULL, NULL, G_TYPE_NONE,
+                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
 
   overlay_signals[KEYBOARD_CLOSE_EVENT] =
     g_signal_new ("keyboard-close-event",
-                   G_TYPE_FROM_CLASS (klass),
-                   G_SIGNAL_RUN_FIRST,
-                   0, NULL, NULL, NULL, G_TYPE_NONE, 0);
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_FIRST,
+                  0, NULL, NULL, NULL, G_TYPE_NONE, 0);
 
   overlay_signals[GRAB_EVENT] =
     g_signal_new ("grab-event",
-                   G_TYPE_FROM_CLASS (klass),
-                   G_SIGNAL_RUN_FIRST,
-                   0, NULL, NULL, NULL, G_TYPE_NONE, 0);
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_FIRST,
+                  0, NULL, NULL, NULL, G_TYPE_NONE,
+                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
   overlay_signals[RELEASE_EVENT] =
     g_signal_new ("release-event",
-                   G_TYPE_FROM_CLASS (klass),
+                  G_TYPE_FROM_CLASS (klass),
                    G_SIGNAL_RUN_FIRST,
-                   0, NULL, NULL, NULL, G_TYPE_NONE, 0);
+                  0, NULL, NULL, NULL, G_TYPE_NONE,
+                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
   overlay_signals[HOVER_END_EVENT] =
     g_signal_new ("hover-end-event",
-                   G_TYPE_FROM_CLASS (klass),
-                   G_SIGNAL_RUN_FIRST,
-                   0, NULL, NULL, NULL, G_TYPE_NONE, 0);
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_LAST,
+                  0, NULL, NULL, NULL, G_TYPE_NONE,
+                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
   overlay_signals[HOVER_EVENT] =
     g_signal_new ("hover-event",
                   G_TYPE_FROM_CLASS (klass),
@@ -742,21 +745,21 @@ openvr_overlay_set_translation (OpenVROverlay      *self,
 }
 
 void
-openvr_overlay_emit_grab (OpenVROverlay *self)
+openvr_overlay_emit_grab (OpenVROverlay *self, OpenVRGrabEvent *event)
 {
-  g_signal_emit (self, overlay_signals[GRAB_EVENT], 0);
+  g_signal_emit (self, overlay_signals[GRAB_EVENT], 0, event);
 }
 
 void
-openvr_overlay_emit_release (OpenVROverlay *self)
+openvr_overlay_emit_release (OpenVROverlay *self, OpenVRReleaseEvent *event)
 {
-  g_signal_emit (self, overlay_signals[RELEASE_EVENT], 0);
+  g_signal_emit (self, overlay_signals[RELEASE_EVENT], 0, event);
 }
 
 void
-openvr_overlay_emit_hover_end (OpenVROverlay *self)
+openvr_overlay_emit_hover_end (OpenVROverlay *self, OpenVRHoverEndEvent *event)
 {
-  g_signal_emit (self, overlay_signals[HOVER_END_EVENT], 0);
+  g_signal_emit (self, overlay_signals[HOVER_END_EVENT], 0, event);
 }
 
 void
