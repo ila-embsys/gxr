@@ -1,75 +1,138 @@
 {
    "bindings" : {
-      "/actions/wm" : {
-         "poses" : [
+      "/actions/mouse_synth": {
+         "sources": [
             {
-               "output" : "/actions/wm/in/hand_primary",
-               "path" : "/user/hand/right/pose/raw"
-            },
-            {
-               "output" : "/actions/wm/in/hand_secondary",
-               "path" : "/user/hand/left/pose/raw"
-            }
-         ],
-         "haptics" : [
-            {
-               "output" : "/actions/wm/out/haptic_primary",
-               "path" : "/user/hand/right/output/haptic"
-            },
-            {
-               "output" : "/actions/wm/out/haptic_secondary",
-               "path" : "/user/hand/left/output/haptic"
-            }
-         ],
-         "sources" : [
-            {
-               "inputs" : {
-                  "click" : {
-                     "output" : "/actions/wm/in/grab_window"
+               "path": "/user/hand/right/input/a",
+               "mode": "button",
+               "inputs": {
+                  "click": {
+                     "output": "/actions/mouse_synth/in/left_click_right"
                   }
-               },
-               "mode" : "button",
-               "path" : "/user/hand/right/input/trigger"
+               }
             },
             {
-               "inputs" : {
-                  "scroll" : {
-                     "output" : "/actions/wm/in/push_pull"
+               "path": "/user/hand/right/input/b",
+               "mode": "button",
+               "inputs": {
+                  "click": {
+                     "output": "/actions/mouse_synth/in/right_click_right"
                   }
-               },
-               "mode" : "trackpad_scroll",
-               "path" : "/user/hand/right/input/trackpad"
+               }
+            },
+            {
+               "path": "/user/hand/left/input/a",
+               "mode": "button",
+               "inputs": {
+                  "click": {
+                     "output": "/actions/mouse_synth/in/left_click_left"
+                  }
+               }
+            },
+            {
+               "path": "/user/hand/left/input/b",
+               "mode": "button",
+               "inputs": {
+                  "click": {
+                     "output": "/actions/mouse_synth/in/right_click_left"
+                  }
+               }
+            },
+            {
+               "path": "/user/hand/left/input/trackpad",
+               "mode": "trackpad_scroll",
+               "inputs": {
+                  "scroll": {
+                     "output": "/actions/mouse_synth/in/scroll_left"
+                  }
+               }
+            },
+            {
+               "path": "/user/hand/right/input/trackpad",
+               "mode": "trackpad_scroll",
+               "inputs": {
+                  "scroll": {
+                     "output": "/actions/mouse_synth/in/scroll_right"
+                  }
+               }
             }
          ]
       },
-      "/actions/mouse_synth" : {
-         "sources" : [
+      "/actions/wm": {
+         "poses": [
             {
-               "inputs" : {
-                  "click" : {
-                     "output" : "/actions/mouse_synth/in/left_click"
-                  }
-               },
-               "mode" : "button",
-               "path" : "/user/hand/right/input/a"
+               "output": "/actions/wm/in/hand_pose_right",
+               "path": "/user/hand/right/pose/tip"
             },
             {
-               "inputs" : {
-                  "click" : {
-                     "output" : "/actions/mouse_synth/in/right_click"
-                  }
-               },
-               "mode" : "button",
-               "path" : "/user/hand/right/input/b"
+               "output": "/actions/wm/in/hand_pose_left",
+               "path": "/user/hand/left/pose/tip"
+            }
+         ],
+         "haptics": [
+            {
+               "output": "/actions/wm/out/haptic_right",
+               "path": "/user/hand/right/output/haptic"
             },
             {
-               "inputs" : {
-                  "scroll" : {
-                     "output" : "/actions/mouse_synth/in/scroll"
+               "output": "/actions/wm/out/haptic_left",
+               "path": "/user/hand/left/output/haptic"
+            }
+         ],
+         "sources": [
+            {
+               "path": "/user/hand/right/input/trigger",
+               "mode": "button",
+               "inputs": {
+                  "click": {
+                     "output": "/actions/wm/in/grab_window_right"
                   }
-               },
-               "mode" : "trackpad_scroll",
-               "path" : "/user/hand/right/input/trackpad"
+               }
+            },
+            {
+               "path": "/user/hand/right/input/trackpad",
+               "mode": "trackpad_scroll",
+               "inputs": {
+                  "scroll": {
+                     "output": "/actions/wm/in/push_pull_right"
+                  }
+               }
+            },
+            {
+               "path": "/user/hand/left/input/trigger",
+               "mode": "button",
+               "inputs": {
+                  "click": {
+                     "output": "/actions/wm/in/grab_window_left"
+                  }
+               }
+            },
+            {
+               "path": "/user/hand/left/input/trackpad",
+               "mode": "trackpad_scroll",
+               "inputs": {
+                  "scroll": {
+                     "output": "/actions/wm/in/push_pull_left"
+                  }
+               }
+            },
+            {
+               "path": "/user/hand/left/input/thumbstick",
+               "mode": "button",
+               "inputs": {
+                  "click": {
+                     "output": "/actions/wm/in/show_keyboard_left"
+                  }
+               }
+            },
+            {
+               "path": "/user/hand/right/input/thumbstick",
+               "mode": "button",
+               "inputs": {
+                  "click": {
+                     "output": "/actions/wm/in/show_keyboard_right"
+                  }
+               }
             }
          ]
       }
