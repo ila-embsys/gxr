@@ -82,7 +82,7 @@ openvr_glib_lib = shared_library(api_path,
   install: true,
 )
 
-openvr_glib_inc = include_directories('.', '/usr/include/gulkan-0.1')
+openvr_glib_inc = include_directories('.')
 
 openvr_glib_dep = declare_dependency(
   sources: [],
