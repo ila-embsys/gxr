@@ -220,7 +220,10 @@ _hover_end_cb (OpenVROverlay *overlay,
 
   /* don't unmark if the other controller is still hovering over this overlay */
   if (openvr_overlay_manager_is_hovered (self->manager, overlay))
+    {
+      g_free (event);
       return;
+    }
   _overlay_unmark (overlay);
   g_free (event);
 }
@@ -352,6 +355,7 @@ _button_sphere_press_cb (OpenVROverlay   *overlay,
   openvr_overlay_manager_arrange_sphere (self->manager,
                                          GRID_WIDTH,
                                          GRID_HEIGHT);
+  g_free (event);
 }
 
 void
@@ -363,6 +367,7 @@ _button_reset_press_cb (OpenVROverlay   *overlay,
   (void) event;
   Example *self = (Example*) _self;
   openvr_overlay_manager_arrange_reset (self->manager);
+  g_free (event);
 }
 
 gboolean
