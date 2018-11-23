@@ -514,3 +514,22 @@ openvr_overlay_manager_update_pose (OpenVROverlayManager *self,
   else
     _test_hover (self, pose, controller_index);
 }
+
+gboolean
+openvr_overlay_manager_is_hovering (OpenVROverlayManager *self)
+{
+  for (uint32_t i = 0; i < OPENVR_CONTROLLER_COUNT; i++)
+    if (self->hover_state[i].overlay != NULL)
+      return TRUE;
+  return FALSE;
+}
+
+gboolean
+openvr_overlay_manager_is_grabbing (OpenVROverlayManager *self)
+{
+  for (uint32_t i = 0; i < OPENVR_CONTROLLER_COUNT; i++)
+    if (self->grab_state[i].overlay != NULL)
+      return TRUE;
+  return FALSE;
+}
+

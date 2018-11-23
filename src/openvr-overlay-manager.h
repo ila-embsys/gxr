@@ -110,6 +110,12 @@ void
 openvr_overlay_manager_save_reset_transform (OpenVROverlayManager *self,
                                              OpenVROverlay        *overlay);
 
+gboolean
+openvr_overlay_manager_is_hovering (OpenVROverlayManager *self);
+
+gboolean
+openvr_overlay_manager_is_grabbing (OpenVROverlayManager *self);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_OVERLAY_MANAGER_H_ */
