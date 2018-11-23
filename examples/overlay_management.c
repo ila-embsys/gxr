@@ -471,7 +471,7 @@ _push_pull_cb (OpenVRAction      *action,
   OpenVRPointer *pointer_overlay =
       self->pointer_overlay[data->controller_index];
 
-  if (grab_state->overlay != NULL)
+  if (grab_state->overlay != NULL && graphene_vec3_get_z(&event->state) == 0.0)
     {
       hover_state->distance +=
         SCROLL_TO_PUSH_RATIO * graphene_vec3_get_y (&event->state);
