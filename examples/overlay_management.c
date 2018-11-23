@@ -130,24 +130,6 @@ _overlay_mark_orange (OpenVROverlay *overlay)
   openvr_overlay_set_color (overlay, &marked_color);
 }
 
-static gboolean
-_is_grabbed (Example *self, OpenVROverlay *overlay)
-{
-  for (int i = 0; i < OPENVR_CONTROLLER_COUNT; i++)
-    if (self->manager->grab_state[i].overlay == overlay)
-      return TRUE;
-  return FALSE;
-}
-
-static gboolean
-_is_hovered (Example *self, OpenVROverlay *overlay)
-{
-  for (int i = 0; i < OPENVR_CONTROLLER_COUNT; i++)
-    if (self->manager->hover_state[i].overlay == overlay)
-      return TRUE;
-  return FALSE;
-}
-
 void
 _cat_grab_cb (OpenVROverlay *overlay,
               OpenVRControllerIndexEvent *event,
@@ -156,7 +138,7 @@ _cat_grab_cb (OpenVROverlay *overlay,
   Example *self = (Example*) _self;
 
   /* don't grab if this overlay is already grabbed */
-  if (_is_grabbed (self, overlay))
+  if (openvr_overlay_manager_is_grabbed (self->manager, overlay))
     {
       g_free (event);
       return;
@@ -189,7 +171,7 @@ _hover_cb (OpenVROverlay    *overlay,
 {
   Example *self = (Example*) _self;
 
-  if (_is_grabbed (self, overlay))
+  if (openvr_overlay_manager_is_grabbed (self->manager, overlay))
     {
       g_free (event);
       return;
@@ -237,7 +219,7 @@ _hover_end_cb (OpenVROverlay *overlay,
   Example *self = (Example*) _self;
 
   /* don't unmark if the other controller is still hovering over this overlay */
-  if (_is_hovered (self, overlay))
+  if (openvr_overlay_manager_is_hovered (self->manager, overlay))
       return;
   _overlay_unmark (overlay);
   g_free (event);

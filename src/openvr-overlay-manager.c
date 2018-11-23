@@ -533,3 +533,22 @@ openvr_overlay_manager_is_grabbing (OpenVROverlayManager *self)
   return FALSE;
 }
 
+gboolean
+openvr_overlay_manager_is_grabbed (OpenVROverlayManager *self,
+                                   OpenVROverlay *overlay)
+{
+  for (uint32_t i = 0; i < OPENVR_CONTROLLER_COUNT; i++)
+    if (self->grab_state[i].overlay == overlay)
+      return TRUE;
+  return FALSE;
+}
+
+gboolean
+openvr_overlay_manager_is_hovered (OpenVROverlayManager *self,
+                                   OpenVROverlay *overlay)
+{
+  for (uint32_t i = 0; i < OPENVR_CONTROLLER_COUNT; i++)
+    if (self->hover_state[i].overlay == overlay)
+      return TRUE;
+  return FALSE;
+}

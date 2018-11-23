@@ -111,6 +111,14 @@ openvr_overlay_manager_is_hovering (OpenVROverlayManager *self);
 gboolean
 openvr_overlay_manager_is_grabbing (OpenVROverlayManager *self);
 
+gboolean
+openvr_overlay_manager_is_grabbed (OpenVROverlayManager *self,
+                                   OpenVROverlay *overlay);
+
+gboolean
+openvr_overlay_manager_is_hovered (OpenVROverlayManager *self,
+                                   OpenVROverlay *overlay);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_OVERLAY_MANAGER_H_ */
