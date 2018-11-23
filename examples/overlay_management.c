@@ -150,7 +150,7 @@ _is_hovered (Example *self, OpenVROverlay *overlay)
 
 void
 _cat_grab_cb (OpenVROverlay *overlay,
-              OpenVRGrabEvent *event,
+              OpenVRControllerIndexEvent *event,
               gpointer      _self)
 {
   Example *self = (Example*) _self;
@@ -162,9 +162,9 @@ _cat_grab_cb (OpenVROverlay *overlay,
       return;
     }
 
-  openvr_overlay_manager_drag_start (self->manager, event->controller_index);
+  openvr_overlay_manager_drag_start (self->manager, event->index);
   OpenVRIntersection *intersection =
-      self->intersection[event->controller_index];
+      self->intersection[event->index];
 
   openvr_overlay_hide (OPENVR_OVERLAY (intersection));
   _overlay_mark_green (overlay);
@@ -173,7 +173,7 @@ _cat_grab_cb (OpenVROverlay *overlay,
 
 void
 _cat_release_cb (OpenVROverlay *overlay,
-                 OpenVRReleaseEvent *event,
+                 OpenVRControllerIndexEvent *event,
                  gpointer      _self)
 {
   (void) event;
@@ -230,7 +230,7 @@ _hover_button_cb (OpenVROverlay    *overlay,
 
 void
 _hover_end_cb (OpenVROverlay *overlay,
-               OpenVRHoverEndEvent *event,
+               OpenVRControllerIndexEvent *event,
                gpointer       _self)
 {
   (void) event;
@@ -361,7 +361,7 @@ _init_button (Example            *self,
 
 void
 _button_sphere_press_cb (OpenVROverlay   *overlay,
-                         OpenVRGrabEvent *event,
+                         OpenVRControllerIndexEvent *event,
                          gpointer        _self)
 {
   (void) overlay;
@@ -374,7 +374,7 @@ _button_sphere_press_cb (OpenVROverlay   *overlay,
 
 void
 _button_reset_press_cb (OpenVROverlay   *overlay,
-                        OpenVRGrabEvent *event,
+                        OpenVRControllerIndexEvent *event,
                         gpointer        _self)
 {
   (void) overlay;
@@ -410,18 +410,18 @@ _init_buttons (Example *self)
 }
 
 void
-_no_hover_cb (OpenVROverlayManager *manager,
-              OpenVRNoHoverEvent   *event,
-              gpointer             _self)
+_no_hover_cb (OpenVROverlayManager       *manager,
+              OpenVRControllerIndexEvent *event,
+              gpointer                   _self)
 {
   (void) manager;
 
   Example *self = (Example*) _self;
 
   OpenVRPointer *pointer_overlay =
-      self->pointer_overlay[event->controller_index];
+      self->pointer_overlay[event->index];
   OpenVRIntersection *intersection =
-      self->intersection[event->controller_index];
+      self->intersection[event->index];
 
 
   openvr_overlay_hide (OPENVR_OVERLAY (intersection));

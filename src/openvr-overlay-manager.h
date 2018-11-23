@@ -51,11 +51,6 @@ typedef enum
   OPENVR_OVERLAY_DESTROY_WITH_PARENT = 1 << 2
 } OpenVROverlayFlags;
 
-typedef struct OpenVRNoHoverEvent
-{
-  int controller_index;
-} OpenVRNoHoverEvent;
-
 struct _OpenVROverlayManager
 {
   GObject parent;

@@ -324,9 +324,9 @@ _test_hover (OpenVROverlayManager *self,
       if (closest != last_hovered_overlay
           && last_hovered_overlay != NULL)
         {
-          OpenVRHoverEndEvent *hover_end_event =
-              g_malloc (sizeof (OpenVRHoverEndEvent));
-          hover_end_event->controller_index = controller_index;
+          OpenVRControllerIndexEvent *hover_end_event =
+              g_malloc (sizeof (OpenVRControllerIndexEvent));
+          hover_end_event->index = controller_index;
           openvr_overlay_emit_hover_end (last_hovered_overlay, hover_end_event);
         }
 
@@ -346,15 +346,15 @@ _test_hover (OpenVROverlayManager *self,
         {
           OpenVROverlay *last_hovered_overlay = hover_state->overlay;
           hover_state->overlay = NULL;
-          OpenVRHoverEndEvent *hover_end_event =
-              g_malloc (sizeof (OpenVRHoverEndEvent));
-          hover_end_event->controller_index = controller_index;
+          OpenVRControllerIndexEvent *hover_end_event =
+              g_malloc (sizeof (OpenVRControllerIndexEvent));
+          hover_end_event->index = controller_index;
           openvr_overlay_emit_hover_end (last_hovered_overlay,
                                          hover_end_event);
 
-          OpenVRNoHoverEvent *no_hover_event =
-              g_malloc (sizeof (OpenVRNoHoverEvent));
-          no_hover_event->controller_index = controller_index;
+          OpenVRControllerIndexEvent *no_hover_event =
+              g_malloc (sizeof (OpenVRControllerIndexEvent));
+          no_hover_event->index = controller_index;
           g_signal_emit (self, overlay_manager_signals[NO_HOVER_EVENT], 0,
                          no_hover_event);
         }
@@ -480,9 +480,9 @@ openvr_overlay_manager_check_grab (OpenVROverlayManager *self,
 
   if (hover_state->overlay != NULL)
     {
-      OpenVRGrabEvent *grab_event =
-          g_malloc (sizeof (OpenVRGrabEvent));
-      grab_event->controller_index = controller_index;
+      OpenVRControllerIndexEvent *grab_event =
+          g_malloc (sizeof (OpenVRControllerIndexEvent));
+      grab_event->index = controller_index;
       openvr_overlay_emit_grab (hover_state->overlay, grab_event);
     }
 }
@@ -495,9 +495,9 @@ openvr_overlay_manager_check_release (OpenVROverlayManager *self,
 
   if (grab_state->overlay != NULL)
     {
-      OpenVRReleaseEvent *release_event =
-          g_malloc (sizeof (OpenVRReleaseEvent));
-      release_event->controller_index = controller_index;
+      OpenVRControllerIndexEvent *release_event =
+          g_malloc (sizeof (OpenVRControllerIndexEvent));
+      release_event->index = controller_index;
       openvr_overlay_emit_release (grab_state->overlay, release_event);
     }
   grab_state->overlay = NULL;

@@ -327,9 +327,9 @@ _right_hand_pose_cb (OpenVRAction    *action,
 }
 
 void
-_no_hover_cb (OpenVROverlayManager *manager,
-              OpenVRNoHoverEvent   *event,
-              gpointer             _self)
+_no_hover_cb (OpenVROverlayManager       *manager,
+              OpenVRControllerIndexEvent *event,
+              gpointer                   _self)
 {
   (void) manager;
 

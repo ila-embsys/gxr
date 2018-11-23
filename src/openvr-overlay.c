@@ -745,19 +745,22 @@ openvr_overlay_set_translation (OpenVROverlay      *self,
 }
 
 void
-openvr_overlay_emit_grab (OpenVROverlay *self, OpenVRGrabEvent *event)
+openvr_overlay_emit_grab (OpenVROverlay *self,
+                          OpenVRControllerIndexEvent *event)
 {
   g_signal_emit (self, overlay_signals[GRAB_EVENT], 0, event);
 }
 
 void
-openvr_overlay_emit_release (OpenVROverlay *self, OpenVRReleaseEvent *event)
+openvr_overlay_emit_release (OpenVROverlay *self,
+                             OpenVRControllerIndexEvent *event)
 {
   g_signal_emit (self, overlay_signals[RELEASE_EVENT], 0, event);
 }
 
 void
-openvr_overlay_emit_hover_end (OpenVROverlay *self, OpenVRHoverEndEvent *event)
+openvr_overlay_emit_hover_end (OpenVROverlay *self,
+                               OpenVRControllerIndexEvent *event)
 {
   g_signal_emit (self, overlay_signals[HOVER_END_EVENT], 0, event);
 }

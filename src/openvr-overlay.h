@@ -45,20 +45,10 @@ typedef struct OpenVRHoverEvent
   int                controller_index;
 } OpenVRHoverEvent;
 
-typedef struct OpenVRHoverEndEvent
+typedef struct OpenVRControllerIndexEvent
 {
-  int controller_index;
-} OpenVRHoverEndEvent;
-
-typedef struct OpenVRGrabEvent
-{
-  int controller_index;
-} OpenVRGrabEvent;
-
-typedef struct OpenVRReleaseEvent
-{
-  int controller_index;
-} OpenVRReleaseEvent;
+  int index;
+} OpenVRControllerIndexEvent;
 
 OpenVROverlay *openvr_overlay_new (void);
 
@@ -174,13 +164,16 @@ openvr_overlay_set_translation (OpenVROverlay      *self,
                                 graphene_point3d_t *translation);
 
 void
-openvr_overlay_emit_grab (OpenVROverlay *self, OpenVRGrabEvent *event);
+openvr_overlay_emit_grab (OpenVROverlay *self,
+                          OpenVRControllerIndexEvent *event);
 
 void
-openvr_overlay_emit_release (OpenVROverlay *self, OpenVRReleaseEvent *event);
+openvr_overlay_emit_release (OpenVROverlay *self,
+                             OpenVRControllerIndexEvent *event);
 
 void
-openvr_overlay_emit_hover_end (OpenVROverlay *self, OpenVRHoverEndEvent *event);
+openvr_overlay_emit_hover_end (OpenVROverlay *self,
+                               OpenVRControllerIndexEvent *event);
 
 void
 openvr_overlay_emit_hover (OpenVROverlay    *self,
