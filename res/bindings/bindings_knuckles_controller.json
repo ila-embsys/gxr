@@ -118,6 +118,24 @@
             },
             {
                "path": "/user/hand/left/input/thumbstick",
+               "mode": "joystick",
+               "inputs": {
+                  "position": {
+                     "output": "/actions/wm/in/push_pull_scale_left"
+                  }
+               }
+            },
+            {
+               "path": "/user/hand/right/input/thumbstick",
+               "mode": "joystick",
+               "inputs": {
+                  "position": {
+                     "output": "/actions/wm/in/push_pull_scale_right"
+                  }
+               }
+            },
+            {
+               "path": "/user/hand/left/input/grip",
                "mode": "button",
                "inputs": {
                   "click": {
@@ -126,7 +144,7 @@
                }
             },
             {
-               "path": "/user/hand/right/input/thumbstick",
+               "path": "/user/hand/right/input/grip",
                "mode": "button",
                "inputs": {
                   "click": {

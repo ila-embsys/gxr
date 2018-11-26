@@ -35,6 +35,14 @@
          "type": "vector3"
       },
       {
+         "name":"/actions/wm/in/push_pull_scale_left",
+         "type": "vector2"
+      },
+      {
+         "name":"/actions/wm/in/push_pull_scale_right",
+         "type": "vector2"
+      },
+      {
         "name": "/actions/wm/in/hand_pose_left",
         "type": "pose"
       },

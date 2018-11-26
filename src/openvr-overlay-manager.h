@@ -89,6 +89,12 @@ openvr_overlay_manager_drag_start (OpenVROverlayManager *self,
                                    int                   controller_index);
 
 void
+openvr_overlay_manager_scale (OpenVROverlayManager *self,
+                              GrabState *grab_state,
+                              float factor,
+                              float update_rate_ms);
+
+void
 openvr_overlay_manager_check_grab (OpenVROverlayManager *self,
                                    int                   controller_index);
 

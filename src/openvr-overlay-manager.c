@@ -459,6 +459,32 @@ openvr_overlay_manager_drag_start (OpenVROverlayManager *self,
       &grab_state->overlay_transformed_rotation_neg);
 }
 
+/**
+ * openvr_overlay_scale:
+ *
+ * While dragging an overlay, scale the overlay @factor times per second
+ */
+void
+openvr_overlay_manager_scale (OpenVROverlayManager *self,
+                              GrabState *grab_state,
+                              float factor,
+                              float update_rate_ms)
+{
+  (void) self;
+  float width;
+  openvr_overlay_get_width_meters (grab_state->overlay, &width);
+  float new_width = width + width * factor * (update_rate_ms / 1000.);
+  /* Don't make the overlay so small it can not be grabbed anymore */
+  if (new_width > 0.01)
+    {
+      /* Grab point is relative to overlay center so we can just scale it */
+      graphene_point3d_scale (&grab_state->offset_translation_point, factor,
+                              &grab_state->offset_translation_point);
+
+      openvr_overlay_set_width_meters (grab_state->overlay, new_width);
+    }
+}
+
 void
 openvr_overlay_manager_check_grab (OpenVROverlayManager *self,
                                    int                   controller_index)

@@ -32,6 +32,8 @@
 #define GRID_WIDTH 6
 #define GRID_HEIGHT 5
 
+#define UPDATE_RATE_MS 20
+
 typedef struct Example
 {
   GulkanTexture *texture;
@@ -468,6 +470,29 @@ _grab_cb (OpenVRAction       *action,
 
 #define SCROLL_TO_PUSH_RATIO 2
 
+#define SCALE_FACTOR 0.75
+
+static void
+_joystick_cb (OpenVRAction      *action,
+              OpenVRAnalogEvent *event,
+              gpointer          _self)
+{
+  (void) action;
+  ActionCallbackData *data = _self;
+  Example *self = data->self;
+
+  GrabState *grab_state =
+      &self->manager->grab_state[data->controller_index];
+
+  float x_state = graphene_vec3_get_x (&event->state);
+  if (grab_state->overlay && (fabs (x_state) > 0.1))
+    {
+      float factor = x_state * SCALE_FACTOR;
+      openvr_overlay_manager_scale (self->manager, grab_state, factor,
+                                    UPDATE_RATE_MS);
+    }
+}
+
 static void
 _push_pull_cb (OpenVRAction      *action,
                OpenVRAnalogEvent *event,
@@ -616,10 +641,17 @@ main ()
                              "/actions/wm/in/push_pull_right",
                              (GCallback) _push_pull_cb, &data_right);
 
+  openvr_action_set_connect (self.action_set, OPENVR_ACTION_ANALOG,
+                             "/actions/wm/in/push_pull_scale_left",
+                             (GCallback) _joystick_cb, &data_left);
+  openvr_action_set_connect (self.action_set, OPENVR_ACTION_ANALOG,
+                             "/actions/wm/in/push_pull_scale_right",
+                             (GCallback) _joystick_cb, &data_right);
+
   g_signal_connect (self.manager, "no-hover-event",
                     (GCallback) _no_hover_cb, &self);
 
-  g_timeout_add (20, _poll_events_cb, &self);
+  g_timeout_add (UPDATE_RATE_MS, _poll_events_cb, &self);
 
   g_unix_signal_add (SIGINT, _sigint_cb, &self);
 
