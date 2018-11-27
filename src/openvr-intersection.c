@@ -54,7 +54,7 @@ openvr_intersection_new (const gchar* name, int controller_index)
             controller_index);
 
   openvr_overlay_create_width (OPENVR_OVERLAY (self),
-                               key, key, 0.15);
+                               key, key, 0.025);
 
   if (!openvr_overlay_is_valid (OPENVR_OVERLAY (self)))
     {
