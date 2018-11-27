@@ -164,6 +164,7 @@ _cat_release_cb (OpenVROverlay *overlay,
   g_free (event);
 }
 
+/* This will not be emitted during grabbing */
 void
 _hover_cb (OpenVROverlay    *overlay,
            OpenVRHoverEvent *event,
@@ -171,22 +172,16 @@ _hover_cb (OpenVROverlay    *overlay,
 {
   Example *self = (Example*) _self;
 
-  if (openvr_overlay_manager_is_grabbed (self->manager, overlay))
-    {
-      g_free (event);
-      return;
-    }
-
-  _overlay_mark_blue (overlay);
-
-  OpenVRPointer *pointer_overlay =
-      self->pointer_overlay[event->controller_index];
-  OpenVRIntersection *intersection =
-      self->intersection[event->controller_index];
+  if (!openvr_overlay_manager_is_grabbed (self->manager, overlay))
+    _overlay_mark_blue (overlay);
 
   /* update pointer length and intersection overlay */
+  OpenVRIntersection *intersection =
+    self->intersection[event->controller_index];
   openvr_intersection_update (intersection, &event->pose, &event->point);
-  openvr_pointer_set_length (pointer_overlay, event->distance);
+
+  OpenVRPointer *pointer = self->pointer_overlay[event->controller_index];
+  openvr_pointer_set_length (pointer, event->distance);
   g_free (event);
 }
 
