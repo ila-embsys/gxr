@@ -144,6 +144,12 @@ openvr_overlay_get_2d_intersection (OpenVROverlay      *overlay,
                                     graphene_point3d_t *intersection_point,
                                     PixelSize          *size_pixels,
                                     graphene_point_t   *position_2d);
+
+gboolean
+openvr_overlay_get_2d_offset (OpenVROverlay      *overlay,
+                              graphene_point3d_t *intersection_point,
+                              graphene_point_t   *position_2d);
+
 gboolean
 openvr_overlay_enable_mouse_input (OpenVROverlay *self);
 

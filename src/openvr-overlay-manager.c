@@ -256,28 +256,6 @@ openvr_overlay_manager_remove_overlay (OpenVROverlayManager *self,
   g_object_unref (overlay);
 }
 
-static gboolean
-openvr_overlay_get_2d_offset (OpenVROverlay      *overlay,
-                              graphene_point3d_t *intersection_point,
-                              graphene_point_t   *position_2d)
-{
-  graphene_matrix_t transform;
-  openvr_overlay_get_transform_absolute (overlay, &transform);
-
-  graphene_matrix_t inverse_transform;
-  graphene_matrix_inverse (&transform, &inverse_transform);
-
-  graphene_point3d_t intersection_origin;
-  graphene_matrix_transform_point3d (&inverse_transform,
-                                      intersection_point,
-                                     &intersection_origin);
-
-  graphene_point_init (position_2d,
-                      intersection_origin.x,
-                      intersection_origin.y);
-  return TRUE;
-}
-
 void
 _test_hover (OpenVROverlayManager *self,
              graphene_matrix_t    *pose,
