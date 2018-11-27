@@ -392,6 +392,15 @@ _drag_overlay (OpenVROverlayManager *self,
 
   openvr_overlay_set_transform_absolute (grab_state->overlay,
                                         &transformation_matrix);
+
+  OpenVRGrabEvent *event = g_malloc (sizeof (OpenVRGrabEvent));
+  event->controller_index = controller_index;
+  graphene_matrix_init_identity (&event->pose);
+  graphene_matrix_translate (&event->pose, &distance_translation_point);
+  graphene_matrix_rotate_quaternion (&event->pose, &controller_rotation);
+  graphene_matrix_translate (&event->pose, &controller_translation_point);
+
+  openvr_overlay_emit_grab (grab_state->overlay, event);
 }
 
 void
@@ -461,7 +470,7 @@ openvr_overlay_manager_check_grab (OpenVROverlayManager *self,
       OpenVRControllerIndexEvent *grab_event =
           g_malloc (sizeof (OpenVRControllerIndexEvent));
       grab_event->index = controller_index;
-      openvr_overlay_emit_grab (hover_state->overlay, grab_event);
+      openvr_overlay_emit_grab_start (hover_state->overlay, grab_event);
     }
 }
 

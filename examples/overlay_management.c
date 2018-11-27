@@ -131,9 +131,9 @@ _overlay_mark_orange (OpenVROverlay *overlay)
 }
 
 void
-_cat_grab_cb (OpenVROverlay *overlay,
-              OpenVRControllerIndexEvent *event,
-              gpointer      _self)
+_cat_grab_start_cb (OpenVROverlay *overlay,
+                    OpenVRControllerIndexEvent *event,
+                    gpointer      _self)
 {
   Example *self = (Example*) _self;
 
@@ -145,11 +145,23 @@ _cat_grab_cb (OpenVROverlay *overlay,
     }
 
   openvr_overlay_manager_drag_start (self->manager, event->index);
-  OpenVRIntersection *intersection =
-      self->intersection[event->index];
 
-  openvr_overlay_hide (OPENVR_OVERLAY (intersection));
   _overlay_mark_green (overlay);
+  g_free (event);
+}
+
+void
+_cat_grab_cb (OpenVROverlay   *overlay,
+              OpenVRGrabEvent *event,
+              gpointer        _self)
+{
+  (void) overlay;
+  Example *self = (Example*) _self;
+
+  OpenVRIntersection *intersection =
+    self->intersection[event->controller_index];
+  openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (intersection),
+                                         &event->pose);
   g_free (event);
 }
 
@@ -284,6 +296,8 @@ _init_cat_overlays (Example *self)
         openvr_vulkan_uploader_submit_frame (self->uploader, cat,
                                              self->texture);
 
+        g_signal_connect (cat, "grab-start-event",
+                          (GCallback)_cat_grab_start_cb, self);
         g_signal_connect (cat, "grab-event",
                           (GCallback)_cat_grab_cb, self);
         g_signal_connect (cat, "release-event",
@@ -331,7 +345,7 @@ _init_button (Example            *self,
   if (!openvr_overlay_set_width_meters (overlay, 0.5f))
     return FALSE;
 
-  g_signal_connect (overlay, "grab-event", (GCallback) callback, self);
+  g_signal_connect (overlay, "grab-start-event", (GCallback) callback, self);
   g_signal_connect (overlay, "hover-event", (GCallback) _hover_button_cb, self);
   g_signal_connect (overlay, "hover-end-event",
                     (GCallback) _hover_end_cb, self);

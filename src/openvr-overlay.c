@@ -29,6 +29,7 @@ enum {
   SCROLL_EVENT,
   KEYBOARD_PRESS_EVENT,
   KEYBOARD_CLOSE_EVENT,
+  GRAB_START_EVENT,
   GRAB_EVENT,
   RELEASE_EVENT,
   HOVER_EVENT,
@@ -101,12 +102,20 @@ openvr_overlay_class_init (OpenVROverlayClass *klass)
                   G_SIGNAL_RUN_FIRST,
                   0, NULL, NULL, NULL, G_TYPE_NONE, 0);
 
+  overlay_signals[GRAB_START_EVENT] =
+    g_signal_new ("grab-start-event",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_FIRST,
+                  0, NULL, NULL, NULL, G_TYPE_NONE,
+                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+
   overlay_signals[GRAB_EVENT] =
     g_signal_new ("grab-event",
                   G_TYPE_FROM_CLASS (klass),
                   G_SIGNAL_RUN_FIRST,
                   0, NULL, NULL, NULL, G_TYPE_NONE,
                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+
   overlay_signals[RELEASE_EVENT] =
     g_signal_new ("release-event",
                   G_TYPE_FROM_CLASS (klass),
@@ -773,8 +782,15 @@ openvr_overlay_set_translation (OpenVROverlay      *self,
 }
 
 void
+openvr_overlay_emit_grab_start (OpenVROverlay *self,
+                                OpenVRControllerIndexEvent *event)
+{
+  g_signal_emit (self, overlay_signals[GRAB_START_EVENT], 0, event);
+}
+
+void
 openvr_overlay_emit_grab (OpenVROverlay *self,
-                          OpenVRControllerIndexEvent *event)
+                          OpenVRGrabEvent *event)
 {
   g_signal_emit (self, overlay_signals[GRAB_EVENT], 0, event);
 }
