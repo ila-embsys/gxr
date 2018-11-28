@@ -483,6 +483,8 @@ _joystick_cb (OpenVRAction      *action,
 
   GrabState *grab_state =
       &self->manager->grab_state[data->controller_index];
+  HoverState *hover_state =
+      &self->manager->hover_state[data->controller_index];
 
   float x_state = graphene_vec3_get_x (&event->state);
   if (grab_state->overlay && (fabs (x_state) > 0.1))
@@ -491,6 +493,16 @@ _joystick_cb (OpenVRAction      *action,
       openvr_overlay_manager_scale (self->manager, grab_state, factor,
                                     UPDATE_RATE_MS);
     }
+
+  float y_state = graphene_vec3_get_y (&event->state);
+  if (grab_state->overlay && (fabs (y_state) > 0.1))
+    {
+      float factor = y_state * SCROLL_TO_PUSH_RATIO;
+      openvr_overlay_manager_push_pull (self->manager, grab_state, hover_state,
+                                        factor, UPDATE_RATE_MS);
+    }
+
+  g_free (event);
 }
 
 static void

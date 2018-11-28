@@ -470,6 +470,8 @@ openvr_overlay_manager_scale (OpenVROverlayManager *self,
                               float factor,
                               float update_rate_ms)
 {
+  if (grab_state->overlay == NULL)
+    return;
   (void) self;
   float width;
   openvr_overlay_get_width_meters (grab_state->overlay, &width);
@@ -483,6 +485,21 @@ openvr_overlay_manager_scale (OpenVROverlayManager *self,
 
       openvr_overlay_set_width_meters (grab_state->overlay, new_width);
     }
+}
+
+void
+openvr_overlay_manager_push_pull (OpenVROverlayManager *self,
+                                  GrabState *grab_state,
+                                  HoverState *hover_state,
+                                  float factor,
+                                  float update_rate_ms)
+{
+  (void) self;
+  //float new_width = width + width * factor * (update_rate_ms / 1000.);
+  if (grab_state->overlay == NULL)
+    return;
+
+  hover_state->distance += factor * (update_rate_ms / 1000.);
 }
 
 void
