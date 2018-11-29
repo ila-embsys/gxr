@@ -480,7 +480,8 @@ openvr_overlay_manager_scale (OpenVROverlayManager *self,
   if (new_width > 0.01)
     {
       /* Grab point is relative to overlay center so we can just scale it */
-      graphene_point3d_scale (&grab_state->offset_translation_point, factor,
+      graphene_point3d_scale (&grab_state->offset_translation_point,
+                              1 + factor * (update_rate_ms / 1000.),
                               &grab_state->offset_translation_point);
 
       openvr_overlay_set_width_meters (grab_state->overlay, new_width);
