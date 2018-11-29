@@ -40,8 +40,8 @@ typedef struct Example
 
   OpenVROverlayManager *manager;
 
-  OpenVRPointer *pointer_overlay[OPENVR_CONTROLLER_COUNT];
-  OpenVRIntersection *intersection[OPENVR_CONTROLLER_COUNT];
+  OpenVRPointer *pointer_ray[OPENVR_CONTROLLER_COUNT];
+  OpenVRIntersection *pointer_tip[OPENVR_CONTROLLER_COUNT];
 
   GSList *overlays;
 
@@ -160,9 +160,9 @@ _cat_grab_cb (OpenVROverlay   *overlay,
   (void) overlay;
   Example *self = (Example*) _self;
 
-  OpenVRIntersection *intersection =
-    self->intersection[event->controller_index];
-  openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (intersection),
+  OpenVRIntersection *pointer_tip =
+    self->pointer_tip[event->controller_index];
+  openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (pointer_tip),
                                          &event->pose);
   g_free (event);
 }
@@ -189,13 +189,13 @@ _hover_cb (OpenVROverlay    *overlay,
   if (!openvr_overlay_manager_is_grabbed (self->manager, overlay))
     _overlay_mark_blue (overlay);
 
-  /* update pointer length and intersection overlay */
-  OpenVRIntersection *intersection =
-    self->intersection[event->controller_index];
-  openvr_intersection_update (intersection, &event->pose, &event->point);
+  /* update pointer length and pointer tip overlay */
+  OpenVRIntersection *pointer_tip =
+    self->pointer_tip[event->controller_index];
+  openvr_intersection_update (pointer_tip, &event->pose, &event->point);
 
-  OpenVRPointer *pointer = self->pointer_overlay[event->controller_index];
-  openvr_pointer_set_length (pointer, event->distance);
+  OpenVRPointer *pointer_ray = self->pointer_ray[event->controller_index];
+  openvr_pointer_set_length (pointer_ray, event->distance);
   g_free (event);
 }
 
@@ -208,14 +208,14 @@ _hover_button_cb (OpenVROverlay    *overlay,
 
   _overlay_mark_orange (overlay);
 
-  OpenVRPointer *pointer_overlay =
-      self->pointer_overlay[event->controller_index];
-  OpenVRIntersection *intersection =
-      self->intersection[event->controller_index];
+  OpenVRPointer *pointer_ray =
+      self->pointer_ray[event->controller_index];
+  OpenVRIntersection *pointer_tip =
+      self->pointer_tip[event->controller_index];
 
   /* update pointer length and intersection overlay */
-  openvr_intersection_update (intersection, &event->pose, &event->point);
-  openvr_pointer_set_length (pointer_overlay, event->distance);
+  openvr_intersection_update (pointer_tip, &event->pose, &event->point);
+  openvr_pointer_set_length (pointer_ray, event->distance);
   g_free (event);
 }
 
@@ -416,14 +416,11 @@ _no_hover_cb (OpenVROverlayManager       *manager,
 
   Example *self = (Example*) _self;
 
-  OpenVRPointer *pointer_overlay =
-      self->pointer_overlay[event->index];
-  OpenVRIntersection *intersection =
-      self->intersection[event->index];
+  OpenVRPointer *pointer_ray = self->pointer_ray[event->index];
+  OpenVRIntersection *pointer_tip = self->pointer_tip[event->index];
 
-
-  openvr_overlay_hide (OPENVR_OVERLAY (intersection));
-  openvr_pointer_reset_length (pointer_overlay);
+  openvr_overlay_hide (OPENVR_OVERLAY (pointer_tip));
+  openvr_pointer_reset_length (pointer_ray);
   g_free (event);
 }
 
@@ -436,12 +433,11 @@ _hand_pose_cb (OpenVRAction    *action,
   ActionCallbackData *data = _self;
   Example *self = (Example*) data->self;
 
-  OpenVRPointer *pointer_overlay =
-      self->pointer_overlay[data->controller_index];
+  OpenVRPointer *pointer_ray = self->pointer_ray[data->controller_index];
 
   openvr_overlay_manager_update_pose (self->manager, &event->pose,
                                       data->controller_index);
-  openvr_pointer_move (pointer_overlay, &event->pose);
+  openvr_pointer_move (pointer_ray, &event->pose);
   g_free (event);
 }
 
@@ -505,8 +501,8 @@ _action_push_pull_scale_cb (OpenVRAction      *action,
         graphene_vec3_get_y (&event->state) *
         (UPDATE_RATE_MS / 1000.);
 
-      OpenVRPointer *pointer = self->pointer_overlay[data->controller_index];
-      openvr_pointer_set_length (pointer, hover_state->distance);
+      OpenVRPointer *pointer_ray = self->pointer_ray[data->controller_index];
+      openvr_pointer_set_length (pointer_ray, hover_state->distance);
     }
 
   g_free (event);
@@ -538,8 +534,8 @@ _push_pull_cb (OpenVRAction      *action,
         hover_state->distance *
         graphene_vec3_get_y (&event->state);
 
-      OpenVRPointer *pointer = self->pointer_overlay[data->controller_index];
-      openvr_pointer_set_length (pointer, hover_state->distance);
+      OpenVRPointer *pointer_ray = self->pointer_ray[data->controller_index];
+      openvr_pointer_set_length (pointer_ray, hover_state->distance);
     }
 
   g_free (event);
@@ -566,8 +562,8 @@ _cleanup (Example *self)
 
   for (int i = 0; i < OPENVR_CONTROLLER_COUNT; i++)
     {
-      g_object_unref (self->pointer_overlay[i]);
-      g_object_unref (self->intersection[i]);
+      g_object_unref (self->pointer_ray[i]);
+      g_object_unref (self->pointer_tip[i]);
     }
   g_object_unref (self->texture);
 
@@ -619,11 +615,11 @@ main ()
 
   for (int i = 0; i < OPENVR_CONTROLLER_COUNT; i++)
     {
-      self.pointer_overlay[i] = openvr_pointer_new (i);
-      if (self.pointer_overlay[i] == NULL)
+      self.pointer_ray[i] = openvr_pointer_new (i);
+      if (self.pointer_ray[i] == NULL)
         return -1;
-      self.intersection[i] = openvr_intersection_new ("/res/default_tip.png", i);
-      if (self.intersection[i] == NULL)
+      self.pointer_tip[i] = openvr_intersection_new ("/res/default_tip.png", i);
+      if (self.pointer_tip[i] == NULL)
         return -1;
     }
 
