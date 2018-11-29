@@ -482,8 +482,7 @@ _action_push_pull_scale_cb (OpenVRAction      *action,
 
   float x_state = graphene_vec3_get_x (&event->state);
 
-  /* TODO: Bigger threshold for scale, since it produces centering bug */
-  if (grab_state->overlay && fabs (x_state) > 0.1)
+  if (grab_state->overlay && fabs (x_state) > ANALOG_TRESHOLD)
     {
       float factor = x_state * SCALE_FACTOR;
       openvr_overlay_manager_scale (self->manager, grab_state, factor,
