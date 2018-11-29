@@ -469,13 +469,13 @@ _grab_cb (OpenVRAction       *action,
 }
 
 #define SCROLL_TO_PUSH_RATIO 2
-
 #define SCALE_FACTOR 0.75
+#define ANALOG_TRESHOLD 0.000001
 
 static void
-_joystick_cb (OpenVRAction      *action,
-              OpenVRAnalogEvent *event,
-              gpointer          _self)
+_action_push_pull_scale_cb (OpenVRAction      *action,
+                            OpenVRAnalogEvent *event,
+                            gpointer          _self)
 {
   (void) action;
   ActionCallbackData *data = _self;
@@ -483,11 +483,11 @@ _joystick_cb (OpenVRAction      *action,
 
   GrabState *grab_state =
       &self->manager->grab_state[data->controller_index];
-  HoverState *hover_state =
-      &self->manager->hover_state[data->controller_index];
 
   float x_state = graphene_vec3_get_x (&event->state);
-  if (grab_state->overlay && (fabs (x_state) > 0.1))
+
+  /* TODO: Bigger threshold for scale, since it produces centering bug */
+  if (grab_state->overlay && fabs (x_state) > 0.1)
     {
       float factor = x_state * SCALE_FACTOR;
       openvr_overlay_manager_scale (self->manager, grab_state, factor,
@@ -495,11 +495,18 @@ _joystick_cb (OpenVRAction      *action,
     }
 
   float y_state = graphene_vec3_get_y (&event->state);
-  if (grab_state->overlay && (fabs (y_state) > 0.1))
+  if (grab_state->overlay && fabs (y_state) > ANALOG_TRESHOLD)
     {
-      float factor = y_state * SCROLL_TO_PUSH_RATIO;
-      openvr_overlay_manager_push_pull (self->manager, grab_state, hover_state,
-                                        factor, UPDATE_RATE_MS);
+      HoverState *hover_state =
+        &self->manager->hover_state[data->controller_index];
+      hover_state->distance +=
+        SCROLL_TO_PUSH_RATIO *
+        hover_state->distance *
+        graphene_vec3_get_y (&event->state) *
+        (UPDATE_RATE_MS / 1000.);
+
+      OpenVRPointer *pointer = self->pointer_overlay[data->controller_index];
+      openvr_pointer_set_length (pointer, hover_state->distance);
     }
 
   g_free (event);
@@ -516,18 +523,23 @@ _push_pull_cb (OpenVRAction      *action,
   Example *self = data->self;
 
   GrabState *grab_state =
-      &self->manager->grab_state[data->controller_index];
-  HoverState *hover_state =
-      &self->manager->hover_state[data->controller_index];
-  OpenVRPointer *pointer_overlay =
-      self->pointer_overlay[data->controller_index];
+    &self->manager->grab_state[data->controller_index];
 
-  if (grab_state->overlay != NULL && graphene_vec3_get_z(&event->state) == 0.0)
+  float y_state = graphene_vec3_get_y (&event->state);
+  if (grab_state->overlay != NULL &&
+      graphene_vec3_get_z(&event->state) == 0.0 &&
+      fabs (y_state) > ANALOG_TRESHOLD)
     {
+      HoverState *hover_state =
+        &self->manager->hover_state[data->controller_index];
+
       hover_state->distance +=
-        SCROLL_TO_PUSH_RATIO * graphene_vec3_get_y (&event->state);
-      openvr_pointer_set_length (pointer_overlay,
-                                 hover_state->distance);
+        SCROLL_TO_PUSH_RATIO *
+        hover_state->distance *
+        graphene_vec3_get_y (&event->state);
+
+      OpenVRPointer *pointer = self->pointer_overlay[data->controller_index];
+      openvr_pointer_set_length (pointer, hover_state->distance);
     }
 
   g_free (event);
@@ -638,7 +650,6 @@ main ()
   openvr_action_set_connect (self.action_set, OPENVR_ACTION_POSE,
                              "/actions/wm/in/hand_pose_right",
                              (GCallback) _hand_pose_cb, &data_right);
-
   openvr_action_set_connect (self.action_set, OPENVR_ACTION_DIGITAL,
                              "/actions/wm/in/grab_window_left",
                              (GCallback) _grab_cb, &data_left);
@@ -655,10 +666,12 @@ main ()
 
   openvr_action_set_connect (self.action_set, OPENVR_ACTION_ANALOG,
                              "/actions/wm/in/push_pull_scale_left",
-                             (GCallback) _joystick_cb, &data_left);
+                             (GCallback) _action_push_pull_scale_cb,
+                             &data_left);
   openvr_action_set_connect (self.action_set, OPENVR_ACTION_ANALOG,
                              "/actions/wm/in/push_pull_scale_right",
-                             (GCallback) _joystick_cb, &data_right);
+                             (GCallback) _action_push_pull_scale_cb,
+                             &data_right);
 
   g_signal_connect (self.manager, "no-hover-event",
                     (GCallback) _no_hover_cb, &self);

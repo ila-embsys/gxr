@@ -488,21 +488,6 @@ openvr_overlay_manager_scale (OpenVROverlayManager *self,
 }
 
 void
-openvr_overlay_manager_push_pull (OpenVROverlayManager *self,
-                                  GrabState *grab_state,
-                                  HoverState *hover_state,
-                                  float factor,
-                                  float update_rate_ms)
-{
-  (void) self;
-  //float new_width = width + width * factor * (update_rate_ms / 1000.);
-  if (grab_state->overlay == NULL)
-    return;
-
-  hover_state->distance += factor * (update_rate_ms / 1000.);
-}
-
-void
 openvr_overlay_manager_check_grab (OpenVROverlayManager *self,
                                    int                   controller_index)
 {
