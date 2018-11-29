@@ -227,13 +227,52 @@ _hover_end_cb (OpenVROverlay *overlay,
   (void) event;
   Example *self = (Example*) _self;
 
-  /* don't unmark if the other controller is still hovering over this overlay */
-  if (openvr_overlay_manager_is_hovered (self->manager, overlay))
-    {
-      g_free (event);
-      return;
-    }
-  _overlay_unmark (overlay);
+  OpenVRPointer *pointer_ray = self->pointer_ray[event->index];
+  openvr_pointer_reset_length (pointer_ray);
+
+  /* unmark if no controller is hovering over this overlay */
+  if (!openvr_overlay_manager_is_hovered (self->manager, overlay))
+    _overlay_unmark (overlay);
+  g_free (event);
+}
+
+void
+_no_hover_cb (OpenVROverlayManager *manager,
+              OpenVRNoHoverEvent   *event,
+              gpointer             _self)
+{
+  (void) manager;
+
+  Example *self = (Example*) _self;
+
+  OpenVRIntersection *pointer_tip = self->pointer_tip[event->controller_index];
+
+  OpenVRPointer *pointer_ray = self->pointer_ray[event->controller_index];
+
+  graphene_point3d_t distance_translation_point;
+  graphene_point3d_init (&distance_translation_point,
+                         0.f, 0.f, -pointer_ray->default_length);
+
+
+  graphene_matrix_t tip_pose;
+
+  graphene_quaternion_t controller_rotation;
+  graphene_quaternion_init_from_matrix (&controller_rotation, &event->pose);
+
+  graphene_vec3_t controller_translation;
+  openvr_math_matrix_get_translation (&event->pose, &controller_translation);
+  graphene_point3d_t controller_translation_point;
+  graphene_point3d_init_from_vec3 (&controller_translation_point,
+                                   &controller_translation);
+
+  graphene_matrix_init_identity (&tip_pose);
+  graphene_matrix_translate (&tip_pose, &distance_translation_point);
+  graphene_matrix_rotate_quaternion (&tip_pose, &controller_rotation);
+  graphene_matrix_translate (&tip_pose, &controller_translation_point);
+
+  openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (pointer_tip),
+                                         &tip_pose);
+
   g_free (event);
 }
 
@@ -405,23 +444,6 @@ _init_buttons (Example *self)
     return FALSE;
 
   return TRUE;
-}
-
-void
-_no_hover_cb (OpenVROverlayManager       *manager,
-              OpenVRControllerIndexEvent *event,
-              gpointer                   _self)
-{
-  (void) manager;
-
-  Example *self = (Example*) _self;
-
-  OpenVRPointer *pointer_ray = self->pointer_ray[event->index];
-  OpenVRIntersection *pointer_tip = self->pointer_tip[event->index];
-
-  openvr_overlay_hide (OPENVR_OVERLAY (pointer_tip));
-  openvr_pointer_reset_length (pointer_ray);
-  g_free (event);
 }
 
 static void
