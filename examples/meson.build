@@ -102,3 +102,13 @@ if libdrm_amdgpu_dep.found()
     include_directories: openvr_glib_inc,
     install: false)
 endif
+
+if glew_dep.found() and glfw_dep.found() and egl_dep.found()
+  executable(
+    'overlay_mesa_dmabuf', ['overlay_mesa_dmabuf.c', test_resources],
+    dependencies: [gtk3_dep, vulkan_dep, graphene_dep, gulkan_dep, glew_dep,
+                   glfw_dep, egl_dep],
+    link_with: openvr_glib_lib,
+    include_directories: openvr_glib_inc,
+    install: false)
+endif
