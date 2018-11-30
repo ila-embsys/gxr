@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <gdk/gdk.h>
 #include "openvr-intersection.h"
 #include "openvr-math.h"
 
@@ -29,7 +30,6 @@ openvr_intersection_init (OpenVRIntersection *self)
 
 #define WIDTH 512
 #define HEIGHT 512
-#define STRIDE (WIDTH * 4)
 
 void
 draw_gradient_circle (cairo_t *cr, unsigned width, unsigned height)
@@ -52,22 +52,16 @@ draw_gradient_circle (cairo_t *cr, unsigned width, unsigned height)
 }
 
 cairo_surface_t*
-create_cairo_surface (unsigned char *image)
+create_cairo_surface ()
 {
-  cairo_surface_t *surface =
-    cairo_image_surface_create_for_data (image,
-                                         CAIRO_FORMAT_ARGB32,
-                                         WIDTH, HEIGHT,
-                                         STRIDE);
+  cairo_surface_t *surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
+                                                         WIDTH, HEIGHT);
 
   cairo_t *cr = cairo_create (surface);
-
   cairo_set_source_rgba (cr, 0, 0, 0, 0);
   cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
   cairo_paint (cr);
-
   draw_gradient_circle (cr, WIDTH, HEIGHT);
-
   cairo_destroy (cr);
 
   return surface;
@@ -84,7 +78,7 @@ openvr_intersection_new (int controller_index)
             controller_index);
 
   openvr_overlay_create_width (OPENVR_OVERLAY (self),
-                               key, key, 0.25);
+                               key, key, 0.025);
 
   if (!openvr_overlay_is_valid (OPENVR_OVERLAY (self)))
     {
@@ -92,10 +86,15 @@ openvr_intersection_new (int controller_index)
       return NULL;
     }
 
-  unsigned char image[STRIDE*HEIGHT];
-  cairo_surface_t* surface = create_cairo_surface (image);
-  openvr_overlay_set_cairo_surface_raw (OPENVR_OVERLAY (self), surface);
+  cairo_surface_t* surface = create_cairo_surface ();
+  GdkPixbuf *pixbuf = gdk_pixbuf_get_from_surface (surface, 0, 0,
+                                                   WIDTH, HEIGHT);
   cairo_surface_destroy (surface);
+
+  /* Since we cannot set a different format for raw upload,
+   * we need to use GdkPixbuf to suit OpenVRs needs */
+  openvr_overlay_set_gdk_pixbuf_raw (OPENVR_OVERLAY (self), pixbuf);
+  g_object_unref (pixbuf);
 
   /*
    * The crosshair should always be visible, except the pointer can
@@ -104,7 +103,6 @@ openvr_intersection_new (int controller_index)
   openvr_overlay_set_sort_order (OPENVR_OVERLAY (self), UINT32_MAX - 1);
 
   return self;
-
 }
 
 static void
