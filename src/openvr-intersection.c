@@ -27,24 +27,54 @@ openvr_intersection_init (OpenVRIntersection *self)
   (void) self;
 }
 
-GdkPixbuf *
-_load_pixbuf (const gchar* name)
+#define WIDTH 512
+#define HEIGHT 512
+#define STRIDE (WIDTH * 4)
+
+void
+draw_gradient_circle (cairo_t *cr, unsigned width, unsigned height)
 {
-  GError * error = NULL;
-  GdkPixbuf *pixbuf = gdk_pixbuf_new_from_resource (name, &error);
+  double center_x = (double) width / 2.0;
+  double center_y = (double) height / 2.0;
 
-  if (error != NULL)
-    {
-      fprintf (stderr, "Unable to read file: %s\n", error->message);
-      g_error_free (error);
-      return NULL;
-    }
+  double radius = center_x;
 
-  return pixbuf;
+  cairo_pattern_t *pat = cairo_pattern_create_radial (center_x, center_y,
+                                                      (3.0/4.0) * radius,
+                                                      center_x, center_y,
+                                                      radius);
+  cairo_pattern_add_color_stop_rgba (pat, 0, 1, 1, 1, 1);
+  cairo_pattern_add_color_stop_rgba (pat, 1, 1, 1, 1, 0);
+  cairo_set_source (cr, pat);
+  cairo_arc (cr, center_x, center_y, radius, 0, 2 * M_PI);
+  cairo_fill (cr);
+  cairo_pattern_destroy (pat);
+}
+
+cairo_surface_t*
+create_cairo_surface (unsigned char *image)
+{
+  cairo_surface_t *surface =
+    cairo_image_surface_create_for_data (image,
+                                         CAIRO_FORMAT_ARGB32,
+                                         WIDTH, HEIGHT,
+                                         STRIDE);
+
+  cairo_t *cr = cairo_create (surface);
+
+  cairo_set_source_rgba (cr, 0, 0, 0, 0);
+  cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
+  cairo_paint (cr);
+
+  draw_gradient_circle (cr, WIDTH, HEIGHT);
+
+  cairo_destroy (cr);
+
+  return surface;
 }
 
 OpenVRIntersection *
-openvr_intersection_new (const gchar* name, int controller_index)
+openvr_intersection_new (int controller_index)
 {
   OpenVRIntersection *self =
     (OpenVRIntersection*) g_object_new (OPENVR_TYPE_INTERSECTION, 0);
@@ -62,12 +92,10 @@ openvr_intersection_new (const gchar* name, int controller_index)
       return NULL;
     }
 
-  GdkPixbuf *pixbuf = _load_pixbuf (name);
-  if (pixbuf == NULL)
-    return NULL;
-
-  openvr_overlay_set_gdk_pixbuf_raw (OPENVR_OVERLAY (self), pixbuf);
-  g_object_unref (pixbuf);
+  unsigned char image[STRIDE*HEIGHT];
+  cairo_surface_t* surface = create_cairo_surface (image);
+  openvr_overlay_set_cairo_surface_raw (OPENVR_OVERLAY (self), surface);
+  cairo_surface_destroy (surface);
 
   /*
    * The crosshair should always be visible, except the pointer can

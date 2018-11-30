@@ -375,8 +375,7 @@ main ()
   if (self.pointer_overlay == NULL)
     return -1;
 
-  self.intersection_overlay =
-      openvr_intersection_new ("/res/crosshair.png", 1);
+  self.intersection_overlay = openvr_intersection_new (1);
   if (self.intersection_overlay == NULL)
     return -1;
 

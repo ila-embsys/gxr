@@ -639,7 +639,7 @@ main ()
       self.pointer_ray[i] = openvr_pointer_new (i);
       if (self.pointer_ray[i] == NULL)
         return -1;
-      self.pointer_tip[i] = openvr_intersection_new ("/res/default_tip.png", i);
+      self.pointer_tip[i] = openvr_intersection_new (i);
       if (self.pointer_tip[i] == NULL)
         return -1;
     }
