@@ -192,7 +192,11 @@ _hover_cb (OpenVROverlay    *overlay,
   /* update pointer length and pointer tip overlay */
   OpenVRIntersection *pointer_tip =
     self->pointer_tip[event->controller_index];
-  openvr_intersection_update (pointer_tip, &event->pose, &event->point);
+
+  graphene_matrix_t overlay_pose;
+  openvr_overlay_get_transform_absolute (overlay, &overlay_pose);
+
+  openvr_intersection_update (pointer_tip, &overlay_pose, &event->point);
   openvr_intersection_set_active (pointer_tip, self->uploader, TRUE);
 
   OpenVRPointer *pointer_ray = self->pointer_ray[event->controller_index];
@@ -215,7 +219,10 @@ _hover_button_cb (OpenVROverlay    *overlay,
       self->pointer_tip[event->controller_index];
 
   /* update pointer length and intersection overlay */
-  openvr_intersection_update (pointer_tip, &event->pose, &event->point);
+  graphene_matrix_t overlay_pose;
+  openvr_overlay_get_transform_absolute (overlay, &overlay_pose);
+
+  openvr_intersection_update (pointer_tip, &overlay_pose, &event->point);
   openvr_pointer_set_length (pointer_ray, event->distance);
   g_free (event);
 }
@@ -642,10 +649,12 @@ main ()
       self.pointer_ray[i] = openvr_pointer_new (i);
       if (self.pointer_ray[i] == NULL)
         return -1;
+      // openvr_overlay_hide (OPENVR_OVERLAY (self.pointer_ray[i]));
       self.pointer_tip[i] = openvr_intersection_new (i);
       if (self.pointer_tip[i] == NULL)
         return -1;
       openvr_intersection_init_vulkan (self.pointer_tip[i], self.uploader);
+      openvr_overlay_show (OPENVR_OVERLAY (self.pointer_tip[i]));
     }
 
   if (!_init_cat_overlays (&self))

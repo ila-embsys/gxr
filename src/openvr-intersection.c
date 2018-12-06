@@ -178,5 +178,4 @@ openvr_intersection_update (OpenVRIntersection *self,
   graphene_matrix_init_from_matrix (&transform, pose);
   openvr_math_matrix_set_translation (&transform, intersection_point);
   openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (self), &transform);
-  openvr_overlay_show (OPENVR_OVERLAY (self));
 }

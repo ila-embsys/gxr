@@ -361,7 +361,6 @@ _drag_overlay (OpenVROverlayManager *self,
   graphene_point3d_init (&distance_translation_point,
                          0.f, 0.f, -hover_state->distance);
 
-
   graphene_matrix_t transformation_matrix;
   graphene_matrix_init_identity (&transformation_matrix);
 
@@ -369,39 +368,42 @@ _drag_overlay (OpenVROverlayManager *self,
   graphene_matrix_translate (&transformation_matrix,
                              &grab_state->offset_translation_point);
 
-  /* then apply the rotation that the overlay had when it was grabbed */
-  graphene_matrix_rotate_quaternion (
-      &transformation_matrix, &grab_state->overlay_rotation);
-
-  /* reverse the rotation induced by the controller pose when it was grabbed */
-  graphene_matrix_rotate_quaternion (
-      &transformation_matrix,
-      &grab_state->overlay_transformed_rotation_neg);
-
-  /* then translate the overlay to the controller ray distance */
-  graphene_matrix_translate (&transformation_matrix,
-                             &distance_translation_point);
-
-  /* rotate the translated overlay. Because the original controller rotation has
-   * been subtracted, this will only add the diff to the original rotation
-   */
-  graphene_matrix_rotate_quaternion (&transformation_matrix,
-                                     &controller_rotation);
-
-  /* and finally move the whole thing so the controller is the origin */
-  graphene_matrix_translate (&transformation_matrix,
-                             &controller_translation_point);
-
-  openvr_overlay_set_transform_absolute (grab_state->overlay,
-                                        &transformation_matrix);
-
   OpenVRGrabEvent *event = g_malloc (sizeof (OpenVRGrabEvent));
   event->controller_index = controller_index;
   graphene_matrix_init_identity (&event->pose);
+
+  /* then apply the rotation that the overlay had when it was grabbed */
+  graphene_matrix_rotate_quaternion (&event->pose,
+                                     &grab_state->overlay_rotation);
+
+  /* reverse the rotation induced by the controller pose when it was grabbed */
+  graphene_matrix_rotate_quaternion (
+      &event->pose,
+      &grab_state->overlay_transformed_rotation_neg);
+
+  /* then translate the overlay to the controller ray distance */
   graphene_matrix_translate (&event->pose, &distance_translation_point);
-  graphene_matrix_rotate_quaternion (&event->pose, &controller_rotation);
+
+  /*
+   * rotate the translated overlay. Because the original controller rotation has
+   * been subtracted, this will only add the diff to the original rotation
+   */
+  graphene_matrix_rotate_quaternion (&event->pose,
+                                     &controller_rotation);
+
+  /* and finally move the whole thing so the controller is the origin */
   graphene_matrix_translate (&event->pose, &controller_translation_point);
 
+  /* Apply pointer tip transform to overlay */
+  graphene_matrix_multiply (&transformation_matrix,
+                            &event->pose,
+                            &transformation_matrix);
+
+  /* Transform overlay */
+  openvr_overlay_set_transform_absolute (grab_state->overlay,
+                                        &transformation_matrix);
+
+  /* Emit tip transformation */
   openvr_overlay_emit_grab (grab_state->overlay, event);
 }
 
