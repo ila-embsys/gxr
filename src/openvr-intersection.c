@@ -27,6 +27,8 @@ openvr_intersection_init (OpenVRIntersection *self)
 {
   (void) self;
   self->active = FALSE;
+  self->active_texture = NULL;
+  self->default_texture = NULL;
 }
 
 #define WIDTH 64
@@ -99,12 +101,6 @@ openvr_intersection_new (int controller_index)
       return NULL;
     }
 
-  self->active_pixbuf = _render_tip_pixbuf (0.078, 0.471, 0.675);
-  self->default_pixbuf = _render_tip_pixbuf (1.0, 1.0, 1.0);
-
-  openvr_overlay_set_gdk_pixbuf_raw (OPENVR_OVERLAY (self),
-                                     self->default_pixbuf);
-
   /*
    * The crosshair should always be visible, except the pointer can
    * occlude it. The pointer has max sort order, so the crosshair gets max -1
@@ -115,16 +111,48 @@ openvr_intersection_new (int controller_index)
 }
 
 void
-openvr_intersection_set_active (OpenVRIntersection *self, gboolean active)
+openvr_intersection_init_vulkan (OpenVRIntersection   *self,
+                                 OpenVRVulkanUploader *uploader)
 {
+  GulkanClient *client = GULKAN_CLIENT (uploader);
+
+  GdkPixbuf* default_pixbuf = _render_tip_pixbuf (1.0, 1.0, 1.0);
+  self->default_texture = gulkan_texture_new_from_pixbuf (client->device,
+                                                          default_pixbuf);
+  gulkan_client_upload_pixbuf (client, self->default_texture, default_pixbuf);
+  g_object_unref (default_pixbuf);
+
+  GdkPixbuf* active_pixbuf = _render_tip_pixbuf (0.078, 0.471, 0.675);
+  self->active_texture = gulkan_texture_new_from_pixbuf (client->device,
+                                                         active_pixbuf);
+  gulkan_client_upload_pixbuf (client, self->active_texture, active_pixbuf);
+  g_object_unref (active_pixbuf);
+}
+
+void
+openvr_intersection_init_raw (OpenVRIntersection *self)
+{
+  GdkPixbuf *default_pixbuf = _render_tip_pixbuf (1.0, 1.0, 1.0);
+  openvr_overlay_set_gdk_pixbuf_raw (OPENVR_OVERLAY (self), default_pixbuf);
+  g_object_unref (default_pixbuf);
+}
+
+void
+openvr_intersection_set_active (OpenVRIntersection *self,
+                                OpenVRVulkanUploader *uploader,
+                                gboolean active)
+{
+  if (self->active_texture == NULL)
+    return;
+
   if (active != self->active)
     {
       if (active)
-        openvr_overlay_set_gdk_pixbuf_raw (OPENVR_OVERLAY (self),
-                                           self->active_pixbuf);
+        openvr_vulkan_uploader_submit_frame (uploader, OPENVR_OVERLAY (self),
+                                             self->active_texture);
       else
-        openvr_overlay_set_gdk_pixbuf_raw (OPENVR_OVERLAY (self),
-                                           self->default_pixbuf);
+        openvr_vulkan_uploader_submit_frame (uploader, OPENVR_OVERLAY (self),
+                                             self->default_texture);
       self->active = active;
     }
 
@@ -135,8 +163,10 @@ openvr_intersection_finalize (GObject *gobject)
 {
   OpenVRIntersection *self = OPENVR_INTERSECTION (gobject);
   (void) self;
-  g_object_unref (self->default_pixbuf);
-  g_object_unref (self->active_pixbuf);
+  if (self->active_texture)
+    g_object_unref (self->active_texture);
+  if (self->default_texture)
+    g_object_unref (self->default_texture);
 }
 
 void

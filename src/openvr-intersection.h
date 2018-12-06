@@ -9,6 +9,9 @@
 #define OPENVR_GLIB_INTERSECTION_H_
 
 #include <glib-object.h>
+#include <gulkan-texture.h>
+
+#include "openvr-vulkan-uploader.h"
 #include "openvr-overlay.h"
 
 G_BEGIN_DECLS
@@ -20,8 +23,8 @@ G_DECLARE_FINAL_TYPE (OpenVRIntersection, openvr_intersection, OPENVR,
 struct _OpenVRIntersection
 {
   OpenVROverlay parent;
-  GdkPixbuf* default_pixbuf;
-  GdkPixbuf* active_pixbuf;
+  GulkanTexture *default_texture;
+  GulkanTexture *active_texture;
   gboolean active;
 };
 
@@ -33,7 +36,16 @@ openvr_intersection_update (OpenVRIntersection *self,
                             graphene_point3d_t *intersection_point);
 
 void
-openvr_intersection_set_active (OpenVRIntersection *self, gboolean active);
+openvr_intersection_set_active (OpenVRIntersection *self,
+                                OpenVRVulkanUploader *uploader,
+                                gboolean active);
+
+void
+openvr_intersection_init_vulkan (OpenVRIntersection   *self,
+                                 OpenVRVulkanUploader *uploader);
+
+void
+openvr_intersection_init_raw (OpenVRIntersection *self);
 
 G_END_DECLS
 
