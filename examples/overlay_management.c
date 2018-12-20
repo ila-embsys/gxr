@@ -514,7 +514,6 @@ _action_push_pull_scale_cb (OpenVRAction      *action,
       &self->manager->grab_state[data->controller_index];
 
   float x_state = graphene_vec3_get_x (&event->state);
-
   if (grab_state->overlay && fabs (x_state) > ANALOG_TRESHOLD)
     {
       float factor = x_state * SCALE_FACTOR;
@@ -532,39 +531,6 @@ _action_push_pull_scale_cb (OpenVRAction      *action,
         hover_state->distance *
         graphene_vec3_get_y (&event->state) *
         (UPDATE_RATE_MS / 1000.);
-
-      OpenVRPointer *pointer_ray = self->pointer_ray[data->controller_index];
-      openvr_pointer_set_length (pointer_ray, hover_state->distance);
-    }
-
-  g_free (event);
-}
-
-static void
-_push_pull_cb (OpenVRAction      *action,
-               OpenVRAnalogEvent *event,
-               gpointer          _self)
-{
-  (void) action;
-
-  ActionCallbackData *data = _self;
-  Example *self = data->self;
-
-  GrabState *grab_state =
-    &self->manager->grab_state[data->controller_index];
-
-  float y_state = graphene_vec3_get_y (&event->state);
-  if (grab_state->overlay != NULL &&
-      graphene_vec3_get_z(&event->state) == 0.0 &&
-      fabs (y_state) > ANALOG_TRESHOLD)
-    {
-      HoverState *hover_state =
-        &self->manager->hover_state[data->controller_index];
-
-      hover_state->distance +=
-        SCROLL_TO_PUSH_RATIO *
-        hover_state->distance *
-        graphene_vec3_get_y (&event->state);
 
       OpenVRPointer *pointer_ray = self->pointer_ray[data->controller_index];
       openvr_pointer_set_length (pointer_ray, hover_state->distance);
@@ -689,13 +655,6 @@ main ()
                              (GCallback) _grab_cb, &data_right);
 
   openvr_action_set_connect (self.action_set, OPENVR_ACTION_ANALOG,
-                             "/actions/wm/in/push_pull_left",
-                             (GCallback) _push_pull_cb, &data_left);
-  openvr_action_set_connect (self.action_set, OPENVR_ACTION_ANALOG,
-                             "/actions/wm/in/push_pull_right",
-                             (GCallback) _push_pull_cb, &data_right);
-
-  openvr_action_set_connect (self.action_set, OPENVR_ACTION_ANALOG,
                              "/actions/wm/in/push_pull_scale_left",
                              (GCallback) _action_push_pull_scale_cb,
                              &data_left);
@@ -703,6 +662,16 @@ main ()
                              "/actions/wm/in/push_pull_scale_right",
                              (GCallback) _action_push_pull_scale_cb,
                              &data_right);
+
+  openvr_action_set_connect (self.action_set, OPENVR_ACTION_ANALOG,
+                             "/actions/wm/in/push_pull_left",
+                             (GCallback) _action_push_pull_scale_cb,
+                             &data_left);
+  openvr_action_set_connect (self.action_set, OPENVR_ACTION_ANALOG,
+                             "/actions/wm/in/push_pull_right",
+                             (GCallback) _action_push_pull_scale_cb,
+                             &data_right);
+
 
   g_signal_connect (self.manager, "no-hover-event",
                     (GCallback) _no_hover_cb, &self);

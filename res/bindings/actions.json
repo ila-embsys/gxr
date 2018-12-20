@@ -28,11 +28,11 @@
       },
       {
          "name":"/actions/wm/in/push_pull_left",
-         "type": "vector3"
+         "type": "vector2"
       },
       {
          "name":"/actions/wm/in/push_pull_right",
-         "type": "vector3"
+         "type": "vector2"
       },
       {
          "name":"/actions/wm/in/push_pull_scale_left",
@@ -99,6 +99,7 @@
          "/actions/wm/in/grab_window_left":"Grab Window Left Controller",
          "/actions/wm/in/show_keyboard_left":"Show On Screen Keyboard Left Controller",
          "/actions/wm/in/push_pull_left":"Move window along Z axis Left Controller",
+         "/actions/wm/in/push_pull_scale_left":"Scale Window Left Controller",
          "/actions/wm/in/hand_pose_left" : "Pose Left Controller",
          "/actions/wm/out/haptic_left" : "Haptic Feedback Left Controller",
          "/actions/mouse_synth/in/left_click_left" : "Left Click Left Controller",
@@ -106,7 +107,8 @@
          "/actions/mouse_synth/in/scroll_left" : "Scroll Left Controller",
          "/actions/wm/in/grab_window_right":"Grab Window Right Controller",
          "/actions/wm/in/show_keyboard_right":"Show On Screen Keyboard Right Controller",
-         "/actions/wm/in/push_pull_right":"Move window along Z axis Right Controller",
+         "/actions/wm/in/push_pull_right":"Move Window along Z axis Right Controller",
+         "/actions/wm/in/push_pull_scale_right":"Scale Window Right Controller",
          "/actions/wm/in/hand_pose_right" : "Pose Right Controller",
          "/actions/wm/out/haptic_right" : "Haptic Feedback Right Controller",
          "/actions/mouse_synth/in/left_click_right" : "Left Click Right Controller",
