@@ -32,7 +32,7 @@ bool _init_vulkan_device (OpenVRSceneRenderer *self);
 void _init_device_model (OpenVRSceneRenderer *self,
                          TrackedDeviceIndex_t device_id);
 void _init_device_models (OpenVRSceneRenderer *self);
-bool _init_textures (OpenVRSceneRenderer *self);
+bool _init_textures (OpenVRSceneRenderer *self, VkCommandBuffer cmd_buffer);
 void _init_planes (OpenVRSceneRenderer *self);
 bool _init_stereo_render_targets (OpenVRSceneRenderer *self);
 bool _init_shaders (OpenVRSceneRenderer *self);
@@ -50,8 +50,7 @@ graphene_matrix_t _get_view_projection_matrix (OpenVRSceneRenderer *self,
 void _update_matrices (OpenVRSceneRenderer *self);
 void _update_device_poses (OpenVRSceneRenderer *self);
 void _update_pointer (OpenVRSceneRenderer *self);
-void _render_stereo (OpenVRSceneRenderer *self);
-void _render_scene (OpenVRSceneRenderer *self, EVREye eye);
+void _render_stereo (OpenVRSceneRenderer *self, VkCommandBuffer cmd_buffer);
 
 static void
 openvr_scene_renderer_class_init (OpenVRSceneRendererClass *klass)
@@ -267,14 +266,14 @@ _init_vulkan (OpenVRSceneRenderer *self)
       return false;
     }
 
-  if (!gulkan_client_begin_res_cmd_buffer (client,
-                                           &self->current_cmd_buffer))
+  FencedCommandBuffer cmd_buffer;
+  if (!gulkan_client_begin_res_cmd_buffer (client, &cmd_buffer))
     {
       g_printerr ("Could not begin command buffer.\n");
       return false;
     }
 
-  _init_textures (self);
+  _init_textures (self, cmd_buffer.cmd_buffer);
   _init_planes (self);
   _update_matrices (self);
   _init_stereo_render_targets (self);
@@ -295,8 +294,7 @@ _init_vulkan (OpenVRSceneRenderer *self)
   _init_descriptor_sets (self);
   _init_device_models (self);
 
-  if (!gulkan_client_submit_res_cmd_buffer (client,
-                                            &self->current_cmd_buffer))
+  if (!gulkan_client_submit_res_cmd_buffer (client, &cmd_buffer))
     {
       g_printerr ("Could not submit command buffer.\n");
       return false;
@@ -368,32 +366,31 @@ void
 openvr_scene_renderer_render (OpenVRSceneRenderer *self)
 {
   GulkanClient *client = GULKAN_CLIENT (self);
-  gulkan_client_begin_res_cmd_buffer (client, &self->current_cmd_buffer);
+
+  FencedCommandBuffer cmd_buffer;
+  gulkan_client_begin_res_cmd_buffer (client, &cmd_buffer);
 
   _update_pointer (self);
-  _render_stereo (self);
+  _render_stereo (self, cmd_buffer.cmd_buffer);
 
-  vkEndCommandBuffer (self->current_cmd_buffer.cmd_buffer);
+  vkEndCommandBuffer (cmd_buffer.cmd_buffer);
 
   VkSubmitInfo submit_info = {
     .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
     .commandBufferCount = 1,
-    .pCommandBuffers = &self->current_cmd_buffer.cmd_buffer,
+    .pCommandBuffers = &cmd_buffer.cmd_buffer,
     .waitSemaphoreCount = 0,
     .pWaitSemaphores = NULL,
     .signalSemaphoreCount = 0
   };
 
-  vkQueueSubmit (client->device->queue, 1, &submit_info,
-                 self->current_cmd_buffer.fence);
+  vkQueueSubmit (client->device->queue, 1, &submit_info, cmd_buffer.fence);
 
   vkQueueWaitIdle (client->device->queue);
 
-  vkFreeCommandBuffers (client->device->device,
-                        client->command_pool,
-                        1, &self->current_cmd_buffer.cmd_buffer);
-  vkDestroyFence (client->device->device,
-                  self->current_cmd_buffer.fence, NULL);
+  vkFreeCommandBuffers (client->device->device, client->command_pool,
+                        1, &cmd_buffer.cmd_buffer);
+  vkDestroyFence (client->device->device, cmd_buffer.fence, NULL);
 
   GulkanDevice *device = client->device;
 
@@ -436,7 +433,7 @@ openvr_scene_renderer_render (OpenVRSceneRenderer *self)
 }
 
 bool
-_init_textures (OpenVRSceneRenderer *self)
+_init_textures (OpenVRSceneRenderer *self, VkCommandBuffer cmd_buffer)
 {
   GdkPixbuf *pixbuf = load_gdk_pixbuf ();
   if (!pixbuf)
@@ -446,12 +443,12 @@ _init_textures (OpenVRSceneRenderer *self)
 
   GulkanClient *client = GULKAN_CLIENT (self);
   self->cat_texture = gulkan_texture_new_from_pixbuf_mipmapped (
-      client->device, self->current_cmd_buffer.cmd_buffer, pixbuf,
+      client->device, cmd_buffer, pixbuf,
       &mip_levels);
 
   gulkan_texture_transfer_layout_mips (self->cat_texture,
                                        client->device,
-                                       self->current_cmd_buffer.cmd_buffer,
+                                       cmd_buffer,
                                        mip_levels,
                                        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -596,33 +593,10 @@ _update_matrices (OpenVRSceneRenderer *self)
 }
 
 void
-_render_stereo (OpenVRSceneRenderer *self)
+_render_planes (OpenVRSceneRenderer *self,
+                EVREye eye, VkCommandBuffer cmd_buffer)
 {
-  VkViewport viewport = {
-    0.0f, 0.0f,
-    self->render_width, self->render_height,
-    0.0f, 1.0f
-  };
-  vkCmdSetViewport (self->current_cmd_buffer.cmd_buffer, 0, 1, &viewport);
-  VkRect2D scissor = {
-    .offset = {0, 0},
-    .extent = {self->render_width, self->render_height}
-  };
-  vkCmdSetScissor (self->current_cmd_buffer.cmd_buffer, 0, 1, &scissor);
-
-  for (uint32_t eye = 0; eye < 2; eye++)
-    {
-      gulkan_frame_buffer_begin_pass (self->framebuffer[eye],
-                                      self->current_cmd_buffer.cmd_buffer);
-      _render_scene (self, eye);
-      vkCmdEndRenderPass (self->current_cmd_buffer.cmd_buffer);
-    }
-}
-
-void
-_render_planes (OpenVRSceneRenderer *self,  EVREye eye)
-{
-  vkCmdBindPipeline (self->current_cmd_buffer.cmd_buffer,
+  vkCmdBindPipeline (cmd_buffer,
                      VK_PIPELINE_BIND_POINT_GRAPHICS,
                      self->pipelines[PIPELINE_WINDOWS]);
 
@@ -631,35 +605,32 @@ _render_planes (OpenVRSceneRenderer *self,  EVREye eye)
   graphene_matrix_to_float (&mvp, self->planes_ubo[eye]->data);
 
   vkCmdBindDescriptorSets (
-    self->current_cmd_buffer.cmd_buffer,
-    VK_PIPELINE_BIND_POINT_GRAPHICS, self->pipeline_layout, 0, 1,
+    cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, self->pipeline_layout, 0, 1,
     &self->descriptor_sets[DESCRIPTOR_SET_LEFT_EYE_SCENE + eye], 0, NULL);
 
-  gulkan_vertex_buffer_draw (self->planes_vbo,
-                             self->current_cmd_buffer.cmd_buffer);
+  gulkan_vertex_buffer_draw (self->planes_vbo, cmd_buffer);
 }
 
 void
-_render_pointer (OpenVRSceneRenderer *self)
+_render_pointer (OpenVRSceneRenderer *self, VkCommandBuffer cmd_buffer)
 {
   OpenVRContext *context = openvr_context_get_instance ();
   if (!context->system->IsInputAvailable () ||
       self->pointer_vbo->buffer == VK_NULL_HANDLE)
     return;
 
-  vkCmdBindPipeline (self->current_cmd_buffer.cmd_buffer,
-                     VK_PIPELINE_BIND_POINT_GRAPHICS,
+  vkCmdBindPipeline (cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                      self->pipelines[PIPELINE_POINTER]);
 
-  gulkan_vertex_buffer_draw (self->pointer_vbo,
-                             self->current_cmd_buffer.cmd_buffer);
+  gulkan_vertex_buffer_draw (self->pointer_vbo, cmd_buffer);
 
 }
 
 void
-_render_device_models (OpenVRSceneRenderer *self, EVREye eye)
+_render_device_models (OpenVRSceneRenderer *self,
+                       EVREye eye, VkCommandBuffer cmd_buffer)
 {
-  vkCmdBindPipeline (self->current_cmd_buffer.cmd_buffer,
+  vkCmdBindPipeline (cmd_buffer,
                      VK_PIPELINE_BIND_POINT_GRAPHICS,
                      self->pipelines[PIPELINE_DEVICE_MODELS]);
   for (uint32_t i = 0; i < k_unMaxTrackedDeviceCount; i++)
@@ -684,17 +655,33 @@ _render_device_models (OpenVRSceneRenderer *self, EVREye eye)
       graphene_matrix_multiply (&mvp, &vp, &mvp);
 
       openvr_vulkan_model_draw (self->model_manager->models[i], eye,
-                                self->current_cmd_buffer.cmd_buffer,
-                                self->pipeline_layout, &mvp);
+                                cmd_buffer, self->pipeline_layout, &mvp);
     }
 }
 
 void
-_render_scene (OpenVRSceneRenderer *self, EVREye eye)
+_render_stereo (OpenVRSceneRenderer *self, VkCommandBuffer cmd_buffer)
 {
-  _render_planes (self, eye);
-  _render_pointer (self);
-  _render_device_models (self, eye);
+  VkViewport viewport = {
+    0.0f, 0.0f,
+    self->render_width, self->render_height,
+    0.0f, 1.0f
+  };
+  vkCmdSetViewport (cmd_buffer, 0, 1, &viewport);
+  VkRect2D scissor = {
+    .offset = {0, 0},
+    .extent = {self->render_width, self->render_height}
+  };
+  vkCmdSetScissor (cmd_buffer, 0, 1, &scissor);
+
+  for (uint32_t eye = 0; eye < 2; eye++)
+    {
+      gulkan_frame_buffer_begin_pass (self->framebuffer[eye], cmd_buffer);
+      _render_planes (self, eye, cmd_buffer);
+      _render_pointer (self, cmd_buffer);
+      _render_device_models (self, eye, cmd_buffer);
+      vkCmdEndRenderPass (cmd_buffer);
+    }
 }
 
 graphene_matrix_t

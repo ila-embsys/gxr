@@ -74,8 +74,6 @@ struct _OpenVRSceneRenderer
   VkDescriptorPool descriptor_pool;
   VkDescriptorSet descriptor_sets[DESCRIPTOR_SET_COUNT];
 
-  FencedCommandBuffer current_cmd_buffer;
-
   /* Windows resources */
   GulkanVertexBuffer *planes_vbo;
   GulkanUniformBuffer *planes_ubo[2];
