@@ -66,6 +66,9 @@ openvr_context_set_system_keyboard_transform (OpenVRContext *self,
 void
 openvr_context_acknowledge_quit (OpenVRContext *self);
 
+gboolean
+openvr_context_init_scene (OpenVRContext *self);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_CONTEXT_H_ */

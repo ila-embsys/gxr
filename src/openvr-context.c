@@ -166,6 +166,12 @@ openvr_context_init_overlay (OpenVRContext * self)
 }
 
 gboolean
+openvr_context_init_scene (OpenVRContext * self)
+{
+  return _vr_init (self, EVRApplicationType_VRApplication_Scene);
+}
+
+gboolean
 openvr_context_is_valid (OpenVRContext * self)
 {
   return self->system != NULL
