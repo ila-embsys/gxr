@@ -17,7 +17,10 @@ openvr_glib_sources = [
   'openvr-button.c',
   'openvr-intersection.c',
   'openvr-pointer.c',
-  'openvr-overlay-manager.c'
+  'openvr-overlay-manager.c',
+  'openvr-vulkan-model.c',
+  'openvr-vulkan-model-manager.c',
+  'openvr-vulkan-model-content.c',
 ]
 
 openvr_glib_headers = [
@@ -36,7 +39,10 @@ openvr_glib_headers = [
   'openvr-button.h',
   'openvr-intersection.h',
   'openvr-pointer.h',
-  'openvr-overlay-manager.h'
+  'openvr-overlay-manager.h',
+  'openvr-vulkan-model.h',
+  'openvr-vulkan-model-manager.h',
+  'openvr-vulkan-model-content.h',
 ]
 
 version_split = meson.project_version().split('.')
