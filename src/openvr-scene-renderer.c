@@ -29,6 +29,8 @@ static void openvr_scene_renderer_finalize (GObject *gobject);
 bool _init_vulkan (OpenVRSceneRenderer *self);
 bool _init_vulkan_instance (OpenVRSceneRenderer *self);
 bool _init_vulkan_device (OpenVRSceneRenderer *self);
+void _init_device_model (OpenVRSceneRenderer *self,
+                         TrackedDeviceIndex_t device_id);
 void _init_device_models (OpenVRSceneRenderer *self);
 bool _init_textures (OpenVRSceneRenderer *self);
 void _init_planes (OpenVRSceneRenderer *self);
@@ -194,6 +196,39 @@ load_gdk_pixbuf ()
     }
 }
 
+static void
+_device_activate_cb (OpenVRContext          *context,
+                     OpenVRDeviceIndexEvent *event,
+                     gpointer               _self)
+{
+  (void) context;
+  OpenVRSceneRenderer *self = (OpenVRSceneRenderer*) _self;
+  g_print ("Device %d activated, initializing model.\n", event->index);
+  _init_device_model (self, event->index);
+}
+
+static void
+_device_deactivate_cb (OpenVRContext          *context,
+                       OpenVRDeviceIndexEvent *event,
+                       gpointer               _self)
+{
+  (void) context;
+  OpenVRSceneRenderer *self = (OpenVRSceneRenderer*) _self;
+  g_print ("Device %d deactivated. Removing model node.\n", event->index);
+  g_object_unref (self->model_manager->models[event->index]);
+  self->model_manager->models[event->index] = NULL;
+}
+
+gboolean
+_poll_events_cb (gpointer unused)
+{
+  (void) unused;
+  OpenVRContext *context = openvr_context_get_instance ();
+  openvr_context_poll_event (context);
+
+  return TRUE;
+}
+
 bool
 openvr_scene_renderer_initialize (OpenVRSceneRenderer *self)
 {
@@ -208,6 +243,14 @@ openvr_scene_renderer_initialize (OpenVRSceneRenderer *self)
       g_print ("Could not init Vulkan.\n");
       return false;
     }
+
+  OpenVRContext *context = openvr_context_get_instance ();
+  g_signal_connect (context, "device-activate-event",
+                    (GCallback) _device_activate_cb, self);
+  g_signal_connect (context, "device-deactivate-event",
+                    (GCallback) _device_deactivate_cb, self);
+
+  g_timeout_add (20, _poll_events_cb, &self);
 
   return true;
 }
@@ -295,22 +338,29 @@ _init_vulkan_device (OpenVRSceneRenderer *self)
 }
 
 void
+_init_device_model (OpenVRSceneRenderer *self,
+                    TrackedDeviceIndex_t device_id)
+{
+  VkDescriptorSet descriptor_sets[2] = {
+    self->descriptor_sets[DESCRIPTOR_SET_LEFT_EYE_DEVICE_MODEL0 + device_id],
+    self->descriptor_sets[DESCRIPTOR_SET_RIGHT_EYE_DEVICE_MODEL0 + device_id],
+  };
+
+  openvr_vulkan_model_manager_load (self->model_manager, self->client,
+                                    descriptor_sets, device_id);
+}
+
+void
 _init_device_models (OpenVRSceneRenderer *self)
 {
-  for (uint32_t i = k_unTrackedDeviceIndex_Hmd + 1;
+  for (TrackedDeviceIndex_t i = k_unTrackedDeviceIndex_Hmd + 1;
        i < k_unMaxTrackedDeviceCount; i++)
     {
       OpenVRContext *context = openvr_context_get_instance ();
       if (!context->system->IsTrackedDeviceConnected (i))
         continue;
 
-      VkDescriptorSet descriptor_sets[2] = {
-        self->descriptor_sets[DESCRIPTOR_SET_LEFT_EYE_DEVICE_MODEL0 + i],
-        self->descriptor_sets[DESCRIPTOR_SET_RIGHT_EYE_DEVICE_MODEL0 + i],
-      };
-
-      openvr_vulkan_model_manager_load (self->model_manager, self->client,
-                                        descriptor_sets, i);
+      _init_device_model (self, i);
     }
 }
 
@@ -338,7 +388,8 @@ openvr_scene_renderer_render (OpenVRSceneRenderer *self)
 
   vkQueueWaitIdle (self->client->device->queue);
 
-  vkFreeCommandBuffers (self->client->device->device, self->client->command_pool,
+  vkFreeCommandBuffers (self->client->device->device,
+                        self->client->command_pool,
                         1, &self->current_cmd_buffer.cmd_buffer);
   vkDestroyFence (self->client->device->device,
                   self->current_cmd_buffer.fence, NULL);

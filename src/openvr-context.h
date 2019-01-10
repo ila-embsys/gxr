@@ -29,6 +29,11 @@ struct _OpenVRContext
   enum ETrackingUniverseOrigin origin;
 };
 
+typedef struct OpenVRDeviceIndexEvent
+{
+  TrackedDeviceIndex_t index;
+} OpenVRDeviceIndexEvent;
+
 OpenVRContext *openvr_context_get_instance (void);
 
 gboolean

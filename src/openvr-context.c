@@ -30,6 +30,9 @@ enum {
   KEYBOARD_PRESS_EVENT,
   KEYBOARD_CLOSE_EVENT,
   QUIT_EVENT,
+  DEVICE_ACTIVATE_EVENT,
+  DEVICE_DEACTIVATE_EVENT,
+  DEVICE_UPDATE_EVENT,
   LAST_SIGNAL
 };
 
@@ -66,6 +69,27 @@ openvr_context_class_init (OpenVRContextClass *klass)
                    G_SIGNAL_RUN_LAST,
                    0, NULL, NULL, NULL, G_TYPE_NONE,
                    1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  context_signals[DEVICE_ACTIVATE_EVENT] =
+    g_signal_new ("device-activate-event",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_LAST,
+                  0, NULL, NULL, NULL, G_TYPE_NONE,
+                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  context_signals[DEVICE_DEACTIVATE_EVENT] =
+    g_signal_new ("device-deactivate-event",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_LAST,
+                  0, NULL, NULL, NULL, G_TYPE_NONE,
+                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  context_signals[DEVICE_UPDATE_EVENT] =
+    g_signal_new ("device-update-event",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_LAST,
+                  0, NULL, NULL, NULL, G_TYPE_NONE,
+                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
 }
 
 static void
@@ -287,6 +311,30 @@ openvr_context_poll_event (OpenVRContext *self)
       {
         GdkEvent *event = gdk_event_new (GDK_DESTROY);
         g_signal_emit (self, context_signals[QUIT_EVENT], 0, event);
+      } break;
+
+      case EVREventType_VREvent_TrackedDeviceActivated:
+      {
+        OpenVRDeviceIndexEvent *event =
+          g_malloc (sizeof (OpenVRDeviceIndexEvent));
+        event->index = vr_event.trackedDeviceIndex;
+        g_signal_emit (self, context_signals[DEVICE_ACTIVATE_EVENT], 0, event);
+      } break;
+
+      case EVREventType_VREvent_TrackedDeviceDeactivated:
+      {
+        OpenVRDeviceIndexEvent *event =
+          g_malloc (sizeof (OpenVRDeviceIndexEvent));
+        event->index = vr_event.trackedDeviceIndex;
+        g_signal_emit (self, context_signals[DEVICE_DEACTIVATE_EVENT], 0, event);
+      } break;
+
+      case EVREventType_VREvent_TrackedDeviceUpdated:
+      {
+        OpenVRDeviceIndexEvent *event =
+          g_malloc (sizeof (OpenVRDeviceIndexEvent));
+        event->index = vr_event.trackedDeviceIndex;
+        g_signal_emit (self, context_signals[DEVICE_UPDATE_EVENT], 0, event);
       } break;
 
     default:
