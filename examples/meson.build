@@ -120,3 +120,11 @@ if glew_dep.found() and glfw_dep.found() and egl_dep.found()
     include_directories: openvr_glib_inc,
     install: false)
 endif
+
+executable(
+  'scene', ['scene.c', test_resources, shader_resources],
+  dependencies: [gdk_pixbuf_dep, gio_dep, glfw_dep,
+                 graphene_dep, gulkan_dep, cairo_dep],
+  include_directories: [openvr_glib_inc],
+  link_with: openvr_glib_lib,
+  install: false)
