@@ -49,6 +49,9 @@ void
 openvr_math_matrix34_to_graphene (HmdMatrix34_t *mat34, graphene_matrix_t *mat);
 
 void
+openvr_math_matrix44_to_graphene (HmdMatrix44_t *mat44, graphene_matrix_t *mat);
+
+void
 openvr_math_matrix_interpolate (graphene_matrix_t *from,
                                 graphene_matrix_t *to,
                                 float interpolation,
