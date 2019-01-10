@@ -47,6 +47,10 @@ openvr_intersection_init_vulkan (OpenVRIntersection   *self,
 void
 openvr_intersection_init_raw (OpenVRIntersection *self);
 
+void
+openvr_intersection_animate_pulse (OpenVRIntersection *self,
+                                   OpenVRVulkanUploader *uploader);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_INTERSECTION_H_ */

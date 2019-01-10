@@ -53,6 +53,7 @@ typedef struct Example
   float pointer_default_length;
 
   OpenVRActionSet *action_set;
+  OpenVRActionSet *action_set_input;
 
   OpenVRVulkanUploader *uploader;
 } Example;
@@ -79,6 +80,8 @@ _poll_events_cb (gpointer _self)
   if (!openvr_action_set_poll (self->action_set))
     return FALSE;
 
+  if (!openvr_action_set_poll (self->action_set_input))
+    return FALSE;
   return TRUE;
 }
 
@@ -465,7 +468,6 @@ _hand_pose_cb (OpenVRAction    *action,
   (void) action;
   ActionCallbackData *data = _self;
   Example *self = (Example*) data->self;
-
   OpenVRPointer *pointer_ray = self->pointer_ray[data->controller_index];
 
   openvr_overlay_manager_update_pose (self->manager, &event->pose,
@@ -569,6 +571,7 @@ _cleanup (Example *self)
   g_object_unref (self->button_sphere);
 
   g_object_unref (self->action_set);
+  g_object_unref (self->action_set_input);
 
   g_object_unref (self->manager);
 
@@ -576,6 +579,26 @@ _cleanup (Example *self)
   g_object_unref (context);
 
   g_object_unref (self->uploader);
+}
+
+static void
+_action_left_click_cb (OpenVRAction       *action,
+                       OpenVRDigitalEvent *event,
+                       ActionCallbackData *data)
+{
+  (void) action;
+  if (event->changed && event->state)
+    {
+      HoverState *hover_state =
+          &data->self->manager->hover_state[data->controller_index];
+      if (hover_state->overlay != NULL)
+        {
+          OpenVRIntersection *pointer_tip =
+              data->self->pointer_tip[data->controller_index];
+          openvr_intersection_animate_pulse (pointer_tip, data->self->uploader);
+        }
+    }
+  g_free (event);
 }
 
 int
@@ -600,6 +623,7 @@ main ()
   Example self = {
     .loop = g_main_loop_new (NULL, FALSE),
     .action_set = openvr_action_set_new_from_url ("/actions/wm"),
+    .action_set_input = openvr_action_set_new_from_url ("/actions/mouse_synth"),
     .manager = openvr_overlay_manager_new (),
     .pointer_default_length = 5.0
   };
@@ -672,6 +696,14 @@ main ()
                              (GCallback) _action_push_pull_scale_cb,
                              &data_right);
 
+  openvr_action_set_connect (self.action_set_input,
+                             OPENVR_ACTION_DIGITAL,
+                             "/actions/mouse_synth/in/left_click_left",
+                             (GCallback) _action_left_click_cb, &data_left);
+  openvr_action_set_connect (self.action_set_input,
+                             OPENVR_ACTION_DIGITAL,
+                             "/actions/mouse_synth/in/left_click_right",
+                             (GCallback) _action_left_click_cb, &data_right);
 
   g_signal_connect (self.manager, "no-hover-event",
                     (GCallback) _no_hover_cb, &self);
