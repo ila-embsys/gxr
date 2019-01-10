@@ -14,9 +14,9 @@
 
 #define STRING_BUFFER_SIZE 128
 
-static gchar*
-_get_device_string (TrackedDeviceIndex_t device_index,
-                    ETrackedDeviceProperty property)
+gchar*
+openvr_system_get_device_string (TrackedDeviceIndex_t device_index,
+                                 ETrackedDeviceProperty property)
 {
   gchar *string = (gchar*) g_malloc (STRING_BUFFER_SIZE);
 
@@ -37,14 +37,14 @@ void
 openvr_system_print_device_info ()
 {
   gchar* tracking_system_name =
-    _get_device_string (k_unTrackedDeviceIndex_Hmd,
-                        ETrackedDeviceProperty_Prop_TrackingSystemName_String);
+    openvr_system_get_device_string (k_unTrackedDeviceIndex_Hmd,
+      ETrackedDeviceProperty_Prop_TrackingSystemName_String);
   g_print ("TrackingSystemName: %s\n", tracking_system_name);
   g_free (tracking_system_name);
 
   gchar* serial_number =
-    _get_device_string (k_unTrackedDeviceIndex_Hmd,
-                        ETrackedDeviceProperty_Prop_SerialNumber_String);
+    openvr_system_get_device_string (k_unTrackedDeviceIndex_Hmd,
+      ETrackedDeviceProperty_Prop_SerialNumber_String);
   g_print ("SerialNumber: %s\n", serial_number);
   g_free (serial_number);
 }
