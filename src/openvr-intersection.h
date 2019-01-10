@@ -14,6 +14,10 @@
 #include "openvr-vulkan-uploader.h"
 #include "openvr-overlay.h"
 
+#define SCREENSPACE_INTERSECTION_WIDTH 0.1
+/* worldspace width, in case a HMD pose can not be acquired for some reason. */
+#define DEFAULT_INTERSECTION_WIDTH 0.025
+
 G_BEGIN_DECLS
 
 #define OPENVR_TYPE_INTERSECTION openvr_intersection_get_type()
@@ -37,6 +41,10 @@ struct _OpenVRIntersection
 };
 
 OpenVRIntersection *openvr_intersection_new (int controller_index);
+
+void
+openvr_intersection_set_constant_width (OpenVRIntersection *self,
+                                        graphene_point3d_t *intersection_point);
 
 void
 openvr_intersection_update (OpenVRIntersection *self,

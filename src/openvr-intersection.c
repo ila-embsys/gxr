@@ -266,6 +266,87 @@ openvr_intersection_finalize (GObject *gobject)
     g_object_unref (self->texture);
 }
 
+/* TODO: scene app needs device poses too. Put in openvr_system? */
+static gboolean
+_get_hmd_pose (graphene_matrix_t *pose)
+{
+  OpenVRContext *context = openvr_context_get_instance ();
+  VRControllerState_t state;
+  if (context->system->IsTrackedDeviceConnected(k_unTrackedDeviceIndex_Hmd) &&
+      context->system->GetTrackedDeviceClass (k_unTrackedDeviceIndex_Hmd) ==
+          ETrackedDeviceClass_TrackedDeviceClass_HMD &&
+      context->system->GetControllerState (k_unTrackedDeviceIndex_Hmd,
+                                           &state, sizeof(state)))
+    {
+      /* k_unTrackedDeviceIndex_Hmd should be 0 => posearray[0] */
+      TrackedDevicePose_t openvr_pose;
+      context->system->GetDeviceToAbsoluteTrackingPose (context->origin, 0,
+                                                        &openvr_pose, 1);
+      openvr_math_matrix34_to_graphene (&openvr_pose.mDeviceToAbsoluteTracking,
+                                        pose);
+
+      return openvr_pose.bDeviceIsConnected &&
+             openvr_pose.bPoseIsValid &&
+             openvr_pose.eTrackingResult ==
+                 ETrackingResult_TrackingResult_Running_OK;
+    }
+  return FALSE;
+}
+
+void
+openvr_intersection_set_constant_width (OpenVRIntersection *self,
+                                        graphene_point3d_t *intersection_point)
+{
+  /* The tip should have the same size relative to the view of the HMD.
+   * Therefore we first need the HMD pose. */
+  graphene_matrix_t hmd_pose;
+  gboolean has_pose = _get_hmd_pose (&hmd_pose);
+  if (!has_pose)
+    {
+      g_print ("Error: NO HMD POSE\n");
+      openvr_overlay_set_width_meters (OPENVR_OVERLAY(self),
+                                       DEFAULT_INTERSECTION_WIDTH);
+      return;
+    }
+
+  /* To find screen space sizes we need a projection matrix. We will use only
+   * the left eye, should be close enough. */
+  graphene_matrix_t projection_matrix =
+      openvr_system_get_projection_matrix (EVREye_Eye_Left, 0.1, 1000.);
+
+  graphene_point3d_t intersection_screenspace;
+  float w = 1.0;
+  openvr_math_worldspace_to_screenspace (intersection_point,
+                                         &hmd_pose,
+                                         &projection_matrix,
+                                         &intersection_screenspace,
+                                         &w);
+
+  /* Transforming a point with offset of the desired screenspace distance back
+   * into worldspace, reusing the same w, yields an approximate point with the
+   * desired radius in worldspace. */
+  graphene_point3d_t intersection_right_screenspace = {
+                       intersection_screenspace.x +
+                          SCREENSPACE_INTERSECTION_WIDTH / 2.,
+                       intersection_screenspace.y,
+                       intersection_screenspace.z
+  };
+
+  graphene_point3d_t intersection_right_worldspace;
+  openvr_math_screenspace_to_worldspace (&intersection_right_screenspace,
+                                         &hmd_pose,
+                                         &projection_matrix,
+                                         &intersection_right_worldspace,
+                                         &w);
+
+  graphene_vec3_t distance_vec;
+  graphene_point3d_distance (intersection_point, &intersection_right_worldspace,
+                             &distance_vec);
+  float new_width = graphene_vec3_length (&distance_vec);
+
+  openvr_overlay_set_width_meters (OPENVR_OVERLAY(self), new_width);
+}
+
 void
 openvr_intersection_update (OpenVRIntersection *self,
                             graphene_matrix_t  *pose,
@@ -275,4 +356,6 @@ openvr_intersection_update (OpenVRIntersection *self,
   graphene_matrix_init_from_matrix (&transform, pose);
   openvr_math_matrix_set_translation (&transform, intersection_point);
   openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (self), &transform);
+
+  openvr_intersection_set_constant_width (self, intersection_point);
 }

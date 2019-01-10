@@ -57,6 +57,20 @@ openvr_math_matrix_interpolate (graphene_matrix_t *from,
                                 float interpolation,
                                 graphene_matrix_t *result);
 
+void
+openvr_math_worldspace_to_screenspace (graphene_point3d_t *worldspace_point,
+                                       graphene_matrix_t  *camera_transform,
+                                       graphene_matrix_t  *projection_matrix,
+                                       graphene_point3d_t *screenspace_point,
+                                       float              *w);
+
+void
+openvr_math_screenspace_to_worldspace (graphene_point3d_t *screenspace_point,
+                                       graphene_matrix_t  *camera_transform,
+                                       graphene_matrix_t  *projection_matrix,
+                                       graphene_point3d_t *worldspace_point,
+                                       float              *w);
+
 bool
 openvr_math_matrix_equals (graphene_matrix_t *a,
                            graphene_matrix_t *b);

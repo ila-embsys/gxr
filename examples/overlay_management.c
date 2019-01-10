@@ -167,6 +167,13 @@ _cat_grab_cb (OpenVROverlay   *overlay,
     self->pointer_tip[event->controller_index];
   openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (pointer_tip),
                                          &event->pose);
+
+  graphene_vec3_t tip_point_vec;
+  openvr_math_matrix_get_translation (&event->pose, &tip_point_vec);
+  graphene_point3d_t tip_point;
+  graphene_point3d_init_from_vec3 (&tip_point, &tip_point_vec);
+  openvr_intersection_set_constant_width (pointer_tip,
+                                          &tip_point);
   g_free (event);
 }
 
@@ -300,6 +307,13 @@ _no_hover_cb (OpenVROverlayManager *manager,
   graphene_matrix_translate (&tip_pose, &distance_translation_point);
   graphene_matrix_rotate_quaternion (&tip_pose, &controller_rotation);
   graphene_matrix_translate (&tip_pose, &controller_translation_point);
+
+  graphene_vec3_t tip_point_vec;
+  openvr_math_matrix_get_translation (&tip_pose, &tip_point_vec);
+  graphene_point3d_t tip_point;
+  graphene_point3d_init_from_vec3 (&tip_point, &tip_point_vec);
+  openvr_intersection_set_constant_width (pointer_tip,
+                                          &tip_point);
 
   openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (pointer_tip),
                                          &tip_pose);

@@ -154,6 +154,78 @@ openvr_math_matrix_interpolate (graphene_matrix_t *from,
   graphene_matrix_init_from_float (result, interpolated_f);
 }
 
+/** openvr_math_worldspace_to_screenspace:
+ * Projects the worldspace point into screen space. Set input factor w = 1.0
+ * for standard usage. The perspective scaling with w is performed by this
+ * function, w is only returned in case the caller is interested what it was. */
+void
+openvr_math_worldspace_to_screenspace (graphene_point3d_t *worldspace_point,
+                                       graphene_matrix_t  *camera_transform,
+                                       graphene_matrix_t  *projection_matrix,
+                                       graphene_point3d_t *screenspace_point,
+                                       float              *w)
+{
+  /* transform intersection point into camera space: (camera transform)^-1 */
+  graphene_matrix_t camera_transform_inv;
+  graphene_matrix_inverse (camera_transform, &camera_transform_inv);
+  graphene_matrix_transform_point3d (&camera_transform_inv, worldspace_point,
+                                     screenspace_point);
+
+  /* Project the HMD relative intersection point onto the HMD display.
+   * To get the actual position on the HMD, divide by the w factor. */
+  graphene_vec4_t screenspace_vec4;
+  graphene_vec4_init (&screenspace_vec4,
+                      screenspace_point->x,
+                      screenspace_point->y,
+                      screenspace_point->z, *w);
+  graphene_matrix_transform_vec4 (projection_matrix, &screenspace_vec4,
+                                  &screenspace_vec4);
+
+  *w = graphene_vec4_get_w (&screenspace_vec4);
+
+  graphene_vec4_scale (&screenspace_vec4, 1. / *w, &screenspace_vec4);
+
+  graphene_point3d_init (screenspace_point,
+                         graphene_vec4_get_x (&screenspace_vec4),
+                         graphene_vec4_get_y (&screenspace_vec4),
+                         graphene_vec4_get_z (&screenspace_vec4));
+}
+
+/** openvr_math_screenspace_to_worldspace:
+ * Projects a screen space point into world space. Requires input factor w for
+ * reversing the perspective projection.
+ * After this function, w is usually 1.0. */
+void
+openvr_math_screenspace_to_worldspace (graphene_point3d_t *screenspace_point,
+                                       graphene_matrix_t  *camera_transform,
+                                       graphene_matrix_t  *projection_matrix,
+                                       graphene_point3d_t *worldspace_point,
+                                       float              *w)
+{
+  graphene_matrix_t projection_matrix_inv;
+  graphene_matrix_inverse (projection_matrix, &projection_matrix_inv);
+
+  graphene_vec4_t world_space_vec4;
+  graphene_vec4_init (&world_space_vec4,
+                      screenspace_point->x,
+                      screenspace_point->y,
+                      screenspace_point->z,
+                      1.0);
+  graphene_vec4_scale (&world_space_vec4, *w, &world_space_vec4);
+
+
+  graphene_matrix_transform_vec4 (&projection_matrix_inv, &world_space_vec4,
+                                  &world_space_vec4);
+  graphene_matrix_transform_vec4 (camera_transform, &world_space_vec4,
+                                  &world_space_vec4);
+
+  graphene_point3d_init (worldspace_point,
+                         graphene_vec4_get_x (&world_space_vec4),
+                         graphene_vec4_get_y (&world_space_vec4),
+                         graphene_vec4_get_z (&world_space_vec4));
+  *w = graphene_vec4_get_w (&world_space_vec4);
+}
+
 bool
 openvr_math_matrix_equals (graphene_matrix_t *a,
                            graphene_matrix_t *b)
