@@ -54,11 +54,11 @@ G_BEGIN_DECLS
 
 #define OPENVR_TYPE_SCENE_RENDERER openvr_scene_renderer_get_type ()
 G_DECLARE_FINAL_TYPE (OpenVRSceneRenderer, openvr_scene_renderer,
-                      OPENVR, SCENE_RENDERER, GObject)
+                      OPENVR, SCENE_RENDERER, GulkanClient)
 
 struct _OpenVRSceneRenderer
 {
-  GObject parent;
+  GulkanClient parent;
 
   VkSampleCountFlagBits msaa_sample_count;
   float super_sample_scale;
@@ -71,7 +71,6 @@ struct _OpenVRSceneRenderer
   float near_clip;
   float far_clip;
 
-  GulkanClient *client;
   VkDescriptorPool descriptor_pool;
   VkDescriptorSet descriptor_sets[DESCRIPTOR_SET_COUNT];
 

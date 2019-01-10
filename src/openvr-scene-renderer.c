@@ -22,7 +22,7 @@
 
 static bool use_validation = true;
 
-G_DEFINE_TYPE (OpenVRSceneRenderer, openvr_scene_renderer, G_TYPE_OBJECT)
+G_DEFINE_TYPE (OpenVRSceneRenderer, openvr_scene_renderer, GULKAN_TYPE_CLIENT)
 
 static void openvr_scene_renderer_finalize (GObject *gobject);
 
@@ -78,8 +78,6 @@ openvr_scene_renderer_init (OpenVRSceneRenderer *self)
 
   memset (self->descriptor_sets, 0, sizeof (self->descriptor_sets));
 
-  self->client = gulkan_client_new ();
-
   self->pointer_vbo = gulkan_vertex_buffer_new ();
   self->planes_vbo = gulkan_vertex_buffer_new ();
 
@@ -106,7 +104,8 @@ openvr_scene_renderer_finalize (GObject *gobject)
 {
   OpenVRSceneRenderer *self = OPENVR_SCENE_RENDERER (gobject);
 
-  VkDevice device = self->client->device->device;
+  GulkanClient *client = GULKAN_CLIENT (gobject);
+  VkDevice device = client->device->device;
 
   if (device != VK_NULL_HANDLE)
     vkDeviceWaitIdle (device);
@@ -118,7 +117,6 @@ openvr_scene_renderer_finalize (GObject *gobject)
 
   if (device != VK_NULL_HANDLE)
     {
-      vkDestroyCommandPool (device, self->client->command_pool, NULL);
       vkDestroyDescriptorPool (device, self->descriptor_pool, NULL);
 
       g_object_unref (self->cat_texture);
@@ -144,9 +142,9 @@ openvr_scene_renderer_finalize (GObject *gobject)
         vkDestroyShaderModule (device, self->shader_modules[i], NULL);
 
       vkDestroyPipelineCache (device, self->pipeline_cache, NULL);
-      g_object_unref (self->client->device);
-      g_object_unref (self->client->instance);
     }
+
+  G_OBJECT_CLASS (openvr_scene_renderer_parent_class)->finalize (gobject);
 }
 
 bool
@@ -262,13 +260,14 @@ _init_vulkan (OpenVRSceneRenderer *self)
   if (!_init_vulkan_device (self))
     return false;
 
-  if (!gulkan_client_init_command_pool (self->client))
+  GulkanClient *client = GULKAN_CLIENT (self);
+  if (!gulkan_client_init_command_pool (client))
     {
       g_printerr ("Could not create command pool.\n");
       return false;
     }
 
-  if (!gulkan_client_begin_res_cmd_buffer (self->client,
+  if (!gulkan_client_begin_res_cmd_buffer (client,
                                            &self->current_cmd_buffer))
     {
       g_printerr ("Could not begin command buffer.\n");
@@ -296,14 +295,14 @@ _init_vulkan (OpenVRSceneRenderer *self)
   _init_descriptor_sets (self);
   _init_device_models (self);
 
-  if (!gulkan_client_submit_res_cmd_buffer (self->client,
+  if (!gulkan_client_submit_res_cmd_buffer (client,
                                             &self->current_cmd_buffer))
     {
       g_printerr ("Could not submit command buffer.\n");
       return false;
     }
 
-  vkQueueWaitIdle (self->client->device->queue);
+  vkQueueWaitIdle (client->device->queue);
 
   return true;
 }
@@ -312,8 +311,9 @@ bool
 _init_vulkan_instance (OpenVRSceneRenderer *self)
 {
   GSList *extensions = NULL;
+  GulkanClient *client = GULKAN_CLIENT (self);
   openvr_compositor_get_instance_extensions (&extensions);
-  return gulkan_instance_create (self->client->instance, use_validation,
+  return gulkan_instance_create (client->instance, use_validation,
                                  extensions);
 }
 
@@ -321,17 +321,18 @@ bool
 _init_vulkan_device (OpenVRSceneRenderer *self)
 {
   /* Query OpenVR for a physical device */
+  GulkanClient *client = GULKAN_CLIENT (self);
   uint64_t physical_device = 0;
   OpenVRContext *context = openvr_context_get_instance ();
   context->system->GetOutputDevice (
       &physical_device, ETextureType_TextureType_Vulkan,
-      (struct VkInstance_T *)self->client->instance->instance);
+      (struct VkInstance_T *) client->instance->instance);
 
   GSList *extensions = NULL;
   openvr_compositor_get_device_extensions ((VkPhysicalDevice)physical_device,
                                            &extensions);
 
-  return gulkan_device_create (self->client->device, self->client->instance,
+  return gulkan_device_create (client->device, client->instance,
                                (VkPhysicalDevice)physical_device, extensions);
 }
 
@@ -344,7 +345,8 @@ _init_device_model (OpenVRSceneRenderer *self,
     self->descriptor_sets[DESCRIPTOR_SET_RIGHT_EYE_DEVICE_MODEL0 + device_id],
   };
 
-  openvr_vulkan_model_manager_load (self->model_manager, self->client,
+  GulkanClient *client = GULKAN_CLIENT (self);
+  openvr_vulkan_model_manager_load (self->model_manager, client,
                                     descriptor_sets, device_id);
 }
 
@@ -365,7 +367,8 @@ _init_device_models (OpenVRSceneRenderer *self)
 void
 openvr_scene_renderer_render (OpenVRSceneRenderer *self)
 {
-  gulkan_client_begin_res_cmd_buffer (self->client, &self->current_cmd_buffer);
+  GulkanClient *client = GULKAN_CLIENT (self);
+  gulkan_client_begin_res_cmd_buffer (client, &self->current_cmd_buffer);
 
   _update_pointer (self);
   _render_stereo (self);
@@ -381,24 +384,24 @@ openvr_scene_renderer_render (OpenVRSceneRenderer *self)
     .signalSemaphoreCount = 0
   };
 
-  vkQueueSubmit (self->client->device->queue, 1, &submit_info,
+  vkQueueSubmit (client->device->queue, 1, &submit_info,
                  self->current_cmd_buffer.fence);
 
-  vkQueueWaitIdle (self->client->device->queue);
+  vkQueueWaitIdle (client->device->queue);
 
-  vkFreeCommandBuffers (self->client->device->device,
-                        self->client->command_pool,
+  vkFreeCommandBuffers (client->device->device,
+                        client->command_pool,
                         1, &self->current_cmd_buffer.cmd_buffer);
-  vkDestroyFence (self->client->device->device,
+  vkDestroyFence (client->device->device,
                   self->current_cmd_buffer.fence, NULL);
 
-  GulkanDevice *device = self->client->device;
+  GulkanDevice *device = client->device;
 
   VRVulkanTextureData_t openvr_texture_data = {
     .m_nImage = (uint64_t)self->framebuffer[EVREye_Eye_Left]->color_image,
     .m_pDevice = (struct VkDevice_T *) device->device,
     .m_pPhysicalDevice = (struct VkPhysicalDevice_T *) device->physical_device,
-    .m_pInstance = (struct VkInstance_T *) self->client->instance->instance,
+    .m_pInstance = (struct VkInstance_T *) client->instance->instance,
     .m_pQueue = (struct VkQueue_T *) device->queue,
     .m_nQueueFamilyIndex = device->queue_family_index,
     .m_nWidth = self->render_width,
@@ -441,12 +444,13 @@ _init_textures (OpenVRSceneRenderer *self)
 
   uint32_t mip_levels;
 
+  GulkanClient *client = GULKAN_CLIENT (self);
   self->cat_texture = gulkan_texture_new_from_pixbuf_mipmapped (
-      self->client->device, self->current_cmd_buffer.cmd_buffer, pixbuf,
+      client->device, self->current_cmd_buffer.cmd_buffer, pixbuf,
       &mip_levels);
 
   gulkan_texture_transfer_layout_mips (self->cat_texture,
-                                       self->client->device,
+                                       client->device,
                                        self->current_cmd_buffer.cmd_buffer,
                                        mip_levels,
                                        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
@@ -465,7 +469,7 @@ _init_textures (OpenVRSceneRenderer *self)
     .maxLod = (float) mip_levels
   };
 
-  vkCreateSampler (self->client->device->device, &sampler_info, NULL,
+  vkCreateSampler (client->device->device, &sampler_info, NULL,
                    &self->scene_sampler);
 
   return true;
@@ -491,17 +495,18 @@ void _append_plane (GulkanVertexBuffer *vbo,
 void
 _init_planes (OpenVRSceneRenderer *self)
 {
+  GulkanClient *client = GULKAN_CLIENT (self);
   _append_plane (self->planes_vbo, 0, 1, 0, 0.3f);
   _append_plane (self->planes_vbo, 1, 1, 0, 0.5f);
 
   if (!gulkan_vertex_buffer_alloc_array (self->planes_vbo,
-                                         self->client->device))
+                                         client->device))
     return;
 
   /* Create uniform buffer to hold a matrix per eye */
   for (uint32_t eye = 0; eye < 2; eye++)
     gulkan_uniform_buffer_allocate_and_map (self->planes_ubo[eye],
-                                            self->client->device,
+                                            client->device,
                                             sizeof (float) * 16);
 }
 
@@ -546,9 +551,10 @@ _update_pointer (OpenVRSceneRenderer *self)
     return;
 
   /* Setup the vbo the first time */
+  GulkanClient *client = GULKAN_CLIENT (self);
   if (self->pointer_vbo->buffer == VK_NULL_HANDLE)
     if (!gulkan_vertex_buffer_alloc_empty (self->pointer_vbo,
-                                           self->client->device,
+                                           client->device,
                                            k_unMaxTrackedDeviceCount))
       return;
 
@@ -559,6 +565,8 @@ bool
 _init_stereo_render_targets (OpenVRSceneRenderer *self)
 {
   OpenVRContext *context = openvr_context_get_instance ();
+  GulkanClient *client = GULKAN_CLIENT (self);
+
   context->system->GetRecommendedRenderTargetSize (&self->render_width,
                                                    &self->render_height);
   self->render_width =
@@ -568,7 +576,7 @@ _init_stereo_render_targets (OpenVRSceneRenderer *self)
 
   for (uint32_t eye = 0; eye < 2; eye++)
     gulkan_frame_buffer_initialize (self->framebuffer[eye],
-                                    self->client->device,
+                                    client->device,
                                     self->render_width, self->render_height,
                                     self->msaa_sample_count);
   return true;
@@ -734,6 +742,8 @@ _update_device_poses (OpenVRSceneRenderer *self)
 bool
 _init_shaders (OpenVRSceneRenderer *self)
 {
+  GulkanClient *client = GULKAN_CLIENT (self);
+
   const char *shader_names[PIPELINE_COUNT] = { "window", "pointer", "device_model" };
   const char *stage_names[2] = {"vert", "frag"};
 
@@ -744,7 +754,7 @@ _init_shaders (OpenVRSceneRenderer *self)
         sprintf (path, "/shaders/%s.%s.spv", shader_names[i], stage_names[j]);
 
         if (!gulkan_renderer_create_shader_module (
-            self->client->device->device, path,
+            client->device->device, path,
            &self->shader_modules[i * 2 + j]))
           return false;
       }
@@ -755,6 +765,7 @@ _init_shaders (OpenVRSceneRenderer *self)
 bool
 _init_descriptor_layout (OpenVRSceneRenderer *self)
 {
+  GulkanClient *client = GULKAN_CLIENT (self);
 
   VkDescriptorSetLayoutCreateInfo info = {
     .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
@@ -776,7 +787,7 @@ _init_descriptor_layout (OpenVRSceneRenderer *self)
   };
 
   VkResult res;
-  res = vkCreateDescriptorSetLayout (self->client->device->device,
+  res = vkCreateDescriptorSetLayout (client->device->device,
                                     &info, NULL,
                                     &self->descriptor_set_layout);
   if (res != VK_SUCCESS)
@@ -791,6 +802,8 @@ _init_descriptor_layout (OpenVRSceneRenderer *self)
 bool
 _init_pipeline_layout (OpenVRSceneRenderer *self)
 {
+  GulkanClient *client = GULKAN_CLIENT (self);
+
   VkPipelineLayoutCreateInfo info = {
     .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
     .setLayoutCount = 1,
@@ -800,7 +813,7 @@ _init_pipeline_layout (OpenVRSceneRenderer *self)
   };
 
   VkResult res;
-  res = vkCreatePipelineLayout (self->client->device->device,
+  res = vkCreatePipelineLayout (client->device->device,
                                &info, NULL, &self->pipeline_layout);
   if (res != VK_SUCCESS)
     {
@@ -814,10 +827,12 @@ _init_pipeline_layout (OpenVRSceneRenderer *self)
 bool
 _init_pipeline_cache (OpenVRSceneRenderer *self)
 {
+  GulkanClient *client = GULKAN_CLIENT (self);
+
   VkPipelineCacheCreateInfo info = {
     .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO
   };
-  VkResult res = vkCreatePipelineCache (self->client->device->device,
+  VkResult res = vkCreatePipelineCache (client->device->device,
                                        &info, NULL, &self->pipeline_cache);
   if (res != VK_SUCCESS)
     {
@@ -838,6 +853,7 @@ typedef struct __attribute__((__packed__)) PipelineConfig {
 bool
 _init_graphics_pipelines (OpenVRSceneRenderer *self)
 {
+  GulkanClient *client = GULKAN_CLIENT (self);
 
   PipelineConfig config[PIPELINE_COUNT] = {
     // PIPELINE_WINDOWS
@@ -961,7 +977,7 @@ _init_graphics_pipelines (OpenVRSceneRenderer *self)
         .subpass = VK_NULL_HANDLE
       };
 
-      VkResult res = vkCreateGraphicsPipelines (self->client->device->device,
+      VkResult res = vkCreateGraphicsPipelines (client->device->device,
                                                 self->pipeline_cache, 1,
                                                &pipeline_info,
                                                 NULL, &self->pipelines[i]);
@@ -978,6 +994,8 @@ _init_graphics_pipelines (OpenVRSceneRenderer *self)
 void
 _init_descriptor_pool (OpenVRSceneRenderer *self)
 {
+  GulkanClient *client = GULKAN_CLIENT (self);
+
   VkDescriptorPoolCreateInfo info = {
     .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
     .maxSets = DESCRIPTOR_SET_COUNT,
@@ -994,13 +1012,15 @@ _init_descriptor_pool (OpenVRSceneRenderer *self)
     }
   };
 
-  vkCreateDescriptorPool (self->client->device->device,
+  vkCreateDescriptorPool (client->device->device,
                           &info, NULL, &self->descriptor_pool);
 }
 
 void
 _init_descriptor_sets (OpenVRSceneRenderer *self)
 {
+  GulkanClient *client = GULKAN_CLIENT (self);
+
   for (int i = 0; i < DESCRIPTOR_SET_COUNT; i++)
     {
       VkDescriptorSetAllocateInfo allocInfo = {
@@ -1010,7 +1030,7 @@ _init_descriptor_sets (OpenVRSceneRenderer *self)
         .pSetLayouts = &self->descriptor_set_layout
       };
 
-      vkAllocateDescriptorSets (self->client->device->device, &allocInfo,
+      vkAllocateDescriptorSets (client->device->device, &allocInfo,
                                 &self->descriptor_sets[i]);
     }
 
@@ -1047,7 +1067,7 @@ _init_descriptor_sets (OpenVRSceneRenderer *self)
         }
       };
 
-      vkUpdateDescriptorSets (self->client->device->device,
+      vkUpdateDescriptorSets (client->device->device,
                               2, write_descriptor_sets, 0, NULL);
     }
 }
