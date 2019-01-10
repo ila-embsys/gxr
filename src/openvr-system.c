@@ -11,6 +11,7 @@
 
 #include "openvr-context.h"
 #include "openvr-system.h"
+#include "openvr-math.h"
 
 #define STRING_BUFFER_SIZE 128
 
@@ -47,4 +48,27 @@ openvr_system_print_device_info ()
       ETrackedDeviceProperty_Prop_SerialNumber_String);
   g_print ("SerialNumber: %s\n", serial_number);
   g_free (serial_number);
+}
+
+graphene_matrix_t
+openvr_system_get_projection_matrix (EVREye eye, float near, float far)
+{
+  OpenVRContext *context = openvr_context_get_instance ();
+  HmdMatrix44_t openvr_mat =
+    context->system->GetProjectionMatrix (eye, near, far);
+
+  graphene_matrix_t mat;
+  openvr_math_matrix44_to_graphene (&openvr_mat, &mat);
+  return mat;
+}
+
+graphene_matrix_t
+openvr_system_get_eye_to_head_transform (EVREye eye)
+{
+  OpenVRContext *context = openvr_context_get_instance ();
+  HmdMatrix34_t openvr_mat = context->system->GetEyeToHeadTransform (eye);
+
+  graphene_matrix_t mat;
+  openvr_math_matrix34_to_graphene (&openvr_mat, &mat);
+  return mat;
 }

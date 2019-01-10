@@ -43,8 +43,6 @@ bool _init_pipeline_layout (OpenVRSceneRenderer *self);
 bool _init_descriptor_layout (OpenVRSceneRenderer *self);
 void _init_descriptor_pool (OpenVRSceneRenderer *self);
 
-graphene_matrix_t _get_hmd_projection_matrix (OpenVRSceneRenderer *self,
-                                              Hmd_Eye              eye);
 graphene_matrix_t _get_hmd_pose_matrix (EVREye eye);
 graphene_matrix_t _get_view_projection_matrix (OpenVRSceneRenderer *self,
                                                EVREye               eye);
@@ -581,7 +579,10 @@ _update_matrices (OpenVRSceneRenderer *self)
 {
   for (uint32_t eye = 0; eye < 2; eye++)
     {
-      self->mat_projection[eye] = _get_hmd_projection_matrix (self, eye);
+      self->mat_projection[eye] =
+        openvr_system_get_projection_matrix (eye,
+                                             self->near_clip,
+                                             self->far_clip);
       self->mat_eye_pos[eye] = _get_hmd_pose_matrix (eye);
     }
 }
@@ -689,29 +690,11 @@ _render_scene (OpenVRSceneRenderer *self, EVREye eye)
 }
 
 graphene_matrix_t
-_get_hmd_projection_matrix (OpenVRSceneRenderer *self, Hmd_Eye eye)
-{
-  OpenVRContext *context = openvr_context_get_instance ();
-  HmdMatrix44_t mat = context->system->GetProjectionMatrix (
-      eye, self->near_clip, self->far_clip);
-
-  graphene_matrix_t mat_g;
-  openvr_math_matrix44_to_graphene (&mat, &mat_g);
-  return mat_g;
-}
-
-graphene_matrix_t
 _get_hmd_pose_matrix (EVREye eye)
 {
-  OpenVRContext *context = openvr_context_get_instance ();
-  HmdMatrix34_t eye_to_head_mat = context->system->GetEyeToHeadTransform (eye);
-
-  graphene_matrix_t mat_g;
-  openvr_math_matrix34_to_graphene (&eye_to_head_mat, &mat_g);
-
-  graphene_matrix_inverse (&mat_g, &mat_g);
-
-  return mat_g;
+  graphene_matrix_t mat = openvr_system_get_eye_to_head_transform (eye);
+  graphene_matrix_inverse (&mat, &mat);
+  return mat;
 }
 
 graphene_matrix_t
