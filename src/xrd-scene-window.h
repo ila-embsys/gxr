@@ -19,7 +19,8 @@
 G_BEGIN_DECLS
 
 #define XRD_TYPE_SCENE_WINDOW xrd_scene_window_get_type()
-G_DECLARE_FINAL_TYPE (XrdSceneWindow, xrd_scene_window, XRD, SCENE_WINDOW, GObject)
+G_DECLARE_FINAL_TYPE (XrdSceneWindow, xrd_scene_window,
+                      XRD, SCENE_WINDOW, GObject)
 
 struct _XrdSceneWindow
 {
@@ -44,9 +45,11 @@ xrd_scene_window_init_texture (XrdSceneWindow *self,
                                VkCommandBuffer cmd_buffer,
                                GdkPixbuf      *pixbuf);
 
-void
-xrd_scene_window_init_geometry (XrdSceneWindow *self,
-                                GulkanDevice   *device);
+gboolean
+xrd_scene_window_initialize (XrdSceneWindow        *self,
+                             GulkanDevice          *device,
+                             VkDescriptorSetLayout *layout);
+
 
 void
 xrd_scene_window_draw (XrdSceneWindow    *self,
@@ -56,10 +59,6 @@ xrd_scene_window_draw (XrdSceneWindow    *self,
                        VkCommandBuffer    cmd_buffer,
                        graphene_matrix_t *vp);
 
-gboolean
-xrd_scene_window_init_descriptor_sets (XrdSceneWindow       *self,
-                                       GulkanDevice         *device,
-                                       VkDescriptorSetLayout layout);
 
 G_END_DECLS
 

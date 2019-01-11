@@ -40,11 +40,11 @@ struct _OpenVRVulkanModel
 
 OpenVRVulkanModel *openvr_vulkan_model_new (void);
 
-bool
+gboolean
 openvr_vulkan_model_initialize (OpenVRVulkanModel        *self,
                                 OpenVRVulkanModelContent *content,
                                 GulkanDevice             *device,
-                                VkDescriptorSetLayout     layout);
+                                VkDescriptorSetLayout    *layout);
 
 void
 openvr_vulkan_model_draw (OpenVRVulkanModel *self,

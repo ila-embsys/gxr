@@ -73,7 +73,7 @@ void
 openvr_vulkan_model_manager_load (OpenVRVulkanModelManager *self,
                                   GulkanClient             *client,
                                   TrackedDeviceIndex_t      device_id,
-                                  VkDescriptorSetLayout     layout)
+                                  VkDescriptorSetLayout    *layout)
 {
   gchar *model_name =
     openvr_system_get_device_string (

@@ -7,6 +7,7 @@
 
 #include "openvr-vulkan-model.h"
 #include "openvr-context.h"
+#include <gulkan-descriptor-set.h>
 
 G_DEFINE_TYPE (OpenVRVulkanModel, openvr_vulkan_model, G_TYPE_OBJECT)
 
@@ -52,57 +53,47 @@ openvr_vulkan_model_finalize (GObject *gobject)
     g_object_unref (self->ubos[i]);
 }
 
-void
-_init_descriptor_pool (OpenVRVulkanModel *self, uint32_t count)
+gboolean
+openvr_vulkan_model_init_descriptors (OpenVRVulkanModel     *self,
+                                      VkDescriptorSetLayout *layout)
 {
-  VkDescriptorPoolCreateInfo info = {
-    .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-    .maxSets = count,
-    .poolSizeCount = 2,
-    .pPoolSizes = (VkDescriptorPoolSize[]) {
-      {
-        .descriptorCount = count,
-        .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER
-      },
-      {
-        .descriptorCount = count,
-        .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
-      }
+  uint32_t set_count = 2;
+
+  VkDescriptorPoolSize pool_sizes[] = {
+    {
+      .descriptorCount = set_count,
+      .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER
+    },
+    {
+      .descriptorCount = set_count,
+      .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
     }
   };
 
-  vkCreateDescriptorPool (self->device->device,
-                          &info, NULL, &self->descriptor_pool);
+  if (!GULKAN_INIT_DECRIPTOR_POOL (self->device, pool_sizes,
+                                   set_count, &self->descriptor_pool))
+     return FALSE;
+
+  for (uint32_t eye = 0; eye < set_count; eye++)
+    if (!gulkan_allocate_descritpor_set (self->device, self->descriptor_pool,
+                                         layout, 1,
+                                         &self->descriptor_sets[eye]))
+      return FALSE;
+
+  return TRUE;
 }
 
-void
-_init_descriptor_sets (OpenVRVulkanModel *self, uint32_t count,
-                       VkDescriptorSetLayout     layout)
-{
-  for (uint32_t i = 0; i < count; i++)
-    {
-      VkDescriptorSetAllocateInfo alloc_info = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .descriptorPool = self->descriptor_pool,
-        .descriptorSetCount = 1,
-        .pSetLayouts = &layout
-      };
 
-      vkAllocateDescriptorSets (self->device->device, &alloc_info,
-                                &self->descriptor_sets[i]);
-    }
-}
-
-bool
+gboolean
 openvr_vulkan_model_initialize (OpenVRVulkanModel        *self,
                                 OpenVRVulkanModelContent *content,
                                 GulkanDevice             *device,
-                                VkDescriptorSetLayout     layout)
+                                VkDescriptorSetLayout    *layout)
 {
   self->device = device;
 
-  _init_descriptor_pool (self, 2);
-  _init_descriptor_sets (self, 2, layout);
+  if (!openvr_vulkan_model_init_descriptors (self, layout))
+    return FALSE;
 
   self->content = content;
   g_object_ref (self->content);

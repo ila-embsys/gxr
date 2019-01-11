@@ -258,8 +258,6 @@ _init_vulkan (OpenVRSceneRenderer *self)
                                       cmd_buffer.cmd_buffer, pixbuf))
     return FALSE;
 
-  xrd_scene_window_init_geometry (self->scene_window, client->device);
-
   _update_matrices (self);
   _init_stereo_render_targets (self);
 
@@ -275,9 +273,9 @@ _init_vulkan (OpenVRSceneRenderer *self)
   if (!_init_graphics_pipelines (self))
     return false;
 
-  xrd_scene_window_init_descriptor_sets (self->scene_window,
-                                         client->device,
-                                         self->descriptor_set_layout);
+  xrd_scene_window_initialize (self->scene_window,
+                               client->device,
+                               &self->descriptor_set_layout);
 
   _init_device_models (self);
 
@@ -327,7 +325,7 @@ _init_device_model (OpenVRSceneRenderer *self,
 {
   GulkanClient *client = GULKAN_CLIENT (self);
   openvr_vulkan_model_manager_load (self->model_manager, client, device_id,
-                                    self->descriptor_set_layout);
+                                   &self->descriptor_set_layout);
 }
 
 void
