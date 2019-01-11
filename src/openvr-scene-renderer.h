@@ -23,6 +23,7 @@
 #include "gulkan-uniform-buffer.h"
 #include "openvr-vulkan-model-manager.h"
 #include "xrd-scene-window.h"
+#include "xrd-scene-pointer.h"
 
 // Pipeline state objects
 enum PipelineType
@@ -83,7 +84,7 @@ struct _OpenVRSceneRenderer
   VkPipelineLayout pipeline_layout;
   VkPipelineCache pipeline_cache;
 
-  GulkanVertexBuffer *pointer_vbo;
+  XrdScenePointer *scene_pointer;
 
   graphene_matrix_t mat_head_pose;
   graphene_matrix_t mat_eye_pos[2];

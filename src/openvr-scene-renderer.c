@@ -47,7 +47,6 @@ graphene_matrix_t _get_view_projection_matrix (OpenVRSceneRenderer *self,
 
 void _update_matrices (OpenVRSceneRenderer *self);
 void _update_device_poses (OpenVRSceneRenderer *self);
-void _update_pointer (OpenVRSceneRenderer *self);
 void _render_stereo (OpenVRSceneRenderer *self, VkCommandBuffer cmd_buffer);
 
 static void
@@ -75,7 +74,7 @@ openvr_scene_renderer_init (OpenVRSceneRenderer *self)
 
   memset (self->descriptor_sets, 0, sizeof (self->descriptor_sets));
 
-  self->pointer_vbo = gulkan_vertex_buffer_new ();
+  self->scene_pointer = xrd_scene_pointer_new ();
 
   self->near_clip = 0.1f;
   self->far_clip = 30.0f;
@@ -121,7 +120,7 @@ openvr_scene_renderer_finalize (GObject *gobject)
           g_object_unref (self->framebuffer[eye]);
         }
 
-      g_object_unref (self->pointer_vbo);
+      g_object_unref (self->scene_pointer);
 
       vkDestroyPipelineLayout (device, self->pipeline_layout, NULL);
       vkDestroyDescriptorSetLayout (device, self->descriptor_set_layout, NULL);
@@ -369,7 +368,12 @@ openvr_scene_renderer_render (OpenVRSceneRenderer *self)
   FencedCommandBuffer cmd_buffer;
   gulkan_client_begin_res_cmd_buffer (client, &cmd_buffer);
 
-  _update_pointer (self);
+  /* Don't update the pointer if there is no input */
+  OpenVRContext *context = openvr_context_get_instance ();
+  if (context->system->IsInputAvailable ())
+    xrd_scene_pointer_update (self->scene_pointer, client->device,
+                              self->device_poses, self->device_mats);
+
   _render_stereo (self, cmd_buffer.cmd_buffer);
 
   vkEndCommandBuffer (cmd_buffer.cmd_buffer);
@@ -419,7 +423,6 @@ openvr_scene_renderer_render (OpenVRSceneRenderer *self)
     .vMax = 1.0f
   };
 
-  OpenVRContext *context = openvr_context_get_instance ();
   context->compositor->Submit (EVREye_Eye_Left, &texture, &bounds,
                                EVRSubmitFlags_Submit_Default);
 
@@ -431,56 +434,7 @@ openvr_scene_renderer_render (OpenVRSceneRenderer *self)
   _update_device_poses (self);
 }
 
-void
-_update_pointer (OpenVRSceneRenderer *self)
-{
-  /* Don't update the pointer if there is no input */
-  OpenVRContext *context = openvr_context_get_instance ();
-  if (!context->system->IsInputAvailable ())
-    return;
 
-  gulkan_vertex_buffer_reset (self->pointer_vbo);
-
-  for (TrackedDeviceIndex_t i = k_unTrackedDeviceIndex_Hmd + 1;
-       i < k_unMaxTrackedDeviceCount; i++)
-    {
-      OpenVRContext *context = openvr_context_get_instance ();
-      if (!context->system->IsTrackedDeviceConnected (i))
-        continue;
-
-      if (context->system->GetTrackedDeviceClass (i) !=
-          ETrackedDeviceClass_TrackedDeviceClass_Controller)
-        continue;
-
-      if (!self->device_poses[i].bPoseIsValid)
-        continue;
-
-      graphene_matrix_t *mat = &self->device_mats[i];
-
-      graphene_vec4_t center;
-      graphene_vec4_init (&center, 0, 0, 0, 1);
-
-      gulkan_geometry_append_axes (self->pointer_vbo, &center, 0.05f, mat);
-
-      graphene_vec4_t start;
-      graphene_vec4_init (&start, 0, 0, -0.02f, 1);
-      gulkan_geometry_append_ray (self->pointer_vbo, &start, 40.0f, mat);
-    }
-
-  /* We didn't find any controller devices */
-  if (self->pointer_vbo->array->len == 0)
-    return;
-
-  /* Setup the vbo the first time */
-  GulkanClient *client = GULKAN_CLIENT (self);
-  if (self->pointer_vbo->buffer == VK_NULL_HANDLE)
-    if (!gulkan_vertex_buffer_alloc_empty (self->pointer_vbo,
-                                           client->device,
-                                           k_unMaxTrackedDeviceCount))
-      return;
-
-  gulkan_vertex_buffer_map_array (self->pointer_vbo);
-}
 
 bool
 _init_stereo_render_targets (OpenVRSceneRenderer *self)
@@ -514,21 +468,6 @@ _update_matrices (OpenVRSceneRenderer *self)
                                              self->far_clip);
       self->mat_eye_pos[eye] = _get_hmd_pose_matrix (eye);
     }
-}
-
-void
-_render_pointer (OpenVRSceneRenderer *self, VkCommandBuffer cmd_buffer)
-{
-  OpenVRContext *context = openvr_context_get_instance ();
-  if (!context->system->IsInputAvailable () ||
-      self->pointer_vbo->buffer == VK_NULL_HANDLE)
-    return;
-
-  vkCmdBindPipeline (cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                     self->pipelines[PIPELINE_POINTER]);
-
-  gulkan_vertex_buffer_draw (self->pointer_vbo, cmd_buffer);
-
 }
 
 void
@@ -591,7 +530,12 @@ _render_stereo (OpenVRSceneRenderer *self, VkCommandBuffer cmd_buffer)
                          cmd_buffer,
                         &vp);
 
-      _render_pointer (self, cmd_buffer);
+      OpenVRContext *context = openvr_context_get_instance ();
+      if (context->system->IsInputAvailable ())
+        xrd_scene_pointer_render_pointer (self->scene_pointer,
+                                          self->pipelines[PIPELINE_POINTER],
+                                          cmd_buffer);
+
       _render_device_models (self, eye, cmd_buffer);
       vkCmdEndRenderPass (cmd_buffer);
     }
