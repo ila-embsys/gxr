@@ -522,12 +522,10 @@ _render_stereo (OpenVRSceneRenderer *self, VkCommandBuffer cmd_buffer)
       gulkan_frame_buffer_begin_pass (self->framebuffer[eye], cmd_buffer);
 
       graphene_matrix_t vp = _get_view_projection_matrix (self, eye);
-      xrd_scene_window_render (self->scene_window, eye,
-                         self->pipelines[PIPELINE_WINDOWS],
-                         self->pipeline_layout,
-                        &self->descriptor_sets[DESCRIPTOR_SET_LEFT_EYE_SCENE + eye],
-                         cmd_buffer,
-                        &vp);
+      xrd_scene_window_draw (self->scene_window, eye,
+                             self->pipelines[PIPELINE_WINDOWS],
+                             self->pipeline_layout,
+                             cmd_buffer, &vp);
 
       OpenVRContext *context = openvr_context_get_instance ();
       if (context->system->IsInputAvailable ())
@@ -866,23 +864,19 @@ _init_descriptor_sets (OpenVRSceneRenderer *self)
 
   for (int i = 0; i < DESCRIPTOR_SET_COUNT; i++)
     {
-      VkDescriptorSetAllocateInfo allocInfo = {
+      VkDescriptorSetAllocateInfo alloc_info = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .descriptorPool = self->descriptor_pool,
         .descriptorSetCount = 1,
         .pSetLayouts = &self->descriptor_set_layout
       };
 
-      vkAllocateDescriptorSets (client->device->device, &allocInfo,
+      vkAllocateDescriptorSets (client->device->device, &alloc_info,
                                 &self->descriptor_sets[i]);
     }
 
-  /* Window descriptor sets */
-  VkDescriptorSet window_sets[2] = {
-    self->descriptor_sets[DESCRIPTOR_SET_LEFT_EYE_SCENE],
-    self->descriptor_sets[DESCRIPTOR_SET_RIGHT_EYE_SCENE],
-  };
-
-  xrd_scene_window_init_descriptor_sets (self->scene_window, window_sets);
+  xrd_scene_window_init_descriptor_sets (self->scene_window,
+                                         client->device,
+                                         self->descriptor_set_layout);
 }
 

@@ -30,6 +30,9 @@ struct _XrdSceneWindow
   GulkanTexture *cat_texture;
   VkSampler scene_sampler;
 
+  VkDescriptorPool descriptor_pool;
+  VkDescriptorSet descriptor_sets[2];
+
   GulkanDevice *device;
 };
 
@@ -46,17 +49,17 @@ xrd_scene_window_init_geometry (XrdSceneWindow *self,
                                 GulkanDevice   *device);
 
 void
-xrd_scene_window_render (XrdSceneWindow    *self,
-                         EVREye             eye,
-                         VkPipeline         pipeline,
-                         VkPipelineLayout   pipeline_layout,
-                         VkDescriptorSet   *descriptor_set,
-                         VkCommandBuffer    cmd_buffer,
-                         graphene_matrix_t *vp);
+xrd_scene_window_draw (XrdSceneWindow    *self,
+                       EVREye             eye,
+                       VkPipeline         pipeline,
+                       VkPipelineLayout   pipeline_layout,
+                       VkCommandBuffer    cmd_buffer,
+                       graphene_matrix_t *vp);
 
-void
-xrd_scene_window_init_descriptor_sets (XrdSceneWindow *self,
-                                       VkDescriptorSet descriptor_sets[2]);
+gboolean
+xrd_scene_window_init_descriptor_sets (XrdSceneWindow       *self,
+                                       GulkanDevice         *device,
+                                       VkDescriptorSetLayout layout);
 
 G_END_DECLS
 
