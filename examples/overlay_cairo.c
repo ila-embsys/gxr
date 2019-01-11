@@ -157,8 +157,8 @@ test_cat_overlay ()
 
   GulkanClient *client = GULKAN_CLIENT (uploader);
 
-  texture = gulkan_texture_new_from_cairo_surface (client->device,
-                                                          surface);
+  texture = gulkan_texture_new_from_cairo_surface (client->device, surface,
+                                                   VK_FORMAT_R8G8B8A8_UNORM);
 
   gulkan_client_upload_cairo_surface (client, texture, surface);
 

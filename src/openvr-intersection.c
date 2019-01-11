@@ -117,14 +117,16 @@ openvr_intersection_init_vulkan (OpenVRIntersection   *self,
   GulkanClient *client = GULKAN_CLIENT (uploader);
 
   GdkPixbuf* default_pixbuf = _render_tip_pixbuf (1.0, 1.0, 1.0);
-  self->default_texture = gulkan_texture_new_from_pixbuf (client->device,
-                                                          default_pixbuf);
+  self->default_texture =
+    gulkan_texture_new_from_pixbuf (client->device, default_pixbuf,
+                                    VK_FORMAT_R8G8B8A8_UNORM);
   gulkan_client_upload_pixbuf (client, self->default_texture, default_pixbuf);
   g_object_unref (default_pixbuf);
 
   GdkPixbuf* active_pixbuf = _render_tip_pixbuf (0.078, 0.471, 0.675);
-  self->active_texture = gulkan_texture_new_from_pixbuf (client->device,
-                                                         active_pixbuf);
+  self->active_texture =
+    gulkan_texture_new_from_pixbuf (client->device, active_pixbuf,
+                                    VK_FORMAT_R8G8B8A8_UNORM);
   gulkan_client_upload_pixbuf (client, self->active_texture, active_pixbuf);
   g_object_unref (active_pixbuf);
 }

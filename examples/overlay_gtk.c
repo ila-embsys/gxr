@@ -47,7 +47,8 @@ _damage_cb (GtkWidget *widget, GdkEventExpose *event, OpenVROverlay *overlay)
       GulkanClient *client = GULKAN_CLIENT (uploader);
 
     if (texture == NULL)
-      texture = gulkan_texture_new_from_pixbuf (client->device, pixbuf);
+      texture = gulkan_texture_new_from_pixbuf (client->device, pixbuf,
+                                                VK_FORMAT_R8G8B8A8_UNORM);
 
     gulkan_client_upload_pixbuf (client, texture, pixbuf);
 

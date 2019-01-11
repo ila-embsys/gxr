@@ -182,7 +182,8 @@ test_cat_overlay ()
 
   GulkanClient *client = GULKAN_CLIENT (uploader);
 
-  texture = gulkan_texture_new_from_pixbuf (client->device, pixbuf);
+  texture = gulkan_texture_new_from_pixbuf (client->device, pixbuf,
+                                            VK_FORMAT_R8G8B8A8_UNORM);
 
   gulkan_client_upload_pixbuf (client, texture, pixbuf);
 

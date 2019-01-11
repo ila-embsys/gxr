@@ -129,7 +129,8 @@ _load_texture (OpenVRVulkanModelContent *self,
   uint32_t num_mipmaps;
   self->texture =
     gulkan_texture_new_from_pixbuf_mipmapped (device, cmd_buffer,
-                                              pixbuf, &num_mipmaps);
+                                              pixbuf, &num_mipmaps,
+                                              VK_FORMAT_R8G8B8A8_UNORM);
 
   gulkan_texture_transfer_layout_mips (
       self->texture, device, cmd_buffer, num_mipmaps,

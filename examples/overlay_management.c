@@ -295,7 +295,8 @@ _init_cat_overlays (Example *self)
 
   GulkanClient *client = GULKAN_CLIENT (self->uploader);
 
-  self->texture = gulkan_texture_new_from_pixbuf (client->device, pixbuf);
+  self->texture = gulkan_texture_new_from_pixbuf (client->device, pixbuf,
+                                                  VK_FORMAT_R8G8B8A8_UNORM);
 
   gulkan_client_upload_pixbuf (client, self->texture, pixbuf);
 

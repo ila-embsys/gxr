@@ -406,7 +406,7 @@ openvr_scene_renderer_render (OpenVRSceneRenderer *self)
     .m_nQueueFamilyIndex = device->queue_family_index,
     .m_nWidth = self->render_width,
     .m_nHeight = self->render_height,
-    .m_nFormat = VK_FORMAT_R8G8B8A8_SRGB,
+    .m_nFormat = VK_FORMAT_R8G8B8A8_UNORM,
     .m_nSampleCount = self->msaa_sample_count
   };
 
@@ -434,8 +434,6 @@ openvr_scene_renderer_render (OpenVRSceneRenderer *self)
   _update_device_poses (self);
 }
 
-
-
 bool
 _init_stereo_render_targets (OpenVRSceneRenderer *self)
 {
@@ -453,7 +451,8 @@ _init_stereo_render_targets (OpenVRSceneRenderer *self)
     gulkan_frame_buffer_initialize (self->framebuffer[eye],
                                     client->device,
                                     self->render_width, self->render_height,
-                                    self->msaa_sample_count);
+                                    self->msaa_sample_count,
+                                    VK_FORMAT_R8G8B8A8_UNORM);
   return true;
 }
 
@@ -799,7 +798,7 @@ _init_graphics_pipelines (OpenVRSceneRenderer *self)
           {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
             .stage = VK_SHADER_STAGE_VERTEX_BIT,
-            .module = self->shader_modules[i * 2 + 0],
+            .module = self->shader_modules[i * 2],
             .pName = "main"
           },
           {

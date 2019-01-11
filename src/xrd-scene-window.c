@@ -64,7 +64,7 @@ xrd_scene_window_init_texture (XrdSceneWindow *self,
 
   self->cat_texture = gulkan_texture_new_from_pixbuf_mipmapped (
       device, cmd_buffer, pixbuf,
-      &mip_levels);
+      &mip_levels, VK_FORMAT_R8G8B8A8_UNORM);
 
   gulkan_texture_transfer_layout_mips (self->cat_texture,
                                        device,

@@ -116,7 +116,8 @@ render_callback (gpointer data)
 
   if (context->texture == NULL)
     context->texture =
-      gulkan_texture_new_from_cairo_surface (client->device, surface);
+      gulkan_texture_new_from_cairo_surface (client->device, surface,
+                                             VK_FORMAT_R8G8B8A8_UNORM);
 
   gulkan_client_upload_cairo_surface (client, context->texture, surface);
 
