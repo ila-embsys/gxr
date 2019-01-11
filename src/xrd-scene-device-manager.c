@@ -6,39 +6,40 @@
  */
 
 #include "xrd-scene-device-manager.h"
+#include "openvr-vulkan-model.h"
 #include "openvr-system.h"
 
-G_DEFINE_TYPE (OpenVRVulkanModelManager, openvr_vulkan_model_manager, G_TYPE_OBJECT)
+G_DEFINE_TYPE (XrdSceneDeviceManager, xrd_scene_device_manager, G_TYPE_OBJECT)
 
 static void
-openvr_vulkan_model_manager_finalize (GObject *gobject);
+xrd_scene_device_manager_finalize (GObject *gobject);
 
 static void
-openvr_vulkan_model_manager_class_init (OpenVRVulkanModelManagerClass *klass)
+xrd_scene_device_manager_class_init (XrdSceneDeviceManagerClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = openvr_vulkan_model_manager_finalize;
+  object_class->finalize = xrd_scene_device_manager_finalize;
 }
 
 static void
-openvr_vulkan_model_manager_init (OpenVRVulkanModelManager *self)
+xrd_scene_device_manager_init (XrdSceneDeviceManager *self)
 {
   self->model_content = g_hash_table_new_full (g_str_hash, g_str_equal,
                                                g_free, g_object_unref);
   memset (self->models, 0, sizeof (self->models));
 }
 
-OpenVRVulkanModelManager *
-openvr_vulkan_model_manager_new (void)
+XrdSceneDeviceManager *
+xrd_scene_device_manager_new (void)
 {
-  return (OpenVRVulkanModelManager*) g_object_new (OPENVR_TYPE_VULKAN_MODEL_MANAGER, 0);
+  return (XrdSceneDeviceManager*) g_object_new (XRD_TYPE_SCENE_DEVICE_MANAGER, 0);
 }
 
 static void
-openvr_vulkan_model_manager_finalize (GObject *gobject)
+xrd_scene_device_manager_finalize (GObject *gobject)
 {
-  OpenVRVulkanModelManager *self = OPENVR_VULKAN_MODEL_MANAGER (gobject);
+  XrdSceneDeviceManager *self = XRD_SCENE_DEVICE_MANAGER (gobject);
   g_hash_table_unref (self->model_content);
 
   for (uint32_t i = 0; i < G_N_ELEMENTS (self->models); i++)
@@ -46,19 +47,19 @@ openvr_vulkan_model_manager_finalize (GObject *gobject)
       g_object_unref (self->models[i]);
 }
 
-OpenVRVulkanModelContent*
-_load_content (OpenVRVulkanModelManager *self,
-               GulkanClient             *client,
-               const char               *model_name)
+OpenVRVulkanModel*
+_load_content (XrdSceneDeviceManager *self,
+               GulkanClient          *client,
+               const char            *model_name)
 {
-  OpenVRVulkanModelContent *content;
+  OpenVRVulkanModel *content;
 
   FencedCommandBuffer cmd_buffer;
   if (!gulkan_client_begin_res_cmd_buffer (client, &cmd_buffer))
     return NULL;
-  content = openvr_vulkan_model_content_new ();
-  if (!openvr_vulkan_model_content_load (content, client->device,
-                                         cmd_buffer.cmd_buffer, model_name))
+  content = openvr_vulkan_model_new ();
+  if (!openvr_vulkan_model_load (content, client->device,
+                                 cmd_buffer.cmd_buffer, model_name))
     return NULL;
 
   if (!gulkan_client_submit_res_cmd_buffer (client, &cmd_buffer))
@@ -70,16 +71,16 @@ _load_content (OpenVRVulkanModelManager *self,
 }
 
 void
-openvr_vulkan_model_manager_load (OpenVRVulkanModelManager *self,
-                                  GulkanClient             *client,
-                                  TrackedDeviceIndex_t      device_id,
-                                  VkDescriptorSetLayout    *layout)
+xrd_scene_device_manager_load (XrdSceneDeviceManager *self,
+                               GulkanClient          *client,
+                               TrackedDeviceIndex_t   device_id,
+                               VkDescriptorSetLayout *layout)
 {
   gchar *model_name =
     openvr_system_get_device_string (
       device_id, ETrackedDeviceProperty_Prop_RenderModelName_String);
 
-  OpenVRVulkanModelContent *content =
+  OpenVRVulkanModel *content =
     g_hash_table_lookup (self->model_content, g_strdup (model_name));
 
   if (content == NULL)
@@ -92,8 +93,8 @@ openvr_vulkan_model_manager_load (OpenVRVulkanModelManager *self,
       return;
     }
 
-  OpenVRVulkanModel *model = openvr_vulkan_model_new ();
-  if (!openvr_vulkan_model_initialize (model, content, client->device, layout))
+  XrdSceneDevice *model = xrd_scene_device_new ();
+  if (!xrd_scene_device_initialize (model, content, client->device, layout))
     {
       g_print ("Unable to create Vulkan model from OpenVR model %s\n",
                model_name);

@@ -9,21 +9,21 @@
 #include "openvr-context.h"
 #include <gulkan-descriptor-set.h>
 
-G_DEFINE_TYPE (OpenVRVulkanModel, openvr_vulkan_model, G_TYPE_OBJECT)
+G_DEFINE_TYPE (XrdSceneDevice, xrd_scene_device, G_TYPE_OBJECT)
 
 static void
-openvr_vulkan_model_finalize (GObject *gobject);
+xrd_scene_device_finalize (GObject *gobject);
 
 static void
-openvr_vulkan_model_class_init (OpenVRVulkanModelClass *klass)
+xrd_scene_device_class_init (XrdSceneDeviceClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = openvr_vulkan_model_finalize;
+  object_class->finalize = xrd_scene_device_finalize;
 }
 
 static void
-openvr_vulkan_model_init (OpenVRVulkanModel *self)
+xrd_scene_device_init (XrdSceneDevice *self)
 {
   memset (self->ubos, 0, sizeof (self->ubos));
   self->ubos[0] = gulkan_uniform_buffer_new ();
@@ -34,16 +34,16 @@ openvr_vulkan_model_init (OpenVRVulkanModel *self)
   self->content = NULL;
 }
 
-OpenVRVulkanModel *
-openvr_vulkan_model_new (void)
+XrdSceneDevice *
+xrd_scene_device_new (void)
 {
-  return (OpenVRVulkanModel*) g_object_new (OPENVR_TYPE_VULKAN_MODEL, 0);
+  return (XrdSceneDevice*) g_object_new (XRD_TYPE_SCENE_DEVICE, 0);
 }
 
 static void
-openvr_vulkan_model_finalize (GObject *gobject)
+xrd_scene_device_finalize (GObject *gobject)
 {
-  OpenVRVulkanModel *self = OPENVR_VULKAN_MODEL (gobject);
+  XrdSceneDevice *self = XRD_SCENE_DEVICE (gobject);
 
   vkDestroyDescriptorPool (self->device->device,
                            self->descriptor_pool, NULL);
@@ -54,7 +54,7 @@ openvr_vulkan_model_finalize (GObject *gobject)
 }
 
 gboolean
-openvr_vulkan_model_init_descriptors (OpenVRVulkanModel     *self,
+xrd_scene_device_init_descriptors (XrdSceneDevice     *self,
                                       VkDescriptorSetLayout *layout)
 {
   uint32_t set_count = 2;
@@ -85,14 +85,14 @@ openvr_vulkan_model_init_descriptors (OpenVRVulkanModel     *self,
 
 
 gboolean
-openvr_vulkan_model_initialize (OpenVRVulkanModel        *self,
-                                OpenVRVulkanModelContent *content,
-                                GulkanDevice             *device,
-                                VkDescriptorSetLayout    *layout)
+xrd_scene_device_initialize (XrdSceneDevice        *self,
+                             OpenVRVulkanModel     *content,
+                             GulkanDevice          *device,
+                             VkDescriptorSetLayout *layout)
 {
   self->device = device;
 
-  if (!openvr_vulkan_model_init_descriptors (self, layout))
+  if (!xrd_scene_device_init_descriptors (self, layout))
     return FALSE;
 
   self->content = content;
@@ -143,11 +143,11 @@ openvr_vulkan_model_initialize (OpenVRVulkanModel        *self,
 }
 
 void
-openvr_vulkan_model_draw (OpenVRVulkanModel *self,
-                          EVREye             eye,
-                          VkCommandBuffer    cmd_buffer,
-                          VkPipelineLayout   pipeline_layout,
-                          graphene_matrix_t *mvp)
+xrd_scene_device_draw (XrdSceneDevice    *self,
+                       EVREye             eye,
+                       VkCommandBuffer    cmd_buffer,
+                       VkPipelineLayout   pipeline_layout,
+                       graphene_matrix_t *mvp)
 {
   graphene_matrix_to_float (mvp, (float*) self->ubos[eye]->data);
 

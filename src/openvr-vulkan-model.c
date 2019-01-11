@@ -8,36 +8,36 @@
 #include "openvr-vulkan-model.h"
 #include "openvr-context.h"
 
-G_DEFINE_TYPE (OpenVRVulkanModelContent, openvr_vulkan_model_content, G_TYPE_OBJECT)
+G_DEFINE_TYPE (OpenVRVulkanModel, openvr_vulkan_model, G_TYPE_OBJECT)
 
 static void
-openvr_vulkan_model_content_finalize (GObject *gobject);
+openvr_vulkan_model_finalize (GObject *gobject);
 
 static void
-openvr_vulkan_model_content_class_init (OpenVRVulkanModelContentClass *klass)
+openvr_vulkan_model_class_init (OpenVRVulkanModelClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = openvr_vulkan_model_content_finalize;
+  object_class->finalize = openvr_vulkan_model_finalize;
 }
 
 static void
-openvr_vulkan_model_content_init (OpenVRVulkanModelContent *self)
+openvr_vulkan_model_init (OpenVRVulkanModel *self)
 {
   self->sampler = VK_NULL_HANDLE;
   self->vbo = gulkan_vertex_buffer_new ();
 }
 
-OpenVRVulkanModelContent *
-openvr_vulkan_model_content_new (void)
+OpenVRVulkanModel *
+openvr_vulkan_model_new (void)
 {
-  return (OpenVRVulkanModelContent*) g_object_new (OPENVR_TYPE_VULKAN_MODEL_CONTENT, 0);
+  return (OpenVRVulkanModel*) g_object_new (OPENVR_TYPE_VULKAN_MODEL, 0);
 }
 
 static void
-openvr_vulkan_model_content_finalize (GObject *gobject)
+openvr_vulkan_model_finalize (GObject *gobject)
 {
-  OpenVRVulkanModelContent *self = OPENVR_VULKAN_MODEL_CONTENT (gobject);
+  OpenVRVulkanModel *self = OPENVR_VULKAN_MODEL (gobject);
   g_object_unref (self->vbo);
   g_object_unref (self->texture);
 
@@ -96,7 +96,7 @@ _load_openvr_texture (TextureID_t                id,
 }
 
 gboolean
-_load_mesh (OpenVRVulkanModelContent *self,
+_load_mesh (OpenVRVulkanModel *self,
             GulkanDevice             *device,
             RenderModel_t            *vr_model)
 {
@@ -116,7 +116,7 @@ _load_mesh (OpenVRVulkanModelContent *self,
 }
 
 gboolean
-_load_texture (OpenVRVulkanModelContent *self,
+_load_texture (OpenVRVulkanModel *self,
                GulkanDevice             *device,
                VkCommandBuffer           cmd_buffer,
                RenderModel_TextureMap_t *texture)
@@ -157,10 +157,10 @@ _load_texture (OpenVRVulkanModelContent *self,
 
 
 gboolean
-openvr_vulkan_model_content_load (OpenVRVulkanModelContent *self,
-                                  GulkanDevice             *device,
-                                  VkCommandBuffer           cmd_buffer,
-                                  const char               *model_name)
+openvr_vulkan_model_load (OpenVRVulkanModel *self,
+                          GulkanDevice      *device,
+                          VkCommandBuffer    cmd_buffer,
+                          const char        *model_name)
 {
   RenderModel_t *vr_model;
   if (!_load_openvr_mesh (&vr_model, model_name))

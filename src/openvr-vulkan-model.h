@@ -5,8 +5,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-#ifndef OPENVR_GLIB_VULKAN_MODEL_CONTENT_H_
-#define OPENVR_GLIB_VULKAN_MODEL_CONTENT_H_
+#ifndef OPENVR_GLIB_VULKAN_MODEL_H_
+#define OPENVR_GLIB_VULKAN_MODEL_H_
 
 #include <glib-object.h>
 
@@ -15,11 +15,11 @@
 
 G_BEGIN_DECLS
 
-#define OPENVR_TYPE_VULKAN_MODEL_CONTENT openvr_vulkan_model_content_get_type()
-G_DECLARE_FINAL_TYPE (OpenVRVulkanModelContent, openvr_vulkan_model_content,
-                      OPENVR, VULKAN_MODEL_CONTENT, GObject)
+#define OPENVR_TYPE_VULKAN_MODEL openvr_vulkan_model_get_type()
+G_DECLARE_FINAL_TYPE (OpenVRVulkanModel, openvr_vulkan_model,
+                      OPENVR, VULKAN_MODEL, GObject)
 
-struct _OpenVRVulkanModelContent
+struct _OpenVRVulkanModel
 {
   GObject parent;
 
@@ -30,14 +30,14 @@ struct _OpenVRVulkanModelContent
   VkSampler sampler;
 };
 
-OpenVRVulkanModelContent *openvr_vulkan_model_content_new (void);
+OpenVRVulkanModel *openvr_vulkan_model_new (void);
 
 gboolean
-openvr_vulkan_model_content_load (OpenVRVulkanModelContent *self,
-                                  GulkanDevice             *device,
-                                  VkCommandBuffer           cmd_buffer,
-                                  const char               *model_name);
+openvr_vulkan_model_load (OpenVRVulkanModel *self,
+                          GulkanDevice             *device,
+                          VkCommandBuffer           cmd_buffer,
+                          const char               *model_name);
 
 G_END_DECLS
 
-#endif /* OPENVR_GLIB_VULKAN_MODEL_CONTENT_H_ */
+#endif /* OPENVR_GLIB_VULKAN_MODEL_H_ */

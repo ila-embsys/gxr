@@ -22,41 +22,41 @@
 
 static bool use_validation = true;
 
-G_DEFINE_TYPE (OpenVRSceneRenderer, openvr_scene_renderer, GULKAN_TYPE_CLIENT)
+G_DEFINE_TYPE (XrdSceneClient, xrd_scene_client, GULKAN_TYPE_CLIENT)
 
-static void openvr_scene_renderer_finalize (GObject *gobject);
+static void xrd_scene_client_finalize (GObject *gobject);
 
-bool _init_vulkan (OpenVRSceneRenderer *self);
-bool _init_vulkan_instance (OpenVRSceneRenderer *self);
-bool _init_vulkan_device (OpenVRSceneRenderer *self);
-void _init_device_model (OpenVRSceneRenderer *self,
+bool _init_vulkan (XrdSceneClient *self);
+bool _init_vulkan_instance (XrdSceneClient *self);
+bool _init_vulkan_device (XrdSceneClient *self);
+void _init_device_model (XrdSceneClient *self,
                          TrackedDeviceIndex_t device_id);
-void _init_device_models (OpenVRSceneRenderer *self);
-bool _init_stereo_render_targets (OpenVRSceneRenderer *self);
-bool _init_shaders (OpenVRSceneRenderer *self);
-bool _init_graphics_pipelines (OpenVRSceneRenderer *self);
-bool _init_pipeline_cache (OpenVRSceneRenderer *self);
-bool _init_pipeline_layout (OpenVRSceneRenderer *self);
-bool _init_descriptor_layout (OpenVRSceneRenderer *self);
+void _init_device_models (XrdSceneClient *self);
+bool _init_stereo_render_targets (XrdSceneClient *self);
+bool _init_shaders (XrdSceneClient *self);
+bool _init_graphics_pipelines (XrdSceneClient *self);
+bool _init_pipeline_cache (XrdSceneClient *self);
+bool _init_pipeline_layout (XrdSceneClient *self);
+bool _init_descriptor_layout (XrdSceneClient *self);
 
 graphene_matrix_t _get_hmd_pose_matrix (EVREye eye);
-graphene_matrix_t _get_view_projection_matrix (OpenVRSceneRenderer *self,
+graphene_matrix_t _get_view_projection_matrix (XrdSceneClient *self,
                                                EVREye               eye);
 
-void _update_matrices (OpenVRSceneRenderer *self);
-void _update_device_poses (OpenVRSceneRenderer *self);
-void _render_stereo (OpenVRSceneRenderer *self, VkCommandBuffer cmd_buffer);
+void _update_matrices (XrdSceneClient *self);
+void _update_device_poses (XrdSceneClient *self);
+void _render_stereo (XrdSceneClient *self, VkCommandBuffer cmd_buffer);
 
 static void
-openvr_scene_renderer_class_init (OpenVRSceneRendererClass *klass)
+xrd_scene_client_class_init (XrdSceneClientClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = openvr_scene_renderer_finalize;
+  object_class->finalize = xrd_scene_client_finalize;
 }
 
 static void
-openvr_scene_renderer_init (OpenVRSceneRenderer *self)
+xrd_scene_client_init (XrdSceneClient *self)
 {
   self->msaa_sample_count = VK_SAMPLE_COUNT_4_BIT;
   self->super_sample_scale = 1.0f;
@@ -73,21 +73,21 @@ openvr_scene_renderer_init (OpenVRSceneRenderer *self)
   self->framebuffer[EVREye_Eye_Left] = gulkan_frame_buffer_new();
   self->framebuffer[EVREye_Eye_Right] = gulkan_frame_buffer_new();
 
-  self->model_manager = openvr_vulkan_model_manager_new ();
+  self->model_manager = xrd_scene_device_manager_new ();
 
   self->scene_window = xrd_scene_window_new ();
 }
 
-OpenVRSceneRenderer *
-openvr_scene_renderer_new (void)
+XrdSceneClient *
+xrd_scene_client_new (void)
 {
-  return (OpenVRSceneRenderer *)g_object_new (OPENVR_TYPE_SCENE_RENDERER, 0);
+  return (XrdSceneClient *)g_object_new (XRD_TYPE_SCENE_CLIENT, 0);
 }
 
 static void
-openvr_scene_renderer_finalize (GObject *gobject)
+xrd_scene_client_finalize (GObject *gobject)
 {
-  OpenVRSceneRenderer *self = OPENVR_SCENE_RENDERER (gobject);
+  XrdSceneClient *self = XRD_SCENE_CLIENT (gobject);
 
   GulkanClient *client = GULKAN_CLIENT (gobject);
   VkDevice device = client->device->device;
@@ -120,7 +120,7 @@ openvr_scene_renderer_finalize (GObject *gobject)
       vkDestroyPipelineCache (device, self->pipeline_cache, NULL);
     }
 
-  G_OBJECT_CLASS (openvr_scene_renderer_parent_class)->finalize (gobject);
+  G_OBJECT_CLASS (xrd_scene_client_parent_class)->finalize (gobject);
 }
 
 bool
@@ -174,7 +174,7 @@ _device_activate_cb (OpenVRContext          *context,
                      gpointer               _self)
 {
   (void) context;
-  OpenVRSceneRenderer *self = (OpenVRSceneRenderer*) _self;
+  XrdSceneClient *self = (XrdSceneClient*) _self;
   g_print ("Device %d activated, initializing model.\n", event->index);
   _init_device_model (self, event->index);
 }
@@ -185,7 +185,7 @@ _device_deactivate_cb (OpenVRContext          *context,
                        gpointer               _self)
 {
   (void) context;
-  OpenVRSceneRenderer *self = (OpenVRSceneRenderer*) _self;
+  XrdSceneClient *self = (XrdSceneClient*) _self;
   g_print ("Device %d deactivated. Removing model node.\n", event->index);
   g_object_unref (self->model_manager->models[event->index]);
   self->model_manager->models[event->index] = NULL;
@@ -202,7 +202,7 @@ _poll_events_cb (gpointer unused)
 }
 
 bool
-openvr_scene_renderer_initialize (OpenVRSceneRenderer *self)
+xrd_scene_client_initialize (XrdSceneClient *self)
 {
   if (!_init_openvr ())
     {
@@ -228,7 +228,7 @@ openvr_scene_renderer_initialize (OpenVRSceneRenderer *self)
 }
 
 bool
-_init_vulkan (OpenVRSceneRenderer *self)
+_init_vulkan (XrdSceneClient *self)
 {
   if (!_init_vulkan_instance (self))
     return false;
@@ -291,7 +291,7 @@ _init_vulkan (OpenVRSceneRenderer *self)
 }
 
 bool
-_init_vulkan_instance (OpenVRSceneRenderer *self)
+_init_vulkan_instance (XrdSceneClient *self)
 {
   GSList *extensions = NULL;
   GulkanClient *client = GULKAN_CLIENT (self);
@@ -301,7 +301,7 @@ _init_vulkan_instance (OpenVRSceneRenderer *self)
 }
 
 bool
-_init_vulkan_device (OpenVRSceneRenderer *self)
+_init_vulkan_device (XrdSceneClient *self)
 {
   /* Query OpenVR for a physical device */
   GulkanClient *client = GULKAN_CLIENT (self);
@@ -320,16 +320,16 @@ _init_vulkan_device (OpenVRSceneRenderer *self)
 }
 
 void
-_init_device_model (OpenVRSceneRenderer *self,
+_init_device_model (XrdSceneClient *self,
                     TrackedDeviceIndex_t device_id)
 {
   GulkanClient *client = GULKAN_CLIENT (self);
-  openvr_vulkan_model_manager_load (self->model_manager, client, device_id,
-                                   &self->descriptor_set_layout);
+  xrd_scene_device_manager_load (self->model_manager, client, device_id,
+                                &self->descriptor_set_layout);
 }
 
 void
-_init_device_models (OpenVRSceneRenderer *self)
+_init_device_models (XrdSceneClient *self)
 {
   for (TrackedDeviceIndex_t i = k_unTrackedDeviceIndex_Hmd + 1;
        i < k_unMaxTrackedDeviceCount; i++)
@@ -343,7 +343,7 @@ _init_device_models (OpenVRSceneRenderer *self)
 }
 
 void
-openvr_scene_renderer_render (OpenVRSceneRenderer *self)
+xrd_scene_client_render (XrdSceneClient *self)
 {
   GulkanClient *client = GULKAN_CLIENT (self);
 
@@ -417,7 +417,7 @@ openvr_scene_renderer_render (OpenVRSceneRenderer *self)
 }
 
 bool
-_init_stereo_render_targets (OpenVRSceneRenderer *self)
+_init_stereo_render_targets (XrdSceneClient *self)
 {
   OpenVRContext *context = openvr_context_get_instance ();
   GulkanClient *client = GULKAN_CLIENT (self);
@@ -439,7 +439,7 @@ _init_stereo_render_targets (OpenVRSceneRenderer *self)
 }
 
 void
-_update_matrices (OpenVRSceneRenderer *self)
+_update_matrices (XrdSceneClient *self)
 {
   for (uint32_t eye = 0; eye < 2; eye++)
     {
@@ -452,7 +452,7 @@ _update_matrices (OpenVRSceneRenderer *self)
 }
 
 void
-_render_device_models (OpenVRSceneRenderer *self,
+_render_device_models (XrdSceneClient *self,
                        EVREye eye, VkCommandBuffer cmd_buffer)
 {
   vkCmdBindPipeline (cmd_buffer,
@@ -479,13 +479,13 @@ _render_device_models (OpenVRSceneRenderer *self,
       graphene_matrix_t vp = _get_view_projection_matrix (self, eye);
       graphene_matrix_multiply (&mvp, &vp, &mvp);
 
-      openvr_vulkan_model_draw (self->model_manager->models[i], eye,
-                                cmd_buffer, self->pipeline_layout, &mvp);
+      xrd_scene_device_draw (self->model_manager->models[i], eye,
+                             cmd_buffer, self->pipeline_layout, &mvp);
     }
 }
 
 void
-_render_stereo (OpenVRSceneRenderer *self, VkCommandBuffer cmd_buffer)
+_render_stereo (XrdSceneClient *self, VkCommandBuffer cmd_buffer)
 {
   VkViewport viewport = {
     0.0f, 0.0f,
@@ -529,7 +529,7 @@ _get_hmd_pose_matrix (EVREye eye)
 }
 
 graphene_matrix_t
-_get_view_projection_matrix (OpenVRSceneRenderer *self,
+_get_view_projection_matrix (XrdSceneClient *self,
                              EVREye               eye)
 {
   graphene_matrix_t mat;
@@ -540,7 +540,7 @@ _get_view_projection_matrix (OpenVRSceneRenderer *self,
 }
 
 void
-_update_device_poses (OpenVRSceneRenderer *self)
+_update_device_poses (XrdSceneClient *self)
 {
   OpenVRContext *context = openvr_context_get_instance ();
   context->compositor->WaitGetPoses (self->device_poses,
@@ -563,7 +563,7 @@ _update_device_poses (OpenVRSceneRenderer *self)
 }
 
 bool
-_init_shaders (OpenVRSceneRenderer *self)
+_init_shaders (XrdSceneClient *self)
 {
   GulkanClient *client = GULKAN_CLIENT (self);
 
@@ -586,7 +586,7 @@ _init_shaders (OpenVRSceneRenderer *self)
 
 /* Create a descriptor set layout compatible with all shaders. */
 bool
-_init_descriptor_layout (OpenVRSceneRenderer *self)
+_init_descriptor_layout (XrdSceneClient *self)
 {
   GulkanClient *client = GULKAN_CLIENT (self);
 
@@ -623,7 +623,7 @@ _init_descriptor_layout (OpenVRSceneRenderer *self)
 }
 
 bool
-_init_pipeline_layout (OpenVRSceneRenderer *self)
+_init_pipeline_layout (XrdSceneClient *self)
 {
   GulkanClient *client = GULKAN_CLIENT (self);
 
@@ -648,7 +648,7 @@ _init_pipeline_layout (OpenVRSceneRenderer *self)
 }
 
 bool
-_init_pipeline_cache (OpenVRSceneRenderer *self)
+_init_pipeline_cache (XrdSceneClient *self)
 {
   GulkanClient *client = GULKAN_CLIENT (self);
 
@@ -674,7 +674,7 @@ typedef struct __attribute__((__packed__)) PipelineConfig {
 } PipelineConfig;
 
 bool
-_init_graphics_pipelines (OpenVRSceneRenderer *self)
+_init_graphics_pipelines (XrdSceneClient *self)
 {
   GulkanClient *client = GULKAN_CLIENT (self);
 

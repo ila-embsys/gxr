@@ -5,8 +5,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-#ifndef OPENVR_GLIB_SCENE_RENDERER_H_
-#define OPENVR_GLIB_SCENE_RENDERER_H_
+#ifndef XRD_SCENE_CLIENT_H_
+#define XRD_SCENE_CLIENT_H_
 
 #define MAX_TRACKED_DEVICES 64
 
@@ -43,11 +43,11 @@ typedef struct VertexDataScene
 
 G_BEGIN_DECLS
 
-#define OPENVR_TYPE_SCENE_RENDERER openvr_scene_renderer_get_type ()
-G_DECLARE_FINAL_TYPE (OpenVRSceneRenderer, openvr_scene_renderer,
-                      OPENVR, SCENE_RENDERER, GulkanClient)
+#define XRD_TYPE_SCENE_CLIENT xrd_scene_client_get_type ()
+G_DECLARE_FINAL_TYPE (XrdSceneClient, xrd_scene_client,
+                      XRD, SCENE_CLIENT, GulkanClient)
 
-struct _OpenVRSceneRenderer
+struct _XrdSceneClient
 {
   GulkanClient parent;
 
@@ -57,7 +57,7 @@ struct _OpenVRSceneRenderer
   TrackedDevicePose_t device_poses[MAX_TRACKED_DEVICES];
   graphene_matrix_t device_mats[MAX_TRACKED_DEVICES];
 
-  OpenVRVulkanModelManager *model_manager;
+  XrdSceneDeviceManager *model_manager;
 
   float near_clip;
   float far_clip;
@@ -80,15 +80,14 @@ struct _OpenVRSceneRenderer
 
   uint32_t render_width;
   uint32_t render_height;
-
 };
 
-OpenVRSceneRenderer *openvr_scene_renderer_new (void);
+XrdSceneClient *xrd_scene_client_new (void);
 
-bool openvr_scene_renderer_initialize (OpenVRSceneRenderer *self);
+bool xrd_scene_client_initialize (XrdSceneClient *self);
 
-void openvr_scene_renderer_render (OpenVRSceneRenderer *self);
+void xrd_scene_client_render (XrdSceneClient *self);
 
 G_END_DECLS
 
-#endif /* OPENVR_GLIB_SCENE_RENDERER_H_ */
+#endif /* XRD_SCENE_CLIENT_H_ */

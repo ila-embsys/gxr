@@ -5,7 +5,7 @@
 
 typedef struct Example
 {
-  OpenVRSceneRenderer *renderer;
+  XrdSceneClient *client;
   GMainLoop *loop;
 } Example;
 
@@ -13,7 +13,7 @@ void
 _cleanup (Example *self)
 {
   g_print ("bye\n");
-  g_object_unref (self->renderer);
+  g_object_unref (self->client);
 }
 
 gboolean
@@ -28,7 +28,7 @@ gboolean
 _iterate_cb (gpointer _self)
 {
   Example *self = (Example*) _self;
-  openvr_scene_renderer_render (self->renderer);
+  xrd_scene_client_render (self->client);
   return true;
 }
 
@@ -37,10 +37,10 @@ main ()
 {
   Example self = {
     .loop = g_main_loop_new (NULL, FALSE),
-    .renderer = openvr_scene_renderer_new ()
+    .client = xrd_scene_client_new ()
   };
 
-  if (!openvr_scene_renderer_initialize (self.renderer))
+  if (!xrd_scene_client_initialize (self.client))
     {
       _cleanup (&self);
       return 1;

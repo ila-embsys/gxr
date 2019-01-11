@@ -5,8 +5,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-#ifndef OPENVR_GLIB_VULKAN_MODEL_MANAGER_H_
-#define OPENVR_GLIB_VULKAN_MODEL_MANAGER_H_
+#ifndef XRD_SCENE_DEVICE_MANAGER_H_
+#define XRD_SCENE_DEVICE_MANAGER_H_
 
 #include <glib-object.h>
 
@@ -17,27 +17,27 @@
 
 G_BEGIN_DECLS
 
-#define OPENVR_TYPE_VULKAN_MODEL_MANAGER openvr_vulkan_model_manager_get_type()
-G_DECLARE_FINAL_TYPE (OpenVRVulkanModelManager, openvr_vulkan_model_manager,
-                      OPENVR, VULKAN_MODEL_MANAGER, GObject)
+#define XRD_TYPE_SCENE_DEVICE_MANAGER xrd_scene_device_manager_get_type()
+G_DECLARE_FINAL_TYPE (XrdSceneDeviceManager, xrd_scene_device_manager,
+                      XRD, SCENE_DEVICE_MANAGER, GObject)
 
-struct _OpenVRVulkanModelManager
+struct _XrdSceneDeviceManager
 {
   GObject parent;
 
   GHashTable *model_content;
 
-  OpenVRVulkanModel *models[MAX_TRACKED_DEVICES];
+  XrdSceneDevice *models[MAX_TRACKED_DEVICES];
 };
 
-OpenVRVulkanModelManager *openvr_vulkan_model_manager_new (void);
+XrdSceneDeviceManager *xrd_scene_device_manager_new (void);
 
 void
-openvr_vulkan_model_manager_load (OpenVRVulkanModelManager *self,
-                                  GulkanClient             *client,
-                                  TrackedDeviceIndex_t      device_id,
-                                  VkDescriptorSetLayout    *layout);
+xrd_scene_device_manager_load (XrdSceneDeviceManager *self,
+                               GulkanClient          *client,
+                               TrackedDeviceIndex_t   device_id,
+                               VkDescriptorSetLayout *layout);
 
 G_END_DECLS
 
-#endif /* OPENVR_GLIB_VULKAN_MODEL_MANAGER_H_ */
+#endif /* XRD_SCENE_DEVICE_MANAGER_H_ */

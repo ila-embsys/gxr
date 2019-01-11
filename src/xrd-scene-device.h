@@ -5,8 +5,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-#ifndef OPENVR_GLIB_VULKAN_MODEL_H_
-#define OPENVR_GLIB_VULKAN_MODEL_H_
+#ifndef XRD_SCENE_DEVICE_H_
+#define XRD_SCENE_DEVICE_H_
 
 #include <glib-object.h>
 
@@ -20,17 +20,17 @@
 
 G_BEGIN_DECLS
 
-#define OPENVR_TYPE_VULKAN_MODEL openvr_vulkan_model_get_type()
-G_DECLARE_FINAL_TYPE (OpenVRVulkanModel, openvr_vulkan_model,
-                      OPENVR, VULKAN_MODEL, GObject)
+#define XRD_TYPE_SCENE_DEVICE xrd_scene_device_get_type()
+G_DECLARE_FINAL_TYPE (XrdSceneDevice, xrd_scene_device,
+                      XRD, SCENE_DEVICE, GObject)
 
-struct _OpenVRVulkanModel
+struct _XrdSceneDevice
 {
   GObject parent;
 
   GulkanDevice *device;
 
-  OpenVRVulkanModelContent *content;
+  OpenVRVulkanModel *content;
 
   GulkanUniformBuffer *ubos[2];
 
@@ -38,21 +38,21 @@ struct _OpenVRVulkanModel
   VkDescriptorSet descriptor_sets[2];
 };
 
-OpenVRVulkanModel *openvr_vulkan_model_new (void);
+XrdSceneDevice *xrd_scene_device_new (void);
 
 gboolean
-openvr_vulkan_model_initialize (OpenVRVulkanModel        *self,
-                                OpenVRVulkanModelContent *content,
-                                GulkanDevice             *device,
-                                VkDescriptorSetLayout    *layout);
+xrd_scene_device_initialize (XrdSceneDevice        *self,
+                             OpenVRVulkanModel     *content,
+                             GulkanDevice          *device,
+                             VkDescriptorSetLayout *layout);
 
 void
-openvr_vulkan_model_draw (OpenVRVulkanModel *self,
-                          EVREye             eye,
-                          VkCommandBuffer    cmd_buffer,
-                          VkPipelineLayout   pipeline_layout,
-                          graphene_matrix_t *mvp);
+xrd_scene_device_draw (XrdSceneDevice    *self,
+                       EVREye             eye,
+                       VkCommandBuffer    cmd_buffer,
+                       VkPipelineLayout   pipeline_layout,
+                       graphene_matrix_t *mvp);
 
 G_END_DECLS
 
-#endif /* OPENVR_GLIB_VULKAN_MODEL_H_ */
+#endif /* XRD_SCENE_DEVICE_H_ */
