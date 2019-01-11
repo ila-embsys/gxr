@@ -32,8 +32,6 @@ bool _init_vulkan_device (OpenVRSceneRenderer *self);
 void _init_device_model (OpenVRSceneRenderer *self,
                          TrackedDeviceIndex_t device_id);
 void _init_device_models (OpenVRSceneRenderer *self);
-bool _init_textures (OpenVRSceneRenderer *self, VkCommandBuffer cmd_buffer);
-void _init_planes (OpenVRSceneRenderer *self);
 bool _init_stereo_render_targets (OpenVRSceneRenderer *self);
 bool _init_shaders (OpenVRSceneRenderer *self);
 void _init_descriptor_sets (OpenVRSceneRenderer *self);
@@ -67,7 +65,7 @@ openvr_scene_renderer_init (OpenVRSceneRenderer *self)
   self->super_sample_scale = 1.0f;
 
   self->descriptor_pool = VK_NULL_HANDLE;
-  self->scene_sampler = VK_NULL_HANDLE;
+
   self->descriptor_set_layout = VK_NULL_HANDLE;
   self->pipeline_layout = VK_NULL_HANDLE;
   self->pipeline_cache = VK_NULL_HANDLE;
@@ -78,10 +76,6 @@ openvr_scene_renderer_init (OpenVRSceneRenderer *self)
   memset (self->descriptor_sets, 0, sizeof (self->descriptor_sets));
 
   self->pointer_vbo = gulkan_vertex_buffer_new ();
-  self->planes_vbo = gulkan_vertex_buffer_new ();
-
-  self->planes_ubo[0] = gulkan_uniform_buffer_new ();
-  self->planes_ubo[1] = gulkan_uniform_buffer_new ();
 
   self->near_clip = 0.1f;
   self->far_clip = 30.0f;
@@ -90,6 +84,8 @@ openvr_scene_renderer_init (OpenVRSceneRenderer *self)
   self->framebuffer[EVREye_Eye_Right] = gulkan_frame_buffer_new();
 
   self->model_manager = openvr_vulkan_model_manager_new ();
+
+  self->scene_window = xrd_scene_window_new ();
 }
 
 OpenVRSceneRenderer *
@@ -118,16 +114,11 @@ openvr_scene_renderer_finalize (GObject *gobject)
     {
       vkDestroyDescriptorPool (device, self->descriptor_pool, NULL);
 
-      g_object_unref (self->cat_texture);
-
-      vkDestroySampler (device, self->scene_sampler, NULL);
-
-      g_object_unref (self->planes_vbo);
+      g_object_unref (self->scene_window);
 
       for (uint32_t eye = 0; eye < 2; eye++)
         {
           g_object_unref (self->framebuffer[eye]);
-          g_object_unref (self->planes_ubo[eye]);
         }
 
       g_object_unref (self->pointer_vbo);
@@ -273,8 +264,16 @@ _init_vulkan (OpenVRSceneRenderer *self)
       return false;
     }
 
-  _init_textures (self, cmd_buffer.cmd_buffer);
-  _init_planes (self);
+  GdkPixbuf *pixbuf = load_gdk_pixbuf ();
+  if (!pixbuf)
+    return false;
+
+  if (!xrd_scene_window_init_texture (self->scene_window, client->device,
+                                      cmd_buffer.cmd_buffer, pixbuf))
+    return FALSE;
+
+  xrd_scene_window_init_geometry (self->scene_window, client->device);
+
   _update_matrices (self);
   _init_stereo_render_targets (self);
 
@@ -432,81 +431,6 @@ openvr_scene_renderer_render (OpenVRSceneRenderer *self)
   _update_device_poses (self);
 }
 
-bool
-_init_textures (OpenVRSceneRenderer *self, VkCommandBuffer cmd_buffer)
-{
-  GdkPixbuf *pixbuf = load_gdk_pixbuf ();
-  if (!pixbuf)
-    return false;
-
-  uint32_t mip_levels;
-
-  GulkanClient *client = GULKAN_CLIENT (self);
-  self->cat_texture = gulkan_texture_new_from_pixbuf_mipmapped (
-      client->device, cmd_buffer, pixbuf,
-      &mip_levels);
-
-  gulkan_texture_transfer_layout_mips (self->cat_texture,
-                                       client->device,
-                                       cmd_buffer,
-                                       mip_levels,
-                                       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                                       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-  VkSamplerCreateInfo sampler_info = {
-    .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-    .magFilter = VK_FILTER_LINEAR,
-    .minFilter = VK_FILTER_LINEAR,
-    .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
-    .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-    .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-    .anisotropyEnable = VK_TRUE,
-    .maxAnisotropy = 16.0f,
-    .minLod = 0.0f,
-    .maxLod = (float) mip_levels
-  };
-
-  vkCreateSampler (client->device->device, &sampler_info, NULL,
-                   &self->scene_sampler);
-
-  return true;
-}
-
-void _append_plane (GulkanVertexBuffer *vbo,
-                    float x, float y, float z,
-                    float scale)
-{
-  graphene_matrix_t mat_scale;
-  graphene_matrix_init_scale (&mat_scale, scale, scale, scale);
-
-  graphene_point3d_t translation = { x, y, z };
-  graphene_matrix_t mat_translation;
-  graphene_matrix_init_translate (&mat_translation, &translation);
-
-  graphene_matrix_t mat;
-  graphene_matrix_multiply (&mat_scale, &mat_translation, &mat);
-
-  gulkan_geometry_append_plane (vbo, &mat);
-}
-
-void
-_init_planes (OpenVRSceneRenderer *self)
-{
-  GulkanClient *client = GULKAN_CLIENT (self);
-  _append_plane (self->planes_vbo, 0, 1, 0, 0.3f);
-  _append_plane (self->planes_vbo, 1, 1, 0, 0.5f);
-
-  if (!gulkan_vertex_buffer_alloc_array (self->planes_vbo,
-                                         client->device))
-    return;
-
-  /* Create uniform buffer to hold a matrix per eye */
-  for (uint32_t eye = 0; eye < 2; eye++)
-    gulkan_uniform_buffer_allocate_and_map (self->planes_ubo[eye],
-                                            client->device,
-                                            sizeof (float) * 16);
-}
-
 void
 _update_pointer (OpenVRSceneRenderer *self)
 {
@@ -593,25 +517,6 @@ _update_matrices (OpenVRSceneRenderer *self)
 }
 
 void
-_render_planes (OpenVRSceneRenderer *self,
-                EVREye eye, VkCommandBuffer cmd_buffer)
-{
-  vkCmdBindPipeline (cmd_buffer,
-                     VK_PIPELINE_BIND_POINT_GRAPHICS,
-                     self->pipelines[PIPELINE_WINDOWS]);
-
-  /* Update matrix in uniform buffer */
-  graphene_matrix_t mvp = _get_view_projection_matrix (self, eye);
-  graphene_matrix_to_float (&mvp, self->planes_ubo[eye]->data);
-
-  vkCmdBindDescriptorSets (
-    cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, self->pipeline_layout, 0, 1,
-    &self->descriptor_sets[DESCRIPTOR_SET_LEFT_EYE_SCENE + eye], 0, NULL);
-
-  gulkan_vertex_buffer_draw (self->planes_vbo, cmd_buffer);
-}
-
-void
 _render_pointer (OpenVRSceneRenderer *self, VkCommandBuffer cmd_buffer)
 {
   OpenVRContext *context = openvr_context_get_instance ();
@@ -677,7 +582,15 @@ _render_stereo (OpenVRSceneRenderer *self, VkCommandBuffer cmd_buffer)
   for (uint32_t eye = 0; eye < 2; eye++)
     {
       gulkan_frame_buffer_begin_pass (self->framebuffer[eye], cmd_buffer);
-      _render_planes (self, eye, cmd_buffer);
+
+      graphene_matrix_t vp = _get_view_projection_matrix (self, eye);
+      xrd_scene_window_render (self->scene_window, eye,
+                         self->pipelines[PIPELINE_WINDOWS],
+                         self->pipeline_layout,
+                        &self->descriptor_sets[DESCRIPTOR_SET_LEFT_EYE_SCENE + eye],
+                         cmd_buffer,
+                        &vp);
+
       _render_pointer (self, cmd_buffer);
       _render_device_models (self, eye, cmd_buffer);
       vkCmdEndRenderPass (cmd_buffer);
@@ -1022,40 +935,11 @@ _init_descriptor_sets (OpenVRSceneRenderer *self)
     }
 
   /* Window descriptor sets */
-  for (uint32_t eye = 0; eye < 2; eye++)
-    {
-      VkWriteDescriptorSet *write_descriptor_sets = (VkWriteDescriptorSet []) {
-        {
-          .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-          .dstSet = self->descriptor_sets[DESCRIPTOR_SET_LEFT_EYE_SCENE + eye],
-          .dstBinding = 0,
-          .descriptorCount = 1,
-          .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-          .pBufferInfo = &(VkDescriptorBufferInfo) {
-            .buffer = self->planes_ubo[eye]->buffer,
-            .offset = 0,
-            .range = VK_WHOLE_SIZE
-          },
-          .pTexelBufferView = NULL
-        },
-        {
-          .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-          .dstSet = self->descriptor_sets[DESCRIPTOR_SET_LEFT_EYE_SCENE + eye],
-          .dstBinding = 1,
-          .descriptorCount = 1,
-          .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-          .pImageInfo = &(VkDescriptorImageInfo) {
-            .sampler = self->scene_sampler,
-            .imageView = self->cat_texture->image_view,
-            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-          },
-          .pBufferInfo = NULL,
-          .pTexelBufferView = NULL
-        }
-      };
+  VkDescriptorSet window_sets[2] = {
+    self->descriptor_sets[DESCRIPTOR_SET_LEFT_EYE_SCENE],
+    self->descriptor_sets[DESCRIPTOR_SET_RIGHT_EYE_SCENE],
+  };
 
-      vkUpdateDescriptorSets (client->device->device,
-                              2, write_descriptor_sets, 0, NULL);
-    }
+  xrd_scene_window_init_descriptor_sets (self->scene_window, window_sets);
 }
 

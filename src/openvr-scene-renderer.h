@@ -22,6 +22,7 @@
 #include "gulkan-vertex-buffer.h"
 #include "gulkan-uniform-buffer.h"
 #include "openvr-vulkan-model-manager.h"
+#include "xrd-scene-window.h"
 
 // Pipeline state objects
 enum PipelineType
@@ -74,11 +75,7 @@ struct _OpenVRSceneRenderer
   VkDescriptorPool descriptor_pool;
   VkDescriptorSet descriptor_sets[DESCRIPTOR_SET_COUNT];
 
-  /* Windows resources */
-  GulkanVertexBuffer *planes_vbo;
-  GulkanUniformBuffer *planes_ubo[2];
-  GulkanTexture *cat_texture;
-  VkSampler scene_sampler;
+  XrdSceneWindow *scene_window;
 
   VkShaderModule shader_modules[PIPELINE_COUNT * 2];
   VkPipeline pipelines[PIPELINE_COUNT];
