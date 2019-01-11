@@ -22,6 +22,8 @@ openvr_glib_sources = [
   'openvr-vulkan-model-manager.c',
   'openvr-vulkan-model-content.c',
   'openvr-scene-renderer.c',
+  'xrd-scene-window.c',
+  'xrd-scene-pointer.c',
 ]
 
 openvr_glib_headers = [
@@ -45,6 +47,8 @@ openvr_glib_headers = [
   'openvr-vulkan-model-manager.h',
   'openvr-vulkan-model-content.h',
   'openvr-scene-renderer.h',
+  'xrd-scene-window.h',
+  'xrd-scene-pointer.h',
 ]
 
 version_split = meson.project_version().split('.')
