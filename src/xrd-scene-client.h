@@ -11,17 +11,18 @@
 #define MAX_TRACKED_DEVICES 64
 
 #include "openvr-context.h"
-#include "openvr-vulkan-model.h"
 #include <glib-object.h>
 
 #include <gulkan-client.h>
 #include <gulkan-device.h>
 #include <gulkan-instance.h>
 #include <gulkan-texture.h>
-#include "gulkan-frame-buffer.h"
-#include "gulkan-vertex-buffer.h"
-#include "gulkan-uniform-buffer.h"
-#include "openvr-vulkan-model-manager.h"
+#include <gulkan-frame-buffer.h>
+#include <gulkan-vertex-buffer.h>
+#include <gulkan-uniform-buffer.h>
+
+#include "xrd-scene-device.h"
+#include "xrd-scene-device-manager.h"
 #include "xrd-scene-window.h"
 #include "xrd-scene-pointer.h"
 

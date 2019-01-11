@@ -10,7 +10,7 @@
 
 #include <glib-object.h>
 
-#include "openvr-vulkan-model.h"
+#include "xrd-scene-device.h"
 #include <gulkan-client.h>
 
 #define MAX_TRACKED_DEVICES 64

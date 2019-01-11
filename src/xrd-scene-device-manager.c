@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "openvr-vulkan-model-manager.h"
+#include "xrd-scene-device-manager.h"
 #include "openvr-system.h"
 
 G_DEFINE_TYPE (OpenVRVulkanModelManager, openvr_vulkan_model_manager, G_TYPE_OBJECT)

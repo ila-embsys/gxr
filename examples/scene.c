@@ -1,7 +1,7 @@
 #include <glib.h>
 #include <glib-unix.h>
 
-#include "openvr-scene-renderer.h"
+#include "xrd-scene-client.h"
 
 typedef struct Example
 {

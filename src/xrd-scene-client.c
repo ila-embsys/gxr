@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 
-#include "openvr-scene-renderer.h"
+#include "xrd-scene-client.h"
 
 #include <gmodule.h>
 #include <gulkan-texture.h>
