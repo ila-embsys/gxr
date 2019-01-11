@@ -33,6 +33,8 @@ struct _OpenVRVulkanModel
   OpenVRVulkanModelContent *content;
 
   GulkanUniformBuffer *ubos[2];
+
+  VkDescriptorPool descriptor_pool;
   VkDescriptorSet descriptor_sets[2];
 };
 
@@ -42,7 +44,7 @@ bool
 openvr_vulkan_model_initialize (OpenVRVulkanModel        *self,
                                 OpenVRVulkanModelContent *content,
                                 GulkanDevice             *device,
-                                VkDescriptorSet           descriptor_sets[2]);
+                                VkDescriptorSetLayout     layout);
 
 void
 openvr_vulkan_model_draw (OpenVRVulkanModel *self,

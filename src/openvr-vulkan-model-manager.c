@@ -72,8 +72,8 @@ _load_content (OpenVRVulkanModelManager *self,
 void
 openvr_vulkan_model_manager_load (OpenVRVulkanModelManager *self,
                                   GulkanClient             *client,
-                                  VkDescriptorSet           descriptor_sets[2],
-                                  TrackedDeviceIndex_t      device_id)
+                                  TrackedDeviceIndex_t      device_id,
+                                  VkDescriptorSetLayout     layout)
 {
   gchar *model_name =
     openvr_system_get_device_string (
@@ -93,8 +93,7 @@ openvr_vulkan_model_manager_load (OpenVRVulkanModelManager *self,
     }
 
   OpenVRVulkanModel *model = openvr_vulkan_model_new ();
-  if (!openvr_vulkan_model_initialize (model, content,
-                                       client->device, descriptor_sets))
+  if (!openvr_vulkan_model_initialize (model, content, client->device, layout))
     {
       g_print ("Unable to create Vulkan model from OpenVR model %s\n",
                model_name);

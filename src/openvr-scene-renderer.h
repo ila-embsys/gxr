@@ -34,16 +34,6 @@ enum PipelineType
   PIPELINE_COUNT
 };
 
-// Indices of descriptor sets for rendering
-enum DescriptorSetType
-{
-  DESCRIPTOR_SET_LEFT_EYE_DEVICE_MODEL0 = 0,
-  DESCRIPTOR_SET_LEFT_EYE_DEVICE_MODEL_MAX = DESCRIPTOR_SET_LEFT_EYE_DEVICE_MODEL0 + MAX_TRACKED_DEVICES,
-  DESCRIPTOR_SET_RIGHT_EYE_DEVICE_MODEL0,
-  DESCRIPTOR_SET_RIGHT_EYE_DEVICE_MODEL_MAX = DESCRIPTOR_SET_RIGHT_EYE_DEVICE_MODEL0 + MAX_TRACKED_DEVICES,
-  DESCRIPTOR_SET_COUNT
-};
-
 typedef struct VertexDataScene
 {
   graphene_point3d_t position;
@@ -70,9 +60,6 @@ struct _OpenVRSceneRenderer
 
   float near_clip;
   float far_clip;
-
-  VkDescriptorPool descriptor_pool;
-  VkDescriptorSet descriptor_sets[DESCRIPTOR_SET_COUNT];
 
   XrdSceneWindow *scene_window;
 

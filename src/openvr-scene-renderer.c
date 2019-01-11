@@ -34,12 +34,10 @@ void _init_device_model (OpenVRSceneRenderer *self,
 void _init_device_models (OpenVRSceneRenderer *self);
 bool _init_stereo_render_targets (OpenVRSceneRenderer *self);
 bool _init_shaders (OpenVRSceneRenderer *self);
-void _init_descriptor_sets (OpenVRSceneRenderer *self);
 bool _init_graphics_pipelines (OpenVRSceneRenderer *self);
 bool _init_pipeline_cache (OpenVRSceneRenderer *self);
 bool _init_pipeline_layout (OpenVRSceneRenderer *self);
 bool _init_descriptor_layout (OpenVRSceneRenderer *self);
-void _init_descriptor_pool (OpenVRSceneRenderer *self);
 
 graphene_matrix_t _get_hmd_pose_matrix (EVREye eye);
 graphene_matrix_t _get_view_projection_matrix (OpenVRSceneRenderer *self,
@@ -63,16 +61,9 @@ openvr_scene_renderer_init (OpenVRSceneRenderer *self)
   self->msaa_sample_count = VK_SAMPLE_COUNT_4_BIT;
   self->super_sample_scale = 1.0f;
 
-  self->descriptor_pool = VK_NULL_HANDLE;
-
   self->descriptor_set_layout = VK_NULL_HANDLE;
   self->pipeline_layout = VK_NULL_HANDLE;
   self->pipeline_cache = VK_NULL_HANDLE;
-
-  memset (&self->shader_modules[0], 0, sizeof (self->shader_modules));
-  memset (&self->pipelines[0], 0, sizeof (self->pipelines));
-
-  memset (self->descriptor_sets, 0, sizeof (self->descriptor_sets));
 
   self->scene_pointer = xrd_scene_pointer_new ();
 
@@ -111,14 +102,10 @@ openvr_scene_renderer_finalize (GObject *gobject)
 
   if (device != VK_NULL_HANDLE)
     {
-      vkDestroyDescriptorPool (device, self->descriptor_pool, NULL);
-
       g_object_unref (self->scene_window);
 
       for (uint32_t eye = 0; eye < 2; eye++)
-        {
-          g_object_unref (self->framebuffer[eye]);
-        }
+        g_object_unref (self->framebuffer[eye]);
 
       g_object_unref (self->scene_pointer);
 
@@ -288,8 +275,10 @@ _init_vulkan (OpenVRSceneRenderer *self)
   if (!_init_graphics_pipelines (self))
     return false;
 
-  _init_descriptor_pool (self);
-  _init_descriptor_sets (self);
+  xrd_scene_window_init_descriptor_sets (self->scene_window,
+                                         client->device,
+                                         self->descriptor_set_layout);
+
   _init_device_models (self);
 
   if (!gulkan_client_submit_res_cmd_buffer (client, &cmd_buffer))
@@ -336,14 +325,9 @@ void
 _init_device_model (OpenVRSceneRenderer *self,
                     TrackedDeviceIndex_t device_id)
 {
-  VkDescriptorSet descriptor_sets[2] = {
-    self->descriptor_sets[DESCRIPTOR_SET_LEFT_EYE_DEVICE_MODEL0 + device_id],
-    self->descriptor_sets[DESCRIPTOR_SET_RIGHT_EYE_DEVICE_MODEL0 + device_id],
-  };
-
   GulkanClient *client = GULKAN_CLIENT (self);
-  openvr_vulkan_model_manager_load (self->model_manager, client,
-                                    descriptor_sets, device_id);
+  openvr_vulkan_model_manager_load (self->model_manager, client, device_id,
+                                    self->descriptor_set_layout);
 }
 
 void
@@ -830,53 +814,5 @@ _init_graphics_pipelines (OpenVRSceneRenderer *self)
     }
 
   return true;
-}
-
-void
-_init_descriptor_pool (OpenVRSceneRenderer *self)
-{
-  GulkanClient *client = GULKAN_CLIENT (self);
-
-  VkDescriptorPoolCreateInfo info = {
-    .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-    .maxSets = DESCRIPTOR_SET_COUNT,
-    .poolSizeCount = 2,
-    .pPoolSizes = (VkDescriptorPoolSize[]) {
-      {
-        .descriptorCount = DESCRIPTOR_SET_COUNT,
-        .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER
-      },
-      {
-        .descriptorCount = DESCRIPTOR_SET_COUNT,
-        .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
-      }
-    }
-  };
-
-  vkCreateDescriptorPool (client->device->device,
-                          &info, NULL, &self->descriptor_pool);
-}
-
-void
-_init_descriptor_sets (OpenVRSceneRenderer *self)
-{
-  GulkanClient *client = GULKAN_CLIENT (self);
-
-  for (int i = 0; i < DESCRIPTOR_SET_COUNT; i++)
-    {
-      VkDescriptorSetAllocateInfo alloc_info = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .descriptorPool = self->descriptor_pool,
-        .descriptorSetCount = 1,
-        .pSetLayouts = &self->descriptor_set_layout
-      };
-
-      vkAllocateDescriptorSets (client->device->device, &alloc_info,
-                                &self->descriptor_sets[i]);
-    }
-
-  xrd_scene_window_init_descriptor_sets (self->scene_window,
-                                         client->device,
-                                         self->descriptor_set_layout);
 }
 

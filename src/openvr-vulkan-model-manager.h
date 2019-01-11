@@ -35,8 +35,8 @@ OpenVRVulkanModelManager *openvr_vulkan_model_manager_new (void);
 void
 openvr_vulkan_model_manager_load (OpenVRVulkanModelManager *self,
                                   GulkanClient             *client,
-                                  VkDescriptorSet           descriptor_sets[2],
-                                  TrackedDeviceIndex_t      device_id);
+                                  TrackedDeviceIndex_t      device_id,
+                                  VkDescriptorSetLayout     layout);
 
 G_END_DECLS
 
