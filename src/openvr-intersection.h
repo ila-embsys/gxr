@@ -14,7 +14,7 @@
 #include "openvr-vulkan-uploader.h"
 #include "openvr-overlay.h"
 
-#define SCREENSPACE_INTERSECTION_WIDTH 0.1
+#define SCREENSPACE_INTERSECTION_WIDTH 0.025
 /* worldspace width, in case a HMD pose can not be acquired for some reason. */
 #define DEFAULT_INTERSECTION_WIDTH 0.025
 
