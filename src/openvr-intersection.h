@@ -43,8 +43,7 @@ struct _OpenVRIntersection
 OpenVRIntersection *openvr_intersection_new (int controller_index);
 
 void
-openvr_intersection_set_constant_width (OpenVRIntersection *self,
-                                        graphene_point3d_t *intersection_point);
+openvr_intersection_set_constant_width (OpenVRIntersection *self);
 
 void
 openvr_intersection_update (OpenVRIntersection *self,

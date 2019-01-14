@@ -293,10 +293,20 @@ _get_hmd_pose (graphene_matrix_t *pose)
   return FALSE;
 }
 
+/* note: Set overlay transform before calling this function */
 void
-openvr_intersection_set_constant_width (OpenVRIntersection *self,
-                                        graphene_point3d_t *intersection_point)
+openvr_intersection_set_constant_width (OpenVRIntersection *self)
 {
+  graphene_matrix_t intersection_pose;
+  openvr_overlay_get_transform_absolute (OPENVR_OVERLAY(self),
+                                         &intersection_pose);
+
+  graphene_vec3_t intersection_point_vec;
+  openvr_math_matrix_get_translation (&intersection_pose,
+                                      &intersection_point_vec);
+  graphene_point3d_t intersection_point;
+  graphene_point3d_init_from_vec3 (&intersection_point, &intersection_point_vec);
+
   /* The tip should have the same size relative to the view of the HMD.
    * Therefore we first need the HMD pose. */
   graphene_matrix_t hmd_pose;
@@ -316,7 +326,7 @@ openvr_intersection_set_constant_width (OpenVRIntersection *self,
 
   graphene_point3d_t intersection_screenspace;
   float w = 1.0;
-  openvr_math_worldspace_to_screenspace (intersection_point,
+  openvr_math_worldspace_to_screenspace (&intersection_point,
                                          &hmd_pose,
                                          &projection_matrix,
                                          &intersection_screenspace,
@@ -340,7 +350,8 @@ openvr_intersection_set_constant_width (OpenVRIntersection *self,
                                          &w);
 
   graphene_vec3_t distance_vec;
-  graphene_point3d_distance (intersection_point, &intersection_right_worldspace,
+  graphene_point3d_distance (&intersection_point,
+                             &intersection_right_worldspace,
                              &distance_vec);
   float new_width = graphene_vec3_length (&distance_vec);
 
@@ -357,5 +368,5 @@ openvr_intersection_update (OpenVRIntersection *self,
   openvr_math_matrix_set_translation (&transform, intersection_point);
   openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (self), &transform);
 
-  openvr_intersection_set_constant_width (self, intersection_point);
+  openvr_intersection_set_constant_width (self);
 }
