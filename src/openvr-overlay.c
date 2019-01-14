@@ -32,6 +32,7 @@ enum {
   GRAB_START_EVENT,
   GRAB_EVENT,
   RELEASE_EVENT,
+  HOVER_START_EVENT,
   HOVER_EVENT,
   HOVER_END_EVENT,
   LAST_SIGNAL
@@ -134,7 +135,12 @@ openvr_overlay_class_init (OpenVROverlayClass *klass)
                   G_SIGNAL_RUN_LAST,
                   0, NULL, NULL, NULL, G_TYPE_NONE,
                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
+  overlay_signals[HOVER_START_EVENT] =
+    g_signal_new ("hover-start-event",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_LAST,
+                  0, NULL, NULL, NULL, G_TYPE_NONE,
+                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
 }
 
 static void
@@ -814,6 +820,13 @@ openvr_overlay_emit_hover (OpenVROverlay    *self,
                            OpenVRHoverEvent *event)
 {
   g_signal_emit (self, overlay_signals[HOVER_EVENT], 0, event);
+}
+
+void
+openvr_overlay_emit_hover_start (OpenVROverlay *self,
+                                 OpenVRControllerIndexEvent *event)
+{
+  g_signal_emit (self, overlay_signals[HOVER_START_EVENT], 0, event);
 }
 
 gboolean

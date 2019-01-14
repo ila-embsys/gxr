@@ -299,6 +299,15 @@ _test_hover (OpenVROverlayManager *self,
       graphene_matrix_init_from_matrix (&hover_state->pose, pose);
 
       /* We now hover over an overlay */
+      if (closest != last_hovered_overlay)
+        {
+          OpenVRControllerIndexEvent *hover_start_event =
+              g_malloc (sizeof (OpenVRControllerIndexEvent));
+          hover_start_event->index = controller_index;
+          openvr_overlay_emit_hover_start (closest, hover_start_event);
+
+        }
+
       if (closest != last_hovered_overlay
           && last_hovered_overlay != NULL)
         {

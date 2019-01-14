@@ -195,6 +195,10 @@ void
 openvr_overlay_emit_hover (OpenVROverlay    *self,
                            OpenVRHoverEvent *event);
 
+void
+openvr_overlay_emit_hover_start (OpenVROverlay *self,
+                                 OpenVRControllerIndexEvent *event);
+
 gboolean
 openvr_overlay_destroy (OpenVROverlay *self);
 

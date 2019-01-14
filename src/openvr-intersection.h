@@ -23,9 +23,9 @@ G_DECLARE_FINAL_TYPE (OpenVRIntersection, openvr_intersection, OPENVR,
 struct _OpenVRIntersection
 {
   OpenVROverlay parent;
-  GulkanTexture *default_texture;
-  GulkanTexture *active_texture;
+  GulkanTexture *texture;
   gboolean active;
+  guint animation_timer;
 };
 
 OpenVRIntersection *openvr_intersection_new (int controller_index);

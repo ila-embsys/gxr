@@ -200,7 +200,6 @@ _hover_cb (OpenVROverlay    *overlay,
   openvr_overlay_get_transform_absolute (overlay, &overlay_pose);
 
   openvr_intersection_update (pointer_tip, &overlay_pose, &event->point);
-  openvr_intersection_set_active (pointer_tip, self->uploader, TRUE);
 
   OpenVRPointer *pointer_ray = self->pointer_ray[event->controller_index];
   openvr_pointer_set_length (pointer_ray, event->distance);
@@ -244,6 +243,28 @@ _hover_end_cb (OpenVROverlay *overlay,
   /* unmark if no controller is hovering over this overlay */
   if (!openvr_overlay_manager_is_hovered (self->manager, overlay))
     _overlay_unmark (overlay);
+
+  /* When leaving this overlay and immediately entering another, the tip should
+   * still be active because it is now hovering another overlay. */
+  gboolean active = self->manager->hover_state[event->index].overlay != NULL;
+
+  OpenVRIntersection *pointer_tip = self->pointer_tip[event->index];
+  openvr_intersection_set_active (pointer_tip, self->uploader, active);
+  g_free (event);
+}
+
+void
+_hover_start_cb (OpenVROverlay *overlay,
+                 OpenVRControllerIndexEvent *event,
+                 gpointer       _self)
+{
+  (void) overlay;
+  (void) event;
+  Example *self = (Example*) _self;
+
+  OpenVRIntersection *pointer_tip = self->pointer_tip[event->index];
+  openvr_intersection_set_active (pointer_tip, self->uploader, TRUE);
+
   g_free (event);
 }
 
@@ -264,7 +285,6 @@ _no_hover_cb (OpenVROverlayManager *manager,
   graphene_point3d_init (&distance_translation_point,
                          0.f, 0.f, -pointer_ray->default_length);
 
-
   graphene_matrix_t tip_pose;
 
   graphene_quaternion_t controller_rotation;
@@ -283,9 +303,6 @@ _no_hover_cb (OpenVROverlayManager *manager,
 
   openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (pointer_tip),
                                          &tip_pose);
-
-  openvr_intersection_set_active (pointer_tip, self->uploader, FALSE);
-
   g_free (event);
 }
 
@@ -357,6 +374,8 @@ _init_cat_overlays (Example *self)
                           (GCallback)_cat_grab_cb, self);
         g_signal_connect (cat, "release-event",
                           (GCallback)_cat_release_cb, self);
+        g_signal_connect (cat, "hover-start-event",
+                          (GCallback) _hover_start_cb, self);
         g_signal_connect (cat, "hover-event",
                           (GCallback) _hover_cb, self);
         g_signal_connect (cat, "hover-end-event",
@@ -645,6 +664,8 @@ main ()
       if (self.pointer_tip[i] == NULL)
         return -1;
       openvr_intersection_init_vulkan (self.pointer_tip[i], self.uploader);
+      openvr_intersection_set_active (self.pointer_tip[i], self.uploader,
+                                      FALSE);
       openvr_overlay_show (OPENVR_OVERLAY (self.pointer_tip[i]));
     }
 
