@@ -20,12 +20,20 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (OpenVRIntersection, openvr_intersection, OPENVR,
                       INTERSECTION, OpenVROverlay)
 
+struct Animation;
+
 struct _OpenVRIntersection
 {
   OpenVROverlay parent;
   GulkanTexture *texture;
   gboolean active;
-  guint animation_timer;
+
+  /* 0, or the id of the currently running animation. */
+  guint animation_callback_id;
+
+  /* Pointer to the data of the currently running animation.
+   * Must be freed when an animation callback is cancelled. */
+  struct Animation *animation_data;
 };
 
 OpenVRIntersection *openvr_intersection_new (int controller_index);

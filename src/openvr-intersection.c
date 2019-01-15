@@ -28,6 +28,8 @@ openvr_intersection_init (OpenVRIntersection *self)
   (void) self;
   self->active = FALSE;
   self->texture = NULL;
+  self->animation_callback_id = 0;
+  self->animation_data = NULL;
 }
 
 /* the backing texture behind the intersection overlay will have
@@ -82,11 +84,15 @@ draw_gradient_circle (cairo_t *cr,
   cairo_pattern_destroy (pat);
 }
 
+/** _render_tip_pixbuf:
+ * Renders the pointer tip with the desired colors.
+ * If background scale is > 1, a transparent white background circle is rendered
+ * behind the pointer tip. */
 GdkPixbuf*
 _render_tip_pixbuf (double r, double g, double b, float background_scale)
 {
   cairo_surface_t *surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
-                                                         WIDTH*2, HEIGHT*2);
+                                                         WIDTH * 2, HEIGHT * 2);
 
   cairo_t *cr = cairo_create (surface);
   cairo_set_source_rgba (cr, 0, 0, 0, 0);
@@ -132,7 +138,8 @@ _animate_cb (gpointer _animation)
 
   if (animation->progress > 1)
     {
-      animation->self->animation_timer = 0;
+      animation->self->animation_callback_id = 0;
+      animation->self->animation_data = NULL;
       g_free (animation);
       return FALSE;
     }
@@ -144,7 +151,7 @@ void
 openvr_intersection_animate_pulse (OpenVRIntersection *self,
                                    OpenVRVulkanUploader *uploader)
 {
-  if (self->animation_timer != 0)
+  if (self->animation_callback_id != 0)
     {
       openvr_intersection_set_active (self, uploader, self->active);
     }
@@ -152,7 +159,8 @@ openvr_intersection_animate_pulse (OpenVRIntersection *self,
   animation->progress = 0;
   animation->uploader = uploader;
   animation->self = self;
-  self->animation_timer = g_timeout_add (20, _animate_cb, animation);
+  self->animation_callback_id = g_timeout_add (20, _animate_cb, animation);
+  self->animation_data = animation;
 }
 
 OpenVRIntersection *
@@ -221,10 +229,12 @@ openvr_intersection_set_active (OpenVRIntersection *self,
   if (self->texture == NULL)
     return;
 
-  if (self->animation_timer != 0)
+  if (self->animation_callback_id != 0)
     {
-      g_source_remove (self->animation_timer);
-      self->animation_timer = 0;
+      g_source_remove (self->animation_callback_id);
+      self->animation_callback_id = 0;
+      g_free (self->animation_data);
+      self->animation_data = NULL;
     }
 
   /* Do not skip renderint to the texture even when self->active == active.
