@@ -65,8 +65,6 @@ xrd_scene_client_init (XrdSceneClient *self)
   self->pipeline_layout = VK_NULL_HANDLE;
   self->pipeline_cache = VK_NULL_HANDLE;
 
-  self->scene_pointer = xrd_scene_pointer_new ();
-
   self->near_clip = 0.1f;
   self->far_clip = 30.0f;
 
@@ -108,8 +106,6 @@ xrd_scene_client_finalize (GObject *gobject)
 
       for (uint32_t eye = 0; eye < 2; eye++)
         g_object_unref (self->framebuffer[eye]);
-
-      g_object_unref (self->scene_pointer);
 
       vkDestroyPipelineLayout (device, self->pipeline_layout, NULL);
       vkDestroyDescriptorSetLayout (device, self->descriptor_set_layout, NULL);
@@ -360,12 +356,8 @@ xrd_scene_client_render (XrdSceneClient *self)
   FencedCommandBuffer cmd_buffer;
   gulkan_client_begin_res_cmd_buffer (client, &cmd_buffer);
 
-  /* Don't update the pointer if there is no input */
-  OpenVRContext *context = openvr_context_get_instance ();
-  if (context->system->IsInputAvailable ())
-    xrd_scene_pointer_update (self->scene_pointer, client->device,
-                              self->model_manager->device_poses,
-                              self->model_manager->device_mats);
+  xrd_scene_device_manager_update_pointers (self->model_manager,
+                                            client->device);
 
   _render_stereo (self, cmd_buffer.cmd_buffer);
 
@@ -416,6 +408,7 @@ xrd_scene_client_render (XrdSceneClient *self)
     .vMax = 1.0f
   };
 
+  OpenVRContext *context = openvr_context_get_instance ();
   context->compositor->Submit (EVREye_Eye_Left, &texture, &bounds,
                                EVRSubmitFlags_Submit_Default);
 
@@ -490,11 +483,9 @@ _render_stereo (XrdSceneClient *self, VkCommandBuffer cmd_buffer)
                                self->pipeline_layout,
                                cmd_buffer, &vp);
 
-      OpenVRContext *context = openvr_context_get_instance ();
-      if (context->system->IsInputAvailable ())
-        xrd_scene_pointer_render_pointer (self->scene_pointer,
-                                          self->pipelines[PIPELINE_POINTER],
-                                          cmd_buffer);
+      xrd_scene_device_manager_render_pointers (self->model_manager,
+                                                cmd_buffer,
+                                                self->pipelines[PIPELINE_POINTER]);
 
       xrd_scene_device_manager_render (self->model_manager, eye, cmd_buffer,
                                        self->pipelines[PIPELINE_DEVICE_MODELS],

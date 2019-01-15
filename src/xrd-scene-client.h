@@ -69,8 +69,6 @@ struct _XrdSceneClient
   VkPipelineLayout pipeline_layout;
   VkPipelineCache pipeline_cache;
 
-  XrdScenePointer *scene_pointer;
-
   graphene_matrix_t mat_head_pose;
   graphene_matrix_t mat_eye_pos[2];
   graphene_matrix_t mat_projection[2];

@@ -29,6 +29,8 @@ xrd_scene_device_manager_init (XrdSceneDeviceManager *self)
   self->model_content = g_hash_table_new_full (g_str_hash, g_str_equal,
                                                g_free, g_object_unref);
   memset (self->models, 0, sizeof (self->models));
+
+  self->pointer = xrd_scene_pointer_new ();
 }
 
 XrdSceneDeviceManager *
@@ -46,6 +48,8 @@ xrd_scene_device_manager_finalize (GObject *gobject)
   for (uint32_t i = 0; i < G_N_ELEMENTS (self->models); i++)
     if (self->models[i] != NULL)
       g_object_unref (self->models[i]);
+
+  g_object_unref (self->pointer);
 }
 
 OpenVRVulkanModel*
@@ -164,4 +168,26 @@ xrd_scene_device_manager_update_poses (XrdSceneDeviceManager *self,
       *mat_head_pose = self->device_mats[k_unTrackedDeviceIndex_Hmd];
       graphene_matrix_inverse (mat_head_pose, mat_head_pose);
     }
+}
+
+void
+xrd_scene_device_manager_update_pointers (XrdSceneDeviceManager *self,
+                                          GulkanDevice          *device)
+{
+  /* Don't update the pointer if there is no input */
+  OpenVRContext *context = openvr_context_get_instance ();
+  if (context->system->IsInputAvailable ())
+    xrd_scene_pointer_update (self->pointer, device,
+                              self->device_poses,
+                              self->device_mats);
+}
+
+void
+xrd_scene_device_manager_render_pointers (XrdSceneDeviceManager *self,
+                                          VkCommandBuffer        cmd_buffer,
+                                          VkPipeline             pipeline)
+{
+  OpenVRContext *context = openvr_context_get_instance ();
+  if (context->system->IsInputAvailable ())
+    xrd_scene_pointer_render_pointer (self->pointer, pipeline, cmd_buffer);
 }

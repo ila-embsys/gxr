@@ -11,6 +11,7 @@
 #include <glib-object.h>
 
 #include "xrd-scene-device.h"
+#include "xrd-scene-pointer.h"
 #include <gulkan-client.h>
 
 #define MAX_TRACKED_DEVICES 64
@@ -30,6 +31,8 @@ struct _XrdSceneDeviceManager
   XrdSceneDevice *models[MAX_TRACKED_DEVICES];
   TrackedDevicePose_t device_poses[MAX_TRACKED_DEVICES];
   graphene_matrix_t device_mats[MAX_TRACKED_DEVICES];
+
+  XrdScenePointer *pointer;
 };
 
 XrdSceneDeviceManager *xrd_scene_device_manager_new (void);
@@ -51,6 +54,15 @@ xrd_scene_device_manager_render (XrdSceneDeviceManager *self,
 void
 xrd_scene_device_manager_update_poses (XrdSceneDeviceManager *self,
                                        graphene_matrix_t     *mat_head_pose);
+
+void
+xrd_scene_device_manager_update_pointers (XrdSceneDeviceManager *self,
+                                          GulkanDevice          *device);
+
+void
+xrd_scene_device_manager_render_pointers (XrdSceneDeviceManager *self,
+                                          VkCommandBuffer        cmd_buffer,
+                                          VkPipeline             pipeline);
 
 G_END_DECLS
 
