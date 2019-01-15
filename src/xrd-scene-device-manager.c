@@ -8,6 +8,7 @@
 #include "xrd-scene-device-manager.h"
 #include "openvr-vulkan-model.h"
 #include "openvr-system.h"
+#include "openvr-math.h"
 
 G_DEFINE_TYPE (XrdSceneDeviceManager, xrd_scene_device_manager, G_TYPE_OBJECT)
 
@@ -106,4 +107,61 @@ xrd_scene_device_manager_load (XrdSceneDeviceManager *self,
   g_free (model_name);
 
   self->models[device_id] = model;
+}
+
+void
+xrd_scene_device_manager_render (XrdSceneDeviceManager *self,
+                                 EVREye                 eye,
+                                 VkCommandBuffer        cmd_buffer,
+                                 VkPipeline             pipeline,
+                                 VkPipelineLayout       layout,
+                                 graphene_matrix_t     *vp)
+{
+  vkCmdBindPipeline (cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+  for (uint32_t i = 0; i < k_unMaxTrackedDeviceCount; i++)
+    {
+      if (!self->models[i])
+        continue;
+
+      TrackedDevicePose_t *pose = &self->device_poses[i];
+      if (!pose->bPoseIsValid)
+        continue;
+
+      OpenVRContext *context = openvr_context_get_instance ();
+      if (!context->system->IsInputAvailable () &&
+          context->system->GetTrackedDeviceClass (i) ==
+              ETrackedDeviceClass_TrackedDeviceClass_Controller)
+        continue;
+
+      graphene_matrix_t mvp;
+      graphene_matrix_init_from_matrix (&mvp, &self->device_mats[i]);
+
+      graphene_matrix_multiply (&mvp, vp, &mvp);
+
+      xrd_scene_device_draw (self->models[i], eye, cmd_buffer, layout, &mvp);
+    }
+}
+
+void
+xrd_scene_device_manager_update_poses (XrdSceneDeviceManager *self,
+                                       graphene_matrix_t     *mat_head_pose)
+{
+  OpenVRContext *context = openvr_context_get_instance ();
+  context->compositor->WaitGetPoses (self->device_poses,
+                                     k_unMaxTrackedDeviceCount, NULL, 0);
+
+  for (uint32_t i = 0; i < k_unMaxTrackedDeviceCount; ++i)
+    {
+      if (!self->device_poses[i].bPoseIsValid)
+        continue;
+
+      openvr_math_matrix34_to_graphene (&self->device_poses[i].mDeviceToAbsoluteTracking,
+                                        &self->device_mats[i]);
+    }
+
+  if (self->device_poses[k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
+    {
+      *mat_head_pose = self->device_mats[k_unTrackedDeviceIndex_Hmd];
+      graphene_matrix_inverse (mat_head_pose, mat_head_pose);
+    }
 }

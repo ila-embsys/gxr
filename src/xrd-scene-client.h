@@ -54,9 +54,6 @@ struct _XrdSceneClient
   VkSampleCountFlagBits msaa_sample_count;
   float super_sample_scale;
 
-  TrackedDevicePose_t device_poses[MAX_TRACKED_DEVICES];
-  graphene_matrix_t device_mats[MAX_TRACKED_DEVICES];
-
   XrdSceneDeviceManager *model_manager;
 
   float near_clip;

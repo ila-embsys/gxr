@@ -74,7 +74,6 @@ xrd_scene_client_init (XrdSceneClient *self)
   self->framebuffer[EVREye_Eye_Right] = gulkan_frame_buffer_new();
 
   self->model_manager = xrd_scene_device_manager_new ();
-
   self->scene_window = xrd_scene_window_new ();
 }
 
@@ -354,7 +353,8 @@ xrd_scene_client_render (XrdSceneClient *self)
   OpenVRContext *context = openvr_context_get_instance ();
   if (context->system->IsInputAvailable ())
     xrd_scene_pointer_update (self->scene_pointer, client->device,
-                              self->device_poses, self->device_mats);
+                              self->model_manager->device_poses,
+                              self->model_manager->device_mats);
 
   _render_stereo (self, cmd_buffer.cmd_buffer);
 
@@ -413,7 +413,8 @@ xrd_scene_client_render (XrdSceneClient *self)
   context->compositor->Submit (EVREye_Eye_Right, &texture, &bounds,
                                EVRSubmitFlags_Submit_Default);
 
-  _update_device_poses (self);
+  xrd_scene_device_manager_update_poses (self->model_manager,
+                                        &self->mat_head_pose);
 }
 
 bool
@@ -452,39 +453,6 @@ _update_matrices (XrdSceneClient *self)
 }
 
 void
-_render_device_models (XrdSceneClient *self,
-                       EVREye eye, VkCommandBuffer cmd_buffer)
-{
-  vkCmdBindPipeline (cmd_buffer,
-                     VK_PIPELINE_BIND_POINT_GRAPHICS,
-                     self->pipelines[PIPELINE_DEVICE_MODELS]);
-  for (uint32_t i = 0; i < k_unMaxTrackedDeviceCount; i++)
-    {
-      if (!self->model_manager->models[i])
-        continue;
-
-      TrackedDevicePose_t *pose = &self->device_poses[i];
-      if (!pose->bPoseIsValid)
-        continue;
-
-      OpenVRContext *context = openvr_context_get_instance ();
-      if (!context->system->IsInputAvailable () &&
-          context->system->GetTrackedDeviceClass (i) ==
-              ETrackedDeviceClass_TrackedDeviceClass_Controller)
-        continue;
-
-      graphene_matrix_t mvp;
-      graphene_matrix_init_from_matrix (&mvp, &self->device_mats[i]);
-
-      graphene_matrix_t vp = _get_view_projection_matrix (self, eye);
-      graphene_matrix_multiply (&mvp, &vp, &mvp);
-
-      xrd_scene_device_draw (self->model_manager->models[i], eye,
-                             cmd_buffer, self->pipeline_layout, &mvp);
-    }
-}
-
-void
 _render_stereo (XrdSceneClient *self, VkCommandBuffer cmd_buffer)
 {
   VkViewport viewport = {
@@ -515,7 +483,10 @@ _render_stereo (XrdSceneClient *self, VkCommandBuffer cmd_buffer)
                                           self->pipelines[PIPELINE_POINTER],
                                           cmd_buffer);
 
-      _render_device_models (self, eye, cmd_buffer);
+      xrd_scene_device_manager_render (self->model_manager, eye, cmd_buffer,
+                                       self->pipelines[PIPELINE_DEVICE_MODELS],
+                                       self->pipeline_layout, &vp);
+
       vkCmdEndRenderPass (cmd_buffer);
     }
 }
@@ -529,8 +500,7 @@ _get_hmd_pose_matrix (EVREye eye)
 }
 
 graphene_matrix_t
-_get_view_projection_matrix (XrdSceneClient *self,
-                             EVREye               eye)
+_get_view_projection_matrix (XrdSceneClient *self, EVREye eye)
 {
   graphene_matrix_t mat;
   graphene_matrix_init_from_matrix (&mat, &self->mat_head_pose);
@@ -539,35 +509,14 @@ _get_view_projection_matrix (XrdSceneClient *self,
   return mat;
 }
 
-void
-_update_device_poses (XrdSceneClient *self)
-{
-  OpenVRContext *context = openvr_context_get_instance ();
-  context->compositor->WaitGetPoses (self->device_poses,
-                                     k_unMaxTrackedDeviceCount, NULL, 0);
-
-  for (uint32_t i = 0; i < k_unMaxTrackedDeviceCount; ++i)
-    {
-      if (!self->device_poses[i].bPoseIsValid)
-        continue;
-
-      openvr_math_matrix34_to_graphene (&self->device_poses[i].mDeviceToAbsoluteTracking,
-                                        &self->device_mats[i]);
-    }
-
-  if (self->device_poses[k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
-    {
-      self->mat_head_pose = self->device_mats[k_unTrackedDeviceIndex_Hmd];
-      graphene_matrix_inverse (&self->mat_head_pose, &self->mat_head_pose);
-    }
-}
-
 bool
 _init_shaders (XrdSceneClient *self)
 {
   GulkanClient *client = GULKAN_CLIENT (self);
 
-  const char *shader_names[PIPELINE_COUNT] = { "window", "pointer", "device_model" };
+  const char *shader_names[PIPELINE_COUNT] = {
+    "window", "pointer", "device_model"
+  };
   const char *stage_names[2] = {"vert", "frag"};
 
   for (int32_t i = 0; i < PIPELINE_COUNT; i++)

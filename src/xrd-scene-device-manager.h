@@ -28,6 +28,8 @@ struct _XrdSceneDeviceManager
   GHashTable *model_content;
 
   XrdSceneDevice *models[MAX_TRACKED_DEVICES];
+  TrackedDevicePose_t device_poses[MAX_TRACKED_DEVICES];
+  graphene_matrix_t device_mats[MAX_TRACKED_DEVICES];
 };
 
 XrdSceneDeviceManager *xrd_scene_device_manager_new (void);
@@ -37,6 +39,18 @@ xrd_scene_device_manager_load (XrdSceneDeviceManager *self,
                                GulkanClient          *client,
                                TrackedDeviceIndex_t   device_id,
                                VkDescriptorSetLayout *layout);
+
+void
+xrd_scene_device_manager_render (XrdSceneDeviceManager *self,
+                                 EVREye                 eye,
+                                 VkCommandBuffer        cmd_buffer,
+                                 VkPipeline             pipeline,
+                                 VkPipelineLayout       layout,
+                                 graphene_matrix_t     *vp);
+
+void
+xrd_scene_device_manager_update_poses (XrdSceneDeviceManager *self,
+                                       graphene_matrix_t     *mat_head_pose);
 
 G_END_DECLS
 
