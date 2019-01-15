@@ -52,8 +52,8 @@ typedef struct Example
 
   float pointer_default_length;
 
-  OpenVRActionSet *action_set;
-  OpenVRActionSet *action_set_input;
+  OpenVRActionSet *action_set_wm;
+  OpenVRActionSet *action_set_mouse_synth;
 
   OpenVRVulkanUploader *uploader;
 } Example;
@@ -77,10 +77,10 @@ _poll_events_cb (gpointer _self)
 {
   Example *self = (Example*) _self;
 
-  if (!openvr_action_set_poll (self->action_set))
+  if (!openvr_action_set_poll (self->action_set_wm))
     return FALSE;
 
-  if (!openvr_action_set_poll (self->action_set_input))
+  if (!openvr_action_set_poll (self->action_set_mouse_synth))
     return FALSE;
   return TRUE;
 }
@@ -589,8 +589,8 @@ _cleanup (Example *self)
   g_object_unref (self->button_reset);
   g_object_unref (self->button_sphere);
 
-  g_object_unref (self->action_set);
-  g_object_unref (self->action_set_input);
+  g_object_unref (self->action_set_wm);
+  g_object_unref (self->action_set_mouse_synth);
 
   g_object_unref (self->manager);
 
@@ -641,8 +641,8 @@ main ()
 
   Example self = {
     .loop = g_main_loop_new (NULL, FALSE),
-    .action_set = openvr_action_set_new_from_url ("/actions/wm"),
-    .action_set_input = openvr_action_set_new_from_url ("/actions/mouse_synth"),
+    .action_set_wm = openvr_action_set_new_from_url ("/actions/wm"),
+    .action_set_mouse_synth = openvr_action_set_new_from_url ("/actions/mouse_synth"),
     .manager = openvr_overlay_manager_new (),
     .pointer_default_length = 5.0
   };
@@ -686,43 +686,41 @@ main ()
       .controller_index = 1
     };
 
-  openvr_action_set_connect (self.action_set, OPENVR_ACTION_POSE,
+  openvr_action_set_connect (self.action_set_wm, OPENVR_ACTION_POSE,
                              "/actions/wm/in/hand_pose_left",
                              (GCallback) _hand_pose_cb, &data_left);
-  openvr_action_set_connect (self.action_set, OPENVR_ACTION_POSE,
+  openvr_action_set_connect (self.action_set_wm, OPENVR_ACTION_POSE,
                              "/actions/wm/in/hand_pose_right",
                              (GCallback) _hand_pose_cb, &data_right);
-  openvr_action_set_connect (self.action_set, OPENVR_ACTION_DIGITAL,
+  openvr_action_set_connect (self.action_set_wm, OPENVR_ACTION_DIGITAL,
                              "/actions/wm/in/grab_window_left",
                              (GCallback) _grab_cb, &data_left);
-  openvr_action_set_connect (self.action_set, OPENVR_ACTION_DIGITAL,
+  openvr_action_set_connect (self.action_set_wm, OPENVR_ACTION_DIGITAL,
                              "/actions/wm/in/grab_window_right",
                              (GCallback) _grab_cb, &data_right);
 
-  openvr_action_set_connect (self.action_set, OPENVR_ACTION_ANALOG,
+  openvr_action_set_connect (self.action_set_wm, OPENVR_ACTION_ANALOG,
                              "/actions/wm/in/push_pull_scale_left",
                              (GCallback) _action_push_pull_scale_cb,
                              &data_left);
-  openvr_action_set_connect (self.action_set, OPENVR_ACTION_ANALOG,
+  openvr_action_set_connect (self.action_set_wm, OPENVR_ACTION_ANALOG,
                              "/actions/wm/in/push_pull_scale_right",
                              (GCallback) _action_push_pull_scale_cb,
                              &data_right);
 
-  openvr_action_set_connect (self.action_set, OPENVR_ACTION_ANALOG,
+  openvr_action_set_connect (self.action_set_wm, OPENVR_ACTION_ANALOG,
                              "/actions/wm/in/push_pull_left",
                              (GCallback) _action_push_pull_scale_cb,
                              &data_left);
-  openvr_action_set_connect (self.action_set, OPENVR_ACTION_ANALOG,
+  openvr_action_set_connect (self.action_set_wm, OPENVR_ACTION_ANALOG,
                              "/actions/wm/in/push_pull_right",
                              (GCallback) _action_push_pull_scale_cb,
                              &data_right);
 
-  openvr_action_set_connect (self.action_set_input,
-                             OPENVR_ACTION_DIGITAL,
+  openvr_action_set_connect (self.action_set_mouse_synth, OPENVR_ACTION_DIGITAL,
                              "/actions/mouse_synth/in/left_click_left",
                              (GCallback) _action_left_click_cb, &data_left);
-  openvr_action_set_connect (self.action_set_input,
-                             OPENVR_ACTION_DIGITAL,
+  openvr_action_set_connect (self.action_set_mouse_synth, OPENVR_ACTION_DIGITAL,
                              "/actions/mouse_synth/in/left_click_right",
                              (GCallback) _action_left_click_cb, &data_right);
 
