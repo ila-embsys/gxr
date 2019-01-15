@@ -41,7 +41,7 @@ bool _init_descriptor_layout (XrdSceneClient *self);
 
 graphene_matrix_t _get_hmd_pose_matrix (EVREye eye);
 graphene_matrix_t _get_view_projection_matrix (XrdSceneClient *self,
-                                               EVREye               eye);
+                                               EVREye eye);
 
 void _update_matrices (XrdSceneClient *self);
 void _update_device_poses (XrdSceneClient *self);
@@ -70,8 +70,8 @@ xrd_scene_client_init (XrdSceneClient *self)
   self->near_clip = 0.1f;
   self->far_clip = 30.0f;
 
-  self->framebuffer[EVREye_Eye_Left] = gulkan_frame_buffer_new();
-  self->framebuffer[EVREye_Eye_Right] = gulkan_frame_buffer_new();
+  for (uint32_t eye = 0; eye < 2; eye++)
+    self->framebuffer[eye] = gulkan_frame_buffer_new();
 
   self->model_manager = xrd_scene_device_manager_new ();
   self->scene_window = xrd_scene_window_new ();
@@ -161,7 +161,8 @@ load_gdk_pixbuf ()
     }
   else
     {
-      GdkPixbuf *pixbuf_rgba = gdk_pixbuf_add_alpha (pixbuf_rgb, false, 0, 0, 0);
+      GdkPixbuf *pixbuf_rgba = gdk_pixbuf_add_alpha (pixbuf_rgb,
+                                                     false, 0, 0, 0);
       g_object_unref (pixbuf_rgb);
       return pixbuf_rgba;
     }
@@ -295,8 +296,7 @@ _init_vulkan_instance (XrdSceneClient *self)
   GSList *extensions = NULL;
   GulkanClient *client = GULKAN_CLIENT (self);
   openvr_compositor_get_instance_extensions (&extensions);
-  return gulkan_instance_create (client->instance, use_validation,
-                                 extensions);
+  return gulkan_instance_create (client->instance, use_validation, extensions);
 }
 
 bool
@@ -558,15 +558,10 @@ _init_descriptor_layout (XrdSceneClient *self)
     }
   };
 
-  VkResult res;
-  res = vkCreateDescriptorSetLayout (client->device->device,
-                                    &info, NULL,
-                                    &self->descriptor_set_layout);
-  if (res != VK_SUCCESS)
-    {
-      g_print ("vkCreateDescriptorSetLayout failed with error %d\n", res);
-      return false;
-    }
+  VkResult res = vkCreateDescriptorSetLayout (client->device->device,
+                                             &info, NULL,
+                                             &self->descriptor_set_layout);
+  vk_check_error ("vkCreateDescriptorSetLayout", res);
 
   return true;
 }
@@ -584,14 +579,9 @@ _init_pipeline_layout (XrdSceneClient *self)
     .pPushConstantRanges = NULL
   };
 
-  VkResult res;
-  res = vkCreatePipelineLayout (client->device->device,
-                               &info, NULL, &self->pipeline_layout);
-  if (res != VK_SUCCESS)
-    {
-      g_print ("vkCreatePipelineLayout failed with error %d\n", res);
-      return false;
-    }
+  VkResult res = vkCreatePipelineLayout (client->device->device,
+                                        &info, NULL, &self->pipeline_layout);
+  vk_check_error ("vkCreatePipelineLayout", res);
 
   return true;
 }
@@ -606,11 +596,7 @@ _init_pipeline_cache (XrdSceneClient *self)
   };
   VkResult res = vkCreatePipelineCache (client->device->device,
                                        &info, NULL, &self->pipeline_cache);
-  if (res != VK_SUCCESS)
-    {
-      g_print ("vkCreatePipelineCache failed with error %d\n", res);
-      return false;
-    }
+  vk_check_error ("vkCreatePipelineCache", res);
 
   return true;
 }
@@ -753,11 +739,7 @@ _init_graphics_pipelines (XrdSceneClient *self)
                                                 self->pipeline_cache, 1,
                                                &pipeline_info,
                                                 NULL, &self->pipelines[i]);
-      if (res != VK_SUCCESS)
-        {
-          g_print ("vkCreateGraphicsPipelines failed with error %d\n", res);
-          return false;
-        }
+      vk_check_error ("vkCreateGraphicsPipelines", res);
     }
 
   return true;
