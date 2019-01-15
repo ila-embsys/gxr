@@ -27,7 +27,10 @@ xrd_scene_window_init (XrdSceneWindow *self)
 {
   self->descriptor_pool = VK_NULL_HANDLE;
 
+  graphene_matrix_init_identity (&self->model_matrix);
+
   self->vertex_buffer = gulkan_vertex_buffer_new ();
+  self->scale = 1.0f;
 
   for (uint32_t eye = 0; eye < 2; eye++)
     self->uniform_buffers[eye] = gulkan_uniform_buffer_new ();
@@ -92,8 +95,7 @@ xrd_scene_window_init_texture (XrdSceneWindow *self,
     .maxLod = (float) mip_levels
   };
 
-  vkCreateSampler (device->device, &sampler_info, NULL,
-                   &self->scene_sampler);
+  vkCreateSampler (device->device, &sampler_info, NULL, &self->scene_sampler);
 
   return true;
 }
@@ -113,16 +115,6 @@ void _append_plane (GulkanVertexBuffer *vbo,
   graphene_matrix_multiply (&mat_scale, &mat_translation, &mat);
 
   gulkan_geometry_append_plane (vbo, &mat);
-}
-
-void
-xrd_scene_window_init_geometry (XrdSceneWindow *self)
-{
-  _append_plane (self->vertex_buffer, 0, 1, 0, 0.3f);
-  _append_plane (self->vertex_buffer, 1, 1, 0, 0.5f);
-
-  if (!gulkan_vertex_buffer_alloc_array (self->vertex_buffer, self->device))
-    return;
 }
 
 gboolean
@@ -203,13 +195,14 @@ xrd_scene_window_initialize (XrdSceneWindow        *self,
   /* TODO: Require device in constructor */
   self->device = device;
 
-  xrd_scene_window_init_geometry (self);
+  _append_plane (self->vertex_buffer, 0, 0, 0, 1.0f);
+  if (!gulkan_vertex_buffer_alloc_array (self->vertex_buffer, self->device))
+    return FALSE;
 
   /* Create uniform buffer to hold a matrix per eye */
   for (uint32_t eye = 0; eye < 2; eye++)
     gulkan_uniform_buffer_allocate_and_map (self->uniform_buffers[eye],
-                                            self->device,
-                                            sizeof (float) * 16);
+                                            self->device, sizeof (float) * 16);
 
   if (!xrd_scene_window_init_descriptors (self, layout))
     return FALSE;
@@ -220,6 +213,29 @@ xrd_scene_window_initialize (XrdSceneWindow        *self,
 }
 
 void
+_update_model_matrix (XrdSceneWindow *self)
+{
+  graphene_matrix_init_scale (&self->model_matrix,
+                              self->scale, self->scale, self->scale);
+  graphene_matrix_translate (&self->model_matrix, &self->position);
+}
+
+void
+xrd_scene_window_set_scale (XrdSceneWindow *self, float scale)
+{
+  self->scale = scale;
+  _update_model_matrix (self);
+}
+
+void
+xrd_scene_window_set_position (XrdSceneWindow     *self,
+                               graphene_point3d_t *position)
+{
+  graphene_point3d_init_from_point (&self->position, position);
+  _update_model_matrix (self);
+}
+
+void
 xrd_scene_window_draw (XrdSceneWindow    *self,
                        EVREye             eye,
                        VkPipeline         pipeline,
@@ -227,12 +243,13 @@ xrd_scene_window_draw (XrdSceneWindow    *self,
                        VkCommandBuffer    cmd_buffer,
                        graphene_matrix_t *vp)
 {
-  vkCmdBindPipeline (cmd_buffer,
-                     VK_PIPELINE_BIND_POINT_GRAPHICS,
-                     pipeline);
+  vkCmdBindPipeline (cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+
+  graphene_matrix_t mvp;
+  graphene_matrix_multiply (&self->model_matrix, vp, &mvp);
 
   /* Update matrix in uniform buffer */
-  graphene_matrix_to_float (vp, self->uniform_buffers[eye]->data);
+  graphene_matrix_to_float (&mvp, self->uniform_buffers[eye]->data);
 
   vkCmdBindDescriptorSets (
     cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1,

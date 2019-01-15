@@ -43,6 +43,8 @@ typedef struct VertexDataScene
 
 G_BEGIN_DECLS
 
+#define WINDOW_COUNT 4
+
 #define XRD_TYPE_SCENE_CLIENT xrd_scene_client_get_type ()
 G_DECLARE_FINAL_TYPE (XrdSceneClient, xrd_scene_client,
                       XRD, SCENE_CLIENT, GulkanClient)
@@ -59,7 +61,7 @@ struct _XrdSceneClient
   float near_clip;
   float far_clip;
 
-  XrdSceneWindow *scene_window;
+  XrdSceneWindow *windows[WINDOW_COUNT];
 
   VkShaderModule shader_modules[PIPELINE_COUNT * 2];
   VkPipeline pipelines[PIPELINE_COUNT];

@@ -34,6 +34,11 @@ struct _XrdSceneWindow
   VkDescriptorPool descriptor_pool;
   VkDescriptorSet descriptor_sets[2];
 
+  graphene_matrix_t model_matrix;
+
+  graphene_point3d_t position;
+  float scale;
+
   GulkanDevice *device;
 };
 
@@ -59,6 +64,12 @@ xrd_scene_window_draw (XrdSceneWindow    *self,
                        VkCommandBuffer    cmd_buffer,
                        graphene_matrix_t *vp);
 
+void
+xrd_scene_window_set_scale (XrdSceneWindow *self, float scale);
+
+void
+xrd_scene_window_set_position (XrdSceneWindow     *self,
+                               graphene_point3d_t *position);
 
 G_END_DECLS
 

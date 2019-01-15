@@ -74,7 +74,9 @@ xrd_scene_client_init (XrdSceneClient *self)
     self->framebuffer[eye] = gulkan_frame_buffer_new();
 
   self->model_manager = xrd_scene_device_manager_new ();
-  self->scene_window = xrd_scene_window_new ();
+
+  for (uint32_t i = 0; i < WINDOW_COUNT; i++)
+    self->windows[i] = xrd_scene_window_new ();
 }
 
 XrdSceneClient *
@@ -101,7 +103,8 @@ xrd_scene_client_finalize (GObject *gobject)
 
   if (device != VK_NULL_HANDLE)
     {
-      g_object_unref (self->scene_window);
+      for (uint32_t i = 0; i < WINDOW_COUNT; i++)
+        g_object_unref (self->windows[i]);
 
       for (uint32_t eye = 0; eye < 2; eye++)
         g_object_unref (self->framebuffer[eye]);
@@ -254,9 +257,10 @@ _init_vulkan (XrdSceneClient *self)
   if (!pixbuf)
     return false;
 
-  if (!xrd_scene_window_init_texture (self->scene_window, client->device,
-                                      cmd_buffer.cmd_buffer, pixbuf))
-    return FALSE;
+  for (uint32_t i = 0; i < WINDOW_COUNT; i++)
+    if (!xrd_scene_window_init_texture (self->windows[i], client->device,
+                                        cmd_buffer.cmd_buffer, pixbuf))
+      return FALSE;
 
   _update_matrices (self);
   _init_stereo_render_targets (self);
@@ -273,9 +277,16 @@ _init_vulkan (XrdSceneClient *self)
   if (!_init_graphics_pipelines (self))
     return false;
 
-  xrd_scene_window_initialize (self->scene_window,
-                               client->device,
-                               &self->descriptor_set_layout);
+  for (uint32_t i = 0; i < WINDOW_COUNT; i++)
+    {
+      xrd_scene_window_initialize (self->windows[i],
+                                   client->device,
+                                   &self->descriptor_set_layout);
+
+      graphene_point3d_t position = { i, 1, 0 };
+      xrd_scene_window_set_position (self->windows[i], &position);
+      xrd_scene_window_set_scale (self->windows[i], (i + 1) * 0.2f);
+    }
 
   _init_device_models (self);
 
@@ -472,10 +483,12 @@ _render_stereo (XrdSceneClient *self, VkCommandBuffer cmd_buffer)
       gulkan_frame_buffer_begin_pass (self->framebuffer[eye], cmd_buffer);
 
       graphene_matrix_t vp = _get_view_projection_matrix (self, eye);
-      xrd_scene_window_draw (self->scene_window, eye,
-                             self->pipelines[PIPELINE_WINDOWS],
-                             self->pipeline_layout,
-                             cmd_buffer, &vp);
+
+      for (uint32_t i = 0; i < WINDOW_COUNT; i++)
+        xrd_scene_window_draw (self->windows[i], eye,
+                               self->pipelines[PIPELINE_WINDOWS],
+                               self->pipeline_layout,
+                               cmd_buffer, &vp);
 
       OpenVRContext *context = openvr_context_get_instance ();
       if (context->system->IsInputAvailable ())
