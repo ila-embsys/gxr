@@ -27,10 +27,10 @@ xrd_scene_window_init (XrdSceneWindow *self)
 {
   self->descriptor_pool = VK_NULL_HANDLE;
 
-  self->planes_vbo = gulkan_vertex_buffer_new ();
+  self->vertex_buffer = gulkan_vertex_buffer_new ();
 
-  self->planes_ubo[0] = gulkan_uniform_buffer_new ();
-  self->planes_ubo[1] = gulkan_uniform_buffer_new ();
+  for (uint32_t eye = 0; eye < 2; eye++)
+    self->uniform_buffers[eye] = gulkan_uniform_buffer_new ();
 
   self->scene_sampler = VK_NULL_HANDLE;
 
@@ -52,10 +52,10 @@ xrd_scene_window_finalize (GObject *gobject)
   vkDestroySampler (self->device->device, self->scene_sampler, NULL);
   vkDestroyDescriptorPool (self->device->device, self->descriptor_pool, NULL);
 
-  g_object_unref (self->planes_vbo);
+  g_object_unref (self->vertex_buffer);
 
   for (uint32_t eye = 0; eye < 2; eye++)
-    g_object_unref (self->planes_ubo[eye]);
+    g_object_unref (self->uniform_buffers[eye]);
 }
 
 bool
@@ -118,11 +118,10 @@ void _append_plane (GulkanVertexBuffer *vbo,
 void
 xrd_scene_window_init_geometry (XrdSceneWindow *self)
 {
-  _append_plane (self->planes_vbo, 0, 1, 0, 0.3f);
-  _append_plane (self->planes_vbo, 1, 1, 0, 0.5f);
+  _append_plane (self->vertex_buffer, 0, 1, 0, 0.3f);
+  _append_plane (self->vertex_buffer, 1, 1, 0, 0.5f);
 
-  if (!gulkan_vertex_buffer_alloc_array (self->planes_vbo,
-                                         self->device))
+  if (!gulkan_vertex_buffer_alloc_array (self->vertex_buffer, self->device))
     return;
 }
 
@@ -169,7 +168,7 @@ xrd_scene_window_update_descriptors (XrdSceneWindow *self)
           .descriptorCount = 1,
           .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
           .pBufferInfo = &(VkDescriptorBufferInfo) {
-            .buffer = self->planes_ubo[eye]->buffer,
+            .buffer = self->uniform_buffers[eye]->buffer,
             .offset = 0,
             .range = VK_WHOLE_SIZE
           },
@@ -208,7 +207,7 @@ xrd_scene_window_initialize (XrdSceneWindow        *self,
 
   /* Create uniform buffer to hold a matrix per eye */
   for (uint32_t eye = 0; eye < 2; eye++)
-    gulkan_uniform_buffer_allocate_and_map (self->planes_ubo[eye],
+    gulkan_uniform_buffer_allocate_and_map (self->uniform_buffers[eye],
                                             self->device,
                                             sizeof (float) * 16);
 
@@ -233,11 +232,11 @@ xrd_scene_window_draw (XrdSceneWindow    *self,
                      pipeline);
 
   /* Update matrix in uniform buffer */
-  graphene_matrix_to_float (vp, self->planes_ubo[eye]->data);
+  graphene_matrix_to_float (vp, self->uniform_buffers[eye]->data);
 
   vkCmdBindDescriptorSets (
     cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1,
    &self->descriptor_sets[eye], 0, NULL);
 
-  gulkan_vertex_buffer_draw (self->planes_vbo, cmd_buffer);
+  gulkan_vertex_buffer_draw (self->vertex_buffer, cmd_buffer);
 }

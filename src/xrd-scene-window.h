@@ -26,8 +26,8 @@ struct _XrdSceneWindow
 {
   GObject parent;
 
-  GulkanVertexBuffer *planes_vbo;
-  GulkanUniformBuffer *planes_ubo[2];
+  GulkanVertexBuffer *vertex_buffer;
+  GulkanUniformBuffer *uniform_buffers[2];
   GulkanTexture *cat_texture;
   VkSampler scene_sampler;
 
