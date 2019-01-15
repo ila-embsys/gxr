@@ -101,8 +101,7 @@ xrd_scene_window_init_texture (XrdSceneWindow *self,
 }
 
 void _append_plane (GulkanVertexBuffer *vbo,
-                    float x, float y, float z,
-                    float scale)
+                    float x, float y, float z, float scale)
 {
   graphene_matrix_t mat_scale;
   graphene_matrix_init_scale (&mat_scale, scale, scale, scale);

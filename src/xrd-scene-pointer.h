@@ -13,6 +13,7 @@
 #include <gulkan-vertex-buffer.h>
 
 #include "openvr-context.h"
+#include <gulkan-uniform-buffer.h>
 
 G_BEGIN_DECLS
 
@@ -24,23 +25,37 @@ struct _XrdScenePointer
 {
   GObject parent;
 
-  GulkanVertexBuffer *pointer_vbo;
+  VkDescriptorPool descriptor_pool;
+  VkDescriptorSet descriptor_sets[2];
+  GulkanUniformBuffer *uniform_buffers[2];
+
+  GulkanDevice *device;
+
+  graphene_matrix_t model_matrix;
+
+  GulkanVertexBuffer *vertex_buffer;
 };
 
 XrdScenePointer *xrd_scene_pointer_new (void);
 
-void
-xrd_scene_pointer_render_pointer (XrdScenePointer *self,
-                                  VkPipeline       pipeline,
-                                  VkCommandBuffer  cmd_buffer);
+gboolean
+xrd_scene_pointer_initialize (XrdScenePointer       *self,
+                              GulkanDevice          *device,
+                              VkDescriptorSetLayout *layout);
 
-#define MAX_TRACKED_DEVICES 64
+void
+xrd_scene_pointer_render (XrdScenePointer   *self,
+                          EVREye             eye,
+                          VkPipeline         pipeline,
+                          VkPipelineLayout   pipeline_layout,
+                          VkCommandBuffer    cmd_buffer,
+                          graphene_matrix_t *vp);
 
 void
 xrd_scene_pointer_update (XrdScenePointer    *self,
-                          GulkanDevice       *device,
-                          TrackedDevicePose_t device_poses[MAX_TRACKED_DEVICES],
-                          graphene_matrix_t   device_mats[MAX_TRACKED_DEVICES]);
+                          graphene_vec4_t    *start,
+                          float               length,
+                          graphene_matrix_t  *mat);
 
 G_END_DECLS
 

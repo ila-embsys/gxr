@@ -29,8 +29,6 @@ xrd_scene_device_manager_init (XrdSceneDeviceManager *self)
   self->model_content = g_hash_table_new_full (g_str_hash, g_str_equal,
                                                g_free, g_object_unref);
   memset (self->models, 0, sizeof (self->models));
-
-  self->pointer = xrd_scene_pointer_new ();
 }
 
 XrdSceneDeviceManager *
@@ -49,7 +47,10 @@ xrd_scene_device_manager_finalize (GObject *gobject)
     if (self->models[i] != NULL)
       g_object_unref (self->models[i]);
 
-  g_object_unref (self->pointer);
+  for (TrackedDeviceIndex_t i = k_unTrackedDeviceIndex_Hmd + 1;
+       i < k_unMaxTrackedDeviceCount; i++)
+    if (self->pointers[i] != NULL)
+      g_object_unref (self->pointers[i]);
 }
 
 OpenVRVulkanModel*
@@ -172,22 +173,55 @@ xrd_scene_device_manager_update_poses (XrdSceneDeviceManager *self,
 
 void
 xrd_scene_device_manager_update_pointers (XrdSceneDeviceManager *self,
-                                          GulkanDevice          *device)
+                                          GulkanDevice          *device,
+                                          VkDescriptorSetLayout *layout)
 {
   /* Don't update the pointer if there is no input */
   OpenVRContext *context = openvr_context_get_instance ();
-  if (context->system->IsInputAvailable ())
-    xrd_scene_pointer_update (self->pointer, device,
-                              self->device_poses,
-                              self->device_mats);
+  if (!context->system->IsInputAvailable ())
+    return;
+
+  for (TrackedDeviceIndex_t i = k_unTrackedDeviceIndex_Hmd + 1;
+       i < k_unMaxTrackedDeviceCount; i++)
+    {
+      OpenVRContext *context = openvr_context_get_instance ();
+      if (!context->system->IsTrackedDeviceConnected (i))
+        continue;
+
+      if (context->system->GetTrackedDeviceClass (i) !=
+          ETrackedDeviceClass_TrackedDeviceClass_Controller)
+        continue;
+
+      if (!self->device_poses[i].bPoseIsValid)
+        continue;
+
+      if (self->pointers[i] == NULL)
+        {
+          self->pointers[i] = xrd_scene_pointer_new ();
+          xrd_scene_pointer_initialize (self->pointers[i], device, layout);
+        }
+
+      graphene_vec4_t start;
+      graphene_vec4_init (&start, 0, 0, -0.02f, 1);
+
+      xrd_scene_pointer_update (self->pointers[i], &start, 40.0f,
+                               &self->device_mats[i]);
+    }
 }
 
 void
 xrd_scene_device_manager_render_pointers (XrdSceneDeviceManager *self,
+                                          EVREye                 eye,
                                           VkCommandBuffer        cmd_buffer,
-                                          VkPipeline             pipeline)
+                                          VkPipeline             pipeline,
+                                          VkPipelineLayout       pipeline_layout,
+                                          graphene_matrix_t     *vp)
 {
   OpenVRContext *context = openvr_context_get_instance ();
   if (context->system->IsInputAvailable ())
-    xrd_scene_pointer_render_pointer (self->pointer, pipeline, cmd_buffer);
+    for (TrackedDeviceIndex_t i = k_unTrackedDeviceIndex_Hmd + 1;
+         i < k_unMaxTrackedDeviceCount; i++)
+      if (self->pointers[i] != NULL)
+        xrd_scene_pointer_render (self->pointers[i], eye, pipeline,
+                                  pipeline_layout, cmd_buffer, vp);
 }

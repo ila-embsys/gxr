@@ -357,7 +357,8 @@ xrd_scene_client_render (XrdSceneClient *self)
   gulkan_client_begin_res_cmd_buffer (client, &cmd_buffer);
 
   xrd_scene_device_manager_update_pointers (self->model_manager,
-                                            client->device);
+                                            client->device,
+                                           &self->descriptor_set_layout);
 
   _render_stereo (self, cmd_buffer.cmd_buffer);
 
@@ -483,9 +484,10 @@ _render_stereo (XrdSceneClient *self, VkCommandBuffer cmd_buffer)
                                self->pipeline_layout,
                                cmd_buffer, &vp);
 
-      xrd_scene_device_manager_render_pointers (self->model_manager,
+      xrd_scene_device_manager_render_pointers (self->model_manager, eye,
                                                 cmd_buffer,
-                                                self->pipelines[PIPELINE_POINTER]);
+                                                self->pipelines[PIPELINE_POINTER],
+                                                self->pipeline_layout, &vp);
 
       xrd_scene_device_manager_render (self->model_manager, eye, cmd_buffer,
                                        self->pipelines[PIPELINE_DEVICE_MODELS],

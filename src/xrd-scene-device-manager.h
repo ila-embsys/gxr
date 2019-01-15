@@ -32,7 +32,7 @@ struct _XrdSceneDeviceManager
   TrackedDevicePose_t device_poses[MAX_TRACKED_DEVICES];
   graphene_matrix_t device_mats[MAX_TRACKED_DEVICES];
 
-  XrdScenePointer *pointer;
+  XrdScenePointer *pointers[MAX_TRACKED_DEVICES];
 };
 
 XrdSceneDeviceManager *xrd_scene_device_manager_new (void);
@@ -57,12 +57,16 @@ xrd_scene_device_manager_update_poses (XrdSceneDeviceManager *self,
 
 void
 xrd_scene_device_manager_update_pointers (XrdSceneDeviceManager *self,
-                                          GulkanDevice          *device);
+                                          GulkanDevice          *device,
+                                          VkDescriptorSetLayout *layout);
 
 void
 xrd_scene_device_manager_render_pointers (XrdSceneDeviceManager *self,
+                                          EVREye                 eye,
                                           VkCommandBuffer        cmd_buffer,
-                                          VkPipeline             pipeline);
+                                          VkPipeline             pipeline,
+                                          VkPipelineLayout       pipeline_layout,
+                                          graphene_matrix_t     *vp);
 
 G_END_DECLS
 
