@@ -15,24 +15,17 @@
 #include "openvr-context.h"
 #include <gulkan-uniform-buffer.h>
 
+#include "xrd-scene-object.h"
+
 G_BEGIN_DECLS
 
 #define XRD_TYPE_SCENE_POINTER xrd_scene_pointer_get_type()
 G_DECLARE_FINAL_TYPE (XrdScenePointer, xrd_scene_pointer,
-                      XRD, SCENE_POINTER, GObject)
+                      XRD, SCENE_POINTER, XrdSceneObject)
 
 struct _XrdScenePointer
 {
-  GObject parent;
-
-  VkDescriptorPool descriptor_pool;
-  VkDescriptorSet descriptor_sets[2];
-  GulkanUniformBuffer *uniform_buffers[2];
-
-  GulkanDevice *device;
-
-  graphene_matrix_t model_matrix;
-
+  XrdSceneObject parent;
   GulkanVertexBuffer *vertex_buffer;
 };
 

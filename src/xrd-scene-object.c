@@ -173,3 +173,30 @@ xrd_scene_object_update_descriptors_texture (XrdSceneObject *self,
                               2, write_descriptor_sets, 0, NULL);
     }
 }
+
+void
+xrd_scene_object_update_descriptors (XrdSceneObject *self)
+{
+  for (uint32_t eye = 0; eye < 2; eye++)
+    {
+      VkWriteDescriptorSet *write_descriptor_sets = (VkWriteDescriptorSet []) {
+        {
+          .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+          .dstSet = self->descriptor_sets[eye],
+          .dstBinding = 0,
+          .descriptorCount = 1,
+          .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+          .pBufferInfo = &(VkDescriptorBufferInfo) {
+            .buffer = self->uniform_buffers[eye]->buffer,
+            .offset = 0,
+            .range = VK_WHOLE_SIZE
+          },
+          .pTexelBufferView = NULL
+        }
+      };
+
+      vkUpdateDescriptorSets (self->device->device,
+                              1, write_descriptor_sets, 0, NULL);
+    }
+}
+

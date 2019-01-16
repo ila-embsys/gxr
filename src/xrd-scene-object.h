@@ -66,6 +66,9 @@ xrd_scene_object_update_descriptors_texture (XrdSceneObject *self,
                                              VkSampler       sampler,
                                              VkImageView     image_view);
 
+void
+xrd_scene_object_update_descriptors (XrdSceneObject *self);
+
 G_END_DECLS
 
 #endif /* XRD_GLIB_SCENE_OBJECT_H_ */
