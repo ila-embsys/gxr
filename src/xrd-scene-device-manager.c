@@ -163,12 +163,7 @@ xrd_scene_device_manager_render (XrdSceneDeviceManager *self,
               ETrackedDeviceClass_TrackedDeviceClass_Controller)
         continue;
 
-      graphene_matrix_t mvp;
-      graphene_matrix_init_from_matrix (&mvp, &self->device_mats[i]);
-
-      graphene_matrix_multiply (&mvp, vp, &mvp);
-
-      xrd_scene_device_draw (self->models[i], eye, cmd_buffer, layout, &mvp);
+      xrd_scene_device_draw (self->models[i], eye, cmd_buffer, layout, vp);
     }
 }
 
@@ -189,9 +184,10 @@ xrd_scene_device_manager_update_poses (XrdSceneDeviceManager *self,
       if (!device_poses[i].bPoseIsValid)
         continue;
 
-      openvr_math_matrix34_to_graphene (
-        &device_poses[i].mDeviceToAbsoluteTracking,
-        &self->device_mats[i]);
+      if (self->models[i] != NULL)
+        openvr_math_matrix34_to_graphene (
+          &device_poses[i].mDeviceToAbsoluteTracking,
+          &self->models[i]->model_matrix);
 
       if (context->system->GetTrackedDeviceClass (i) ==
           ETrackedDeviceClass_TrackedDeviceClass_Controller &&
@@ -206,7 +202,9 @@ xrd_scene_device_manager_update_poses (XrdSceneDeviceManager *self,
 
   if (device_poses[k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
     {
-      *mat_head_pose = self->device_mats[k_unTrackedDeviceIndex_Hmd];
+      openvr_math_matrix34_to_graphene (
+        &device_poses[k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking,
+        mat_head_pose);
       graphene_matrix_inverse (mat_head_pose, mat_head_pose);
     }
 }

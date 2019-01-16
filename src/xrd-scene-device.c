@@ -147,9 +147,13 @@ xrd_scene_device_draw (XrdSceneDevice    *self,
                        EVREye             eye,
                        VkCommandBuffer    cmd_buffer,
                        VkPipelineLayout   pipeline_layout,
-                       graphene_matrix_t *mvp)
+                       graphene_matrix_t *vp)
 {
-  graphene_matrix_to_float (mvp, (float*) self->ubos[eye]->data);
+
+  graphene_matrix_t mvp;
+  graphene_matrix_multiply (&self->model_matrix, vp, &mvp);
+
+  graphene_matrix_to_float (&mvp, (float*) self->ubos[eye]->data);
 
   vkCmdBindDescriptorSets (cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                            pipeline_layout, 0, 1, &self->descriptor_sets[eye],
