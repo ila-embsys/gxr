@@ -185,9 +185,8 @@ _device_deactivate_cb (OpenVRContext          *context,
 {
   (void) context;
   XrdSceneClient *self = (XrdSceneClient*) _self;
-  g_print ("Device %d deactivated. Removing model node.\n", event->index);
-  g_object_unref (self->model_manager->models[event->index]);
-  self->model_manager->models[event->index] = NULL;
+  g_print ("Device %d deactivated. Removing scene device.\n", event->index);
+  xrd_scene_device_manager_remove (self->model_manager, event->index);
 }
 
 gboolean
@@ -330,8 +329,8 @@ _init_device_model (XrdSceneClient *self,
                     TrackedDeviceIndex_t device_id)
 {
   GulkanClient *client = GULKAN_CLIENT (self);
-  xrd_scene_device_manager_load (self->model_manager, client, device_id,
-                                &self->descriptor_set_layout);
+  xrd_scene_device_manager_add (self->model_manager, client, device_id,
+                               &self->descriptor_set_layout);
 }
 
 void
@@ -415,8 +414,6 @@ xrd_scene_client_render (XrdSceneClient *self)
                                EVRSubmitFlags_Submit_Default);
 
   xrd_scene_device_manager_update_poses (self->model_manager,
-                                         client->device,
-                                        &self->descriptor_set_layout,
                                         &self->mat_head_pose);
 }
 

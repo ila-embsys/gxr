@@ -38,10 +38,14 @@ struct _XrdSceneDeviceManager
 XrdSceneDeviceManager *xrd_scene_device_manager_new (void);
 
 void
-xrd_scene_device_manager_load (XrdSceneDeviceManager *self,
-                               GulkanClient          *client,
-                               TrackedDeviceIndex_t   device_id,
-                               VkDescriptorSetLayout *layout);
+xrd_scene_device_manager_add (XrdSceneDeviceManager *self,
+                              GulkanClient          *client,
+                              TrackedDeviceIndex_t   device_id,
+                              VkDescriptorSetLayout *layout);
+
+void
+xrd_scene_device_manager_remove (XrdSceneDeviceManager *self,
+                                 TrackedDeviceIndex_t   device_id);
 
 void
 xrd_scene_device_manager_render (XrdSceneDeviceManager *self,
@@ -53,8 +57,6 @@ xrd_scene_device_manager_render (XrdSceneDeviceManager *self,
 
 void
 xrd_scene_device_manager_update_poses (XrdSceneDeviceManager *self,
-                                       GulkanDevice          *device,
-                                       VkDescriptorSetLayout *layout,
                                        graphene_matrix_t     *mat_head_pose);
 
 void
