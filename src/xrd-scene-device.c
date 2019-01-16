@@ -25,7 +25,7 @@ xrd_scene_device_class_init (XrdSceneDeviceClass *klass)
 static void
 xrd_scene_device_init (XrdSceneDevice *self)
 {
-  self->content = NULL;
+  self->model = NULL;
   self->pose_valid = FALSE;
   self->is_controller = FALSE;
 }
@@ -40,13 +40,13 @@ static void
 xrd_scene_device_finalize (GObject *gobject)
 {
   XrdSceneDevice *self = XRD_SCENE_DEVICE (gobject);
-  g_object_unref (self->content);
+  g_object_unref (self->model);
   G_OBJECT_CLASS (xrd_scene_device_parent_class)->finalize (gobject);
 }
 
 gboolean
 xrd_scene_device_initialize (XrdSceneDevice        *self,
-                             OpenVRVulkanModel     *content,
+                             OpenVRVulkanModel     *model,
                              GulkanDevice          *device,
                              VkDescriptorSetLayout *layout)
 {
@@ -55,12 +55,12 @@ xrd_scene_device_initialize (XrdSceneDevice        *self,
   if (!xrd_scene_object_initialize (obj, device, layout))
     return FALSE;
 
-  self->content = content;
-  g_object_ref (self->content);
+  self->model = model;
+  g_object_ref (self->model);
 
   xrd_scene_object_update_descriptors_texture (
-    obj, self->content->sampler,
-    self->content->texture->image_view);
+    obj, self->model->sampler,
+    self->model->texture->image_view);
 
   return TRUE;
 }
@@ -82,6 +82,6 @@ xrd_scene_device_draw (XrdSceneDevice    *self,
   XrdSceneObject *obj = XRD_SCENE_OBJECT (self);
   xrd_scene_object_update_mvp_matrix (obj, eye, vp);
   xrd_scene_object_bind (obj, eye, cmd_buffer, pipeline_layout);
-  gulkan_vertex_buffer_draw_indexed (self->content->vbo, cmd_buffer);
+  gulkan_vertex_buffer_draw_indexed (self->model->vbo, cmd_buffer);
 }
 

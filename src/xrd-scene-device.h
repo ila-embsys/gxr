@@ -30,7 +30,7 @@ struct _XrdSceneDevice
 {
   XrdSceneObject parent;
 
-  OpenVRVulkanModel *content;
+  OpenVRVulkanModel *model;
 
   gboolean pose_valid;
   gboolean is_controller;
@@ -40,7 +40,7 @@ XrdSceneDevice *xrd_scene_device_new (void);
 
 gboolean
 xrd_scene_device_initialize (XrdSceneDevice        *self,
-                             OpenVRVulkanModel     *content,
+                             OpenVRVulkanModel     *model,
                              GulkanDevice          *device,
                              VkDescriptorSetLayout *layout);
 
