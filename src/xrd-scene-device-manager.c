@@ -19,15 +19,14 @@ static void
 xrd_scene_device_manager_class_init (XrdSceneDeviceManagerClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
-
   object_class->finalize = xrd_scene_device_manager_finalize;
 }
 
 static void
 xrd_scene_device_manager_init (XrdSceneDeviceManager *self)
 {
-  self->model_content = g_hash_table_new_full (g_str_hash, g_str_equal,
-                                               g_free, g_object_unref);
+  self->models = g_hash_table_new_full (g_str_hash, g_str_equal,
+                                        g_free, g_object_unref);
   memset (self->devices, 0, sizeof (self->devices));
 }
 
@@ -41,7 +40,7 @@ static void
 xrd_scene_device_manager_finalize (GObject *gobject)
 {
   XrdSceneDeviceManager *self = XRD_SCENE_DEVICE_MANAGER (gobject);
-  g_hash_table_unref (self->model_content);
+  g_hash_table_unref (self->models);
 
   for (uint32_t i = 0; i < G_N_ELEMENTS (self->devices); i++)
     if (self->devices[i] != NULL)
@@ -71,7 +70,7 @@ _load_content (XrdSceneDeviceManager *self,
   if (!gulkan_client_submit_res_cmd_buffer (client, &cmd_buffer))
     return NULL;
 
-  g_hash_table_insert (self->model_content, g_strdup (model_name), content);
+  g_hash_table_insert (self->models, g_strdup (model_name), content);
 
   return content;
 }
@@ -87,7 +86,7 @@ xrd_scene_device_manager_add (XrdSceneDeviceManager *self,
       device_id, ETrackedDeviceProperty_Prop_RenderModelName_String);
 
   OpenVRVulkanModel *content =
-    g_hash_table_lookup (self->model_content, g_strdup (model_name));
+    g_hash_table_lookup (self->models, g_strdup (model_name));
 
   if (content == NULL)
     content = _load_content (self, client, model_name);

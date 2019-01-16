@@ -26,7 +26,7 @@ struct _XrdSceneDeviceManager
 {
   GObject parent;
 
-  GHashTable *model_content;
+  GHashTable *models;
 
   XrdSceneDevice *devices[MAX_TRACKED_DEVICES];
   XrdScenePointer *pointers[MAX_TRACKED_DEVICES];
