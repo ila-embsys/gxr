@@ -114,9 +114,12 @@ xrd_scene_device_manager_add (XrdSceneDeviceManager *self,
 
   g_free (model_name);
 
+  OpenVRContext *context = openvr_context_get_instance ();
+  device->is_controller = context->system->GetTrackedDeviceClass (device_id) ==
+                          ETrackedDeviceClass_TrackedDeviceClass_Controller;
+
   _insert_at_key (self->devices, device_id, device);
 
-  OpenVRContext *context = openvr_context_get_instance ();
   if (context->system->GetTrackedDeviceClass (device_id) ==
       ETrackedDeviceClass_TrackedDeviceClass_Controller)
     {
@@ -143,24 +146,10 @@ xrd_scene_device_manager_render (XrdSceneDeviceManager *self,
                                  graphene_matrix_t     *vp)
 {
   vkCmdBindPipeline (cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-  for (uint32_t i = 0; i < k_unMaxTrackedDeviceCount; i++)
-    {
-      XrdSceneDevice *device = g_hash_table_lookup (self->devices, &i);
 
-      if (!device)
-        continue;
-
-      if (!device->pose_valid)
-        continue;
-
-      OpenVRContext *context = openvr_context_get_instance ();
-      if (!context->system->IsInputAvailable () &&
-          context->system->GetTrackedDeviceClass (i) ==
-              ETrackedDeviceClass_TrackedDeviceClass_Controller)
-        continue;
-
-      xrd_scene_device_draw (device, eye, cmd_buffer, layout, vp);
-    }
+  GList *devices = g_hash_table_get_values (self->devices);
+  for (GList *l = devices; l; l = l->next)
+    xrd_scene_device_draw (l->data, eye, cmd_buffer, layout, vp);
 }
 
 void
@@ -171,31 +160,26 @@ xrd_scene_device_manager_update_poses (XrdSceneDeviceManager *self,
   OpenVRContext *context = openvr_context_get_instance ();
   context->compositor->WaitGetPoses (poses, k_unMaxTrackedDeviceCount, NULL, 0);
 
-  for (uint32_t i = 0; i < k_unMaxTrackedDeviceCount; ++i)
+  GList *device_keys = g_hash_table_get_keys (self->devices);
+  for (GList *l = device_keys; l; l = l->next)
     {
-      XrdSceneDevice *device = g_hash_table_lookup (self->devices, &i);
+      gint *key = l->data;
+      TrackedDeviceIndex_t i = *key;
 
-      if (!device)
-        continue;
+      XrdSceneDevice *device = g_hash_table_lookup (self->devices, &i);
 
       device->pose_valid = poses[i].bPoseIsValid;
       if (!device->pose_valid)
         continue;
 
-      openvr_math_matrix34_to_graphene (
-        &poses[i].mDeviceToAbsoluteTracking, &device->model_matrix);
+      openvr_math_matrix34_to_graphene (&poses[i].mDeviceToAbsoluteTracking,
+                                        &device->model_matrix);
 
-      if (context->system->GetTrackedDeviceClass (i) ==
-          ETrackedDeviceClass_TrackedDeviceClass_Controller &&
-          context->system->IsTrackedDeviceConnected (i))
+      if (device->is_controller)
         {
-          XrdScenePointer *pointer =
-            g_hash_table_lookup (self->pointers, &i);
-
-          if (pointer != NULL)
-            openvr_math_matrix34_to_graphene (
-              &poses[i].mDeviceToAbsoluteTracking,
-              &pointer->model_matrix);
+          XrdScenePointer *pointer = g_hash_table_lookup (self->pointers, &i);
+          openvr_math_matrix34_to_graphene (&poses[i].mDeviceToAbsoluteTracking,
+                                            &pointer->model_matrix);
         }
     }
 
@@ -217,13 +201,11 @@ xrd_scene_device_manager_render_pointers (XrdSceneDeviceManager *self,
                                           graphene_matrix_t     *vp)
 {
   OpenVRContext *context = openvr_context_get_instance ();
-  if (context->system->IsInputAvailable ())
-    for (TrackedDeviceIndex_t i = k_unTrackedDeviceIndex_Hmd + 1;
-         i < k_unMaxTrackedDeviceCount; i++)
-    {
-      XrdScenePointer *pointer = g_hash_table_lookup (self->pointers, &i);
-      if (pointer != NULL)
-        xrd_scene_pointer_render (pointer, eye, pipeline,
-                                  pipeline_layout, cmd_buffer, vp);
-    }
+  if (!context->system->IsInputAvailable ())
+    return;
+
+  GList *pointers = g_hash_table_get_values (self->pointers);
+  for (GList *l = pointers; l; l = l->next)
+    xrd_scene_pointer_render (l->data, eye, pipeline,
+                              pipeline_layout, cmd_buffer, vp);
 }

@@ -38,6 +38,7 @@ struct _XrdSceneDevice
   VkDescriptorSet descriptor_sets[2];
 
   gboolean pose_valid;
+  gboolean is_controller;
 
   graphene_matrix_t model_matrix;
 };

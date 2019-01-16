@@ -33,6 +33,7 @@ xrd_scene_device_init (XrdSceneDevice *self)
 
   self->content = NULL;
   self->pose_valid = FALSE;
+  self->is_controller = FALSE;
 }
 
 XrdSceneDevice *
@@ -149,6 +150,12 @@ xrd_scene_device_draw (XrdSceneDevice    *self,
                        VkPipelineLayout   pipeline_layout,
                        graphene_matrix_t *vp)
 {
+  if (!self->pose_valid)
+    return;
+
+  OpenVRContext *context = openvr_context_get_instance ();
+  if (!context->system->IsInputAvailable () && self->is_controller)
+    return;
 
   graphene_matrix_t mvp;
   graphene_matrix_multiply (&self->model_matrix, vp, &mvp);
