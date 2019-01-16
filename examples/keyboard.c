@@ -19,7 +19,7 @@
 #include "openvr-context.h"
 #include "openvr-overlay.h"
 #include "openvr-time.h"
-#include "openvr-vulkan-uploader.h"
+#include "openvr-overlay-uploader.h"
 #include "openvr-io.h"
 #include "openvr-action.h"
 #include "openvr-action-set.h"
@@ -34,7 +34,7 @@ typedef struct Example
   int text_cursor;
   char input_text[300];
   GulkanTexture *texture;
-  OpenVRVulkanUploader *uploader;
+  OpenVROverlayUploader *uploader;
   OpenVROverlay *overlay;
 
   OpenVRActionSet *action_set;
@@ -71,7 +71,7 @@ _damage_cb (GtkWidget      *widget,
 
     gulkan_client_upload_pixbuf (client, self->texture, pixbuf);
 
-    openvr_vulkan_uploader_submit_frame (self->uploader,
+    openvr_overlay_uploader_submit_frame (self->uploader,
                                          self->overlay,
                                          self->texture);
 
@@ -301,14 +301,14 @@ main (int argc, char *argv[])
     .size_y = 600,
     .text_cursor = 0,
     .texture = NULL,
-    .uploader = openvr_vulkan_uploader_new (),
+    .uploader = openvr_overlay_uploader_new (),
     .action_set = openvr_action_set_new_from_url ("/actions/wm")
   };
 
   if (!_init_gtk (&self))
     return FALSE;
 
-  if (!openvr_vulkan_uploader_init_vulkan (self.uploader, true))
+  if (!openvr_overlay_uploader_init_vulkan (self.uploader, true))
   {
     g_printerr ("Unable to initialize Vulkan!\n");
     return false;

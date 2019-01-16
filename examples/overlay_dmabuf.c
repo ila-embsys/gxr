@@ -18,7 +18,7 @@
 #include "openvr-context.h"
 #include "openvr-overlay.h"
 #include "openvr-compositor.h"
-#include "openvr-vulkan-uploader.h"
+#include "openvr-overlay-uploader.h"
 
 #include "dmabuf_content.h"
 
@@ -118,9 +118,9 @@ _show_cb (OpenVROverlay *overlay,
   if (!openvr_overlay_is_valid (overlay) || is_invisible)
     return;
 
-  OpenVRVulkanUploader * uploader = (OpenVRVulkanUploader*) data;
+  OpenVROverlayUploader * uploader = (OpenVROverlayUploader*) data;
 
-  openvr_vulkan_uploader_submit_frame (uploader, overlay, texture);
+  openvr_overlay_uploader_submit_frame (uploader, overlay, texture);
 }
 
 static void
@@ -180,8 +180,8 @@ main ()
   if (!_init_openvr ())
     return -1;
 
-  OpenVRVulkanUploader *uploader = openvr_vulkan_uploader_new ();
-  if (!openvr_vulkan_uploader_init_vulkan (uploader, true))
+  OpenVROverlayUploader *uploader = openvr_overlay_uploader_new ();
+  if (!openvr_overlay_uploader_init_vulkan (uploader, true))
   {
     g_printerr ("Unable to initialize Vulkan!\n");
     return false;

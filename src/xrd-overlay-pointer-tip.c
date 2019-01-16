@@ -6,24 +6,24 @@
  */
 
 #include <gdk/gdk.h>
-#include "openvr-intersection.h"
+#include "xrd-overlay-pointer-tip.h"
 #include "openvr-math.h"
 
-G_DEFINE_TYPE (OpenVRIntersection, openvr_intersection, OPENVR_TYPE_OVERLAY)
+G_DEFINE_TYPE (XrdOverlayPointerTip, xrd_overlay_pointer_tip, OPENVR_TYPE_OVERLAY)
 
 static void
-openvr_intersection_finalize (GObject *gobject);
+xrd_overlay_pointer_tip_finalize (GObject *gobject);
 
 static void
-openvr_intersection_class_init (OpenVRIntersectionClass *klass)
+xrd_overlay_pointer_tip_class_init (XrdOverlayPointerTipClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = openvr_intersection_finalize;
+  object_class->finalize = xrd_overlay_pointer_tip_finalize;
 }
 
 static void
-openvr_intersection_init (OpenVRIntersection *self)
+xrd_overlay_pointer_tip_init (XrdOverlayPointerTip *self)
 {
   (void) self;
   self->active = FALSE;
@@ -49,8 +49,8 @@ openvr_intersection_init (OpenVRIntersection *self)
 
 typedef struct Animation
 {
-  OpenVRIntersection *self;
-  OpenVRVulkanUploader *uploader;
+  XrdOverlayPointerTip *self;
+  OpenVROverlayUploader *uploader;
   float progress;
 } Animation;
 
@@ -130,7 +130,7 @@ _animate_cb (gpointer _animation)
                                active_pixbuf);
   g_object_unref (active_pixbuf);
 
-  openvr_vulkan_uploader_submit_frame (animation->uploader,
+  openvr_overlay_uploader_submit_frame (animation->uploader,
                                        OPENVR_OVERLAY (animation->self),
                                        animation->self->texture);
 
@@ -148,12 +148,12 @@ _animate_cb (gpointer _animation)
 }
 
 void
-openvr_intersection_animate_pulse (OpenVRIntersection *self,
-                                   OpenVRVulkanUploader *uploader)
+xrd_overlay_pointer_tip_animate_pulse (XrdOverlayPointerTip *self,
+                                   OpenVROverlayUploader *uploader)
 {
   if (self->animation_callback_id != 0)
     {
-      openvr_intersection_set_active (self, uploader, self->active);
+      xrd_overlay_pointer_tip_set_active (self, uploader, self->active);
     }
   Animation *animation =  g_malloc (sizeof *animation);
   animation->progress = 0;
@@ -163,11 +163,11 @@ openvr_intersection_animate_pulse (OpenVRIntersection *self,
   self->animation_data = animation;
 }
 
-OpenVRIntersection *
-openvr_intersection_new (int controller_index)
+XrdOverlayPointerTip *
+xrd_overlay_pointer_tip_new (int controller_index)
 {
-  OpenVRIntersection *self =
-    (OpenVRIntersection*) g_object_new (OPENVR_TYPE_INTERSECTION, 0);
+  XrdOverlayPointerTip *self =
+    (XrdOverlayPointerTip*) g_object_new (XRD_TYPE_OVERLAY_POINTER_TIP, 0);
 
   char key[k_unVROverlayMaxKeyLength];
   snprintf (key, k_unVROverlayMaxKeyLength - 1, "intersection-%d",
@@ -194,8 +194,8 @@ openvr_intersection_new (int controller_index)
 }
 
 void
-openvr_intersection_init_vulkan (OpenVRIntersection   *self,
-                                 OpenVRVulkanUploader *uploader)
+xrd_overlay_pointer_tip_init_vulkan (XrdOverlayPointerTip   *self,
+                                 OpenVROverlayUploader *uploader)
 {
   GulkanClient *client = GULKAN_CLIENT (uploader);
 
@@ -211,19 +211,19 @@ openvr_intersection_init_vulkan (OpenVRIntersection   *self,
 }
 
 void
-openvr_intersection_init_raw (OpenVRIntersection *self)
+xrd_overlay_pointer_tip_init_raw (XrdOverlayPointerTip *self)
 {
   GdkPixbuf *default_pixbuf = _render_tip_pixbuf (1.0, 1.0, 1.0, 0.0);
   openvr_overlay_set_gdk_pixbuf_raw (OPENVR_OVERLAY (self), default_pixbuf);
   g_object_unref (default_pixbuf);
 }
 
-/** openvr_intersection_set_active:
+/** xrd_overlay_pointer_tip_set_active:
  * Changes whether the active or inactive style is rendered.
  * Also cancels animations. */
 void
-openvr_intersection_set_active (OpenVRIntersection *self,
-                                OpenVRVulkanUploader *uploader,
+xrd_overlay_pointer_tip_set_active (XrdOverlayPointerTip *self,
+                                OpenVROverlayUploader *uploader,
                                 gboolean active)
 {
   if (self->texture == NULL)
@@ -250,7 +250,7 @@ openvr_intersection_set_active (OpenVRIntersection *self,
   gulkan_client_upload_pixbuf (client, self->texture, pixbuf);
   g_object_unref (pixbuf);
 
-  openvr_vulkan_uploader_submit_frame (uploader, OPENVR_OVERLAY (self),
+  openvr_overlay_uploader_submit_frame (uploader, OPENVR_OVERLAY (self),
                                        self->texture);
 
   self->active = active;
@@ -258,9 +258,9 @@ openvr_intersection_set_active (OpenVRIntersection *self,
 }
 
 static void
-openvr_intersection_finalize (GObject *gobject)
+xrd_overlay_pointer_tip_finalize (GObject *gobject)
 {
-  OpenVRIntersection *self = OPENVR_INTERSECTION (gobject);
+  XrdOverlayPointerTip *self = XRD_OVERLAY_POINTER_TIP (gobject);
   (void) self;
   if (self->texture)
     g_object_unref (self->texture);
@@ -295,7 +295,7 @@ _get_hmd_pose (graphene_matrix_t *pose)
 
 /* note: Set overlay transform before calling this function */
 void
-openvr_intersection_set_constant_width (OpenVRIntersection *self)
+xrd_overlay_pointer_tip_set_constant_width (XrdOverlayPointerTip *self)
 {
   graphene_matrix_t intersection_pose;
   openvr_overlay_get_transform_absolute (OPENVR_OVERLAY(self),
@@ -359,7 +359,7 @@ openvr_intersection_set_constant_width (OpenVRIntersection *self)
 }
 
 void
-openvr_intersection_update (OpenVRIntersection *self,
+xrd_overlay_pointer_tip_update (XrdOverlayPointerTip *self,
                             graphene_matrix_t  *pose,
                             graphene_point3d_t *intersection_point)
 {
@@ -368,5 +368,5 @@ openvr_intersection_update (OpenVRIntersection *self,
   openvr_math_matrix_set_translation (&transform, intersection_point);
   openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (self), &transform);
 
-  openvr_intersection_set_constant_width (self);
+  xrd_overlay_pointer_tip_set_constant_width (self);
 }

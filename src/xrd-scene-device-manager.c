@@ -6,7 +6,7 @@
  */
 
 #include "xrd-scene-device-manager.h"
-#include "openvr-vulkan-model.h"
+#include "xrd-scene-model.h"
 #include "openvr-system.h"
 #include "openvr-math.h"
 
@@ -48,18 +48,18 @@ xrd_scene_device_manager_finalize (GObject *gobject)
   g_hash_table_unref (self->pointers);
 }
 
-OpenVRVulkanModel*
+XrdSceneModel*
 _load_content (XrdSceneDeviceManager *self,
                GulkanClient          *client,
                const char            *model_name)
 {
-  OpenVRVulkanModel *content;
+  XrdSceneModel *content;
 
   FencedCommandBuffer cmd_buffer;
   if (!gulkan_client_begin_res_cmd_buffer (client, &cmd_buffer))
     return NULL;
-  content = openvr_vulkan_model_new ();
-  if (!openvr_vulkan_model_load (content, client->device,
+  content = xrd_scene_model_new ();
+  if (!xrd_scene_model_load (content, client->device,
                                  cmd_buffer.cmd_buffer, model_name))
     return NULL;
 
@@ -89,7 +89,7 @@ xrd_scene_device_manager_add (XrdSceneDeviceManager *self,
     openvr_system_get_device_string (
       device_id, ETrackedDeviceProperty_Prop_RenderModelName_String);
 
-  OpenVRVulkanModel *content =
+  XrdSceneModel *content =
     g_hash_table_lookup (self->models, g_strdup (model_name));
 
   if (content == NULL)

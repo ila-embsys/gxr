@@ -5,39 +5,39 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "openvr-vulkan-model.h"
+#include "xrd-scene-model.h"
 #include "openvr-context.h"
 
-G_DEFINE_TYPE (OpenVRVulkanModel, openvr_vulkan_model, G_TYPE_OBJECT)
+G_DEFINE_TYPE (XrdSceneModel, xrd_scene_model, G_TYPE_OBJECT)
 
 static void
-openvr_vulkan_model_finalize (GObject *gobject);
+xrd_scene_model_finalize (GObject *gobject);
 
 static void
-openvr_vulkan_model_class_init (OpenVRVulkanModelClass *klass)
+xrd_scene_model_class_init (XrdSceneModelClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = openvr_vulkan_model_finalize;
+  object_class->finalize = xrd_scene_model_finalize;
 }
 
 static void
-openvr_vulkan_model_init (OpenVRVulkanModel *self)
+xrd_scene_model_init (XrdSceneModel *self)
 {
   self->sampler = VK_NULL_HANDLE;
   self->vbo = gulkan_vertex_buffer_new ();
 }
 
-OpenVRVulkanModel *
-openvr_vulkan_model_new (void)
+XrdSceneModel *
+xrd_scene_model_new (void)
 {
-  return (OpenVRVulkanModel*) g_object_new (OPENVR_TYPE_VULKAN_MODEL, 0);
+  return (XrdSceneModel*) g_object_new (XRD_TYPE_SCENE_MODEL, 0);
 }
 
 static void
-openvr_vulkan_model_finalize (GObject *gobject)
+xrd_scene_model_finalize (GObject *gobject)
 {
-  OpenVRVulkanModel *self = OPENVR_VULKAN_MODEL (gobject);
+  XrdSceneModel *self = XRD_SCENE_MODEL (gobject);
   g_object_unref (self->vbo);
   g_object_unref (self->texture);
 
@@ -96,7 +96,7 @@ _load_openvr_texture (TextureID_t                id,
 }
 
 gboolean
-_load_mesh (OpenVRVulkanModel *self,
+_load_mesh (XrdSceneModel *self,
             GulkanDevice             *device,
             RenderModel_t            *vr_model)
 {
@@ -116,7 +116,7 @@ _load_mesh (OpenVRVulkanModel *self,
 }
 
 gboolean
-_load_texture (OpenVRVulkanModel *self,
+_load_texture (XrdSceneModel *self,
                GulkanDevice             *device,
                VkCommandBuffer           cmd_buffer,
                RenderModel_TextureMap_t *texture)
@@ -157,7 +157,7 @@ _load_texture (OpenVRVulkanModel *self,
 
 
 gboolean
-openvr_vulkan_model_load (OpenVRVulkanModel *self,
+xrd_scene_model_load (XrdSceneModel *self,
                           GulkanDevice      *device,
                           VkCommandBuffer    cmd_buffer,
                           const char        *model_name)

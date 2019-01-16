@@ -7,12 +7,12 @@
 
 
 #include "openvr-context.h"
-#include "openvr-vulkan-uploader.h"
+#include "openvr-overlay-uploader.h"
 
 void
 _test_minimal ()
 {
-  OpenVRVulkanUploader *uploader = openvr_vulkan_uploader_new ();
+  OpenVROverlayUploader *uploader = openvr_overlay_uploader_new ();
   g_assert_nonnull (uploader);
 
   g_assert (openvr_context_is_installed ());
@@ -21,7 +21,7 @@ _test_minimal ()
   g_assert (openvr_context_init_overlay (context));
   g_assert (openvr_context_is_valid (context));
 
-  g_assert (openvr_vulkan_uploader_init_vulkan (uploader, true));
+  g_assert (openvr_overlay_uploader_init_vulkan (uploader, true));
   g_object_unref (uploader);
 }
 

@@ -8,11 +8,11 @@
 #include <gdk/gdk.h>
 #include <math.h>
 
-#include "openvr-overlay-manager.h"
+#include "xrd-overlay-manager.h"
 #include "openvr-overlay.h"
 #include "openvr-math.h"
 
-G_DEFINE_TYPE (OpenVROverlayManager, openvr_overlay_manager, G_TYPE_OBJECT)
+G_DEFINE_TYPE (XrdOverlayManager, xrd_overlay_manager, G_TYPE_OBJECT)
 
 enum {
   NO_HOVER_EVENT,
@@ -21,10 +21,10 @@ enum {
 static guint overlay_manager_signals[LAST_SIGNAL] = { 0 };
 
 static void
-openvr_overlay_manager_finalize (GObject *gobject);
+xrd_overlay_manager_finalize (GObject *gobject);
 
 static void
-openvr_overlay_manager_class_init (OpenVROverlayManagerClass *klass)
+xrd_overlay_manager_class_init (XrdOverlayManagerClass *klass)
 {
   overlay_manager_signals[NO_HOVER_EVENT] =
     g_signal_new ("no-hover-event",
@@ -35,11 +35,11 @@ openvr_overlay_manager_class_init (OpenVROverlayManagerClass *klass)
 
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = openvr_overlay_manager_finalize;
+  object_class->finalize = xrd_overlay_manager_finalize;
 }
 
 static void
-openvr_overlay_manager_init (OpenVROverlayManager *self)
+xrd_overlay_manager_init (XrdOverlayManager *self)
 {
   self->reset_transforms = g_hash_table_new (g_direct_hash, g_direct_equal);
   for (int i = 0; i < OPENVR_CONTROLLER_COUNT; i++)
@@ -50,10 +50,10 @@ openvr_overlay_manager_init (OpenVROverlayManager *self)
     }
 }
 
-OpenVROverlayManager *
-openvr_overlay_manager_new (void)
+XrdOverlayManager *
+xrd_overlay_manager_new (void)
 {
-  return (OpenVROverlayManager*) g_object_new (OPENVR_TYPE_OVERLAY_MANAGER, 0);
+  return (XrdOverlayManager*) g_object_new (XRD_TYPE_OVERLAY_MANAGER, 0);
 }
 
 void
@@ -63,9 +63,9 @@ _free_matrix_cb (gpointer m)
 }
 
 static void
-openvr_overlay_manager_finalize (GObject *gobject)
+xrd_overlay_manager_finalize (GObject *gobject)
 {
-  OpenVROverlayManager *self = OPENVR_OVERLAY_MANAGER (gobject);
+  XrdOverlayManager *self = XRD_OVERLAY_MANAGER (gobject);
 
   GList *matrices = g_hash_table_get_values (self->reset_transforms);
   g_list_free_full (matrices, _free_matrix_cb);
@@ -103,7 +103,7 @@ _interpolate_cb (gpointer _transition)
 }
 
 void
-openvr_overlay_manager_arrange_reset (OpenVROverlayManager *self)
+xrd_overlay_manager_arrange_reset (XrdOverlayManager *self)
 {
   GSList *l;
   for (l = self->grab_overlays; l != NULL; l = l->next)
@@ -135,7 +135,7 @@ openvr_overlay_manager_arrange_reset (OpenVROverlayManager *self)
 }
 
 gboolean
-openvr_overlay_manager_arrange_sphere (OpenVROverlayManager *self,
+xrd_overlay_manager_arrange_sphere (XrdOverlayManager *self,
                                        uint32_t              grid_width,
                                        uint32_t              grid_height)
 {
@@ -211,7 +211,7 @@ openvr_overlay_manager_arrange_sphere (OpenVROverlayManager *self,
 }
 
 void
-openvr_overlay_manager_save_reset_transform (OpenVROverlayManager *self,
+xrd_overlay_manager_save_reset_transform (XrdOverlayManager *self,
                                              OpenVROverlay        *overlay)
 {
   graphene_matrix_t *transform =
@@ -220,7 +220,7 @@ openvr_overlay_manager_save_reset_transform (OpenVROverlayManager *self,
 }
 
 void
-openvr_overlay_manager_add_overlay (OpenVROverlayManager *self,
+xrd_overlay_manager_add_overlay (XrdOverlayManager *self,
                                     OpenVROverlay        *overlay,
                                     OpenVROverlayFlags    flags)
 {
@@ -245,7 +245,7 @@ openvr_overlay_manager_add_overlay (OpenVROverlayManager *self,
 }
 
 void
-openvr_overlay_manager_remove_overlay (OpenVROverlayManager *self,
+xrd_overlay_manager_remove_overlay (XrdOverlayManager *self,
                                        OpenVROverlay        *overlay)
 {
   self->destroy_overlays = g_slist_remove (self->destroy_overlays, overlay);
@@ -257,7 +257,7 @@ openvr_overlay_manager_remove_overlay (OpenVROverlayManager *self,
 }
 
 void
-_test_hover (OpenVROverlayManager *self,
+_test_hover (XrdOverlayManager *self,
              graphene_matrix_t    *pose,
              int                   controller_index)
 {
@@ -351,7 +351,7 @@ _test_hover (OpenVROverlayManager *self,
 }
 
 void
-_drag_overlay (OpenVROverlayManager *self,
+_drag_overlay (XrdOverlayManager *self,
                graphene_matrix_t    *pose,
                int                   controller_index)
 {
@@ -417,7 +417,7 @@ _drag_overlay (OpenVROverlayManager *self,
 }
 
 void
-openvr_overlay_manager_drag_start (OpenVROverlayManager *self,
+xrd_overlay_manager_drag_start (XrdOverlayManager *self,
                                    int                   controller_index)
 {
   HoverState *hover_state = &self->hover_state[controller_index];
@@ -481,7 +481,7 @@ openvr_overlay_manager_drag_start (OpenVROverlayManager *self,
 #define MINIMAL_SCALE_WIDTH 0.1
 
 void
-openvr_overlay_manager_scale (OpenVROverlayManager *self,
+xrd_overlay_manager_scale (XrdOverlayManager *self,
                               GrabState *grab_state,
                               float factor,
                               float update_rate_ms)
@@ -505,7 +505,7 @@ openvr_overlay_manager_scale (OpenVROverlayManager *self,
 }
 
 void
-openvr_overlay_manager_check_grab (OpenVROverlayManager *self,
+xrd_overlay_manager_check_grab (XrdOverlayManager *self,
                                    int                   controller_index)
 {
   HoverState *hover_state = &self->hover_state[controller_index];
@@ -520,7 +520,7 @@ openvr_overlay_manager_check_grab (OpenVROverlayManager *self,
 }
 
 void
-openvr_overlay_manager_check_release (OpenVROverlayManager *self,
+xrd_overlay_manager_check_release (XrdOverlayManager *self,
                                       int                   controller_index)
 {
   GrabState *grab_state = &self->grab_state[controller_index];
@@ -536,7 +536,7 @@ openvr_overlay_manager_check_release (OpenVROverlayManager *self,
 }
 
 void
-openvr_overlay_manager_update_pose (OpenVROverlayManager *self,
+xrd_overlay_manager_update_pose (XrdOverlayManager *self,
                                     graphene_matrix_t    *pose,
                                     int                   controller_index)
 {
@@ -548,7 +548,7 @@ openvr_overlay_manager_update_pose (OpenVROverlayManager *self,
 }
 
 gboolean
-openvr_overlay_manager_is_hovering (OpenVROverlayManager *self)
+xrd_overlay_manager_is_hovering (XrdOverlayManager *self)
 {
   for (uint32_t i = 0; i < OPENVR_CONTROLLER_COUNT; i++)
     if (self->hover_state[i].overlay != NULL)
@@ -557,7 +557,7 @@ openvr_overlay_manager_is_hovering (OpenVROverlayManager *self)
 }
 
 gboolean
-openvr_overlay_manager_is_grabbing (OpenVROverlayManager *self)
+xrd_overlay_manager_is_grabbing (XrdOverlayManager *self)
 {
   for (uint32_t i = 0; i < OPENVR_CONTROLLER_COUNT; i++)
     if (self->grab_state[i].overlay != NULL)
@@ -566,7 +566,7 @@ openvr_overlay_manager_is_grabbing (OpenVROverlayManager *self)
 }
 
 gboolean
-openvr_overlay_manager_is_grabbed (OpenVROverlayManager *self,
+xrd_overlay_manager_is_grabbed (XrdOverlayManager *self,
                                    OpenVROverlay *overlay)
 {
   for (uint32_t i = 0; i < OPENVR_CONTROLLER_COUNT; i++)
@@ -576,7 +576,7 @@ openvr_overlay_manager_is_grabbed (OpenVROverlayManager *self,
 }
 
 gboolean
-openvr_overlay_manager_is_hovered (OpenVROverlayManager *self,
+xrd_overlay_manager_is_hovered (XrdOverlayManager *self,
                                    OpenVROverlay *overlay)
 {
   for (uint32_t i = 0; i < OPENVR_CONTROLLER_COUNT; i++)

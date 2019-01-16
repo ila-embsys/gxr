@@ -20,14 +20,14 @@
 #include "openvr-compositor.h"
 #include "openvr-math.h"
 #include "openvr-overlay.h"
-#include "openvr-vulkan-uploader.h"
+#include "openvr-overlay-uploader.h"
 #include "openvr-io.h"
 #include "openvr-action.h"
 #include "openvr-action-set.h"
-#include "openvr-pointer.h"
-#include "openvr-intersection.h"
-#include "openvr-button.h"
-#include "openvr-overlay-manager.h"
+#include "xrd-overlay-pointer.h"
+#include "xrd-overlay-pointer-tip.h"
+#include "xrd-overlay-button.h"
+#include "xrd-overlay-manager.h"
 
 #define GRID_WIDTH 6
 #define GRID_HEIGHT 5
@@ -38,15 +38,15 @@ typedef struct Example
 {
   GulkanTexture *texture;
 
-  OpenVROverlayManager *manager;
+  XrdOverlayManager *manager;
 
-  OpenVRPointer *pointer_ray[OPENVR_CONTROLLER_COUNT];
-  OpenVRIntersection *pointer_tip[OPENVR_CONTROLLER_COUNT];
+  XrdOverlayPointer *pointer_ray[OPENVR_CONTROLLER_COUNT];
+  XrdOverlayPointerTip *pointer_tip[OPENVR_CONTROLLER_COUNT];
 
   GSList *overlays;
 
-  OpenVRButton *button_reset;
-  OpenVRButton *button_sphere;
+  XrdOverlayButton *button_reset;
+  XrdOverlayButton *button_sphere;
 
   GMainLoop *loop;
 
@@ -55,7 +55,7 @@ typedef struct Example
   OpenVRActionSet *action_set_wm;
   OpenVRActionSet *action_set_mouse_synth;
 
-  OpenVRVulkanUploader *uploader;
+  OpenVROverlayUploader *uploader;
 } Example;
 
 typedef struct ActionCallbackData
@@ -143,13 +143,13 @@ _cat_grab_start_cb (OpenVROverlay *overlay,
   Example *self = (Example*) _self;
 
   /* don't grab if this overlay is already grabbed */
-  if (openvr_overlay_manager_is_grabbed (self->manager, overlay))
+  if (xrd_overlay_manager_is_grabbed (self->manager, overlay))
     {
       g_free (event);
       return;
     }
 
-  openvr_overlay_manager_drag_start (self->manager, event->index);
+  xrd_overlay_manager_drag_start (self->manager, event->index);
 
   _overlay_mark_green (overlay);
   g_free (event);
@@ -163,12 +163,12 @@ _cat_grab_cb (OpenVROverlay   *overlay,
   (void) overlay;
   Example *self = (Example*) _self;
 
-  OpenVRIntersection *pointer_tip =
+  XrdOverlayPointerTip *pointer_tip =
     self->pointer_tip[event->controller_index];
   openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (pointer_tip),
                                          &event->pose);
 
-  openvr_intersection_set_constant_width (pointer_tip);
+  xrd_overlay_pointer_tip_set_constant_width (pointer_tip);
   g_free (event);
 }
 
@@ -191,20 +191,20 @@ _hover_cb (OpenVROverlay    *overlay,
 {
   Example *self = (Example*) _self;
 
-  if (!openvr_overlay_manager_is_grabbed (self->manager, overlay))
+  if (!xrd_overlay_manager_is_grabbed (self->manager, overlay))
     _overlay_mark_blue (overlay);
 
   /* update pointer length and pointer tip overlay */
-  OpenVRIntersection *pointer_tip =
+  XrdOverlayPointerTip *pointer_tip =
     self->pointer_tip[event->controller_index];
 
   graphene_matrix_t overlay_pose;
   openvr_overlay_get_transform_absolute (overlay, &overlay_pose);
 
-  openvr_intersection_update (pointer_tip, &overlay_pose, &event->point);
+  xrd_overlay_pointer_tip_update (pointer_tip, &overlay_pose, &event->point);
 
-  OpenVRPointer *pointer_ray = self->pointer_ray[event->controller_index];
-  openvr_pointer_set_length (pointer_ray, event->distance);
+  XrdOverlayPointer *pointer_ray = self->pointer_ray[event->controller_index];
+  xrd_overlay_pointer_set_length (pointer_ray, event->distance);
   g_free (event);
 }
 
@@ -217,17 +217,17 @@ _hover_button_cb (OpenVROverlay    *overlay,
 
   _overlay_mark_orange (overlay);
 
-  OpenVRPointer *pointer_ray =
+  XrdOverlayPointer *pointer_ray =
       self->pointer_ray[event->controller_index];
-  OpenVRIntersection *pointer_tip =
+  XrdOverlayPointerTip *pointer_tip =
       self->pointer_tip[event->controller_index];
 
   /* update pointer length and intersection overlay */
   graphene_matrix_t overlay_pose;
   openvr_overlay_get_transform_absolute (overlay, &overlay_pose);
 
-  openvr_intersection_update (pointer_tip, &overlay_pose, &event->point);
-  openvr_pointer_set_length (pointer_ray, event->distance);
+  xrd_overlay_pointer_tip_update (pointer_tip, &overlay_pose, &event->point);
+  xrd_overlay_pointer_set_length (pointer_ray, event->distance);
   g_free (event);
 }
 
@@ -239,19 +239,19 @@ _hover_end_cb (OpenVROverlay *overlay,
   (void) event;
   Example *self = (Example*) _self;
 
-  OpenVRPointer *pointer_ray = self->pointer_ray[event->index];
-  openvr_pointer_reset_length (pointer_ray);
+  XrdOverlayPointer *pointer_ray = self->pointer_ray[event->index];
+  xrd_overlay_pointer_reset_length (pointer_ray);
 
   /* unmark if no controller is hovering over this overlay */
-  if (!openvr_overlay_manager_is_hovered (self->manager, overlay))
+  if (!xrd_overlay_manager_is_hovered (self->manager, overlay))
     _overlay_unmark (overlay);
 
   /* When leaving this overlay and immediately entering another, the tip should
    * still be active because it is now hovering another overlay. */
   gboolean active = self->manager->hover_state[event->index].overlay != NULL;
 
-  OpenVRIntersection *pointer_tip = self->pointer_tip[event->index];
-  openvr_intersection_set_active (pointer_tip, self->uploader, active);
+  XrdOverlayPointerTip *pointer_tip = self->pointer_tip[event->index];
+  xrd_overlay_pointer_tip_set_active (pointer_tip, self->uploader, active);
   g_free (event);
 }
 
@@ -264,14 +264,14 @@ _hover_start_cb (OpenVROverlay *overlay,
   (void) event;
   Example *self = (Example*) _self;
 
-  OpenVRIntersection *pointer_tip = self->pointer_tip[event->index];
-  openvr_intersection_set_active (pointer_tip, self->uploader, TRUE);
+  XrdOverlayPointerTip *pointer_tip = self->pointer_tip[event->index];
+  xrd_overlay_pointer_tip_set_active (pointer_tip, self->uploader, TRUE);
 
   g_free (event);
 }
 
 void
-_no_hover_cb (OpenVROverlayManager *manager,
+_no_hover_cb (XrdOverlayManager *manager,
               OpenVRNoHoverEvent   *event,
               gpointer             _self)
 {
@@ -279,9 +279,9 @@ _no_hover_cb (OpenVROverlayManager *manager,
 
   Example *self = (Example*) _self;
 
-  OpenVRIntersection *pointer_tip = self->pointer_tip[event->controller_index];
+  XrdOverlayPointerTip *pointer_tip = self->pointer_tip[event->controller_index];
 
-  OpenVRPointer *pointer_ray = self->pointer_ray[event->controller_index];
+  XrdOverlayPointer *pointer_ray = self->pointer_ray[event->controller_index];
 
   graphene_point3d_t distance_translation_point;
   graphene_point3d_init (&distance_translation_point,
@@ -306,9 +306,9 @@ _no_hover_cb (OpenVROverlayManager *manager,
   openvr_overlay_set_transform_absolute (OPENVR_OVERLAY (pointer_tip),
                                          &tip_pose);
 
-  openvr_intersection_set_constant_width (pointer_tip);
+  xrd_overlay_pointer_tip_set_constant_width (pointer_tip);
 
-  openvr_intersection_set_active (pointer_tip, self->uploader, FALSE);
+  xrd_overlay_pointer_tip_set_active (pointer_tip, self->uploader, FALSE);
 
   g_free (event);
 }
@@ -367,12 +367,12 @@ _init_cat_overlays (Example *self)
           .z = -3
         };
         openvr_overlay_set_translation (cat, &position);
-        openvr_overlay_manager_add_overlay (self->manager, cat,
+        xrd_overlay_manager_add_overlay (self->manager, cat,
                                             OPENVR_OVERLAY_HOVER |
                                             OPENVR_OVERLAY_GRAB |
                                             OPENVR_OVERLAY_DESTROY_WITH_PARENT);
 
-        openvr_vulkan_uploader_submit_frame (self->uploader, cat,
+        openvr_overlay_uploader_submit_frame (self->uploader, cat,
                                              self->texture);
 
         g_signal_connect (cat, "grab-start-event",
@@ -403,7 +403,7 @@ _init_cat_overlays (Example *self)
 
 gboolean
 _init_button (Example            *self,
-              OpenVRButton      **button,
+              XrdOverlayButton      **button,
               gchar              *id,
               gchar              *label,
               graphene_point3d_t *position,
@@ -412,7 +412,7 @@ _init_button (Example            *self,
   graphene_matrix_t transform;
   graphene_matrix_init_translate (&transform, position);
 
-  *button = openvr_button_new (id, label);
+  *button = xrd_overlay_button_new (id, label);
   if (*button == NULL)
     return FALSE;
 
@@ -420,7 +420,7 @@ _init_button (Example            *self,
 
   openvr_overlay_set_transform_absolute (overlay, &transform);
 
-  openvr_overlay_manager_add_overlay (self->manager, overlay,
+  xrd_overlay_manager_add_overlay (self->manager, overlay,
                                       OPENVR_OVERLAY_HOVER);
 
   if (!openvr_overlay_set_width_meters (overlay, 0.5f))
@@ -442,7 +442,7 @@ _button_sphere_press_cb (OpenVROverlay   *overlay,
   (void) overlay;
   (void) event;
   Example *self = (Example*) _self;
-  openvr_overlay_manager_arrange_sphere (self->manager,
+  xrd_overlay_manager_arrange_sphere (self->manager,
                                          GRID_WIDTH,
                                          GRID_HEIGHT);
   g_free (event);
@@ -456,7 +456,7 @@ _button_reset_press_cb (OpenVROverlay   *overlay,
   (void) overlay;
   (void) event;
   Example *self = (Example*) _self;
-  openvr_overlay_manager_arrange_reset (self->manager);
+  xrd_overlay_manager_arrange_reset (self->manager);
   g_free (event);
 }
 
@@ -494,11 +494,11 @@ _hand_pose_cb (OpenVRAction    *action,
   (void) action;
   ActionCallbackData *data = _self;
   Example *self = (Example*) data->self;
-  OpenVRPointer *pointer_ray = self->pointer_ray[data->controller_index];
+  XrdOverlayPointer *pointer_ray = self->pointer_ray[data->controller_index];
 
-  openvr_overlay_manager_update_pose (self->manager, &event->pose,
+  xrd_overlay_manager_update_pose (self->manager, &event->pose,
                                       data->controller_index);
-  openvr_pointer_move (pointer_ray, &event->pose);
+  xrd_overlay_pointer_move (pointer_ray, &event->pose);
   g_free (event);
 }
 
@@ -515,10 +515,10 @@ _grab_cb (OpenVRAction       *action,
   if (event->changed)
     {
       if (event->state == 1)
-        openvr_overlay_manager_check_grab (self->manager,
+        xrd_overlay_manager_check_grab (self->manager,
                                            data->controller_index);
       else
-        openvr_overlay_manager_check_release (self->manager,
+        xrd_overlay_manager_check_release (self->manager,
                                               data->controller_index);
     }
 
@@ -545,7 +545,7 @@ _action_push_pull_scale_cb (OpenVRAction      *action,
   if (grab_state->overlay && fabs (x_state) > ANALOG_TRESHOLD)
     {
       float factor = x_state * SCALE_FACTOR;
-      openvr_overlay_manager_scale (self->manager, grab_state, factor,
+      xrd_overlay_manager_scale (self->manager, grab_state, factor,
                                     UPDATE_RATE_MS);
     }
 
@@ -560,8 +560,8 @@ _action_push_pull_scale_cb (OpenVRAction      *action,
         graphene_vec3_get_y (&event->state) *
         (UPDATE_RATE_MS / 1000.);
 
-      OpenVRPointer *pointer_ray = self->pointer_ray[data->controller_index];
-      openvr_pointer_set_length (pointer_ray, hover_state->distance);
+      XrdOverlayPointer *pointer_ray = self->pointer_ray[data->controller_index];
+      xrd_overlay_pointer_set_length (pointer_ray, hover_state->distance);
     }
 
   g_free (event);
@@ -619,9 +619,9 @@ _action_left_click_cb (OpenVRAction       *action,
           &data->self->manager->hover_state[data->controller_index];
       if (hover_state->overlay != NULL)
         {
-          OpenVRIntersection *pointer_tip =
+          XrdOverlayPointerTip *pointer_tip =
               data->self->pointer_tip[data->controller_index];
-          openvr_intersection_animate_pulse (pointer_tip, data->self->uploader);
+          xrd_overlay_pointer_tip_animate_pulse (pointer_tip, data->self->uploader);
         }
     }
   g_free (event);
@@ -650,12 +650,12 @@ main ()
     .loop = g_main_loop_new (NULL, FALSE),
     .action_set_wm = openvr_action_set_new_from_url ("/actions/wm"),
     .action_set_mouse_synth = openvr_action_set_new_from_url ("/actions/mouse_synth"),
-    .manager = openvr_overlay_manager_new (),
+    .manager = xrd_overlay_manager_new (),
     .pointer_default_length = 5.0
   };
 
-  self.uploader = openvr_vulkan_uploader_new ();
-  if (!openvr_vulkan_uploader_init_vulkan (self.uploader, true))
+  self.uploader = openvr_overlay_uploader_new ();
+  if (!openvr_overlay_uploader_init_vulkan (self.uploader, true))
     {
       g_printerr ("Unable to initialize Vulkan!\n");
       return false;
@@ -663,15 +663,15 @@ main ()
 
   for (int i = 0; i < OPENVR_CONTROLLER_COUNT; i++)
     {
-      self.pointer_ray[i] = openvr_pointer_new (i);
+      self.pointer_ray[i] = xrd_overlay_pointer_new (i);
       if (self.pointer_ray[i] == NULL)
         return -1;
       // openvr_overlay_hide (OPENVR_OVERLAY (self.pointer_ray[i]));
-      self.pointer_tip[i] = openvr_intersection_new (i);
+      self.pointer_tip[i] = xrd_overlay_pointer_tip_new (i);
       if (self.pointer_tip[i] == NULL)
         return -1;
-      openvr_intersection_init_vulkan (self.pointer_tip[i], self.uploader);
-      openvr_intersection_set_active (self.pointer_tip[i], self.uploader,
+      xrd_overlay_pointer_tip_init_vulkan (self.pointer_tip[i], self.uploader);
+      xrd_overlay_pointer_tip_set_active (self.pointer_tip[i], self.uploader,
                                       FALSE);
       openvr_overlay_show (OPENVR_OVERLAY (self.pointer_tip[i]));
     }

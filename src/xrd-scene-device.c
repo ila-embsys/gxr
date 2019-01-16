@@ -46,7 +46,7 @@ xrd_scene_device_finalize (GObject *gobject)
 
 gboolean
 xrd_scene_device_initialize (XrdSceneDevice        *self,
-                             OpenVRVulkanModel     *model,
+                             XrdSceneModel     *model,
                              GulkanDevice          *device,
                              VkDescriptorSetLayout *layout)
 {

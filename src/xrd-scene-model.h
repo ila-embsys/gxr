@@ -5,8 +5,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-#ifndef OPENVR_GLIB_VULKAN_MODEL_H_
-#define OPENVR_GLIB_VULKAN_MODEL_H_
+#ifndef XRD_SCENE_MODEL_H_
+#define XRD_SCENE_MODEL_H_
 
 #include <glib-object.h>
 
@@ -15,11 +15,11 @@
 
 G_BEGIN_DECLS
 
-#define OPENVR_TYPE_VULKAN_MODEL openvr_vulkan_model_get_type()
-G_DECLARE_FINAL_TYPE (OpenVRVulkanModel, openvr_vulkan_model,
-                      OPENVR, VULKAN_MODEL, GObject)
+#define XRD_TYPE_SCENE_MODEL xrd_scene_model_get_type()
+G_DECLARE_FINAL_TYPE (XrdSceneModel, xrd_scene_model,
+                      XRD, SCENE_MODEL, GObject)
 
-struct _OpenVRVulkanModel
+struct _XrdSceneModel
 {
   GObject parent;
 
@@ -30,14 +30,14 @@ struct _OpenVRVulkanModel
   VkSampler sampler;
 };
 
-OpenVRVulkanModel *openvr_vulkan_model_new (void);
+XrdSceneModel *xrd_scene_model_new (void);
 
 gboolean
-openvr_vulkan_model_load (OpenVRVulkanModel *self,
+xrd_scene_model_load (XrdSceneModel *self,
                           GulkanDevice             *device,
                           VkCommandBuffer           cmd_buffer,
                           const char               *model_name);
 
 G_END_DECLS
 
-#endif /* OPENVR_GLIB_VULKAN_MODEL_H_ */
+#endif /* XRD_SCENE_MODEL_H_ */

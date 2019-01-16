@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "openvr-vulkan-uploader.h"
+#include "openvr-overlay-uploader.h"
 #include "openvr-context.h"
 
 #define VK_USE_PLATFORM_XLIB_KHR
@@ -20,34 +20,34 @@
 #include "openvr-compositor.h"
 
 
-G_DEFINE_TYPE (OpenVRVulkanUploader, openvr_vulkan_uploader,
+G_DEFINE_TYPE (OpenVROverlayUploader, openvr_overlay_uploader,
                GULKAN_TYPE_CLIENT)
 
 static void
-openvr_vulkan_uploader_finalize (GObject *gobject);
+openvr_overlay_uploader_finalize (GObject *gobject);
 
 static void
-openvr_vulkan_uploader_class_init (OpenVRVulkanUploaderClass *klass)
+openvr_overlay_uploader_class_init (OpenVROverlayUploaderClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = openvr_vulkan_uploader_finalize;
+  object_class->finalize = openvr_overlay_uploader_finalize;
 }
 
 static void
-openvr_vulkan_uploader_init (OpenVRVulkanUploader *self)
+openvr_overlay_uploader_init (OpenVROverlayUploader *self)
 {
   (void) self;
 }
 
-OpenVRVulkanUploader *
-openvr_vulkan_uploader_new (void)
+OpenVROverlayUploader *
+openvr_overlay_uploader_new (void)
 {
-  return (OpenVRVulkanUploader*) g_object_new (OPENVR_TYPE_VULKAN_UPLOADER, 0);
+  return (OpenVROverlayUploader*) g_object_new (OPENVR_TYPE_OVERLAY_UPLOADER, 0);
 }
 
 static void
-openvr_vulkan_uploader_finalize (GObject *gobject)
+openvr_overlay_uploader_finalize (GObject *gobject)
 {
   GulkanClient *client = GULKAN_CLIENT (gobject);
 
@@ -55,11 +55,11 @@ openvr_vulkan_uploader_finalize (GObject *gobject)
   if (client->device->device != VK_NULL_HANDLE)
     vkDeviceWaitIdle (client->device->device);
 
-  G_OBJECT_CLASS (openvr_vulkan_uploader_parent_class)->finalize (gobject);
+  G_OBJECT_CLASS (openvr_overlay_uploader_parent_class)->finalize (gobject);
 }
 
 bool
-openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
+openvr_overlay_uploader_init_vulkan (OpenVROverlayUploader *self,
                                     bool enable_validation)
 {
   GulkanClient *client = GULKAN_CLIENT (self);
@@ -108,7 +108,7 @@ openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
 
 /* Submit frame to OpenVR runtime */
 void
-openvr_vulkan_uploader_submit_frame (OpenVRVulkanUploader *self,
+openvr_overlay_uploader_submit_frame (OpenVROverlayUploader *self,
                                      OpenVROverlay        *overlay,
                                      GulkanTexture  *texture)
 {

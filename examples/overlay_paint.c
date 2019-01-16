@@ -21,24 +21,24 @@
 #include "openvr-compositor.h"
 #include "openvr-math.h"
 #include "openvr-overlay.h"
-#include "openvr-vulkan-uploader.h"
+#include "openvr-overlay-uploader.h"
 #include "openvr-action.h"
 #include "openvr-action-set.h"
-#include "openvr-pointer.h"
-#include "openvr-intersection.h"
-#include "openvr-overlay-manager.h"
+#include "xrd-overlay-pointer.h"
+#include "xrd-overlay-pointer-tip.h"
+#include "xrd-overlay-manager.h"
 
 typedef struct Example
 {
-  OpenVRVulkanUploader *uploader;
+  OpenVROverlayUploader *uploader;
   GulkanTexture *texture;
 
-  OpenVROverlayManager *manager;
+  XrdOverlayManager *manager;
 
   OpenVRActionSet *wm_action_set;
 
-  OpenVRPointer *pointer_overlay;
-  OpenVRIntersection *intersection_overlay;
+  XrdOverlayPointer *pointer_overlay;
+  XrdOverlayPointerTip *intersection_overlay;
   OpenVROverlay *paint_overlay;
 
   GdkPixbuf *draw_pixbuf;
@@ -174,7 +174,7 @@ _draw_at_2d_position (Example          *self,
                                     self->draw_pixbuf))
     return FALSE;
 
-  openvr_vulkan_uploader_submit_frame (self->uploader,
+  openvr_overlay_uploader_submit_frame (self->uploader,
                                        self->paint_overlay, self->texture);
 
   g_mutex_unlock (&paint_mutex);
@@ -189,7 +189,7 @@ _paint_hover_cb (OpenVROverlay    *overlay,
 {
   Example *self = (Example*) _self;
 
-  openvr_intersection_update (self->intersection_overlay,
+  xrd_overlay_pointer_tip_update (self->intersection_overlay,
                              &event->pose,
                              &event->point);
 
@@ -219,7 +219,7 @@ _paint_hover_cb (OpenVROverlay    *overlay,
 
   _draw_at_2d_position (self, &size_pixels, &position_2d, &color, 5);
 
-  openvr_pointer_set_length (self->pointer_overlay, event->distance);
+  xrd_overlay_pointer_set_length (self->pointer_overlay, event->distance);
 
   free (event);
 }
@@ -264,7 +264,7 @@ _init_paint_overlay (Example *self)
 
   gulkan_client_upload_pixbuf (client, self->texture, self->draw_pixbuf);
 
-  openvr_vulkan_uploader_submit_frame (self->uploader,
+  openvr_overlay_uploader_submit_frame (self->uploader,
                                        self->paint_overlay, self->texture);
 
   /* connect glib callbacks */
@@ -272,7 +272,7 @@ _init_paint_overlay (Example *self)
   //                  (GCallback)_intersection_cb,
   //                  self);
   //
-  openvr_overlay_manager_add_overlay (self->manager, self->paint_overlay,
+  xrd_overlay_manager_add_overlay (self->manager, self->paint_overlay,
                                       OPENVR_OVERLAY_HOVER);
 
   openvr_overlay_set_mouse_scale (
@@ -318,8 +318,8 @@ _right_hand_pose_cb (OpenVRAction    *action,
   ActionCallbackData *data = _self;
   Example *self = data->self;
 
-  openvr_pointer_move (self->pointer_overlay, &event->pose);
-  openvr_overlay_manager_update_pose (self->manager, &event->pose, 1);
+  xrd_overlay_pointer_move (self->pointer_overlay, &event->pose);
+  xrd_overlay_manager_update_pose (self->manager, &event->pose, 1);
 
   /* update intersection */
   //openvr_overlay_poll_3d_intersection (self->paint_overlay, &event->pose);
@@ -328,7 +328,7 @@ _right_hand_pose_cb (OpenVRAction    *action,
 }
 
 void
-_no_hover_cb (OpenVROverlayManager       *manager,
+_no_hover_cb (XrdOverlayManager       *manager,
               OpenVRControllerIndexEvent *event,
               gpointer                   _self)
 {
@@ -336,7 +336,7 @@ _no_hover_cb (OpenVROverlayManager       *manager,
 
   Example *self = (Example*) _self;
   openvr_overlay_hide (OPENVR_OVERLAY (self->intersection_overlay));
-  openvr_pointer_reset_length (self->pointer_overlay);
+  xrd_overlay_pointer_reset_length (self->pointer_overlay);
   g_free (event);
 }
 
@@ -362,21 +362,21 @@ main ()
   Example self = {
     .loop = g_main_loop_new (NULL, FALSE),
     .wm_action_set = openvr_action_set_new_from_url ("/actions/wm"),
-    .manager = openvr_overlay_manager_new (),
-    .uploader = openvr_vulkan_uploader_new (),
+    .manager = xrd_overlay_manager_new (),
+    .uploader = openvr_overlay_uploader_new (),
   };
 
-  if (!openvr_vulkan_uploader_init_vulkan (self.uploader, true))
+  if (!openvr_overlay_uploader_init_vulkan (self.uploader, true))
     {
       g_printerr ("Unable to initialize Vulkan!\n");
       return false;
     }
 
-  self.pointer_overlay = openvr_pointer_new (1);
+  self.pointer_overlay = xrd_overlay_pointer_new (1);
   if (self.pointer_overlay == NULL)
     return -1;
 
-  self.intersection_overlay = openvr_intersection_new (1);
+  self.intersection_overlay = xrd_overlay_pointer_tip_new (1);
   if (self.intersection_overlay == NULL)
     return -1;
 

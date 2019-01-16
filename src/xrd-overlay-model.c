@@ -5,24 +5,24 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "openvr-model.h"
+#include "xrd-overlay-model.h"
 #include "openvr-context.h"
 
-G_DEFINE_TYPE (OpenVRModel, openvr_model, OPENVR_TYPE_OVERLAY)
+G_DEFINE_TYPE (XrdOverlayModel, xrd_overlay_model, OPENVR_TYPE_OVERLAY)
 
 static void
-openvr_model_finalize (GObject *gobject);
+xrd_overlay_model_finalize (GObject *gobject);
 
 static void
-openvr_model_class_init (OpenVRModelClass *klass)
+xrd_overlay_model_class_init (XrdOverlayModelClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = openvr_model_finalize;
+  object_class->finalize = xrd_overlay_model_finalize;
 }
 
 static void
-openvr_model_init (OpenVRModel *self)
+xrd_overlay_model_init (XrdOverlayModel *self)
 {
   (void) self;
 }
@@ -46,12 +46,12 @@ _create_empty_pixbuf (uint32_t width, uint32_t height)
   return pixbuf;
 }
 
-OpenVRModel *
-openvr_model_new (gchar* key, gchar* name)
+XrdOverlayModel *
+xrd_overlay_model_new (gchar* key, gchar* name)
 {
-  OpenVRModel *self = (OpenVRModel*) g_object_new (OPENVR_TYPE_MODEL, 0);
+  XrdOverlayModel *self = (XrdOverlayModel*) g_object_new (XRD_TYPE_OVERLAY_MODEL, 0);
 
-  if (!openvr_model_initialize (self, key, name))
+  if (!xrd_overlay_model_initialize (self, key, name))
     return NULL;
 
   return self;
@@ -59,12 +59,12 @@ openvr_model_new (gchar* key, gchar* name)
 
 /*
  * TODO: Not sure how the parent _new constructor can be shared with
- *       OpenVRPointer. Casting to the child class is not allowed.
+ *       XrdOverlayPointer. Casting to the child class is not allowed.
  *       As a workaround I am introducting this initialization method.
  */
 
 gboolean
-openvr_model_initialize (OpenVRModel *self, gchar* key, gchar* name)
+xrd_overlay_model_initialize (XrdOverlayModel *self, gchar* key, gchar* name)
 {
   OpenVROverlay *overlay = OPENVR_OVERLAY (self);
 
@@ -95,9 +95,9 @@ openvr_model_initialize (OpenVRModel *self, gchar* key, gchar* name)
 }
 
 static void
-openvr_model_finalize (GObject *gobject)
+xrd_overlay_model_finalize (GObject *gobject)
 {
-  OpenVRModel *self = OPENVR_MODEL (gobject);
+  XrdOverlayModel *self = XRD_OVERLAY_MODEL (gobject);
   (void) self;
 }
 
@@ -106,7 +106,7 @@ openvr_model_finalize (GObject *gobject)
  * pass NULL for color to match the overlays vertex color
  */
 gboolean
-openvr_model_set_model (OpenVRModel *self, gchar *name,
+xrd_overlay_model_set_model (XrdOverlayModel *self, gchar *name,
                           struct HmdColor_t *color)
 {
   GET_OVERLAY_FUNCTIONS
@@ -119,7 +119,7 @@ openvr_model_set_model (OpenVRModel *self, gchar *name,
 }
 
 gboolean
-openvr_model_get_model (OpenVRModel *self, gchar *name,
+xrd_overlay_model_get_model (XrdOverlayModel *self, gchar *name,
                         struct HmdColor_t *color, uint32_t *id)
 {
   GET_OVERLAY_FUNCTIONS

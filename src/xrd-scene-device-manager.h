@@ -24,7 +24,7 @@ struct _XrdSceneDeviceManager
 {
   GObject parent;
 
-  GHashTable *models; // char* -> OpenVRVulkanModel
+  GHashTable *models; // char* -> XrdSceneModel
   GHashTable *devices; // int -> XrdSceneDevice
   GHashTable *pointers; // int -> XrdScenePointer
 };

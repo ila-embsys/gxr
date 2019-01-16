@@ -17,10 +17,10 @@
 #include "openvr-context.h"
 #include "openvr-overlay.h"
 #include "openvr-time.h"
-#include "openvr-vulkan-uploader.h"
+#include "openvr-overlay-uploader.h"
 
 GulkanTexture *texture = NULL;
-OpenVRVulkanUploader *uploader;
+OpenVROverlayUploader *uploader;
 
 static gboolean
 _damage_cb (GtkWidget *widget, GdkEventExpose *event, OpenVROverlay *overlay)
@@ -52,7 +52,7 @@ _damage_cb (GtkWidget *widget, GdkEventExpose *event, OpenVROverlay *overlay)
 
     gulkan_client_upload_pixbuf (client, texture, pixbuf);
 
-    openvr_vulkan_uploader_submit_frame (uploader, overlay, texture);
+    openvr_overlay_uploader_submit_frame (uploader, overlay, texture);
 
     g_object_unref (pixbuf);
   } else {
@@ -209,8 +209,8 @@ main (int argc, char *argv[])
   if (!_init_openvr ())
     return -1;
 
-  uploader = openvr_vulkan_uploader_new ();
-  if (!openvr_vulkan_uploader_init_vulkan (uploader, true))
+  uploader = openvr_overlay_uploader_new ();
+  if (!openvr_overlay_uploader_init_vulkan (uploader, true))
   {
     g_printerr ("Unable to initialize Vulkan!\n");
     return false;

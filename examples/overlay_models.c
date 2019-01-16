@@ -12,12 +12,12 @@
 #include "openvr-overlay.h"
 #include "openvr-io.h"
 #include "openvr-action-set.h"
-#include "openvr-model.h"
+#include "xrd-overlay-model.h"
 
 typedef struct Example
 {
   GSList *controllers;
-  OpenVRModel *model_overlay;
+  XrdOverlayModel *model_overlay;
   GMainLoop *loop;
   guint current_model_list_index;
   GSList *models;
@@ -76,7 +76,7 @@ _update_model (Example *self)
            self->current_model_list_index + 1,
            g_slist_length (self->models));
 
-  if (!openvr_model_set_model (self->model_overlay,
+  if (!xrd_overlay_model_set_model (self->model_overlay,
                                (gchar *) name->data, &color))
     return FALSE;
 
@@ -150,7 +150,7 @@ _poll_events_cb (gpointer _self)
 gboolean
 _init_model_overlay (Example *self)
 {
-  self->model_overlay = openvr_model_new ("model", "A 3D model overlay");
+  self->model_overlay = xrd_overlay_model_new ("model", "A 3D model overlay");
 
   struct HmdColor_t color = {
     .r = 1.0f,
@@ -161,7 +161,7 @@ _init_model_overlay (Example *self)
 
   GSList* model_name = g_slist_nth (self->models,
                                     self->current_model_list_index);
-  if (!openvr_model_set_model (self->model_overlay,
+  if (!xrd_overlay_model_set_model (self->model_overlay,
                                (gchar *) model_name->data, &color))
     return FALSE;
 
@@ -169,7 +169,7 @@ _init_model_overlay (Example *self)
   struct HmdColor_t color_ret = {};
 
   uint32_t id;
-  if (!openvr_model_get_model (self->model_overlay, name_ret, &color_ret, &id))
+  if (!xrd_overlay_model_get_model (self->model_overlay, name_ret, &color_ret, &id))
     return FALSE;
 
   g_print ("GetOverlayRenderModel returned id %d name: %s\n", id, name_ret);

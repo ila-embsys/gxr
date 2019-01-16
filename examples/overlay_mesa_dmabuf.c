@@ -16,7 +16,7 @@
 #include "openvr-context.h"
 #include "openvr-overlay.h"
 #include "openvr-compositor.h"
-#include "openvr-vulkan-uploader.h"
+#include "openvr-overlay-uploader.h"
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -26,7 +26,7 @@
 #include <EGL/eglext.h>
 
 GdkPixbuf *pixbuf;
-OpenVRVulkanUploader *uploader;
+OpenVROverlayUploader *uploader;
 
 GulkanTexture *texture;
 OpenVROverlay *overlay;
@@ -119,7 +119,7 @@ create_overlay ()
   openvr_overlay_set_transform_absolute (overlay, &transform);
 
   guint64 start = g_get_monotonic_time ();
-  openvr_vulkan_uploader_submit_frame (uploader, overlay, texture);
+  openvr_overlay_uploader_submit_frame (uploader, overlay, texture);
   guint64 end = g_get_monotonic_time ();
   g_print ("Submit frame took %f ms\n",
            (end - start) / (1000.));
@@ -141,7 +141,7 @@ gboolean overlay_change_callback ()
   if (!overlay)
     return FALSE;
 
-  openvr_vulkan_uploader_submit_frame (uploader, overlay, texture);
+  openvr_overlay_uploader_submit_frame (uploader, overlay, texture);
 
   return TRUE;
 }
@@ -227,8 +227,8 @@ main ()
   if (!_init_openvr ())
     return -1;
 
-  uploader = openvr_vulkan_uploader_new ();
-  if (!openvr_vulkan_uploader_init_vulkan (uploader, true))
+  uploader = openvr_overlay_uploader_new ();
+  if (!openvr_overlay_uploader_init_vulkan (uploader, true))
   {
     g_printerr ("Unable to initialize Vulkan!\n");
     return false;

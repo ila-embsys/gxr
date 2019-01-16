@@ -5,38 +5,38 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "openvr-pointer.h"
+#include "xrd-overlay-pointer.h"
 
-G_DEFINE_TYPE (OpenVRPointer, openvr_pointer, OPENVR_TYPE_MODEL)
-
-static void
-openvr_pointer_finalize (GObject *gobject);
+G_DEFINE_TYPE (XrdOverlayPointer, xrd_overlay_pointer, XRD_TYPE_OVERLAY_MODEL)
 
 static void
-openvr_pointer_class_init (OpenVRPointerClass *klass)
+xrd_overlay_pointer_finalize (GObject *gobject);
+
+static void
+xrd_overlay_pointer_class_init (XrdOverlayPointerClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = openvr_pointer_finalize;
+  object_class->finalize = xrd_overlay_pointer_finalize;
 }
 
 static void
-openvr_pointer_init (OpenVRPointer *self)
+xrd_overlay_pointer_init (XrdOverlayPointer *self)
 {
   self->default_length = 5.0;
   self->length = 5.0;
 }
 
-OpenVRPointer *
-openvr_pointer_new (int controller_index)
+XrdOverlayPointer *
+xrd_overlay_pointer_new (int controller_index)
 {
-  OpenVRPointer *self = (OpenVRPointer*) g_object_new (OPENVR_TYPE_POINTER, 0);
+  XrdOverlayPointer *self = (XrdOverlayPointer*) g_object_new (XRD_TYPE_OVERLAY_POINTER, 0);
 
   char key[k_unVROverlayMaxKeyLength];
   snprintf (key, k_unVROverlayMaxKeyLength - 1, "pointer-%d",
             controller_index);
 
-  if (!openvr_model_initialize (OPENVR_MODEL (self), key, key))
+  if (!xrd_overlay_model_initialize (XRD_OVERLAY_MODEL (self), key, key))
     return NULL;
 
   /*
@@ -52,7 +52,7 @@ openvr_pointer_new (int controller_index)
     .a = 1.0f
   };
 
-  if (!openvr_model_set_model (OPENVR_MODEL (self), "{system}laser_pointer",
+  if (!xrd_overlay_model_set_model (XRD_OVERLAY_MODEL (self), "{system}laser_pointer",
                               &color))
     return NULL;
 
@@ -66,14 +66,14 @@ openvr_pointer_new (int controller_index)
 }
 
 static void
-openvr_pointer_finalize (GObject *gobject)
+xrd_overlay_pointer_finalize (GObject *gobject)
 {
-  OpenVRPointer *self = OPENVR_POINTER (gobject);
+  XrdOverlayPointer *self = XRD_OVERLAY_POINTER (gobject);
   (void) self;
 }
 
 void
-openvr_pointer_move (OpenVRPointer     *self,
+xrd_overlay_pointer_move (XrdOverlayPointer     *self,
                      graphene_matrix_t *transform)
 {
   graphene_matrix_t scale_matrix;
@@ -84,14 +84,14 @@ openvr_pointer_move (OpenVRPointer     *self,
 }
 
 void
-openvr_pointer_set_length (OpenVRPointer *self,
+xrd_overlay_pointer_set_length (XrdOverlayPointer *self,
                            float          length)
 {
   self->length = length;
 }
 
 void
-openvr_pointer_reset_length (OpenVRPointer *self)
+xrd_overlay_pointer_reset_length (XrdOverlayPointer *self)
 {
   self->length = self->default_length;
 }

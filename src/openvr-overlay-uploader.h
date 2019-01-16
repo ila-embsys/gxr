@@ -5,8 +5,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-#ifndef OPENVR_GLIB_VULKAN_UPLOADER_H_
-#define OPENVR_GLIB_VULKAN_UPLOADER_H_
+#ifndef OPENVR_OVERLAY_UPLOADER_H_
+#define OPENVR_OVERLAY_UPLOADER_H_
 
 #include <stdint.h>
 #include <glib-object.h>
@@ -24,31 +24,31 @@
 
 G_BEGIN_DECLS
 
-#define OPENVR_TYPE_VULKAN_UPLOADER openvr_vulkan_uploader_get_type()
-G_DECLARE_FINAL_TYPE (OpenVRVulkanUploader, openvr_vulkan_uploader,
-                      OPENVR, VULKAN_UPLOADER, GulkanClient)
+#define OPENVR_TYPE_OVERLAY_UPLOADER openvr_overlay_uploader_get_type()
+G_DECLARE_FINAL_TYPE (OpenVROverlayUploader, openvr_overlay_uploader,
+                      OPENVR, OVERLAY_UPLOADER, GulkanClient)
 
-struct _OpenVRVulkanUploader
+struct _OpenVROverlayUploader
 {
   GulkanClient parent_type;
 };
 
-struct _OpenVRVulkanUploaderClass
+struct _OpenVROverlayUploaderClass
 {
   GObjectClass parent_class;
 };
 
-OpenVRVulkanUploader *openvr_vulkan_uploader_new (void);
+OpenVROverlayUploader *openvr_overlay_uploader_new (void);
 
 bool
-openvr_vulkan_uploader_init_vulkan (OpenVRVulkanUploader *self,
+openvr_overlay_uploader_init_vulkan (OpenVROverlayUploader *self,
                                     bool enable_validation);
 
 void
-openvr_vulkan_uploader_submit_frame (OpenVRVulkanUploader *self,
+openvr_overlay_uploader_submit_frame (OpenVROverlayUploader *self,
                                      OpenVROverlay        *overlay,
                                      GulkanTexture  *texture);
 
 G_END_DECLS
 
-#endif /* OPENVR_GLIB_VULKAN_UPLOADER_H_ */
+#endif /* OPENVR_OVERLAY_UPLOADER_H_ */

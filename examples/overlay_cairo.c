@@ -16,7 +16,7 @@
 #include "openvr-context.h"
 #include "openvr-overlay.h"
 #include "openvr-compositor.h"
-#include "openvr-vulkan-uploader.h"
+#include "openvr-overlay-uploader.h"
 
 #define WIDTH 1280
 #define HEIGHT 720
@@ -88,9 +88,9 @@ _show_cb (OpenVROverlay *overlay,
   if (!openvr_overlay_is_valid (overlay) || is_invisible)
     return;
 
-  OpenVRVulkanUploader * uploader = (OpenVRVulkanUploader*) data;
+  OpenVROverlayUploader * uploader = (OpenVROverlayUploader*) data;
 
-  openvr_vulkan_uploader_submit_frame (uploader, overlay, texture);
+  openvr_overlay_uploader_submit_frame (uploader, overlay, texture);
 }
 
 static void
@@ -148,8 +148,8 @@ test_cat_overlay ()
     return -1;
 
   /* Upload vulkan texture */
-  OpenVRVulkanUploader *uploader = openvr_vulkan_uploader_new ();
-  if (!openvr_vulkan_uploader_init_vulkan (uploader, true))
+  OpenVROverlayUploader *uploader = openvr_overlay_uploader_new ();
+  if (!openvr_overlay_uploader_init_vulkan (uploader, true))
   {
     g_printerr ("Unable to initialize Vulkan!\n");
     return false;
@@ -177,7 +177,7 @@ test_cat_overlay ()
   if (!openvr_overlay_show (overlay))
     return -1;
 
-  openvr_vulkan_uploader_submit_frame (uploader, overlay, texture);
+  openvr_overlay_uploader_submit_frame (uploader, overlay, texture);
 
   g_signal_connect (overlay, "button-press-event", (GCallback) _press_cb, loop);
   g_signal_connect (overlay, "show", (GCallback) _show_cb, uploader);

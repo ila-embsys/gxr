@@ -16,7 +16,7 @@
 
 #include <gulkan-uniform-buffer.h>
 
-#include "openvr-vulkan-model.h"
+#include "xrd-scene-model.h"
 
 #include "xrd-scene-object.h"
 
@@ -30,7 +30,7 @@ struct _XrdSceneDevice
 {
   XrdSceneObject parent;
 
-  OpenVRVulkanModel *model;
+  XrdSceneModel *model;
 
   gboolean pose_valid;
   gboolean is_controller;
@@ -40,7 +40,7 @@ XrdSceneDevice *xrd_scene_device_new (void);
 
 gboolean
 xrd_scene_device_initialize (XrdSceneDevice        *self,
-                             OpenVRVulkanModel     *model,
+                             XrdSceneModel     *model,
                              GulkanDevice          *device,
                              VkDescriptorSetLayout *layout);
 

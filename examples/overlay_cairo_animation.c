@@ -17,7 +17,7 @@
 #include "openvr-context.h"
 #include "openvr-overlay.h"
 #include "openvr-compositor.h"
-#include "openvr-vulkan-uploader.h"
+#include "openvr-overlay-uploader.h"
 #include "openvr-time.h"
 
 #define WIDTH 1000
@@ -93,7 +93,7 @@ input_callback (gpointer data)
 
 struct RenderContext
 {
-  OpenVRVulkanUploader *uploader;
+  OpenVROverlayUploader *uploader;
   OpenVROverlay *overlay;
   GulkanTexture *texture;
 };
@@ -122,7 +122,7 @@ render_callback (gpointer data)
   gulkan_client_upload_cairo_surface (client, context->texture, surface);
 
   cairo_surface_destroy (surface);
-  openvr_vulkan_uploader_submit_frame (context->uploader,
+  openvr_overlay_uploader_submit_frame (context->uploader,
                                        context->overlay,
                                        context->texture);
 
@@ -169,8 +169,8 @@ test_overlay ()
       return false;
     }
 
-  OpenVRVulkanUploader *uploader = openvr_vulkan_uploader_new ();
-  if (!openvr_vulkan_uploader_init_vulkan (uploader, true))
+  OpenVROverlayUploader *uploader = openvr_overlay_uploader_new ();
+  if (!openvr_overlay_uploader_init_vulkan (uploader, true))
   {
     g_printerr ("Unable to initialize Vulkan uploader!\n");
     return -1;

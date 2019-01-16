@@ -5,23 +5,23 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "openvr-button.h"
+#include "xrd-overlay-button.h"
 
-G_DEFINE_TYPE (OpenVRButton, openvr_button, OPENVR_TYPE_OVERLAY)
-
-static void
-openvr_button_finalize (GObject *gobject);
+G_DEFINE_TYPE (XrdOverlayButton, xrd_overlay_button, OPENVR_TYPE_OVERLAY)
 
 static void
-openvr_button_class_init (OpenVRButtonClass *klass)
+xrd_overlay_button_finalize (GObject *gobject);
+
+static void
+xrd_overlay_button_class_init (XrdOverlayButtonClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = openvr_button_finalize;
+  object_class->finalize = xrd_overlay_button_finalize;
 }
 
 static void
-openvr_button_init (OpenVRButton *self)
+xrd_overlay_button_init (XrdOverlayButton *self)
 {
   (void) self;
 }
@@ -88,10 +88,10 @@ _create_cairo_surface (unsigned char *image, uint32_t width,
   return surface;
 }
 
-OpenVRButton *
-openvr_button_new (gchar *id, gchar *text)
+XrdOverlayButton *
+xrd_overlay_button_new (gchar *id, gchar *text)
 {
-  OpenVRButton *self = (OpenVRButton*) g_object_new (OPENVR_TYPE_BUTTON, 0);
+  XrdOverlayButton *self = (XrdOverlayButton*) g_object_new (XRD_TYPE_OVERLAY_BUTTON, 0);
 
   /* create openvr overlay */
   openvr_overlay_create (OPENVR_OVERLAY (self), id, text);
@@ -122,8 +122,8 @@ openvr_button_new (gchar *id, gchar *text)
 }
 
 static void
-openvr_button_finalize (GObject *gobject)
+xrd_overlay_button_finalize (GObject *gobject)
 {
-  OpenVRButton *self = OPENVR_BUTTON (gobject);
+  XrdOverlayButton *self = XRD_OVERLAY_BUTTON (gobject);
   (void) self;
 }
