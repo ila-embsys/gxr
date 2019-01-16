@@ -32,7 +32,7 @@ bool _init_vulkan_device (XrdSceneClient *self);
 void _init_device_model (XrdSceneClient *self,
                          TrackedDeviceIndex_t device_id);
 void _init_device_models (XrdSceneClient *self);
-bool _init_stereo_render_targets (XrdSceneClient *self);
+bool _init_framebuffers (XrdSceneClient *self, VkCommandBuffer cmd_buffer);
 bool _init_shaders (XrdSceneClient *self);
 bool _init_graphics_pipelines (XrdSceneClient *self);
 bool _init_pipeline_cache (XrdSceneClient *self);
@@ -258,7 +258,7 @@ _init_vulkan (XrdSceneClient *self)
       return FALSE;
 
   _update_matrices (self);
-  _init_stereo_render_targets (self);
+  _init_framebuffers (self, cmd_buffer.cmd_buffer);
 
   if (!_init_shaders (self))
     return false;
@@ -418,7 +418,7 @@ xrd_scene_client_render (XrdSceneClient *self)
 }
 
 bool
-_init_stereo_render_targets (XrdSceneClient *self)
+_init_framebuffers (XrdSceneClient *self, VkCommandBuffer cmd_buffer)
 {
   OpenVRContext *context = openvr_context_get_instance ();
   GulkanClient *client = GULKAN_CLIENT (self);
@@ -433,6 +433,7 @@ _init_stereo_render_targets (XrdSceneClient *self)
   for (uint32_t eye = 0; eye < 2; eye++)
     gulkan_frame_buffer_initialize (self->framebuffer[eye],
                                     client->device,
+                                    cmd_buffer,
                                     self->render_width, self->render_height,
                                     self->msaa_sample_count,
                                     VK_FORMAT_R8G8B8A8_UNORM);
