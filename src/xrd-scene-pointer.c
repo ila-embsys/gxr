@@ -134,6 +134,8 @@ xrd_scene_pointer_initialize (XrdScenePointer       *self,
                                          k_unMaxTrackedDeviceCount))
     return FALSE;
 
+  gulkan_vertex_buffer_map_array (self->vertex_buffer);
+
   for (uint32_t eye = 0; eye < 2; eye++)
     gulkan_uniform_buffer_allocate_and_map (self->uniform_buffers[eye],
                                             self->device, sizeof (float) * 16);
@@ -149,8 +151,7 @@ xrd_scene_pointer_initialize (XrdScenePointer       *self,
 void
 xrd_scene_pointer_update (XrdScenePointer    *self,
                           graphene_vec4_t    *start,
-                          float               length,
-                          graphene_matrix_t  *mat)
+                          float               length)
 {
   gulkan_vertex_buffer_reset (self->vertex_buffer);
 
@@ -164,8 +165,6 @@ xrd_scene_pointer_update (XrdScenePointer    *self,
 
   gulkan_geometry_append_ray (self->vertex_buffer, start, length, &identity);
   gulkan_vertex_buffer_map_array (self->vertex_buffer);
-
-  graphene_matrix_init_from_matrix (&self->model_matrix, mat);
 }
 
 void

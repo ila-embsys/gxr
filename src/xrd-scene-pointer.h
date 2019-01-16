@@ -54,8 +54,7 @@ xrd_scene_pointer_render (XrdScenePointer   *self,
 void
 xrd_scene_pointer_update (XrdScenePointer    *self,
                           graphene_vec4_t    *start,
-                          float               length,
-                          graphene_matrix_t  *mat);
+                          float               length);
 
 G_END_DECLS
 

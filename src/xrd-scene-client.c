@@ -356,10 +356,6 @@ xrd_scene_client_render (XrdSceneClient *self)
   FencedCommandBuffer cmd_buffer;
   gulkan_client_begin_res_cmd_buffer (client, &cmd_buffer);
 
-  xrd_scene_device_manager_update_pointers (self->model_manager,
-                                            client->device,
-                                           &self->descriptor_set_layout);
-
   _render_stereo (self, cmd_buffer.cmd_buffer);
 
   vkEndCommandBuffer (cmd_buffer.cmd_buffer);
@@ -419,6 +415,8 @@ xrd_scene_client_render (XrdSceneClient *self)
                                EVRSubmitFlags_Submit_Default);
 
   xrd_scene_device_manager_update_poses (self->model_manager,
+                                         client->device,
+                                        &self->descriptor_set_layout,
                                         &self->mat_head_pose);
 }
 

@@ -149,6 +149,8 @@ xrd_scene_device_manager_render (XrdSceneDeviceManager *self,
 
 void
 xrd_scene_device_manager_update_poses (XrdSceneDeviceManager *self,
+                                       GulkanDevice          *device,
+                                       VkDescriptorSetLayout *layout,
                                        graphene_matrix_t     *mat_head_pose)
 {
   OpenVRContext *context = openvr_context_get_instance ();
@@ -162,50 +164,26 @@ xrd_scene_device_manager_update_poses (XrdSceneDeviceManager *self,
 
       openvr_math_matrix34_to_graphene (&self->device_poses[i].mDeviceToAbsoluteTracking,
                                         &self->device_mats[i]);
+
+      if (context->system->GetTrackedDeviceClass (i) ==
+          ETrackedDeviceClass_TrackedDeviceClass_Controller &&
+          context->system->IsTrackedDeviceConnected (i))
+        {
+          if (self->pointers[i] == NULL)
+            {
+              self->pointers[i] = xrd_scene_pointer_new ();
+              xrd_scene_pointer_initialize (self->pointers[i], device, layout);
+            }
+
+          openvr_math_matrix34_to_graphene (&self->device_poses[i].mDeviceToAbsoluteTracking,
+                                            &self->pointers[i]->model_matrix);
+        }
     }
 
   if (self->device_poses[k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
     {
       *mat_head_pose = self->device_mats[k_unTrackedDeviceIndex_Hmd];
       graphene_matrix_inverse (mat_head_pose, mat_head_pose);
-    }
-}
-
-void
-xrd_scene_device_manager_update_pointers (XrdSceneDeviceManager *self,
-                                          GulkanDevice          *device,
-                                          VkDescriptorSetLayout *layout)
-{
-  /* Don't update the pointer if there is no input */
-  OpenVRContext *context = openvr_context_get_instance ();
-  if (!context->system->IsInputAvailable ())
-    return;
-
-  for (TrackedDeviceIndex_t i = k_unTrackedDeviceIndex_Hmd + 1;
-       i < k_unMaxTrackedDeviceCount; i++)
-    {
-      OpenVRContext *context = openvr_context_get_instance ();
-      if (!context->system->IsTrackedDeviceConnected (i))
-        continue;
-
-      if (context->system->GetTrackedDeviceClass (i) !=
-          ETrackedDeviceClass_TrackedDeviceClass_Controller)
-        continue;
-
-      if (!self->device_poses[i].bPoseIsValid)
-        continue;
-
-      if (self->pointers[i] == NULL)
-        {
-          self->pointers[i] = xrd_scene_pointer_new ();
-          xrd_scene_pointer_initialize (self->pointers[i], device, layout);
-        }
-
-      graphene_vec4_t start;
-      graphene_vec4_init (&start, 0, 0, -0.02f, 1);
-
-      xrd_scene_pointer_update (self->pointers[i], &start, 40.0f,
-                               &self->device_mats[i]);
     }
 }
 

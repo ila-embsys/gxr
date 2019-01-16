@@ -53,12 +53,9 @@ xrd_scene_device_manager_render (XrdSceneDeviceManager *self,
 
 void
 xrd_scene_device_manager_update_poses (XrdSceneDeviceManager *self,
+                                       GulkanDevice          *device,
+                                       VkDescriptorSetLayout *layout,
                                        graphene_matrix_t     *mat_head_pose);
-
-void
-xrd_scene_device_manager_update_pointers (XrdSceneDeviceManager *self,
-                                          GulkanDevice          *device,
-                                          VkDescriptorSetLayout *layout);
 
 void
 xrd_scene_device_manager_render_pointers (XrdSceneDeviceManager *self,
