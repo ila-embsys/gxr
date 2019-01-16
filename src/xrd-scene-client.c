@@ -71,7 +71,7 @@ xrd_scene_client_init (XrdSceneClient *self)
   for (uint32_t eye = 0; eye < 2; eye++)
     self->framebuffer[eye] = gulkan_frame_buffer_new();
 
-  self->model_manager = xrd_scene_device_manager_new ();
+  self->device_manager = xrd_scene_device_manager_new ();
 
   for (uint32_t i = 0; i < WINDOW_COUNT; i++)
     self->windows[i] = xrd_scene_window_new ();
@@ -97,7 +97,7 @@ xrd_scene_client_finalize (GObject *gobject)
   OpenVRContext *context = openvr_context_get_instance ();
   g_object_unref (context);
 
-  g_object_unref (self->model_manager);
+  g_object_unref (self->device_manager);
 
   if (device != VK_NULL_HANDLE)
     {
@@ -186,7 +186,7 @@ _device_deactivate_cb (OpenVRContext          *context,
   (void) context;
   XrdSceneClient *self = (XrdSceneClient*) _self;
   g_print ("Device %d deactivated. Removing scene device.\n", event->index);
-  xrd_scene_device_manager_remove (self->model_manager, event->index);
+  xrd_scene_device_manager_remove (self->device_manager, event->index);
 }
 
 gboolean
@@ -329,7 +329,7 @@ _init_device_model (XrdSceneClient *self,
                     TrackedDeviceIndex_t device_id)
 {
   GulkanClient *client = GULKAN_CLIENT (self);
-  xrd_scene_device_manager_add (self->model_manager, client, device_id,
+  xrd_scene_device_manager_add (self->device_manager, client, device_id,
                                &self->descriptor_set_layout);
 }
 
@@ -413,7 +413,7 @@ xrd_scene_client_render (XrdSceneClient *self)
   context->compositor->Submit (EVREye_Eye_Right, &texture, &bounds,
                                EVRSubmitFlags_Submit_Default);
 
-  xrd_scene_device_manager_update_poses (self->model_manager,
+  xrd_scene_device_manager_update_poses (self->device_manager,
                                         &self->mat_head_pose);
 }
 
@@ -480,12 +480,12 @@ _render_stereo (XrdSceneClient *self, VkCommandBuffer cmd_buffer)
                                self->pipeline_layout,
                                cmd_buffer, &vp);
 
-      xrd_scene_device_manager_render_pointers (self->model_manager, eye,
+      xrd_scene_device_manager_render_pointers (self->device_manager, eye,
                                                 cmd_buffer,
                                                 self->pipelines[PIPELINE_POINTER],
                                                 self->pipeline_layout, &vp);
 
-      xrd_scene_device_manager_render (self->model_manager, eye, cmd_buffer,
+      xrd_scene_device_manager_render (self->device_manager, eye, cmd_buffer,
                                        self->pipelines[PIPELINE_DEVICE_MODELS],
                                        self->pipeline_layout, &vp);
 

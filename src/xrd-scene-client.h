@@ -56,7 +56,7 @@ struct _XrdSceneClient
   VkSampleCountFlagBits msaa_sample_count;
   float super_sample_scale;
 
-  XrdSceneDeviceManager *model_manager;
+  XrdSceneDeviceManager *device_manager;
 
   float near_clip;
   float far_clip;
