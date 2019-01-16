@@ -25,7 +25,7 @@ static void
 xrd_scene_window_init (XrdSceneWindow *self)
 {
   self->vertex_buffer = gulkan_vertex_buffer_new ();
-  self->scene_sampler = VK_NULL_HANDLE;
+  self->sampler = VK_NULL_HANDLE;
 }
 
 XrdSceneWindow *
@@ -38,11 +38,11 @@ static void
 xrd_scene_window_finalize (GObject *gobject)
 {
   XrdSceneWindow *self = XRD_SCENE_WINDOW (gobject);
-  g_object_unref (self->cat_texture);
+  g_object_unref (self->texture);
 
   XrdSceneObject *obj = XRD_SCENE_OBJECT (self);
 
-  vkDestroySampler (obj->device->device, self->scene_sampler, NULL);
+  vkDestroySampler (obj->device->device, self->sampler, NULL);
 
   g_object_unref (self->vertex_buffer);
 
@@ -60,11 +60,11 @@ xrd_scene_window_init_texture (XrdSceneWindow *self,
 
   uint32_t mip_levels;
 
-  self->cat_texture = gulkan_texture_new_from_pixbuf_mipmapped (
+  self->texture = gulkan_texture_new_from_pixbuf_mipmapped (
       device, cmd_buffer, pixbuf,
       &mip_levels, VK_FORMAT_R8G8B8A8_UNORM);
 
-  gulkan_texture_transfer_layout_mips (self->cat_texture,
+  gulkan_texture_transfer_layout_mips (self->texture,
                                        device,
                                        cmd_buffer,
                                        mip_levels,
@@ -84,7 +84,7 @@ xrd_scene_window_init_texture (XrdSceneWindow *self,
     .maxLod = (float) mip_levels
   };
 
-  vkCreateSampler (device->device, &sampler_info, NULL, &self->scene_sampler);
+  vkCreateSampler (device->device, &sampler_info, NULL, &self->sampler);
 
   return true;
 }
@@ -119,8 +119,8 @@ xrd_scene_window_initialize (XrdSceneWindow        *self,
   if (!xrd_scene_object_initialize (obj, device, layout))
     return FALSE;
 
-  xrd_scene_object_update_descriptors_texture (obj, self->scene_sampler,
-                                               self->cat_texture->image_view);
+  xrd_scene_object_update_descriptors_texture (obj, self->sampler,
+                                               self->texture->image_view);
 
   return TRUE;
 }

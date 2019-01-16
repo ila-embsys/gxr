@@ -29,8 +29,8 @@ struct _XrdSceneWindow
   XrdSceneObject parent;
 
   GulkanVertexBuffer *vertex_buffer;
-  GulkanTexture *cat_texture;
-  VkSampler scene_sampler;
+  GulkanTexture *texture;
+  VkSampler sampler;
 };
 
 XrdSceneWindow *xrd_scene_window_new (void);
