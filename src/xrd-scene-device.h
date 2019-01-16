@@ -18,29 +18,22 @@
 
 #include "openvr-vulkan-model.h"
 
+#include "xrd-scene-object.h"
+
 G_BEGIN_DECLS
 
 #define XRD_TYPE_SCENE_DEVICE xrd_scene_device_get_type()
 G_DECLARE_FINAL_TYPE (XrdSceneDevice, xrd_scene_device,
-                      XRD, SCENE_DEVICE, GObject)
+                      XRD, SCENE_DEVICE, XrdSceneObject)
 
 struct _XrdSceneDevice
 {
-  GObject parent;
-
-  GulkanDevice *device;
+  XrdSceneObject parent;
 
   OpenVRVulkanModel *content;
 
-  GulkanUniformBuffer *ubos[2];
-
-  VkDescriptorPool descriptor_pool;
-  VkDescriptorSet descriptor_sets[2];
-
   gboolean pose_valid;
   gboolean is_controller;
-
-  graphene_matrix_t model_matrix;
 };
 
 XrdSceneDevice *xrd_scene_device_new (void);
