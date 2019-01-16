@@ -123,12 +123,6 @@ xrd_scene_pointer_initialize (XrdScenePointer       *self,
   graphene_matrix_t identity;
   graphene_matrix_init_identity (&identity);
 
-  graphene_vec4_t center;
-  graphene_vec4_init (&center, 0, 0, 0, 1);
-
-  gulkan_geometry_append_axes (self->vertex_buffer, &center, 0.05f, &identity);
-
-
   gulkan_geometry_append_ray (self->vertex_buffer, &start, 40.0f, &identity);
   if (!gulkan_vertex_buffer_alloc_empty (self->vertex_buffer, device,
                                          k_unMaxTrackedDeviceCount))
@@ -155,13 +149,8 @@ xrd_scene_pointer_update (XrdScenePointer    *self,
 {
   gulkan_vertex_buffer_reset (self->vertex_buffer);
 
-  graphene_vec4_t center;
-  graphene_vec4_init (&center, 0, 0, 0, 1);
-
   graphene_matrix_t identity;
   graphene_matrix_init_identity (&identity);
-
-  gulkan_geometry_append_axes (self->vertex_buffer, &center, 0.05f, &identity);
 
   gulkan_geometry_append_ray (self->vertex_buffer, start, length, &identity);
   gulkan_vertex_buffer_map_array (self->vertex_buffer);
