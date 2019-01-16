@@ -154,8 +154,7 @@ xrd_scene_device_manager_render (XrdSceneDeviceManager *self,
       if (!self->models[i])
         continue;
 
-      TrackedDevicePose_t *pose = &self->device_poses[i];
-      if (!pose->bPoseIsValid)
+      if (!self->models[i]->pose_valid)
         continue;
 
       OpenVRContext *context = openvr_context_get_instance ();
@@ -177,17 +176,21 @@ void
 xrd_scene_device_manager_update_poses (XrdSceneDeviceManager *self,
                                        graphene_matrix_t     *mat_head_pose)
 {
+  TrackedDevicePose_t device_poses[k_unMaxTrackedDeviceCount];
   OpenVRContext *context = openvr_context_get_instance ();
-  context->compositor->WaitGetPoses (self->device_poses,
+  context->compositor->WaitGetPoses (device_poses,
                                      k_unMaxTrackedDeviceCount, NULL, 0);
 
   for (uint32_t i = 0; i < k_unMaxTrackedDeviceCount; ++i)
     {
-      if (!self->device_poses[i].bPoseIsValid)
+      if (self->models[i] != NULL)
+        self->models[i]->pose_valid = device_poses[i].bPoseIsValid;
+
+      if (!device_poses[i].bPoseIsValid)
         continue;
 
       openvr_math_matrix34_to_graphene (
-        &self->device_poses[i].mDeviceToAbsoluteTracking,
+        &device_poses[i].mDeviceToAbsoluteTracking,
         &self->device_mats[i]);
 
       if (context->system->GetTrackedDeviceClass (i) ==
@@ -196,12 +199,12 @@ xrd_scene_device_manager_update_poses (XrdSceneDeviceManager *self,
         {
           if (self->pointers[i] != NULL)
             openvr_math_matrix34_to_graphene (
-              &self->device_poses[i].mDeviceToAbsoluteTracking,
+              &device_poses[i].mDeviceToAbsoluteTracking,
               &self->pointers[i]->model_matrix);
         }
     }
 
-  if (self->device_poses[k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
+  if (device_poses[k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
     {
       *mat_head_pose = self->device_mats[k_unTrackedDeviceIndex_Hmd];
       graphene_matrix_inverse (mat_head_pose, mat_head_pose);

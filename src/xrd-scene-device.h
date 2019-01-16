@@ -36,6 +36,8 @@ struct _XrdSceneDevice
 
   VkDescriptorPool descriptor_pool;
   VkDescriptorSet descriptor_sets[2];
+
+  gboolean pose_valid;
 };
 
 XrdSceneDevice *xrd_scene_device_new (void);

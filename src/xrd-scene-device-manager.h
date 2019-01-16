@@ -29,7 +29,6 @@ struct _XrdSceneDeviceManager
   GHashTable *model_content;
 
   XrdSceneDevice *models[MAX_TRACKED_DEVICES];
-  TrackedDevicePose_t device_poses[MAX_TRACKED_DEVICES];
   graphene_matrix_t device_mats[MAX_TRACKED_DEVICES];
 
   XrdScenePointer *pointers[MAX_TRACKED_DEVICES];

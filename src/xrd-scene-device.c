@@ -32,6 +32,7 @@ xrd_scene_device_init (XrdSceneDevice *self)
   memset (self->descriptor_sets, 0, sizeof (self->descriptor_sets));
 
   self->content = NULL;
+  self->pose_valid = FALSE;
 }
 
 XrdSceneDevice *
@@ -45,8 +46,7 @@ xrd_scene_device_finalize (GObject *gobject)
 {
   XrdSceneDevice *self = XRD_SCENE_DEVICE (gobject);
 
-  vkDestroyDescriptorPool (self->device->device,
-                           self->descriptor_pool, NULL);
+  vkDestroyDescriptorPool (self->device->device, self->descriptor_pool, NULL);
   g_object_unref (self->content);
 
   for (uint32_t i = 0; i < 2; i++)
@@ -54,8 +54,8 @@ xrd_scene_device_finalize (GObject *gobject)
 }
 
 gboolean
-xrd_scene_device_init_descriptors (XrdSceneDevice     *self,
-                                      VkDescriptorSetLayout *layout)
+xrd_scene_device_init_descriptors (XrdSceneDevice        *self,
+                                   VkDescriptorSetLayout *layout)
 {
   uint32_t set_count = 2;
 
