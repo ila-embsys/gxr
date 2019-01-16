@@ -147,10 +147,10 @@ _init_openvr ()
 }
 
 GdkPixbuf *
-load_gdk_pixbuf ()
+_load_gdk_pixbuf (const gchar* path)
 {
   GError *error = NULL;
-  GdkPixbuf *pixbuf_rgb = gdk_pixbuf_new_from_resource ("/res/cat.jpg", &error);
+  GdkPixbuf *pixbuf_rgb = gdk_pixbuf_new_from_resource (path, &error);
 
   if (error != NULL)
     {
@@ -248,14 +248,23 @@ _init_vulkan (XrdSceneClient *self)
       return false;
     }
 
-  GdkPixbuf *pixbuf = load_gdk_pixbuf ();
-  if (!pixbuf)
-    return false;
+  GdkPixbuf *pixbufs[2] = {
+    _load_gdk_pixbuf ("/res/cat.jpg"),
+    _load_gdk_pixbuf ("/res/hawk.jpg"),
+  };
+
+  for (uint32_t i = 0; i < G_N_ELEMENTS (pixbufs); i++)
+    if (!pixbufs[i])
+      return FALSE;
 
   for (uint32_t i = 0; i < WINDOW_COUNT; i++)
     if (!xrd_scene_window_init_texture (self->windows[i], client->device,
-                                        cmd_buffer.cmd_buffer, pixbuf))
+                                        cmd_buffer.cmd_buffer,
+                                        pixbufs[i % G_N_ELEMENTS (pixbufs)]))
       return FALSE;
+
+  for (uint32_t i = 0; i < G_N_ELEMENTS (pixbufs); i++)
+    g_object_unref (pixbufs[i]);
 
   _update_matrices (self);
   _init_framebuffers (self, cmd_buffer.cmd_buffer);
