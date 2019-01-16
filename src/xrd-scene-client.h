@@ -8,8 +8,6 @@
 #ifndef XRD_SCENE_CLIENT_H_
 #define XRD_SCENE_CLIENT_H_
 
-#define MAX_TRACKED_DEVICES 64
-
 #include "openvr-context.h"
 #include <glib-object.h>
 

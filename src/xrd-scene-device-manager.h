@@ -14,8 +14,6 @@
 #include "xrd-scene-pointer.h"
 #include <gulkan-client.h>
 
-#define MAX_TRACKED_DEVICES 64
-
 G_BEGIN_DECLS
 
 #define XRD_TYPE_SCENE_DEVICE_MANAGER xrd_scene_device_manager_get_type()
@@ -26,10 +24,9 @@ struct _XrdSceneDeviceManager
 {
   GObject parent;
 
-  GHashTable *models;
-
-  XrdSceneDevice *devices[MAX_TRACKED_DEVICES];
-  XrdScenePointer *pointers[MAX_TRACKED_DEVICES];
+  GHashTable *models; // char* -> OpenVRVulkanModel
+  GHashTable *devices; // int -> XrdSceneDevice
+  GHashTable *pointers; // int -> XrdScenePointer
 };
 
 XrdSceneDeviceManager *xrd_scene_device_manager_new (void);
