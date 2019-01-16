@@ -288,8 +288,10 @@ _init_vulkan (XrdSceneClient *self)
                                    &self->descriptor_set_layout);
 
       graphene_point3d_t position = { i, 1, 0 };
-      xrd_scene_window_set_position (self->windows[i], &position);
-      xrd_scene_window_set_scale (self->windows[i], (i + 1) * 0.2f);
+
+      XrdSceneObject *obj = XRD_SCENE_OBJECT (self->windows[i]);
+      xrd_scene_object_set_position (obj, &position);
+      xrd_scene_object_set_scale (obj, (i + 1) * 0.2f);
     }
 
   _init_device_models (self);
