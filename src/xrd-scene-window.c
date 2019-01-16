@@ -7,7 +7,6 @@
 
 #include "xrd-scene-window.h"
 #include <gulkan-geometry.h>
-#include <gulkan-descriptor-set.h>
 
 G_DEFINE_TYPE (XrdSceneWindow, xrd_scene_window, XRD_TYPE_SCENE_OBJECT)
 
@@ -107,102 +106,21 @@ void _append_plane (GulkanVertexBuffer *vbo,
 }
 
 gboolean
-xrd_scene_window_init_descriptors (XrdSceneWindow        *self,
-                                   VkDescriptorSetLayout *layout)
-{
-  uint32_t set_count = 2;
-
-  VkDescriptorPoolSize pool_sizes[] = {
-    {
-      .descriptorCount = set_count,
-      .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER
-    },
-    {
-      .descriptorCount = set_count,
-      .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
-    }
-  };
-
-  XrdSceneObject *obj = XRD_SCENE_OBJECT (self);
-
-  if (!GULKAN_INIT_DECRIPTOR_POOL (obj->device, pool_sizes,
-                                   set_count, &obj->descriptor_pool))
-     return FALSE;
-
-  for (uint32_t eye = 0; eye < set_count; eye++)
-    if (!gulkan_allocate_descritpor_set (obj->device, obj->descriptor_pool,
-                                         layout, 1,
-                                         &obj->descriptor_sets[eye]))
-      return FALSE;
-
-  return TRUE;
-}
-
-void
-xrd_scene_window_update_descriptors (XrdSceneWindow *self)
-{
-  XrdSceneObject *obj = XRD_SCENE_OBJECT (self);
-
-  for (uint32_t eye = 0; eye < 2; eye++)
-    {
-      VkWriteDescriptorSet *write_descriptor_sets = (VkWriteDescriptorSet []) {
-        {
-          .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-          .dstSet = obj->descriptor_sets[eye],
-          .dstBinding = 0,
-          .descriptorCount = 1,
-          .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-          .pBufferInfo = &(VkDescriptorBufferInfo) {
-            .buffer = obj->uniform_buffers[eye]->buffer,
-            .offset = 0,
-            .range = VK_WHOLE_SIZE
-          },
-          .pTexelBufferView = NULL
-        },
-        {
-          .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-          .dstSet = obj->descriptor_sets[eye],
-          .dstBinding = 1,
-          .descriptorCount = 1,
-          .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-          .pImageInfo = &(VkDescriptorImageInfo) {
-            .sampler = self->scene_sampler,
-            .imageView = self->cat_texture->image_view,
-            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-          },
-          .pBufferInfo = NULL,
-          .pTexelBufferView = NULL
-        }
-      };
-
-      vkUpdateDescriptorSets (obj->device->device,
-                              2, write_descriptor_sets, 0, NULL);
-    }
-}
-
-gboolean
 xrd_scene_window_initialize (XrdSceneWindow        *self,
                              GulkanDevice          *device,
                              VkDescriptorSetLayout *layout)
 {
   XrdSceneObject *obj = XRD_SCENE_OBJECT (self);
 
-  /* TODO: Require device in constructor */
-  obj->device = device;
-
   _append_plane (self->vertex_buffer, 0, 0, 0, 1.0f);
   if (!gulkan_vertex_buffer_alloc_array (self->vertex_buffer, obj->device))
     return FALSE;
 
-  /* Create uniform buffer to hold a matrix per eye */
-  for (uint32_t eye = 0; eye < 2; eye++)
-    gulkan_uniform_buffer_allocate_and_map (obj->uniform_buffers[eye],
-                                            obj->device, sizeof (float) * 16);
-
-  if (!xrd_scene_window_init_descriptors (self, layout))
+  if (!xrd_scene_object_initialize (obj, device, layout))
     return FALSE;
 
-  xrd_scene_window_update_descriptors (self);
+  xrd_scene_object_update_descriptors_texture (obj, self->scene_sampler,
+                                               self->cat_texture->image_view);
 
   return TRUE;
 }

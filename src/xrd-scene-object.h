@@ -56,6 +56,16 @@ xrd_scene_object_bind (XrdSceneObject    *self,
                        VkCommandBuffer    cmd_buffer,
                        VkPipelineLayout   pipeline_layout);
 
+gboolean
+xrd_scene_object_initialize (XrdSceneObject        *self,
+                             GulkanDevice          *device,
+                             VkDescriptorSetLayout *layout);
+
+void
+xrd_scene_object_update_descriptors_texture (XrdSceneObject *self,
+                                             VkSampler       sampler,
+                                             VkImageView     image_view);
+
 G_END_DECLS
 
 #endif /* XRD_GLIB_SCENE_OBJECT_H_ */

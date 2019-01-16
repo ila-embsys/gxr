@@ -6,6 +6,7 @@
  */
 
 #include "xrd-scene-object.h"
+#include <gulkan-descriptor-set.h>
 
 G_DEFINE_TYPE (XrdSceneObject, xrd_scene_object, G_TYPE_OBJECT)
 
@@ -92,3 +93,83 @@ xrd_scene_object_set_position (XrdSceneObject     *self,
   _update_model_matrix (self);
 }
 
+gboolean
+xrd_scene_object_initialize (XrdSceneObject        *self,
+                             GulkanDevice          *device,
+                             VkDescriptorSetLayout *layout)
+{
+  self->device = device;
+
+  /* Create uniform buffer to hold a matrix per eye */
+  for (uint32_t eye = 0; eye < 2; eye++)
+    gulkan_uniform_buffer_allocate_and_map (self->uniform_buffers[eye],
+                                            self->device, sizeof (float) * 16);
+
+  uint32_t set_count = 2;
+
+  VkDescriptorPoolSize pool_sizes[] = {
+    {
+      .descriptorCount = set_count,
+      .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER
+    },
+    {
+      .descriptorCount = set_count,
+      .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
+    }
+  };
+
+
+  if (!GULKAN_INIT_DECRIPTOR_POOL (self->device, pool_sizes,
+                                   set_count, &self->descriptor_pool))
+     return FALSE;
+
+  for (uint32_t eye = 0; eye < set_count; eye++)
+    if (!gulkan_allocate_descritpor_set (self->device, self->descriptor_pool,
+                                         layout, 1,
+                                         &self->descriptor_sets[eye]))
+      return FALSE;
+
+  return TRUE;
+}
+
+void
+xrd_scene_object_update_descriptors_texture (XrdSceneObject *self,
+                                             VkSampler       sampler,
+                                             VkImageView     image_view)
+{
+  for (uint32_t eye = 0; eye < 2; eye++)
+    {
+      VkWriteDescriptorSet *write_descriptor_sets = (VkWriteDescriptorSet []) {
+        {
+          .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+          .dstSet = self->descriptor_sets[eye],
+          .dstBinding = 0,
+          .descriptorCount = 1,
+          .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+          .pBufferInfo = &(VkDescriptorBufferInfo) {
+            .buffer = self->uniform_buffers[eye]->buffer,
+            .offset = 0,
+            .range = VK_WHOLE_SIZE
+          },
+          .pTexelBufferView = NULL
+        },
+        {
+          .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+          .dstSet = self->descriptor_sets[eye],
+          .dstBinding = 1,
+          .descriptorCount = 1,
+          .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+          .pImageInfo = &(VkDescriptorImageInfo) {
+            .sampler = sampler,
+            .imageView = image_view,
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+          },
+          .pBufferInfo = NULL,
+          .pTexelBufferView = NULL
+        }
+      };
+
+      vkUpdateDescriptorSets (self->device->device,
+                              2, write_descriptor_sets, 0, NULL);
+    }
+}
