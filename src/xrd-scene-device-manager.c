@@ -28,7 +28,7 @@ xrd_scene_device_manager_init (XrdSceneDeviceManager *self)
 {
   self->model_content = g_hash_table_new_full (g_str_hash, g_str_equal,
                                                g_free, g_object_unref);
-  memset (self->models, 0, sizeof (self->models));
+  memset (self->devices, 0, sizeof (self->devices));
 }
 
 XrdSceneDeviceManager *
@@ -43,9 +43,9 @@ xrd_scene_device_manager_finalize (GObject *gobject)
   XrdSceneDeviceManager *self = XRD_SCENE_DEVICE_MANAGER (gobject);
   g_hash_table_unref (self->model_content);
 
-  for (uint32_t i = 0; i < G_N_ELEMENTS (self->models); i++)
-    if (self->models[i] != NULL)
-      g_object_unref (self->models[i]);
+  for (uint32_t i = 0; i < G_N_ELEMENTS (self->devices); i++)
+    if (self->devices[i] != NULL)
+      g_object_unref (self->devices[i]);
 
   for (TrackedDeviceIndex_t i = k_unTrackedDeviceIndex_Hmd + 1;
        i < k_unMaxTrackedDeviceCount; i++)
@@ -99,19 +99,19 @@ xrd_scene_device_manager_add (XrdSceneDeviceManager *self,
       return;
     }
 
-  XrdSceneDevice *model = xrd_scene_device_new ();
-  if (!xrd_scene_device_initialize (model, content, client->device, layout))
+  XrdSceneDevice *device = xrd_scene_device_new ();
+  if (!xrd_scene_device_initialize (device, content, client->device, layout))
     {
       g_print ("Unable to create Vulkan model from OpenVR model %s\n",
                model_name);
-      g_object_unref (model);
+      g_object_unref (device);
       g_free (model_name);
       return;
     }
 
   g_free (model_name);
 
-  self->models[device_id] = model;
+  self->devices[device_id] = device;
 
   OpenVRContext *context = openvr_context_get_instance ();
   if (context->system->GetTrackedDeviceClass (device_id) ==
@@ -130,8 +130,8 @@ void
 xrd_scene_device_manager_remove (XrdSceneDeviceManager *self,
                                  TrackedDeviceIndex_t   device_id)
 {
-  g_object_unref (self->models[device_id]);
-  self->models[device_id] = NULL;
+  g_object_unref (self->devices[device_id]);
+  self->devices[device_id] = NULL;
 
   if (self->pointers[device_id] != NULL)
     {
@@ -151,10 +151,10 @@ xrd_scene_device_manager_render (XrdSceneDeviceManager *self,
   vkCmdBindPipeline (cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
   for (uint32_t i = 0; i < k_unMaxTrackedDeviceCount; i++)
     {
-      if (!self->models[i])
+      if (!self->devices[i])
         continue;
 
-      if (!self->models[i]->pose_valid)
+      if (!self->devices[i]->pose_valid)
         continue;
 
       OpenVRContext *context = openvr_context_get_instance ();
@@ -163,7 +163,7 @@ xrd_scene_device_manager_render (XrdSceneDeviceManager *self,
               ETrackedDeviceClass_TrackedDeviceClass_Controller)
         continue;
 
-      xrd_scene_device_draw (self->models[i], eye, cmd_buffer, layout, vp);
+      xrd_scene_device_draw (self->devices[i], eye, cmd_buffer, layout, vp);
     }
 }
 
@@ -171,23 +171,22 @@ void
 xrd_scene_device_manager_update_poses (XrdSceneDeviceManager *self,
                                        graphene_matrix_t     *mat_head_pose)
 {
-  TrackedDevicePose_t device_poses[k_unMaxTrackedDeviceCount];
+  TrackedDevicePose_t poses[k_unMaxTrackedDeviceCount];
   OpenVRContext *context = openvr_context_get_instance ();
-  context->compositor->WaitGetPoses (device_poses,
-                                     k_unMaxTrackedDeviceCount, NULL, 0);
+  context->compositor->WaitGetPoses (poses, k_unMaxTrackedDeviceCount, NULL, 0);
 
   for (uint32_t i = 0; i < k_unMaxTrackedDeviceCount; ++i)
     {
-      if (self->models[i] != NULL)
-        self->models[i]->pose_valid = device_poses[i].bPoseIsValid;
+      if (self->devices[i] != NULL)
+        self->devices[i]->pose_valid = poses[i].bPoseIsValid;
 
-      if (!device_poses[i].bPoseIsValid)
+      if (!poses[i].bPoseIsValid)
         continue;
 
-      if (self->models[i] != NULL)
+      if (self->devices[i] != NULL)
         openvr_math_matrix34_to_graphene (
-          &device_poses[i].mDeviceToAbsoluteTracking,
-          &self->models[i]->model_matrix);
+          &poses[i].mDeviceToAbsoluteTracking,
+          &self->devices[i]->model_matrix);
 
       if (context->system->GetTrackedDeviceClass (i) ==
           ETrackedDeviceClass_TrackedDeviceClass_Controller &&
@@ -195,15 +194,15 @@ xrd_scene_device_manager_update_poses (XrdSceneDeviceManager *self,
         {
           if (self->pointers[i] != NULL)
             openvr_math_matrix34_to_graphene (
-              &device_poses[i].mDeviceToAbsoluteTracking,
+              &poses[i].mDeviceToAbsoluteTracking,
               &self->pointers[i]->model_matrix);
         }
     }
 
-  if (device_poses[k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
+  if (poses[k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
     {
       openvr_math_matrix34_to_graphene (
-        &device_poses[k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking,
+        &poses[k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking,
         mat_head_pose);
       graphene_matrix_inverse (mat_head_pose, mat_head_pose);
     }
