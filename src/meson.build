@@ -24,6 +24,7 @@ openvr_glib_sources = [
   'xrd-scene-client.c',
   'xrd-scene-window.c',
   'xrd-scene-pointer.c',
+  'xrd-scene-object.c'
 ]
 
 openvr_glib_headers = [
@@ -49,6 +50,7 @@ openvr_glib_headers = [
   'xrd-scene-client.h',
   'xrd-scene-window.h',
   'xrd-scene-pointer.h',
+  'xrd-scene-object.h'
 ]
 
 version_split = meson.project_version().split('.')
