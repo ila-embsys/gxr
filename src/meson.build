@@ -12,19 +12,7 @@ openvr_glib_sources = [
   'openvr-action.c',
   'openvr-action-set.c',
   'openvr-io.c',
-  'openvr-overlay-uploader.c',
-  'xrd-overlay-model.c',
-  'xrd-overlay-button.c',
-  'xrd-overlay-pointer-tip.c',
-  'xrd-overlay-pointer.c',
-  'xrd-overlay-manager.c',
-  'xrd-scene-model.c',
-  'xrd-scene-device-manager.c',
-  'xrd-scene-device.c',
-  'xrd-scene-client.c',
-  'xrd-scene-window.c',
-  'xrd-scene-pointer.c',
-  'xrd-scene-object.c'
+  'openvr-overlay-uploader.c'
 ]
 
 openvr_glib_headers = [
@@ -38,19 +26,7 @@ openvr_glib_headers = [
   'openvr-action.h',
   'openvr-action-set.h',
   'openvr-io.h',
-  'openvr-overlay-uploader.h',
-  'xrd-overlay-model.h',
-  'xrd-overlay-button.h',
-  'xrd-overlay-pointer-tip.h',
-  'xrd-overlay-pointer.h',
-  'xrd-overlay-manager.h',
-  'xrd-scene-model.h',
-  'xrd-scene-device-manager.h',
-  'xrd-scene-device.h',
-  'xrd-scene-client.h',
-  'xrd-scene-window.h',
-  'xrd-scene-pointer.h',
-  'xrd-scene-object.h'
+  'openvr-overlay-uploader.h'
 ]
 
 version_split = meson.project_version().split('.')

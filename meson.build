@@ -50,7 +50,6 @@ glfw_dep = dependency('glfw3', required : false)
 egl_dep = dependency('egl', required : false)
 ###
 
-subdir('shaders')
 subdir('src')
 subdir('res')
 subdir('tests')

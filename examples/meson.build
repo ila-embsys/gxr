@@ -15,28 +15,6 @@ executable(
   install: false)
 
 executable(
-  'overlay_paint', ['overlay_paint.c', test_resources],
-  dependencies: [gtk3_dep, openvr_dep, cairo_dep, graphene_dep, gulkan_dep],
-  link_with: openvr_glib_lib,
-  include_directories: openvr_glib_inc,
-  install: false)
-
-executable(
-  'overlay_models', ['overlay_models.c', test_resources],
-  dependencies: [gtk3_dep, openvr_dep, cairo_dep, graphene_dep, gulkan_dep],
-  link_with: openvr_glib_lib,
-  include_directories: openvr_glib_inc,
-  install: false)
-
-executable(
-  'overlay_management', ['overlay_management.c', test_resources],
-  dependencies: [gtk3_dep, openvr_dep, cairo_dep, graphene_dep, m_dep,
-                 gulkan_dep],
-  link_with: openvr_glib_lib,
-  include_directories: openvr_glib_inc,
-  install: false)
-
-executable(
   'actions', ['actions.c', test_resources],
   dependencies: [gtk3_dep, openvr_dep, cairo_dep, graphene_dep, m_dep,
                  gulkan_dep],
@@ -120,11 +98,3 @@ if glew_dep.found() and glfw_dep.found() and egl_dep.found()
     include_directories: openvr_glib_inc,
     install: false)
 endif
-
-executable(
-  'scene', ['scene.c', test_resources, shader_resources],
-  dependencies: [gdk_pixbuf_dep, gio_dep, glfw_dep,
-                 graphene_dep, gulkan_dep, cairo_dep],
-  include_directories: [openvr_glib_inc],
-  link_with: openvr_glib_lib,
-  install: false)
