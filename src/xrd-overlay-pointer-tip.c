@@ -149,7 +149,7 @@ _animate_cb (gpointer _animation)
 
 void
 xrd_overlay_pointer_tip_animate_pulse (XrdOverlayPointerTip *self,
-                                   OpenVROverlayUploader *uploader)
+                                       OpenVROverlayUploader *uploader)
 {
   if (self->animation_callback_id != 0)
     {
@@ -195,7 +195,7 @@ xrd_overlay_pointer_tip_new (int controller_index)
 
 void
 xrd_overlay_pointer_tip_init_vulkan (XrdOverlayPointerTip   *self,
-                                 OpenVROverlayUploader *uploader)
+                                     OpenVROverlayUploader  *uploader)
 {
   GulkanClient *client = GULKAN_CLIENT (uploader);
 
@@ -223,8 +223,8 @@ xrd_overlay_pointer_tip_init_raw (XrdOverlayPointerTip *self)
  * Also cancels animations. */
 void
 xrd_overlay_pointer_tip_set_active (XrdOverlayPointerTip *self,
-                                OpenVROverlayUploader *uploader,
-                                gboolean active)
+                                    OpenVROverlayUploader *uploader,
+                                    gboolean active)
 {
   if (self->texture == NULL)
     return;
@@ -336,10 +336,9 @@ xrd_overlay_pointer_tip_set_constant_width (XrdOverlayPointerTip *self)
    * into worldspace, reusing the same w, yields an approximate point with the
    * desired radius in worldspace. */
   graphene_point3d_t intersection_right_screenspace = {
-                       intersection_screenspace.x +
-                          SCREENSPACE_INTERSECTION_WIDTH / 2.,
-                       intersection_screenspace.y,
-                       intersection_screenspace.z
+    intersection_screenspace.x + SCREENSPACE_INTERSECTION_WIDTH / 2.,
+    intersection_screenspace.y,
+    intersection_screenspace.z
   };
 
   graphene_point3d_t intersection_right_worldspace;
@@ -360,8 +359,8 @@ xrd_overlay_pointer_tip_set_constant_width (XrdOverlayPointerTip *self)
 
 void
 xrd_overlay_pointer_tip_update (XrdOverlayPointerTip *self,
-                            graphene_matrix_t  *pose,
-                            graphene_point3d_t *intersection_point)
+                                graphene_matrix_t    *pose,
+                                graphene_point3d_t   *intersection_point)
 {
   graphene_matrix_t transform;
   graphene_matrix_init_from_matrix (&transform, pose);

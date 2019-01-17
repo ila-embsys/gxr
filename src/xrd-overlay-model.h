@@ -15,7 +15,8 @@
 G_BEGIN_DECLS
 
 #define XRD_TYPE_OVERLAY_MODEL xrd_overlay_model_get_type()
-G_DECLARE_FINAL_TYPE (XrdOverlayModel, xrd_overlay_model, XRD, OVERLAY_MODEL, OpenVROverlay)
+G_DECLARE_FINAL_TYPE (XrdOverlayModel, xrd_overlay_model, XRD,
+                      OVERLAY_MODEL, OpenVROverlay)
 
 struct _XrdOverlayModel
 {
@@ -31,11 +32,11 @@ XrdOverlayModel *xrd_overlay_model_new (gchar* key, gchar* name);
 
 gboolean
 xrd_overlay_model_set_model (XrdOverlayModel *self, gchar *name,
-                        struct HmdColor_t *color);
+                             struct HmdColor_t *color);
 
 gboolean
 xrd_overlay_model_get_model (XrdOverlayModel *self, gchar *name,
-                        struct HmdColor_t *color, uint32_t *id);
+                             struct HmdColor_t *color, uint32_t *id);
 
 gboolean
 xrd_overlay_model_initialize (XrdOverlayModel *self, gchar* key, gchar* name);

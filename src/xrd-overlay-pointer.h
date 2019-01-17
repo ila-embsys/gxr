@@ -30,12 +30,12 @@ struct _XrdOverlayPointer
 XrdOverlayPointer *xrd_overlay_pointer_new (int controller_index);
 
 void
-xrd_overlay_pointer_move (XrdOverlayPointer     *self,
-                     graphene_matrix_t *transform);
+xrd_overlay_pointer_move (XrdOverlayPointer *self,
+                          graphene_matrix_t *transform);
 
 void
 xrd_overlay_pointer_set_length (XrdOverlayPointer *self,
-                           float          length);
+                                float              length);
 
 void
 xrd_overlay_pointer_reset_length (XrdOverlayPointer *self);

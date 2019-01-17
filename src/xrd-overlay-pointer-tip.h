@@ -47,24 +47,24 @@ xrd_overlay_pointer_tip_set_constant_width (XrdOverlayPointerTip *self);
 
 void
 xrd_overlay_pointer_tip_update (XrdOverlayPointerTip *self,
-                            graphene_matrix_t  *pose,
-                            graphene_point3d_t *intersection_point);
+                                graphene_matrix_t    *pose,
+                                graphene_point3d_t   *intersection_point);
 
 void
-xrd_overlay_pointer_tip_set_active (XrdOverlayPointerTip *self,
-                                OpenVROverlayUploader *uploader,
-                                gboolean active);
+xrd_overlay_pointer_tip_set_active (XrdOverlayPointerTip  *self,
+                                    OpenVROverlayUploader *uploader,
+                                    gboolean               active);
 
 void
-xrd_overlay_pointer_tip_init_vulkan (XrdOverlayPointerTip   *self,
-                                 OpenVROverlayUploader *uploader);
+xrd_overlay_pointer_tip_init_vulkan (XrdOverlayPointerTip  *self,
+                                     OpenVROverlayUploader *uploader);
 
 void
 xrd_overlay_pointer_tip_init_raw (XrdOverlayPointerTip *self);
 
 void
-xrd_overlay_pointer_tip_animate_pulse (XrdOverlayPointerTip *self,
-                                   OpenVROverlayUploader *uploader);
+xrd_overlay_pointer_tip_animate_pulse (XrdOverlayPointerTip  *self,
+                                       OpenVROverlayUploader *uploader);
 
 G_END_DECLS
 
