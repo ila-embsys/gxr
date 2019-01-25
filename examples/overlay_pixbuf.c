@@ -6,6 +6,7 @@
  */
 
 #include <glib.h>
+#include <glib-unix.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gdk/gdk.h>
 
@@ -19,10 +20,18 @@
 GulkanTexture *texture;
 
 gboolean
-timeout_callback (gpointer data)
+_poll_cb (gpointer data)
 {
   OpenVROverlay *overlay = (OpenVROverlay*) data;
   openvr_overlay_poll_event (overlay);
+  return TRUE;
+}
+
+gboolean
+_sigint_cb (gpointer _loop)
+{
+  GMainLoop *loop = (GMainLoop*) _loop;
+  g_main_loop_quit (loop);
   return TRUE;
 }
 
@@ -202,7 +211,10 @@ test_cat_overlay ()
     overlay, "button-release-event", (GCallback) _release_cb, NULL);
   g_signal_connect (overlay, "destroy", (GCallback) _destroy_cb, loop);
 
-  g_timeout_add (20, timeout_callback, overlay);
+  g_timeout_add (20, _poll_cb, overlay);
+
+  g_unix_signal_add (SIGINT, _sigint_cb, loop);
+
   g_main_loop_run (loop);
   g_main_loop_unref (loop);
 
@@ -211,10 +223,11 @@ test_cat_overlay ()
   g_object_unref (overlay);
   g_object_unref (pixbuf);
   g_object_unref (texture);
-  g_object_unref (uploader);
 
   OpenVRContext *context = openvr_context_get_instance ();
   g_object_unref (context);
+
+  g_object_unref (uploader);
 
   return 0;
 }
