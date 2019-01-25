@@ -104,24 +104,6 @@ _release_cb (OpenVROverlay  *overlay,
 }
 
 static void
-_show_cb (OpenVROverlay *overlay,
-          gpointer       data)
-{
-  g_print ("show\n");
-
-  /* skip rendering if the overlay isn't available or visible */
-  gboolean is_invisible = !openvr_overlay_is_visible (overlay) &&
-                          !openvr_overlay_thumbnail_is_visible (overlay);
-
-  if (!openvr_overlay_is_valid (overlay) || is_invisible)
-    return;
-
-  OpenVROverlayUploader * uploader = (OpenVROverlayUploader*) data;
-
-  openvr_overlay_uploader_submit_frame (uploader, overlay, texture);
-}
-
-static void
 _destroy_cb (OpenVROverlay *overlay,
              gpointer       data)
 {
@@ -188,7 +170,7 @@ test_cat_overlay ()
   gulkan_client_upload_pixbuf (client, texture, pixbuf);
 
   OpenVROverlay *overlay = openvr_overlay_new ();
-  openvr_overlay_create_for_dashboard (overlay, "vulkan.cat", "Vulkan Cat");
+  openvr_overlay_create_width (overlay, "vulkan.cat", "Vulkan Cat", 2.0f);
 
   if (!openvr_overlay_is_valid (overlay))
   {
@@ -200,11 +182,24 @@ test_cat_overlay ()
                                   (float) gdk_pixbuf_get_width (pixbuf),
                                   (float) gdk_pixbuf_get_height (pixbuf));
 
+  openvr_overlay_uploader_submit_frame (uploader, overlay, texture);
+
+  graphene_matrix_t transform;
+  graphene_point3d_t pos =
+  {
+    .x = 0,
+    .y = 1,
+    .z = -2
+  };
+  graphene_matrix_init_translate (&transform, &pos);
+  openvr_overlay_set_transform_absolute (overlay, &transform);
+
+  openvr_overlay_show (overlay);
+
   g_signal_connect (overlay, "motion-notify-event", (GCallback) _move_cb, NULL);
   g_signal_connect (overlay, "button-press-event", (GCallback) _press_cb, loop);
   g_signal_connect (
     overlay, "button-release-event", (GCallback) _release_cb, NULL);
-  g_signal_connect (overlay, "show", (GCallback) _show_cb, uploader);
   g_signal_connect (overlay, "destroy", (GCallback) _destroy_cb, loop);
 
   g_timeout_add (20, timeout_callback, overlay);
