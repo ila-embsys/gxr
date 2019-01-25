@@ -109,8 +109,8 @@ openvr_overlay_uploader_init_vulkan (OpenVROverlayUploader *self,
 /* Submit frame to OpenVR runtime */
 void
 openvr_overlay_uploader_submit_frame (OpenVROverlayUploader *self,
-                                     OpenVROverlay        *overlay,
-                                     GulkanTexture  *texture)
+                                      OpenVROverlay         *overlay,
+                                      GulkanTexture         *texture)
 {
   GulkanClient *client = GULKAN_CLIENT (self);
   GulkanDevice *device = client->device;
@@ -125,7 +125,7 @@ openvr_overlay_uploader_submit_frame (OpenVROverlayUploader *self,
       .m_nQueueFamilyIndex = device->queue_family_index,
       .m_nWidth = texture->width,
       .m_nHeight = texture->height,
-      .m_nFormat = VK_FORMAT_B8G8R8A8_UNORM,
+      .m_nFormat = texture->format,
       .m_nSampleCount = 1
     };
 
