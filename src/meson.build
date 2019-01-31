@@ -49,13 +49,9 @@ configure_file(
 )
 
 openvr_glib_deps = [
-  gdk_dep,
-  gio_dep,
-  gdk_pixbuf_dep,
-  vulkan_dep,
-  graphene_dep,
   gulkan_dep,
-  openvr_dep
+  openvr_dep,
+  gdk_dep
 ]
 
 openvr_glib_lib = shared_library(api_path,
@@ -86,7 +82,7 @@ pkg.generate(
      filebase: api_path,
       version: meson.project_version(),
       subdirs: api_path,
-     requires: 'glib-2.0',
+     requires: ['gulkan-' + api_version, 'gdk-3.0'],
   install_dir: join_paths(get_option('libdir'), 'pkgconfig')
 )
 

@@ -23,11 +23,7 @@ c = meson.get_compiler('c')
 ## Required
 openvr_dep = c.find_library('openvr_api')
 gulkan_dep = dependency('gulkan-0.9', version: '>= 0.9.0')
-gio_dep = dependency('gio-2.0', version: '>= 2.50')
 gdk_dep = dependency('gdk-3.0', version: '>= 3.22')
-gdk_pixbuf_dep = dependency('gdk-pixbuf-2.0', version: '>= 2.36')
-vulkan_dep = dependency('vulkan')
-graphene_dep = dependency('graphene-1.0')
 
 ## Optional
 gtk3_dep = dependency('gtk+-3.0', version: '>= 3.22', required : false)
