@@ -22,6 +22,12 @@ c = meson.get_compiler('c')
 
 ## Required
 openvr_dep = c.find_library('openvr_api')
+
+# For a statically linked libopenvr_api we also need to link to the
+# Standard C++ library and the implementation of dlopen()
+stdcpp_dep = c.find_library('stdc++')
+dl_dep = c.find_library('dl')
+
 gulkan_dep = dependency('gulkan-0.9', version: '>= 0.9.0')
 gdk_dep = dependency('gdk-3.0', version: '>= 3.22')
 

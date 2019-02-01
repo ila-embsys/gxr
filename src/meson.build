@@ -51,7 +51,9 @@ configure_file(
 openvr_glib_deps = [
   gulkan_dep,
   openvr_dep,
-  gdk_dep
+  gdk_dep,
+  stdcpp_dep,
+  dl_dep
 ]
 
 openvr_glib_lib = shared_library(api_path,
