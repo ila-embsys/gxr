@@ -32,7 +32,6 @@ OpenVROverlayUploader *uploader;
 GulkanTexture *gk_texture;
 OpenVROverlay *overlay;
 GLuint gl_texture;
-GLuint gl_mem_object;
 
 void
 create_overlay ()
@@ -75,6 +74,9 @@ create_overlay ()
   glBindTexture (GL_TEXTURE_2D, gl_texture);
   glTexStorageMem2DEXT (
       GL_TEXTURE_2D, 1, GL_RGBA8, width, height, gl_mem_object, 0);
+
+  /* don't need to keep this around */
+  glDeleteMemoryObjectsEXT (1, &gl_mem_object);
 
   /* this does not seem to be necessary to get everything in linear memory but
    * for now we leave it here */
@@ -279,7 +281,6 @@ main ()
   g_object_unref (gk_texture);
   g_object_unref (uploader);
 
-  glDeleteMemoryObjectsEXT (1, &gl_mem_object);
   glDeleteTextures (1, &gl_texture);
 
   OpenVRContext *context = openvr_context_get_instance ();
