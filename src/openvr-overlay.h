@@ -175,30 +175,6 @@ gboolean
 openvr_overlay_set_translation (OpenVROverlay      *self,
                                 graphene_point3d_t *translation);
 
-void
-openvr_overlay_emit_grab_start (OpenVROverlay *self,
-                                OpenVRControllerIndexEvent *event);
-
-void
-openvr_overlay_emit_grab (OpenVROverlay *self,
-                          OpenVRGrabEvent *event);
-
-void
-openvr_overlay_emit_release (OpenVROverlay *self,
-                             OpenVRControllerIndexEvent *event);
-
-void
-openvr_overlay_emit_hover_end (OpenVROverlay *self,
-                               OpenVRControllerIndexEvent *event);
-
-void
-openvr_overlay_emit_hover (OpenVROverlay    *self,
-                           OpenVRHoverEvent *event);
-
-void
-openvr_overlay_emit_hover_start (OpenVROverlay *self,
-                                 OpenVRControllerIndexEvent *event);
-
 gboolean
 openvr_overlay_destroy (OpenVROverlay *self);
 

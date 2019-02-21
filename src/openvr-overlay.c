@@ -25,16 +25,10 @@ enum {
   BUTTON_PRESS_EVENT,
   BUTTON_RELEASE_EVENT,
   SHOW,
+  HIDE,
   DESTROY,
-  SCROLL_EVENT,
   KEYBOARD_PRESS_EVENT,
   KEYBOARD_CLOSE_EVENT,
-  GRAB_START_EVENT,
-  GRAB_EVENT,
-  RELEASE_EVENT,
-  HOVER_START_EVENT,
-  HOVER_EVENT,
-  HOVER_END_EVENT,
   LAST_SIGNAL
 };
 
@@ -83,13 +77,6 @@ openvr_overlay_class_init (OpenVROverlayClass *klass)
                       G_SIGNAL_NO_HOOKS,
                    0, NULL, NULL, NULL, G_TYPE_NONE, 0);
 
-  overlay_signals[SCROLL_EVENT] =
-    g_signal_new ("scroll-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_LAST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE,
-                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
   overlay_signals[KEYBOARD_PRESS_EVENT] =
     g_signal_new ("keyboard-press-event",
                   G_TYPE_FROM_CLASS (klass),
@@ -102,45 +89,6 @@ openvr_overlay_class_init (OpenVROverlayClass *klass)
                   G_TYPE_FROM_CLASS (klass),
                   G_SIGNAL_RUN_FIRST,
                   0, NULL, NULL, NULL, G_TYPE_NONE, 0);
-
-  overlay_signals[GRAB_START_EVENT] =
-    g_signal_new ("grab-start-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_FIRST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE,
-                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  overlay_signals[GRAB_EVENT] =
-    g_signal_new ("grab-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_FIRST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE,
-                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  overlay_signals[RELEASE_EVENT] =
-    g_signal_new ("release-event",
-                  G_TYPE_FROM_CLASS (klass),
-                   G_SIGNAL_RUN_FIRST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE,
-                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-  overlay_signals[HOVER_END_EVENT] =
-    g_signal_new ("hover-end-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_LAST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE,
-                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-  overlay_signals[HOVER_EVENT] =
-    g_signal_new ("hover-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_LAST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE,
-                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-  overlay_signals[HOVER_START_EVENT] =
-    g_signal_new ("hover-start-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_LAST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE,
-                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
 }
 
 static void
@@ -351,6 +299,9 @@ openvr_overlay_poll_event (OpenVROverlay *self)
 
       case EVREventType_VREvent_OverlayShown:
         g_signal_emit (self, overlay_signals[SHOW], 0);
+        break;
+      case EVREventType_VREvent_OverlayHidden:
+        g_signal_emit (self, overlay_signals[HIDE], 0);
         break;
       case EVREventType_VREvent_Quit:
         g_signal_emit (self, overlay_signals[DESTROY], 0);
@@ -785,48 +736,6 @@ openvr_overlay_set_translation (OpenVROverlay      *self,
   graphene_matrix_t transform;
   graphene_matrix_init_translate (&transform, translation);
   return openvr_overlay_set_transform_absolute (self, &transform);
-}
-
-void
-openvr_overlay_emit_grab_start (OpenVROverlay *self,
-                                OpenVRControllerIndexEvent *event)
-{
-  g_signal_emit (self, overlay_signals[GRAB_START_EVENT], 0, event);
-}
-
-void
-openvr_overlay_emit_grab (OpenVROverlay *self,
-                          OpenVRGrabEvent *event)
-{
-  g_signal_emit (self, overlay_signals[GRAB_EVENT], 0, event);
-}
-
-void
-openvr_overlay_emit_release (OpenVROverlay *self,
-                             OpenVRControllerIndexEvent *event)
-{
-  g_signal_emit (self, overlay_signals[RELEASE_EVENT], 0, event);
-}
-
-void
-openvr_overlay_emit_hover_end (OpenVROverlay *self,
-                               OpenVRControllerIndexEvent *event)
-{
-  g_signal_emit (self, overlay_signals[HOVER_END_EVENT], 0, event);
-}
-
-void
-openvr_overlay_emit_hover (OpenVROverlay    *self,
-                           OpenVRHoverEvent *event)
-{
-  g_signal_emit (self, overlay_signals[HOVER_EVENT], 0, event);
-}
-
-void
-openvr_overlay_emit_hover_start (OpenVROverlay *self,
-                                 OpenVRControllerIndexEvent *event)
-{
-  g_signal_emit (self, overlay_signals[HOVER_START_EVENT], 0, event);
 }
 
 gboolean
