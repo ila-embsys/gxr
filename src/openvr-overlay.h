@@ -152,7 +152,7 @@ openvr_overlay_get_2d_intersection (OpenVROverlay      *overlay,
                                     graphene_point_t   *position_2d);
 
 gboolean
-openvr_overlay_get_2d_offset (OpenVROverlay      *overlay,
+openvr_overlay_get_2d_offset (OpenVROverlay      *self,
                               graphene_point3d_t *intersection_point,
                               graphene_point_t   *position_2d);
 

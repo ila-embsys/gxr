@@ -666,17 +666,20 @@ openvr_overlay_get_2d_intersection (OpenVROverlay      *overlay,
 
 /**
  * openvr_overlay_get_2d_offset:
+ * @self: The #OpenVROverlay
+ * @intersection_point: A #graphene_point3d_t return value
+ * @position_2d: The intersection position return value as #graphene_point_t
  *
  * Calculates the offset of the intersection relative to the overlay's center,
  * in overlay-relative coordinates, in meters
  */
 gboolean
-openvr_overlay_get_2d_offset (OpenVROverlay      *overlay,
+openvr_overlay_get_2d_offset (OpenVROverlay      *self,
                               graphene_point3d_t *intersection_point,
                               graphene_point_t   *position_2d)
 {
   graphene_matrix_t transform;
-  openvr_overlay_get_transform_absolute (overlay, &transform);
+  openvr_overlay_get_transform_absolute (self, &transform);
 
   graphene_matrix_t inverse_transform;
   graphene_matrix_inverse (&transform, &inverse_transform);
