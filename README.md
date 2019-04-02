@@ -14,6 +14,11 @@ $ meson build
 $ ninja -C build
 ```
 
+#### Build the docs
+```
+$ ninja -C build openvr-glib-doc
+```
+
 ## Run
 
 #### Run the examples
