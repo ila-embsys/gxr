@@ -17,6 +17,13 @@ add_project_arguments([
 ],
 ], language: ['c'])
 
+# Paths
+openvr_glib_prefix = get_option('prefix')
+openvr_glib_libdir = join_paths(openvr_glib_prefix, get_option('libdir'))
+openvr_glib_includedir = join_paths(openvr_glib_prefix, get_option('includedir'))
+openvr_glib_datadir = join_paths(openvr_glib_prefix, get_option('datadir'))
+src_inc = include_directories('src')
+
 ### Dependencies
 c = meson.get_compiler('c')
 
@@ -47,3 +54,4 @@ subdir('src')
 subdir('res')
 subdir('tests')
 subdir('examples')
+subdir('doc')
