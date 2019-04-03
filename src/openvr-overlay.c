@@ -758,4 +758,5 @@ openvr_overlay_finalize (GObject *gobject)
 {
   OpenVROverlay *self = OPENVR_OVERLAY (gobject);
   openvr_overlay_destroy (self);
+  G_OBJECT_CLASS (openvr_overlay_parent_class)->finalize (gobject);
 }
