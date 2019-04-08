@@ -25,4 +25,7 @@ openvr_system_get_projection_matrix (EVREye eye, float near, float far);
 graphene_matrix_t
 openvr_system_get_eye_to_head_transform (EVREye eye);
 
+gboolean
+openvr_system_get_hmd_pose (graphene_matrix_t *pose);
+
 #endif /* OPENVR_GLIB_SYSTEM_H_ */
