@@ -381,9 +381,9 @@ main (int argc, char *argv[])
   graphene_matrix_init_translate (&keyboard_position, &position);
   openvr_context_set_system_keyboard_transform (context, &keyboard_position);
 
-  g_signal_connect (context, "keyboard-char-input-event",
+  g_signal_connect (context, "keyboard-press-event",
                     (GCallback) _keyboard_input, keysym_table);
-  g_signal_connect (context, "keyboard-closed-event",
+  g_signal_connect (context, "keyboard-close-event",
                     (GCallback) _keyboard_closed, context);
   g_timeout_add (20, G_SOURCE_FUNC (timeout_callback), context);
 
