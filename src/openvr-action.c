@@ -12,6 +12,15 @@
 #include "openvr-context.h"
 #include "openvr-math.h"
 
+struct _OpenVRAction
+{
+  GObject parent;
+
+  VRActionHandle_t handle;
+
+  OpenVRActionType type;
+};
+
 G_DEFINE_TYPE (OpenVRAction, openvr_action, G_TYPE_OBJECT)
 
 enum {
@@ -282,4 +291,10 @@ openvr_action_finalize (GObject *gobject)
 {
   OpenVRAction *self = OPENVR_ACTION (gobject);
   (void) self;
+}
+
+OpenVRActionType
+openvr_action_get_action_type (OpenVRAction *self)
+{
+  return self->type;
 }

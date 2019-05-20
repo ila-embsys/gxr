@@ -130,7 +130,7 @@ openvr_action_set_connect (OpenVRActionSet *self,
   if (action != NULL)
     self->actions = g_slist_append (self->actions, action);
 
-  switch (action->type)
+  switch (type)
     {
     case OPENVR_ACTION_DIGITAL:
       g_signal_connect (action, "digital-event", callback, data);
@@ -142,7 +142,7 @@ openvr_action_set_connect (OpenVRActionSet *self,
       g_signal_connect (action, "pose-event", callback, data);
       break;
     default:
-      g_printerr ("Uknown action type %d\n", action->type);
+      g_printerr ("Uknown action type %d\n", type);
       return FALSE;
     }
 

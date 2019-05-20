@@ -27,15 +27,6 @@ typedef enum OpenVRActionType {
   OPENVR_ACTION_POSE
 } OpenVRActionType;
 
-struct _OpenVRAction
-{
-  GObject parent;
-
-  VRActionHandle_t handle;
-
-  OpenVRActionType type;
-};
-
 typedef struct OpenVRDigitalEvent {
   gboolean active;
   gboolean state;
@@ -88,6 +79,10 @@ openvr_action_trigger_haptic (OpenVRAction *self,
                               float duration_seconds,
                               float frequency,
                               float amplitude);
+
+/* name openvr_action_get_type is already taken by gobject function */
+OpenVRActionType
+openvr_action_get_action_type (OpenVRAction *self);
 
 G_END_DECLS
 
