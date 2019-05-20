@@ -187,6 +187,10 @@ gboolean
 openvr_overlay_get_model (OpenVROverlay *self, gchar *name,
                           graphene_vec4_t *color, uint32_t *id);
 
+void
+openvr_overlay_set_flip_y (OpenVROverlay *self,
+                           gboolean flip_y);
+
 G_END_DECLS
 
 #define GET_OVERLAY_FUNCTIONS \

@@ -24,7 +24,12 @@ typedef struct _OpenVROverlayPrivate
 
   VROverlayHandle_t overlay_handle;
   VROverlayHandle_t thumbnail_handle;
+  gboolean      flip_y;
+
 } OpenVROverlayPrivate;
+
+static struct VRTextureBounds_t defaultBounds = { 0., 0., 1., 1. };
+static struct VRTextureBounds_t flippedBounds = { 0., 1., 1., 0. };
 
 G_DEFINE_TYPE_WITH_PRIVATE (OpenVROverlay, openvr_overlay, G_TYPE_OBJECT)
 
@@ -864,4 +869,20 @@ openvr_overlay_get_model (OpenVROverlay *self, gchar *name,
 
   OVERLAY_CHECK_ERROR ("GetOverlayRenderModel", err);
   return TRUE;
+}
+
+void
+openvr_overlay_set_flip_y (OpenVROverlay *self,
+                           gboolean flip_y)
+{
+  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
+  if (flip_y != priv->flip_y)
+    {
+      OpenVRContext *openvrContext = openvr_context_get_instance();
+      VRTextureBounds_t *bounds = flip_y ? &flippedBounds : &defaultBounds;
+      openvrContext->overlay->SetOverlayTextureBounds (priv->overlay_handle,
+                                                       bounds);
+
+      priv->flip_y = flip_y;
+    }
 }
