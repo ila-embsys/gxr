@@ -122,8 +122,9 @@ show_overlay_info (OpenVROverlay *overlay)
   OpenVRContext *context = openvr_context_get_instance ();
   struct VR_IVROverlay_FnTable *f = context->overlay;
 
+  VROverlayHandle_t overlay_handle = openvr_overlay_get_handle (overlay);
   EVROverlayError err = f->GetOverlayDualAnalogTransform (
-    overlay->overlay_handle, which, &center, &radius);
+    overlay_handle, which, &center, &radius);
 
   if (err != EVROverlayError_VROverlayError_None)
     {
@@ -134,7 +135,7 @@ show_overlay_info (OpenVROverlay *overlay)
   g_print ("Center [%f, %f] Radius %f\n", center.v[0], center.v[1], radius);
 
   VROverlayTransformType transform_type;
-  err = f->GetOverlayTransformType (overlay->overlay_handle, &transform_type);
+  err = f->GetOverlayTransformType (overlay_handle, &transform_type);
 
   switch (transform_type)
     {
@@ -154,7 +155,7 @@ show_overlay_info (OpenVROverlay *overlay)
 
   bool anti_alias = false;
 
-  err = f->GetOverlayFlag (overlay->overlay_handle,
+  err = f->GetOverlayFlag (overlay_handle,
                            VROverlayFlags_RGSS4X,
                           &anti_alias);
 
@@ -164,7 +165,7 @@ show_overlay_info (OpenVROverlay *overlay)
   HmdMatrix34_t transform;
 
   err = f->GetOverlayTransformAbsolute (
-    overlay->overlay_handle,
+    overlay_handle,
     &tracking_origin,
     &transform);
 
@@ -199,7 +200,7 @@ show_overlay_info (OpenVROverlay *overlay)
   openvr_math_print_matrix34 (translation34);
 
   err = f->SetOverlayTransformAbsolute (
-    overlay->overlay_handle,
+    overlay_handle,
     tracking_origin,
     &translation34);
 }

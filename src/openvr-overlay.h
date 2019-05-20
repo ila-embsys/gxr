@@ -23,14 +23,6 @@ G_BEGIN_DECLS
 #define OPENVR_TYPE_OVERLAY openvr_overlay_get_type()
 G_DECLARE_FINAL_TYPE (OpenVROverlay, openvr_overlay, OPENVR, OVERLAY, GObject)
 
-struct _OpenVROverlay
-{
-  GObjectClass parent_class;
-
-  VROverlayHandle_t overlay_handle;
-  VROverlayHandle_t thumbnail_handle;
-};
-
 typedef struct PixelSize
 {
   uint32_t width;
@@ -177,6 +169,9 @@ openvr_overlay_set_translation (OpenVROverlay      *self,
 
 gboolean
 openvr_overlay_destroy (OpenVROverlay *self);
+
+VROverlayHandle_t
+openvr_overlay_get_handle (OpenVROverlay *self);
 
 G_END_DECLS
 

@@ -18,6 +18,14 @@
 #include "openvr-time.h"
 #include "openvr-math.h"
 
+struct _OpenVROverlay
+{
+  GObjectClass parent_class;
+
+  VROverlayHandle_t overlay_handle;
+  VROverlayHandle_t thumbnail_handle;
+};
+
 G_DEFINE_TYPE (OpenVROverlay, openvr_overlay, G_TYPE_OBJECT)
 
 enum {
@@ -759,4 +767,10 @@ openvr_overlay_finalize (GObject *gobject)
   OpenVROverlay *self = OPENVR_OVERLAY (gobject);
   openvr_overlay_destroy (self);
   G_OBJECT_CLASS (openvr_overlay_parent_class)->finalize (gobject);
+}
+
+VROverlayHandle_t
+openvr_overlay_get_handle (OpenVROverlay *self)
+{
+  return self->overlay_handle;
 }

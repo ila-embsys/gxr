@@ -140,5 +140,6 @@ openvr_overlay_uploader_submit_frame (OpenVROverlayUploader *self,
     };
 
   OpenVRContext *context = openvr_context_get_instance ();
-  context->overlay->SetOverlayTexture (overlay->overlay_handle, &vr_texture);
+  VROverlayHandle_t overlay_handle = openvr_overlay_get_handle (overlay);
+  context->overlay->SetOverlayTexture (overlay_handle, &vr_texture);
 }
