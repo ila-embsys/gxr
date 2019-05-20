@@ -21,7 +21,12 @@
 G_BEGIN_DECLS
 
 #define OPENVR_TYPE_OVERLAY openvr_overlay_get_type()
-G_DECLARE_FINAL_TYPE (OpenVROverlay, openvr_overlay, OPENVR, OVERLAY, GObject)
+G_DECLARE_DERIVABLE_TYPE (OpenVROverlay, openvr_overlay, OPENVR, OVERLAY, GObject)
+
+struct _OpenVROverlayClass
+{
+  GObjectClass parent_class;
+};
 
 typedef struct PixelSize
 {
@@ -113,7 +118,7 @@ openvr_overlay_set_transform_absolute (OpenVROverlay *self,
                                        graphene_matrix_t *mat);
 
 gboolean
-openvr_overlay_intersects (OpenVROverlay      *overlay,
+openvr_overlay_intersects (OpenVROverlay      *self,
                            graphene_point3d_t *intersection_point,
                            graphene_matrix_t  *transform);
 
