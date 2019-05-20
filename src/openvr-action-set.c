@@ -9,6 +9,15 @@
 
 #include "openvr-context.h"
 
+struct _OpenVRActionSet
+{
+  GObject parent;
+
+  GSList *actions;
+
+  VRActionSetHandle_t handle;
+};
+
 G_DEFINE_TYPE (OpenVRActionSet, openvr_action_set, G_TYPE_OBJECT)
 
 gboolean

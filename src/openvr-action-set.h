@@ -20,15 +20,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (OpenVRActionSet, openvr_action_set,
                       OPENVR, ACTION_SET, GObject)
 
-struct _OpenVRActionSet
-{
-  GObject parent;
-
-  GSList *actions;
-
-  VRActionSetHandle_t handle;
-};
-
 OpenVRActionSet *openvr_action_set_new (void);
 
 OpenVRActionSet *
