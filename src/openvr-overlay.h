@@ -178,6 +178,15 @@ openvr_overlay_destroy (OpenVROverlay *self);
 VROverlayHandle_t
 openvr_overlay_get_handle (OpenVROverlay *self);
 
+gboolean
+openvr_overlay_set_model (OpenVROverlay *self,
+                          gchar *name,
+                          graphene_vec4_t *color);
+
+gboolean
+openvr_overlay_get_model (OpenVROverlay *self, gchar *name,
+                          graphene_vec4_t *color, uint32_t *id);
+
 G_END_DECLS
 
 #define GET_OVERLAY_FUNCTIONS \

@@ -822,3 +822,46 @@ openvr_overlay_get_handle (OpenVROverlay *self)
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
   return priv->overlay_handle;
 }
+
+gboolean
+openvr_overlay_set_model (OpenVROverlay *self,
+                          gchar *name,
+                          graphene_vec4_t *color)
+{
+  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
+
+  GET_OVERLAY_FUNCTIONS
+
+  struct HmdColor_t hmd_color = {
+    .r = graphene_vec4_get_x (color),
+    .g = graphene_vec4_get_y (color),
+    .b = graphene_vec4_get_z (color),
+    .a = graphene_vec4_get_w (color)
+  };
+
+  err = f->SetOverlayRenderModel (priv->overlay_handle,
+                                  name, &hmd_color);
+
+  OVERLAY_CHECK_ERROR ("SetOverlayRenderModel", err);
+  return TRUE;
+}
+
+gboolean
+openvr_overlay_get_model (OpenVROverlay *self, gchar *name,
+                          graphene_vec4_t *color, uint32_t *id)
+{
+  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
+
+  GET_OVERLAY_FUNCTIONS
+
+  struct HmdColor_t hmd_color;
+  *id = f->GetOverlayRenderModel (priv->overlay_handle,
+                                  name, k_unMaxPropertyStringSize,
+                                  &hmd_color, &err);
+
+  graphene_vec4_init (color,
+                      hmd_color.r, hmd_color.g, hmd_color.b, hmd_color.a);
+
+  OVERLAY_CHECK_ERROR ("GetOverlayRenderModel", err);
+  return TRUE;
+}
