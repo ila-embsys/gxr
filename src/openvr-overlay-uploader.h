@@ -28,11 +28,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (OpenVROverlayUploader, openvr_overlay_uploader,
                       OPENVR, OVERLAY_UPLOADER, GulkanClient)
 
-struct _OpenVROverlayUploader
-{
-  GulkanClient parent_type;
-};
-
 struct _OpenVROverlayUploaderClass
 {
   GObjectClass parent_class;

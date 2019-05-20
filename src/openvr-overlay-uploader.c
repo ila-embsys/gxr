@@ -19,6 +19,11 @@
 #include "openvr-overlay.h"
 #include "openvr-compositor.h"
 
+struct _OpenVROverlayUploader
+{
+  GulkanClient parent_type;
+};
+
 G_DEFINE_TYPE (OpenVROverlayUploader, openvr_overlay_uploader,
                GULKAN_TYPE_CLIENT)
 
