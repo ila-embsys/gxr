@@ -64,9 +64,10 @@ _damage_cb (GtkWidget      *widget,
     g_object_unref (offscreen_pixbuf);
 
     GulkanClient *client = GULKAN_CLIENT (self->uploader);
+    GulkanDevice *device = gulkan_client_get_device (client);
 
     if (self->texture == NULL)
-      self->texture = gulkan_texture_new_from_pixbuf (client->device, pixbuf,
+      self->texture = gulkan_texture_new_from_pixbuf (device, pixbuf,
                                                       VK_FORMAT_R8G8B8A8_UNORM);
 
     gulkan_client_upload_pixbuf (client, self->texture, pixbuf);

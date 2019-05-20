@@ -83,9 +83,10 @@ test_overlay_pixbuf ()
   g_assert (openvr_overlay_uploader_init_vulkan (uploader, true));
 
   GulkanClient *client = GULKAN_CLIENT (uploader);
+  GulkanDevice *device = gulkan_client_get_device (client);
 
   GulkanTexture *texture =
-    gulkan_texture_new_from_pixbuf (client->device, pixbuf,
+    gulkan_texture_new_from_pixbuf (device, pixbuf,
                                     VK_FORMAT_R8G8B8A8_UNORM);
   g_assert_nonnull (texture);
 

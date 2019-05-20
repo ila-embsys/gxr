@@ -42,10 +42,11 @@ create_overlay ()
   guchar* rgb = gdk_pixbuf_get_pixels (pixbuf);
 
   GulkanClient *client = GULKAN_CLIENT (uploader);
+  GulkanDevice *device = gulkan_client_get_device (client);
 
   gsize size;
   int fd;
-  gk_texture = gulkan_texture_new_export_fd (client->device, width, height,
+  gk_texture = gulkan_texture_new_export_fd (device, width, height,
                                              VK_FORMAT_R8G8B8A8_UNORM, &size,
                                              &fd);
   g_print ("Mem size: %lu\n", size);
@@ -249,7 +250,7 @@ main ()
   glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, 2);
   glfwWindowHint (GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-  glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+  glfwWindowHint (GLFW_VISIBLE, GLFW_FALSE);
 
   GLFWwindow *window = glfwCreateWindow(
       640, 480, "GLFW OpenGL & Vulkan", NULL, NULL);

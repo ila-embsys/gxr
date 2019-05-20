@@ -35,7 +35,7 @@ openvr_dep = c.find_library('openvr_api')
 stdcpp_dep = c.find_library('stdc++')
 dl_dep = c.find_library('dl')
 
-gulkan_dep = dependency('gulkan-0.10', version: '>= 0.10.0')
+gulkan_dep = dependency('gulkan-0.11', version: '>= 0.11.0')
 gdk_dep = dependency('gdk-3.0', version: '>= 3.22')
 
 ## Optional

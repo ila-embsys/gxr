@@ -109,9 +109,10 @@ repaint_cb (gpointer user_data)
     (CLUTTER_STAGE(data->stage), 0, 0, width, height);
 
   GulkanClient *client = GULKAN_CLIENT (uploader);
+  GulkanDevice *device = gulkan_client_get_device (client);
 
   if (texture == NULL)
-    texture = gulkan_texture_new (client->device,
+    texture = gulkan_texture_new (device,
                                   width, height, size,
                                   VK_FORMAT_R8G8B8A8_UNORM);
 
@@ -172,13 +173,17 @@ test_cat_overlay (int argc, char *argv[])
     }
 
   OpenVROverlay *overlay = openvr_overlay_new ();
-  openvr_overlay_create_for_dashboard (overlay, "example.clutter", "Clutter");
+  openvr_overlay_create_width (overlay, "example.clutter", "Clutter", 2.0);
 
   if (!openvr_overlay_is_valid (overlay))
     {
       fprintf (stderr, "Overlay unavailable.\n");
       return -1;
     }
+
+  graphene_point3d_t pos = { .x = 0, .y = 1, .z = -2 };
+  openvr_overlay_set_translation (overlay, &pos);
+  openvr_overlay_show (overlay);
 
   openvr_overlay_set_mouse_scale (overlay, 500.0f, 500.0f);
 

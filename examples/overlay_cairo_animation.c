@@ -113,10 +113,11 @@ render_callback (gpointer data)
   }
 
   GulkanClient *client = GULKAN_CLIENT (context->uploader);
+  GulkanDevice *device = gulkan_client_get_device (client);
 
   if (context->texture == NULL)
     context->texture =
-      gulkan_texture_new_from_cairo_surface (client->device, surface,
+      gulkan_texture_new_from_cairo_surface (device, surface,
                                              VK_FORMAT_R8G8B8A8_UNORM);
 
   gulkan_client_upload_cairo_surface (client, context->texture, surface);

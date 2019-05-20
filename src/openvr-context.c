@@ -292,6 +292,7 @@ openvr_context_poll_event (OpenVRContext *self)
         // TODO: https://github.com/ValveSoftware/openvr/issues/289
         char *new_input = (char*) vr_event.data.keyboard.cNewInput;
 
+        g_print ("Keyboard input %s\n", new_input);
         int len = 0;
         for (; len < 8 && new_input[len] != 0; len++);
 

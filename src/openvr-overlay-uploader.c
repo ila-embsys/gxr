@@ -19,7 +19,6 @@
 #include "openvr-overlay.h"
 #include "openvr-compositor.h"
 
-
 G_DEFINE_TYPE (OpenVROverlayUploader, openvr_overlay_uploader,
                GULKAN_TYPE_CLIENT)
 
@@ -51,10 +50,9 @@ openvr_overlay_uploader_finalize (GObject *gobject)
 {
   GulkanClient *client = GULKAN_CLIENT (gobject);
 
-  /* Idle the device to make sure no work is outstanding */
-  if (client->device->device != VK_NULL_HANDLE)
-    vkDeviceWaitIdle (client->device->device);
+  gulkan_device_wait_idle (gulkan_client_get_device (client));
 
+  g_print ("finalize uploader\n");
   G_OBJECT_CLASS (openvr_overlay_uploader_parent_class)->finalize (gobject);
 }
 
@@ -63,10 +61,13 @@ openvr_overlay_uploader_init_vulkan (OpenVROverlayUploader *self,
                                     bool enable_validation)
 {
   GulkanClient *client = GULKAN_CLIENT (self);
+  GulkanDevice *device = gulkan_client_get_device (client);
+  GulkanInstance *instance = gulkan_client_get_instance (client);
+
   GSList* openvr_instance_extensions = NULL;
   openvr_compositor_get_instance_extensions (&openvr_instance_extensions);
 
-  if (!gulkan_instance_create (client->instance,
+  if (!gulkan_instance_create (instance,
                                enable_validation,
                                openvr_instance_extensions))
     {
@@ -74,12 +75,14 @@ openvr_overlay_uploader_init_vulkan (OpenVROverlayUploader *self,
       return false;
     }
 
+  VkInstance instance_handle = gulkan_instance_get_handle (instance);
+
   /* Query OpenVR for the physical device to use */
   uint64_t physical_device = 0;
   OpenVRContext *context = openvr_context_get_instance ();
   context->system->GetOutputDevice (
     &physical_device, ETextureType_TextureType_Vulkan,
-    (struct VkInstance_T*) client->instance->instance);
+    (struct VkInstance_T*) instance_handle);
 
   g_print ("OpenVR requests device %ld.\n", physical_device);
 
@@ -88,8 +91,8 @@ openvr_overlay_uploader_init_vulkan (OpenVROverlayUploader *self,
   openvr_compositor_get_device_extensions ((VkPhysicalDevice) physical_device,
                                           &openvr_device_extensions);
 
-  if (!gulkan_device_create (client->device,
-                             client->instance,
+  if (!gulkan_device_create (device,
+                             instance,
                              (VkPhysicalDevice) physical_device,
                              openvr_device_extensions))
     {
@@ -113,19 +116,19 @@ openvr_overlay_uploader_submit_frame (OpenVROverlayUploader *self,
                                       GulkanTexture         *texture)
 {
   GulkanClient *client = GULKAN_CLIENT (self);
-  GulkanDevice *device = client->device;
+  GulkanDevice *device = gulkan_client_get_device (client);
 
   struct VRVulkanTextureData_t texture_data =
     {
-      .m_nImage = (uint64_t) texture->image,
-      .m_pDevice = (struct VkDevice_T*) device->device,
-      .m_pPhysicalDevice = (struct VkPhysicalDevice_T*) device->physical_device,
-      .m_pInstance = (struct VkInstance_T*) client->instance->instance,
-      .m_pQueue = (struct VkQueue_T*) device->queue,
-      .m_nQueueFamilyIndex = device->queue_family_index,
-      .m_nWidth = texture->width,
-      .m_nHeight = texture->height,
-      .m_nFormat = texture->format,
+      .m_nImage = (uint64_t) gulkan_texture_get_image (texture),
+      .m_pDevice = gulkan_device_get_handle (device),
+      .m_pPhysicalDevice = gulkan_device_get_physical_handle (device),
+      .m_pInstance = gulkan_client_get_instance_handle (client),
+      .m_pQueue = gulkan_device_get_queue_handle (device),
+      .m_nQueueFamilyIndex = gulkan_device_get_queue_family_index (device),
+      .m_nWidth = gulkan_texture_get_width (texture),
+      .m_nHeight = gulkan_texture_get_height (texture),
+      .m_nFormat = gulkan_texture_get_format (texture),
       .m_nSampleCount = 1
     };
 

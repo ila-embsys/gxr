@@ -188,8 +188,9 @@ main ()
   }
 
   GulkanClient *client = GULKAN_CLIENT (uploader);
+  GulkanDevice *device = gulkan_client_get_device (client);
 
-  texture = gulkan_texture_new_from_dmabuf (client->device,
+  texture = gulkan_texture_new_from_dmabuf (device,
                                             fd, width, height,
                                             VK_FORMAT_B8G8R8A8_UNORM);
   if (texture == NULL)

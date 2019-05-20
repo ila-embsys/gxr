@@ -41,6 +41,7 @@ create_overlay ()
   guchar* rgba = gdk_pixbuf_get_pixels (pixbuf);
 
   GulkanClient *client = GULKAN_CLIENT (uploader);
+  GulkanDevice *device = gulkan_client_get_device (client);
 
   glGenTextures (1, &gl_texture);
   glActiveTexture (GL_TEXTURE0);
@@ -79,7 +80,7 @@ create_overlay ()
 
   eglDestroyImage (eglDisplay, egl_image);
 
-  texture = gulkan_texture_new_from_dmabuf (client->device,
+  texture = gulkan_texture_new_from_dmabuf (device,
                                             fd, width, height,
                                             VK_FORMAT_R8G8B8A8_UNORM);
   if (texture == NULL)
