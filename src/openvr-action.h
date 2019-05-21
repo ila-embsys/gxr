@@ -22,9 +22,6 @@ G_BEGIN_DECLS
 #define OPENVR_TYPE_ACTION openvr_action_get_type()
 G_DECLARE_FINAL_TYPE (OpenVRAction, openvr_action, OPENVR, ACTION, GObject)
 
-/* TODO: figure out if and how more than 2 controllers should be supported */
-#define OPENVR_CONTROLLER_COUNT 2
-
 typedef enum OpenVRActionType {
   OPENVR_ACTION_DIGITAL,
   OPENVR_ACTION_ANALOG,
@@ -35,6 +32,7 @@ typedef struct OpenVRDigitalEvent {
   gboolean active;
   gboolean state;
   gboolean changed;
+  guint64 controller_handle;
   gfloat time;
 } OpenVRDigitalEvent;
 
@@ -42,6 +40,7 @@ typedef struct OpenVRAnalogEvent {
   gboolean active;
   graphene_vec3_t state;
   graphene_vec3_t delta;
+  guint64 controller_handle;
   gfloat time;
 } OpenVRAnalogEvent;
 
@@ -52,6 +51,7 @@ typedef struct OpenVRPoseEvent {
   graphene_vec3_t angular_velocity;
   gboolean valid;
   gboolean device_connected;
+  guint64 controller_handle;
 } OpenVRPoseEvent;
 
 gboolean

@@ -88,7 +88,7 @@ openvr_action_class_init (OpenVRActionClass *klass)
 static void
 openvr_action_init (OpenVRAction *self)
 {
-  self->handle = k_ulInvalidActionSetHandle;
+  self->handle = k_ulInvalidActionHandle;
 }
 
 OpenVRAction *
@@ -159,7 +159,13 @@ openvr_action_poll_digital (OpenVRAction *self)
       return FALSE;
     }
 
+  InputOriginInfo_t origin_info;
+  err = context->input->GetOriginTrackedDeviceInfo (data.activeOrigin,
+                                                    &origin_info,
+                                                    sizeof (origin_info));
+
   OpenVRDigitalEvent *event = g_malloc (sizeof (OpenVRDigitalEvent));
+  event->controller_handle = origin_info.trackedDeviceIndex;
   event->active = data.bActive;
   event->state = data.bState;
   event->changed = data.bChanged;
@@ -207,8 +213,14 @@ openvr_action_poll_analog (OpenVRAction *self)
       return FALSE;
     }
 
+  InputOriginInfo_t origin_info;
+  err = context->input->GetOriginTrackedDeviceInfo (data.activeOrigin,
+                                                    &origin_info,
+                                                    sizeof (origin_info));
+
   OpenVRAnalogEvent *event = g_malloc (sizeof (OpenVRAnalogEvent));
   event->active = data.bActive;
+  event->controller_handle = origin_info.trackedDeviceIndex;
   graphene_vec3_init (&event->state, data.x, data.y, data.z);
   graphene_vec3_init (&event->delta, data.deltaX, data.deltaY, data.deltaZ);
   event->time = data.fUpdateTime;
@@ -242,8 +254,15 @@ openvr_action_poll_pose (OpenVRAction *self)
       return FALSE;
     }
 
+  InputOriginInfo_t origin_info;
+  err = context->input->GetOriginTrackedDeviceInfo (data.activeOrigin,
+                                                    &origin_info,
+                                                    sizeof (origin_info));
+
+
   OpenVRPoseEvent *event = g_malloc (sizeof (OpenVRPoseEvent));
   event->active = data.bActive;
+  event->controller_handle = origin_info.trackedDeviceIndex;
   openvr_math_matrix34_to_graphene (&data.pose.mDeviceToAbsoluteTracking,
                                     &event->pose);
   graphene_vec3_init_from_float (&event->velocity,
