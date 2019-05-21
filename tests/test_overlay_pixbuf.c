@@ -9,12 +9,7 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gdk/gdk.h>
 
-#include <openvr-glib.h>
-
-#include "openvr-context.h"
-#include "openvr-overlay.h"
-#include "openvr-overlay-uploader.h"
-#include "openvr-math.h"
+#include "openvr-glib.h"
 
 GdkPixbuf *
 load_gdk_pixbuf ()

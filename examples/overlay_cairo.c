@@ -11,12 +11,7 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gdk/gdk.h>
 
-#include <openvr-glib.h>
-
-#include "openvr-context.h"
-#include "openvr-overlay.h"
-#include "openvr-compositor.h"
-#include "openvr-overlay-uploader.h"
+#include "openvr-glib.h"
 
 #define WIDTH 1280
 #define HEIGHT 720

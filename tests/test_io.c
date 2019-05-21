@@ -7,7 +7,7 @@
 
 #include <glib.h>
 
-#include "openvr-io.h"
+#include "openvr-glib.h"
 
 #define CACHE_DIR "openvr-glib"
 #define RES_BASE_PATH "/res/bindings"

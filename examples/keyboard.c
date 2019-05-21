@@ -16,13 +16,7 @@
 #include <gdk/gdk.h>
 #include <gtk/gtk.h>
 
-#include "openvr-context.h"
-#include "openvr-overlay.h"
-#include "openvr-time.h"
-#include "openvr-overlay-uploader.h"
-#include "openvr-io.h"
-#include "openvr-action.h"
-#include "openvr-action-set.h"
+#include "openvr-glib.h"
 
 static gboolean use_system_keyboard = FALSE;
 

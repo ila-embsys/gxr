@@ -7,12 +7,25 @@
 
 #pragma once
 
+#ifndef OPENVR_GLIB_H
+#define OPENVR_GLIB_H
+
 #include <glib.h>
 
-G_BEGIN_DECLS
-
 #define OPENVR_GLIB_INSIDE
-# include "openvr-glib-version.h"
+
+#include "openvr-glib-version.h"
+#include "openvr-action.h"
+#include "openvr-action-set.h"
+#include "openvr-compositor.h"
+#include "openvr-context.h"
+#include "openvr-io.h"
+#include "openvr-math.h"
+#include "openvr-overlay.h"
+#include "openvr-overlay-uploader.h"
+#include "openvr-system.h"
+#include "openvr-time.h"
+
 #undef OPENVR_GLIB_INSIDE
 
-G_END_DECLS
+#endif

@@ -8,6 +8,10 @@
 #ifndef OPENVR_OVERLAY_UPLOADER_H_
 #define OPENVR_OVERLAY_UPLOADER_H_
 
+#if !defined (OPENVR_GLIB_INSIDE) && !defined (OPENVR_GLIB_COMPILATION)
+#error "Only <openvr-glib.h> can be included directly."
+#endif
+
 #include <stdint.h>
 #include <glib-object.h>
 

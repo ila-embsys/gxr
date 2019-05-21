@@ -62,6 +62,7 @@ openvr_glib_lib = shared_library(api_path,
   soversion: so_version,
   dependencies: openvr_glib_deps,
   install: true,
+  c_args : ['-DOPENVR_GLIB_COMPILATION']
 )
 
 openvr_glib_inc = include_directories('.')

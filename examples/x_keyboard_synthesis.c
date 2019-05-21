@@ -13,8 +13,7 @@
 #include <glib/gprintf.h>
 #include <gdk/gdk.h>
 
-#include <openvr-glib.h>
-#include "openvr-context.h"
+#include "openvr-glib.h"
 
 #include <graphene.h>
 

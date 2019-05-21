@@ -12,13 +12,7 @@
 #include <gdk/gdk.h>
 #include <glib/gprintf.h>
 
-#include <openvr-glib.h>
-
-#include "openvr-context.h"
-#include "openvr-overlay.h"
-#include "openvr-compositor.h"
-#include "openvr-overlay-uploader.h"
-#include "openvr-time.h"
+#include "openvr-glib.h"
 
 #define WIDTH 1000
 #define HEIGHT 1000

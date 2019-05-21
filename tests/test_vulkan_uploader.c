@@ -6,8 +6,7 @@
  */
 
 
-#include "openvr-context.h"
-#include "openvr-overlay-uploader.h"
+#include <openvr-glib.h>
 
 void
 _test_minimal ()

@@ -10,12 +10,7 @@
 
 #include <fcntl.h>
 
-#include <openvr-glib.h>
-
-#include "openvr-context.h"
-#include "openvr-overlay.h"
-#include "openvr-compositor.h"
-#include "openvr-overlay-uploader.h"
+#include "openvr-glib.h"
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>

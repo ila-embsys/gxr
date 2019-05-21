@@ -8,6 +8,10 @@
 #ifndef OPENVR_GLIB_ACTION_SET_H_
 #define OPENVR_GLIB_ACTION_SET_H_
 
+#if !defined (OPENVR_GLIB_INSIDE) && !defined (OPENVR_GLIB_COMPILATION)
+#error "Only <openvr-glib.h> can be included directly."
+#endif
+
 #include <glib-object.h>
 
 #include <openvr_capi.h>

@@ -12,16 +12,11 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gdk/gdk.h>
 
-#include <openvr-glib.h>
-
-#include "openvr-context.h"
-#include "openvr-overlay.h"
+#include "openvr-glib.h"
 
 #include <cairo.h>
 #include <clutter/clutter.h>
 #include "clutter_content.h"
-
-#include "openvr-overlay-uploader.h"
 
 GulkanTexture *texture = NULL;
 OpenVROverlayUploader *uploader;
