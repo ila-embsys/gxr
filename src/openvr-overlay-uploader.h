@@ -16,8 +16,7 @@
 
 #include <openvr_capi.h>
 
-#include <gulkan-client.h>
-#include <gulkan-texture.h>
+#include <gulkan.h>
 
 #include "openvr-overlay.h"
 #include "openvr-system.h"
