@@ -107,14 +107,15 @@ render_callback (gpointer data)
   }
 
   GulkanClient *client = GULKAN_CLIENT (context->uploader);
-  GulkanDevice *device = gulkan_client_get_device (client);
 
   if (context->texture == NULL)
     context->texture =
-      gulkan_texture_new_from_cairo_surface (device, surface,
-                                             VK_FORMAT_R8G8B8A8_UNORM);
-
-  gulkan_client_upload_cairo_surface (client, context->texture, surface);
+      gulkan_client_texture_new_from_cairo_surface (client, surface,
+                                                    VK_FORMAT_R8G8B8A8_UNORM,
+                                                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+  else
+    gulkan_client_upload_cairo_surface (client, context->texture, surface,
+                                        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
   cairo_surface_destroy (surface);
   openvr_overlay_uploader_submit_frame (context->uploader,

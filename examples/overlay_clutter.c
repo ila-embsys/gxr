@@ -111,7 +111,8 @@ repaint_cb (gpointer user_data)
                                   width, height, size,
                                   VK_FORMAT_R8G8B8A8_UNORM);
 
-  gulkan_client_upload_pixels (client, texture, pixels,size);
+  gulkan_client_upload_pixels (client, texture, pixels,size,
+                               VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
   openvr_overlay_uploader_submit_frame (uploader, data->overlay, texture);
 

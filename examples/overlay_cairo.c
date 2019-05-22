@@ -151,12 +151,10 @@ test_cat_overlay ()
   }
 
   GulkanClient *client = GULKAN_CLIENT (uploader);
-  GulkanDevice *device = gulkan_client_get_device (client);
 
-  texture = gulkan_texture_new_from_cairo_surface (device, surface,
-                                                   VK_FORMAT_R8G8B8A8_UNORM);
-
-  gulkan_client_upload_cairo_surface (client, texture, surface);
+  texture = gulkan_client_texture_new_from_cairo_surface (client, surface,
+                                                          VK_FORMAT_R8G8B8A8_UNORM,
+                                                          VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
   /* create openvr overlay */
   OpenVROverlay *overlay = openvr_overlay_new ();
