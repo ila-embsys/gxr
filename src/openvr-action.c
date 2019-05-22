@@ -18,6 +18,8 @@ struct _OpenVRAction
 
   VRActionHandle_t handle;
 
+  GSList *input_handles;
+
   OpenVRActionType type;
 };
 
@@ -89,6 +91,19 @@ static void
 openvr_action_init (OpenVRAction *self)
 {
   self->handle = k_ulInvalidActionHandle;
+  self->input_handles = NULL;
+
+  OpenVRContext *context = openvr_context_get_instance ();
+
+  /* TODO: don't hardcode input paths */
+  VRInputValueHandle_t *input_handle = g_malloc (sizeof (VRInputValueHandle_t));
+
+  context->input->GetInputSourceHandle ("/user/hand/left", input_handle);
+  self->input_handles = g_slist_append (self->input_handles, input_handle);
+
+  input_handle = g_malloc (sizeof (VRInputValueHandle_t));
+  context->input->GetInputSourceHandle ("/user/hand/right", input_handle);
+  self->input_handles = g_slist_append (self->input_handles, input_handle);
 }
 
 OpenVRAction *
@@ -148,31 +163,35 @@ openvr_action_poll_digital (OpenVRAction *self)
   InputDigitalActionData_t data;
 
   EVRInputError err;
-  err = context->input->GetDigitalActionData (self->handle, &data,
-                                              sizeof(data),
-                                              k_ulInvalidInputValueHandle);
-
-  if (err != EVRInputError_VRInputError_None)
+  for(GSList *e = self->input_handles; e; e = e->next)
     {
-      g_printerr ("ERROR: GetDigitalActionData: %s\n",
-                  openvr_input_error_string (err));
-      return FALSE;
+      VRActionHandle_t *input_handle = e->data;
+
+      err = context->input->GetDigitalActionData (self->handle, &data,
+                                                  sizeof(data),
+                                                  *input_handle);
+
+      if (err != EVRInputError_VRInputError_None)
+        {
+          g_printerr ("ERROR: GetDigitalActionData: %s\n",
+                      openvr_input_error_string (err));
+          return FALSE;
+        }
+
+      InputOriginInfo_t origin_info;
+      err = context->input->GetOriginTrackedDeviceInfo (data.activeOrigin,
+                                                        &origin_info,
+                                                        sizeof (origin_info));
+
+      OpenVRDigitalEvent *event = g_malloc (sizeof (OpenVRDigitalEvent));
+      event->controller_handle = origin_info.trackedDeviceIndex;
+      event->active = data.bActive;
+      event->state = data.bState;
+      event->changed = data.bChanged;
+      event->time = data.fUpdateTime;
+
+      g_signal_emit (self, action_signals[DIGITAL_EVENT], 0, event);
     }
-
-  InputOriginInfo_t origin_info;
-  err = context->input->GetOriginTrackedDeviceInfo (data.activeOrigin,
-                                                    &origin_info,
-                                                    sizeof (origin_info));
-
-  OpenVRDigitalEvent *event = g_malloc (sizeof (OpenVRDigitalEvent));
-  event->controller_handle = origin_info.trackedDeviceIndex;
-  event->active = data.bActive;
-  event->state = data.bState;
-  event->changed = data.bChanged;
-  event->time = data.fUpdateTime;
-
-  g_signal_emit (self, action_signals[DIGITAL_EVENT], 0, event);
-
   return TRUE;
 }
 
@@ -202,30 +221,35 @@ openvr_action_poll_analog (OpenVRAction *self)
   InputAnalogActionData_t data;
 
   EVRInputError err;
-  err = context->input->GetAnalogActionData (self->handle, &data,
-                                             sizeof(data),
-                                             k_ulInvalidInputValueHandle);
 
-  if (err != EVRInputError_VRInputError_None)
+  for(GSList *e = self->input_handles; e; e = e->next)
     {
-      g_printerr ("ERROR: GetAnalogActionData: %s\n",
-                  openvr_input_error_string (err));
-      return FALSE;
+      VRActionHandle_t *input_handle = e->data;
+      err = context->input->GetAnalogActionData (self->handle, &data,
+                                                 sizeof(data),
+                                                 *input_handle);
+
+      if (err != EVRInputError_VRInputError_None)
+        {
+          g_printerr ("ERROR: GetAnalogActionData: %s\n",
+                      openvr_input_error_string (err));
+          return FALSE;
+        }
+
+      InputOriginInfo_t origin_info;
+      err = context->input->GetOriginTrackedDeviceInfo (data.activeOrigin,
+                                                        &origin_info,
+                                                        sizeof (origin_info));
+
+      OpenVRAnalogEvent *event = g_malloc (sizeof (OpenVRAnalogEvent));
+      event->active = data.bActive;
+      event->controller_handle = origin_info.trackedDeviceIndex;
+      graphene_vec3_init (&event->state, data.x, data.y, data.z);
+      graphene_vec3_init (&event->delta, data.deltaX, data.deltaY, data.deltaZ);
+      event->time = data.fUpdateTime;
+
+      g_signal_emit (self, action_signals[ANALOG_EVENT], 0, event);
     }
-
-  InputOriginInfo_t origin_info;
-  err = context->input->GetOriginTrackedDeviceInfo (data.activeOrigin,
-                                                    &origin_info,
-                                                    sizeof (origin_info));
-
-  OpenVRAnalogEvent *event = g_malloc (sizeof (OpenVRAnalogEvent));
-  event->active = data.bActive;
-  event->controller_handle = origin_info.trackedDeviceIndex;
-  graphene_vec3_init (&event->state, data.x, data.y, data.z);
-  graphene_vec3_init (&event->delta, data.deltaX, data.deltaY, data.deltaZ);
-  event->time = data.fUpdateTime;
-
-  g_signal_emit (self, action_signals[ANALOG_EVENT], 0, event);
 
   return TRUE;
 }
@@ -240,40 +264,42 @@ openvr_action_poll_pose (OpenVRAction *self)
   float predicted_seconds_from_now = 0;
 
   EVRInputError err;
-  err = context->input->GetPoseActionData (self->handle,
-                                           context->origin,
-                                           predicted_seconds_from_now,
-                                           &data,
-                                           sizeof(data),
-                                           k_ulInvalidInputValueHandle);
 
-  if (err != EVRInputError_VRInputError_None)
+  for(GSList *e = self->input_handles; e; e = e->next)
     {
-      g_printerr ("ERROR: GetPoseActionData: %s\n",
-                  openvr_input_error_string (err));
-      return FALSE;
+      VRActionHandle_t *input_handle = e->data;
+      err = context->input->GetPoseActionData (self->handle,
+                                               context->origin,
+                                               predicted_seconds_from_now,
+                                               &data,
+                                               sizeof(data),
+                                               *input_handle);
+      if (err != EVRInputError_VRInputError_None)
+        {
+          g_printerr ("ERROR: GetPoseActionData: %s\n",
+                      openvr_input_error_string (err));
+          return FALSE;
+        }
+
+      InputOriginInfo_t origin_info;
+      err = context->input->GetOriginTrackedDeviceInfo (data.activeOrigin,
+                                                        &origin_info,
+                                                        sizeof (origin_info));
+
+      OpenVRPoseEvent *event = g_malloc (sizeof (OpenVRPoseEvent));
+      event->active = data.bActive;
+      event->controller_handle = origin_info.trackedDeviceIndex;
+      openvr_math_matrix34_to_graphene (&data.pose.mDeviceToAbsoluteTracking,
+                                        &event->pose);
+      graphene_vec3_init_from_float (&event->velocity,
+                                     data.pose.vVelocity.v);
+      graphene_vec3_init_from_float (&event->angular_velocity,
+                                     data.pose.vAngularVelocity.v);
+      event->valid = data.pose.bPoseIsValid;
+      event->device_connected = data.pose.bDeviceIsConnected;
+
+      g_signal_emit (self, action_signals[POSE_EVENT], 0, event);
     }
-
-  InputOriginInfo_t origin_info;
-  err = context->input->GetOriginTrackedDeviceInfo (data.activeOrigin,
-                                                    &origin_info,
-                                                    sizeof (origin_info));
-
-
-  OpenVRPoseEvent *event = g_malloc (sizeof (OpenVRPoseEvent));
-  event->active = data.bActive;
-  event->controller_handle = origin_info.trackedDeviceIndex;
-  openvr_math_matrix34_to_graphene (&data.pose.mDeviceToAbsoluteTracking,
-                                    &event->pose);
-  graphene_vec3_init_from_float (&event->velocity,
-                                 data.pose.vVelocity.v);
-  graphene_vec3_init_from_float (&event->angular_velocity,
-                                 data.pose.vAngularVelocity.v);
-  event->valid = data.pose.bPoseIsValid;
-  event->device_connected = data.pose.bDeviceIsConnected;
-
-  g_signal_emit (self, action_signals[POSE_EVENT], 0, event);
-
   return TRUE;
 }
 
@@ -309,7 +335,7 @@ static void
 openvr_action_finalize (GObject *gobject)
 {
   OpenVRAction *self = OPENVR_ACTION (gobject);
-  (void) self;
+  g_slist_free_full (self->input_handles, g_free);
 }
 
 OpenVRActionType
