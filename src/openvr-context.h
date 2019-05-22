@@ -35,7 +35,7 @@ struct _OpenVRContext
 
 typedef struct OpenVRDeviceIndexEvent
 {
-  TrackedDeviceIndex_t index;
+  guint64 controller_handle;
 } OpenVRDeviceIndexEvent;
 
 OpenVRContext *openvr_context_get_instance (void);

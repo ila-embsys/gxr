@@ -318,7 +318,7 @@ openvr_context_poll_event (OpenVRContext *self)
       {
         OpenVRDeviceIndexEvent *event =
           g_malloc (sizeof (OpenVRDeviceIndexEvent));
-        event->index = vr_event.trackedDeviceIndex;
+        event->controller_handle = vr_event.trackedDeviceIndex;
         g_signal_emit (self, context_signals[DEVICE_ACTIVATE_EVENT], 0, event);
       } break;
 
@@ -326,7 +326,7 @@ openvr_context_poll_event (OpenVRContext *self)
       {
         OpenVRDeviceIndexEvent *event =
           g_malloc (sizeof (OpenVRDeviceIndexEvent));
-        event->index = vr_event.trackedDeviceIndex;
+        event->controller_handle = vr_event.trackedDeviceIndex;
         g_signal_emit (self, context_signals[DEVICE_DEACTIVATE_EVENT], 0, event);
       } break;
 
@@ -334,7 +334,7 @@ openvr_context_poll_event (OpenVRContext *self)
       {
         OpenVRDeviceIndexEvent *event =
           g_malloc (sizeof (OpenVRDeviceIndexEvent));
-        event->index = vr_event.trackedDeviceIndex;
+        event->controller_handle = vr_event.trackedDeviceIndex;
         g_signal_emit (self, context_signals[DEVICE_UPDATE_EVENT], 0, event);
       } break;
 
