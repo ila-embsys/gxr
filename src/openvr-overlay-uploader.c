@@ -57,7 +57,6 @@ openvr_overlay_uploader_finalize (GObject *gobject)
 
   gulkan_device_wait_idle (gulkan_client_get_device (client));
 
-  g_print ("finalize uploader\n");
   G_OBJECT_CLASS (openvr_overlay_uploader_parent_class)->finalize (gobject);
 }
 
