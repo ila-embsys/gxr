@@ -782,3 +782,41 @@ openvr_overlay_set_flip_y (OpenVROverlay *self,
       priv->flip_y = flip_y;
     }
 }
+
+/* Submit frame to OpenVR runtime */
+bool
+openvr_overlay_submit_texture (OpenVROverlay *self,
+                               GulkanClient  *client,
+                               GulkanTexture *texture)
+{
+  GET_OVERLAY_FUNCTIONS
+
+  GulkanDevice *device = gulkan_client_get_device (client);
+
+  struct VRVulkanTextureData_t texture_data =
+    {
+      .m_nImage = (uint64_t) gulkan_texture_get_image (texture),
+      .m_pDevice = gulkan_device_get_handle (device),
+      .m_pPhysicalDevice = gulkan_device_get_physical_handle (device),
+      .m_pInstance = gulkan_client_get_instance_handle (client),
+      .m_pQueue = gulkan_device_get_queue_handle (device),
+      .m_nQueueFamilyIndex = gulkan_device_get_queue_family_index (device),
+      .m_nWidth = gulkan_texture_get_width (texture),
+      .m_nHeight = gulkan_texture_get_height (texture),
+      .m_nFormat = gulkan_texture_get_format (texture),
+      .m_nSampleCount = 1
+    };
+
+  struct Texture_t vr_texture =
+    {
+      .handle = &texture_data,
+      .eType = ETextureType_TextureType_Vulkan,
+      .eColorSpace = EColorSpace_ColorSpace_Auto
+    };
+
+  VROverlayHandle_t overlay_handle = openvr_overlay_get_handle (self);
+  err = f->SetOverlayTexture (overlay_handle, &vr_texture);
+
+  OVERLAY_CHECK_ERROR ("SetOverlayTexture", err);
+  return TRUE;
+}

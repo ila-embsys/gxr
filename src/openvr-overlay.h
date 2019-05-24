@@ -21,6 +21,7 @@
 
 #include <openvr_capi.h>
 #include <graphene.h>
+#include <gulkan.h>
 
 G_BEGIN_DECLS
 
@@ -183,6 +184,11 @@ openvr_overlay_get_model (OpenVROverlay *self, gchar *name,
 void
 openvr_overlay_set_flip_y (OpenVROverlay *self,
                            gboolean flip_y);
+
+bool
+openvr_overlay_submit_texture (OpenVROverlay *self,
+                               GulkanClient  *client,
+                               GulkanTexture *texture);
 
 G_END_DECLS
 
