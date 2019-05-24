@@ -64,23 +64,20 @@ openvr_compositor_get_device_extensions (VkPhysicalDevice  physical_device,
   }
 }
 
-GulkanClient*
-openvr_compositor_gulkan_client_new (bool enable_validation)
+bool
+openvr_compositor_gulkan_client_init (GulkanClient *client,
+                                      bool          enable_validation)
 {
-  GulkanClient *client = gulkan_client_new ();
-  GulkanDevice *device = gulkan_client_get_device (client);
-  GulkanInstance *instance = gulkan_client_get_instance (client);
-
   GSList* openvr_instance_extensions = NULL;
   openvr_compositor_get_instance_extensions (&openvr_instance_extensions);
 
+  GulkanInstance *instance = gulkan_client_get_instance (client);
   if (!gulkan_instance_create (instance,
                                enable_validation,
                                openvr_instance_extensions))
     {
       g_printerr ("Failed to create instance.\n");
-      g_object_unref (client);
-      return NULL;
+      return false;
     }
 
   VkInstance instance_handle = gulkan_instance_get_handle (instance);
@@ -97,22 +94,33 @@ openvr_compositor_gulkan_client_new (bool enable_validation)
   openvr_compositor_get_device_extensions ((VkPhysicalDevice) physical_device,
                                           &openvr_device_extensions);
 
+  GulkanDevice *device = gulkan_client_get_device (client);
   if (!gulkan_device_create (device,
                              instance,
                              (VkPhysicalDevice) physical_device,
                              openvr_device_extensions))
     {
       g_printerr ("Failed to create device.\n");
-      g_object_unref (client);
-      return NULL;
+      return false;
     }
 
   if (!gulkan_client_init_command_pool (client))
     {
       g_printerr ("Failed to create command pool.\n");
+      return false;
+    }
+
+  return true;
+}
+
+GulkanClient*
+openvr_compositor_gulkan_client_new (bool enable_validation)
+{
+  GulkanClient *client = gulkan_client_new ();
+  if (!openvr_compositor_gulkan_client_init (client, enable_validation))
+    {
       g_object_unref (client);
       return NULL;
     }
-
   return client;
 }
