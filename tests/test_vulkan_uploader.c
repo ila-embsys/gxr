@@ -11,7 +11,7 @@
 void
 _test_minimal ()
 {
-  OpenVROverlayUploader *uploader = openvr_overlay_uploader_new ();
+  GulkanClient *uploader = openvr_compositor_gulkan_client_new (true);
   g_assert_nonnull (uploader);
 
   g_assert (openvr_context_is_installed ());
@@ -20,7 +20,6 @@ _test_minimal ()
   g_assert (openvr_context_init_overlay (context));
   g_assert (openvr_context_is_valid (context));
 
-  g_assert (openvr_overlay_uploader_init_vulkan (uploader, true));
   g_object_unref (uploader);
 }
 

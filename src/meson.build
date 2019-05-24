@@ -11,8 +11,7 @@ openvr_glib_sources = [
   'openvr-context.c',
   'openvr-action.c',
   'openvr-action-set.c',
-  'openvr-io.c',
-  'openvr-overlay-uploader.c'
+  'openvr-io.c'
 ]
 
 openvr_glib_headers = [
@@ -25,8 +24,7 @@ openvr_glib_headers = [
   'openvr-context.h',
   'openvr-action.h',
   'openvr-action-set.h',
-  'openvr-io.h',
-  'openvr-overlay-uploader.h'
+  'openvr-io.h'
 ]
 
 version_split = meson.project_version().split('.')

@@ -87,7 +87,7 @@ input_callback (gpointer data)
 
 struct RenderContext
 {
-  OpenVROverlayUploader *uploader;
+  GulkanClient *uploader;
   OpenVROverlay *overlay;
   GulkanTexture *texture;
 };
@@ -118,9 +118,8 @@ render_callback (gpointer data)
                                         VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
   cairo_surface_destroy (surface);
-  openvr_overlay_uploader_submit_frame (context->uploader,
-                                       context->overlay,
-                                       context->texture);
+  openvr_overlay_submit_texture (context->overlay, context->uploader,
+                                 context->texture);
 
   return TRUE;
 }
@@ -165,8 +164,8 @@ test_overlay ()
       return false;
     }
 
-  OpenVROverlayUploader *uploader = openvr_overlay_uploader_new ();
-  if (!openvr_overlay_uploader_init_vulkan (uploader, true))
+  GulkanClient *uploader = openvr_compositor_gulkan_client_new (true);
+  if (!uploader)
   {
     g_printerr ("Unable to initialize Vulkan uploader!\n");
     return -1;

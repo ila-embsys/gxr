@@ -19,7 +19,7 @@
 #include "clutter_content.h"
 
 GulkanTexture *texture = NULL;
-OpenVROverlayUploader *uploader;
+GulkanClient *uploader;
 
 gboolean
 timeout_callback (gpointer data)
@@ -114,7 +114,7 @@ repaint_cb (gpointer user_data)
   gulkan_client_upload_pixels (client, texture, pixels,size,
                                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
-  openvr_overlay_uploader_submit_frame (uploader, data->overlay, texture);
+  openvr_overlay_submit_texture (data->overlay, uploader, texture);
 
   return TRUE;
 }
@@ -161,8 +161,8 @@ test_cat_overlay (int argc, char *argv[])
   if (!_init_openvr ())
     return -1;
 
-  uploader = openvr_overlay_uploader_new ();
-  if (!openvr_overlay_uploader_init_vulkan (uploader, true))
+  uploader = openvr_compositor_gulkan_client_new (true);
+  if (!uploader)
     {
       g_printerr ("Unable to initialize Vulkan!\n");
       return false;

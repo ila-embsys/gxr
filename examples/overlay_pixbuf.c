@@ -159,14 +159,12 @@ test_cat_overlay ()
   if (!_init_openvr ())
     return -1;
 
-  OpenVROverlayUploader *uploader = openvr_overlay_uploader_new ();
-  if (!openvr_overlay_uploader_init_vulkan (uploader, true))
+  GulkanClient *client = openvr_compositor_gulkan_client_new (true);
+  if (!client)
   {
     g_printerr ("Unable to initialize Vulkan!\n");
     return false;
   }
-
-  GulkanClient *client = GULKAN_CLIENT (uploader);
 
   texture = gulkan_client_texture_new_from_pixbuf (client, pixbuf,
                                                    VK_FORMAT_R8G8B8A8_UNORM,
@@ -186,7 +184,7 @@ test_cat_overlay ()
                                   (float) gdk_pixbuf_get_width (pixbuf),
                                   (float) gdk_pixbuf_get_height (pixbuf));
 
-  openvr_overlay_uploader_submit_frame (uploader, overlay, texture);
+  openvr_overlay_submit_texture (overlay, client, texture);
 
   graphene_matrix_t transform;
   graphene_point3d_t pos =
@@ -222,7 +220,7 @@ test_cat_overlay ()
   OpenVRContext *context = openvr_context_get_instance ();
   g_object_unref (context);
 
-  g_object_unref (uploader);
+  g_object_unref (client);
 
   return 0;
 }

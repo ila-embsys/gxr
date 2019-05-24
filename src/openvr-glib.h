@@ -22,7 +22,6 @@
 #include "openvr-io.h"
 #include "openvr-math.h"
 #include "openvr-overlay.h"
-#include "openvr-overlay-uploader.h"
 #include "openvr-system.h"
 #include "openvr-time.h"
 

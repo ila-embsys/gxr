@@ -72,10 +72,8 @@ test_overlay_pixbuf ()
   g_assert (openvr_context_init_overlay (context));
   g_assert (openvr_context_is_valid (context));
 
-  OpenVROverlayUploader *uploader = openvr_overlay_uploader_new ();
+  GulkanClient *uploader = openvr_compositor_gulkan_client_new (true);
   g_assert_nonnull (uploader);
-
-  g_assert (openvr_overlay_uploader_init_vulkan (uploader, true));
 
   GulkanClient *client = GULKAN_CLIENT (uploader);
 
@@ -99,7 +97,7 @@ test_overlay_pixbuf ()
 
   test_color (overlay);
 
-  openvr_overlay_uploader_submit_frame (uploader, overlay, texture);
+  openvr_overlay_submit_texture (overlay, uploader, texture);
 
   g_object_unref (pixbuf);
 }

@@ -80,7 +80,7 @@ _press_cb (OpenVROverlay  *overlay,
 
 static void
 _show_cb (OpenVROverlay *overlay,
-          gpointer       data)
+          gpointer      _client)
 {
   g_print ("show\n");
 
@@ -91,9 +91,8 @@ _show_cb (OpenVROverlay *overlay,
   if (!openvr_overlay_is_valid (overlay) || is_invisible)
     return;
 
-  OpenVROverlayUploader * uploader = (OpenVROverlayUploader*) data;
-
-  openvr_overlay_uploader_submit_frame (uploader, overlay, texture);
+  GulkanClient *client = (GulkanClient*) _client;
+  openvr_overlay_submit_texture (overlay, client, texture);
 }
 
 static void
@@ -241,14 +240,12 @@ test_cat_overlay ()
   if (!_init_openvr ())
     return -1;
 
-  OpenVROverlayUploader *uploader = openvr_overlay_uploader_new ();
-  if (!openvr_overlay_uploader_init_vulkan (uploader, true))
+  GulkanClient *client = openvr_compositor_gulkan_client_new (true);
+  if (!client)
   {
     g_printerr ("Unable to initialize Vulkan!\n");
     return false;
   }
-
-  GulkanClient *client = GULKAN_CLIENT (uploader);
 
   texture = gulkan_client_texture_new_from_pixbuf (client, pixbuf,
                                                    VK_FORMAT_R8G8B8A8_UNORM,
@@ -285,12 +282,12 @@ test_cat_overlay ()
 
   show_overlay_info (overlay);
 
-  openvr_overlay_uploader_submit_frame (uploader, overlay, texture);
-  openvr_overlay_uploader_submit_frame (uploader, overlay2, texture);
+  openvr_overlay_submit_texture (overlay, client, texture);
+  openvr_overlay_submit_texture (overlay2, client, texture);
 
   /* connect glib callbacks */
   g_signal_connect (overlay, "button-press-event", (GCallback) _press_cb, loop);
-  g_signal_connect (overlay, "show", (GCallback) _show_cb, uploader);
+  g_signal_connect (overlay, "show", (GCallback) _show_cb, client);
   g_signal_connect (overlay, "destroy", (GCallback) _destroy_cb, loop);
 
   g_timeout_add (20, timeout_callback, overlay);
@@ -304,7 +301,7 @@ test_cat_overlay ()
   g_object_unref (overlay);
   g_object_unref (pixbuf);
   g_object_unref (texture);
-  g_object_unref (uploader);
+  g_object_unref (client);
 
   OpenVRContext *context = openvr_context_get_instance ();
   g_object_unref (context);

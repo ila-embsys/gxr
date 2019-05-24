@@ -113,9 +113,9 @@ _show_cb (OpenVROverlay *overlay,
   if (!openvr_overlay_is_valid (overlay) || is_invisible)
     return;
 
-  OpenVROverlayUploader * uploader = (OpenVROverlayUploader*) data;
+  GulkanClient *uploader = (GulkanClient*) data;
 
-  openvr_overlay_uploader_submit_frame (uploader, overlay, texture);
+  openvr_overlay_submit_texture (overlay, uploader, texture);
 }
 
 static void
@@ -175,8 +175,8 @@ main ()
   if (!_init_openvr ())
     return -1;
 
-  OpenVROverlayUploader *uploader = openvr_overlay_uploader_new ();
-  if (!openvr_overlay_uploader_init_vulkan (uploader, true))
+  GulkanClient *uploader = openvr_compositor_gulkan_client_new (true);
+  if (!uploader)
   {
     g_printerr ("Unable to initialize Vulkan!\n");
     return false;
