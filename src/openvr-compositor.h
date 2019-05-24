@@ -16,6 +16,7 @@
 #include <openvr_capi.h>
 
 #include <vulkan/vulkan.h>
+#include <gulkan.h>
 
 G_BEGIN_DECLS
 
@@ -25,6 +26,9 @@ openvr_compositor_get_instance_extensions (GSList **out_list);
 void
 openvr_compositor_get_device_extensions (VkPhysicalDevice  physical_device,
                                          GSList          **out_list);
+
+GulkanClient*
+openvr_compositor_gulkan_client_new (bool enable_validation);
 
 G_END_DECLS
 
