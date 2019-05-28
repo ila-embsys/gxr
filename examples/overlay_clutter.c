@@ -15,6 +15,8 @@
 #include "openvr-glib.h"
 
 #include <cairo.h>
+
+#define COGL_ENABLE_EXPERIMENTAL_2_0_API 1
 #include <clutter/clutter.h>
 #include "clutter_content.h"
 
