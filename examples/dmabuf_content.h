@@ -16,16 +16,25 @@
 #include <stdint.h>
 
 void
-dma_buf_fill (char *pixels, uint32_t width, uint32_t height, int stride)
+dma_buf_fill (char *pixels, uint32_t width, uint32_t height, uint32_t stride);
+
+void
+dma_buf_fill (char *pixels, uint32_t width, uint32_t height, uint32_t stride)
 {
   uint32_t i, j;
   /* paint the buffer with a colored gradient */
   for (j = 0; j < height; j++)
     {
-      uint32_t *fb_ptr = (uint32_t*)(pixels + j * stride);
+      /* pixel data is BGRA, each channel in a char. */
+      char *fb_ptr = (char*)(pixels + j * stride);
       for (i = 0; i < width; i++)
-        fb_ptr[i] = 0xff000000 + 0x00000001 * (i * 255 / width)
-                               + 0x00000100 * (j * 255 / height);
+        {
+          fb_ptr[i * 4]     = 0;
+          fb_ptr[i * 4 + 1] = (char) (i * 255 / width);
+          fb_ptr[i * 4 + 2] = (char) (j * 255 / height);
+          fb_ptr[i * 4 + 3] = (char) 255;
+          //printf ("b %d\n", fb_ptr[i+3]);
+        }
     }
 }
 

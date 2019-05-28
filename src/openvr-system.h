@@ -16,7 +16,8 @@
 
 #include <openvr_capi.h>
 
-void openvr_system_print_device_info ();
+void
+openvr_system_print_device_info (void);
 
 
 gchar*

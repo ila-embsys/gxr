@@ -19,16 +19,16 @@
 
 #include "cairo_content.h"
 
-GulkanTexture *texture;
+static GulkanTexture *texture;
 
-void
+static void
 draw_cairo (cairo_t *cr, unsigned width, unsigned height)
 {
   draw_gradient_quad (cr, width, height);
   draw_gradient_circle (cr, width, height);
 }
 
-cairo_surface_t*
+static cairo_surface_t*
 create_cairo_surface (unsigned char *image)
 {
   cairo_surface_t *surface =
@@ -50,7 +50,7 @@ create_cairo_surface (unsigned char *image)
   return surface;
 }
 
-gboolean
+static gboolean
 timeout_callback (gpointer data)
 {
   OpenVROverlay *overlay = (OpenVROverlay*) data;
@@ -98,7 +98,7 @@ _destroy_cb (OpenVROverlay *overlay,
   g_main_loop_quit (loop);
 }
 
-bool
+static bool
 _init_openvr ()
 {
   if (!openvr_context_is_installed ())
@@ -123,7 +123,7 @@ _init_openvr ()
   return true;
 }
 
-int
+static int
 test_cat_overlay ()
 {
   GMainLoop *loop;

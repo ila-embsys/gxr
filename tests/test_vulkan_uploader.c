@@ -8,7 +8,7 @@
 
 #include <openvr-glib.h>
 
-void
+static void
 _test_minimal ()
 {
   GulkanClient *uploader = openvr_compositor_gulkan_client_new (true);

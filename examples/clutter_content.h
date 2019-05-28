@@ -2,11 +2,20 @@
 
 #include "cairo_content.h"
 
-static gboolean
+gboolean
 draw_content (ClutterCanvas *canvas,
               cairo_t       *cr,
-              int            width,
-              int            height)
+              uint32_t       width,
+              uint32_t       height);
+
+void
+create_rotated_quad_stage (ClutterActor* stage);
+
+gboolean
+draw_content (ClutterCanvas *canvas,
+              cairo_t       *cr,
+              uint32_t       width,
+              uint32_t       height)
 {
   (void) canvas;
   draw_rounded_quad (cr, width, height);

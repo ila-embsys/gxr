@@ -25,7 +25,7 @@ typedef struct ActionCallbackData
   int         controller_index;
 } ActionCallbackData;
 
-gboolean
+static gboolean
 _sigint_cb (gpointer _self)
 {
   Example *self = (Example*) _self;
@@ -33,7 +33,7 @@ _sigint_cb (gpointer _self)
   return TRUE;
 }
 
-gboolean
+static gboolean
 _poll_events_cb (gpointer _self)
 {
   Example *self = (Example*) _self;
@@ -47,7 +47,7 @@ _poll_events_cb (gpointer _self)
   return TRUE;
 }
 
-gboolean
+static gboolean
 _cache_bindings (GString *actions_path)
 {
   GString* cache_path = openvr_io_get_cache_path ("openvr-glib");
@@ -90,7 +90,7 @@ _digital_cb (OpenVRAction       *action,
     }
   g_free (event);
 }
-
+#include <stdio.h>
 static void
 _hand_pose_cb (OpenVRAction       *action,
                OpenVRPoseEvent    *event,
@@ -113,7 +113,7 @@ _hand_pose_cb (OpenVRAction       *action,
   g_free (event);
 }
 
-void
+static void
 _cleanup (Example *self)
 {
   g_print ("bye\n");

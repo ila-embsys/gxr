@@ -11,7 +11,7 @@
 
 #include "openvr-glib.h"
 
-GdkPixbuf *
+static GdkPixbuf *
 load_gdk_pixbuf ()
 {
   GError *error = NULL;
@@ -32,7 +32,7 @@ load_gdk_pixbuf ()
     }
 }
 
-void
+static void
 test_color (OpenVROverlay *overlay)
 {
   graphene_vec3_t *color = graphene_vec3_alloc ();
@@ -58,7 +58,7 @@ test_color (OpenVROverlay *overlay)
   graphene_vec3_free (color_ret);
 }
 
-void
+static void
 test_overlay_pixbuf ()
 {
   GError *error = NULL;
@@ -92,8 +92,8 @@ test_overlay_pixbuf ()
   g_assert (openvr_overlay_is_valid (overlay));
 
   openvr_overlay_set_mouse_scale (overlay,
-                                  (float) gdk_pixbuf_get_width (pixbuf),
-                                  (float) gdk_pixbuf_get_height (pixbuf));
+                                  gdk_pixbuf_get_width (pixbuf),
+                                  gdk_pixbuf_get_height (pixbuf));
 
   test_color (overlay);
 

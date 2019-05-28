@@ -89,7 +89,7 @@ _destroy_cb (OpenVROverlay *overlay,
   g_main_loop_quit (self->loop);
 }
 
-void
+static void
 _process_key_event (Example *self, GdkEventKey *event)
 {
   g_print ("Input str %s (%d)\n", event->string, event->length);
@@ -143,7 +143,7 @@ _overlay_keyboard_close_cb (OpenVROverlay  *overlay,
   g_print ("Overlay keyboard closed.\n");
 }
 
-gboolean
+static gboolean
 _poll_events_cb (gpointer _self)
 {
   Example *self = (Example*) _self;
@@ -183,10 +183,10 @@ static GOptionEntry entries[] =
 {
   { "system-keyboard", 0, 0, G_OPTION_ARG_NONE, &use_system_keyboard,
     "Use system keyboard", NULL },
-  { NULL }
+  { 0 }
 };
 
-gboolean
+static gboolean
 _parse_options (gint *argc, gchar ***argv)
 {
   GError *error = NULL;
@@ -203,7 +203,7 @@ _parse_options (gint *argc, gchar ***argv)
   return TRUE;
 }
 
-gboolean
+static gboolean
 _init_gtk (Example *self)
 {
   GtkWidget *window = gtk_offscreen_window_new ();
@@ -224,7 +224,7 @@ _init_gtk (Example *self)
   return TRUE;
 }
 
-gboolean
+static gboolean
 _create_overlay (Example *self)
 {
   self->overlay = openvr_overlay_new ();
@@ -255,7 +255,7 @@ _create_overlay (Example *self)
   return TRUE;
 }
 
-void
+static void
 _cleanup (Example *self)
 {
   g_main_loop_unref (self->loop);

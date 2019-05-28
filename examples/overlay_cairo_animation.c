@@ -20,11 +20,11 @@
 
 #include "cairo_content.h"
 
-struct timespec last_time;
-unsigned frames_without_time_update = 60;
-gchar fps_str [50];
+static struct timespec last_time;
+static unsigned frames_without_time_update = 60;
+static gchar fps_str [50];
 
-void
+static void
 update_fps (struct timespec* now)
 {
   struct timespec diff;
@@ -36,7 +36,7 @@ update_fps (struct timespec* now)
   frames_without_time_update = 0;
 }
 
-cairo_surface_t*
+static cairo_surface_t*
 create_cairo_surface (unsigned char *image)
 {
   struct timespec now;
@@ -77,7 +77,7 @@ create_cairo_surface (unsigned char *image)
   return surface;
 }
 
-gboolean
+static gboolean
 input_callback (gpointer data)
 {
   OpenVROverlay *overlay = (OpenVROverlay*) data;
@@ -92,7 +92,7 @@ struct RenderContext
   GulkanTexture *texture;
 };
 
-gboolean
+static gboolean
 render_callback (gpointer data)
 {
   struct RenderContext *context = (struct RenderContext*) data;
@@ -146,7 +146,7 @@ _destroy_cb (OpenVROverlay *overlay,
   g_main_loop_quit (loop);
 }
 
-int
+static int
 test_overlay ()
 {
   GMainLoop *loop;

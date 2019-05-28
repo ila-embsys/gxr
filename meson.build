@@ -9,13 +9,38 @@ configure_file(
   output: 'openvr-glib-config.h',
   configuration: config_h,
 )
-add_project_arguments([
-  ['-I' + meson.build_root(),
+
+project_args = ['-I' + meson.build_root(),
    #'-Werror',
    '-Wall',
-   '-Wextra'
-],
-], language: ['c'])
+   '-Wextra',
+]
+
+compiler = meson.get_compiler('c')
+compiler_id = compiler.get_id()
+
+if compiler_id == 'clang'
+  project_args += [
+    '-Weverything',
+    '-Wno-reserved-id-macro',
+    '-Wno-documentation',
+    '-Wno-documentation-unknown-command',
+    '-Wno-padded',
+    '-Wno-overlength-strings',
+    '-Wno-disabled-macro-expansion',
+    '-Wno-atomic-implicit-seq-cst',
+    '-Wno-gnu-empty-initializer',
+    '-Wno-covered-switch-default',
+    '-Wno-switch-enum',
+    '-Wno-used-but-marked-unused',
+    '-Wno-double-promotion',
+    # variadic %f
+    '-Wno-gnu-folding-constant'
+    # openvr max length macros
+  ]
+endif
+
+add_project_arguments([project_args], language: ['c'])
 
 # Paths
 openvr_glib_prefix = get_option('prefix')

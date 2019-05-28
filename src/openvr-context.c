@@ -112,7 +112,7 @@ openvr_context_finalize (GObject *gobject)
   G_OBJECT_CLASS (openvr_context_parent_class)->finalize (gobject);
 }
 
-OpenVRContext *
+static OpenVRContext *
 openvr_context_new (void)
 {
   return (OpenVRContext*) g_object_new (OPENVR_TYPE_CONTEXT, 0);
@@ -127,7 +127,7 @@ openvr_context_get_instance ()
   return context;
 }
 
-gboolean
+static gboolean
 _init_fn_table (const char *type, intptr_t *ret)
 {
   EVRInitError error;
@@ -147,14 +147,14 @@ _init_fn_table (const char *type, intptr_t *ret)
   return TRUE;
 }
 
-bool
+static bool
 _init_function_tables (OpenVRContext *self)
 {
-  INIT_FN_TABLE (self->system, System);
-  INIT_FN_TABLE (self->overlay, Overlay);
-  INIT_FN_TABLE (self->compositor, Compositor);
-  INIT_FN_TABLE (self->input, Input);
-  INIT_FN_TABLE (self->model, RenderModels);
+  INIT_FN_TABLE (self->system, System)
+  INIT_FN_TABLE (self->overlay, Overlay)
+  INIT_FN_TABLE (self->compositor, Compositor)
+  INIT_FN_TABLE (self->input, Input)
+  INIT_FN_TABLE (self->model, RenderModels)
   return true;
 }
 
@@ -352,7 +352,7 @@ openvr_context_show_system_keyboard (OpenVRContext *self)
   self->overlay->ShowKeyboard (
     EGamepadTextInputMode_k_EGamepadTextInputModeNormal,
     EGamepadTextInputLineMode_k_EGamepadTextInputLineModeSingleLine,
-    "OpenVR System Keyboard", 1, "", "true", 0);
+    "OpenVR System Keyboard", 1, "", TRUE, 0);
 }
 
 void

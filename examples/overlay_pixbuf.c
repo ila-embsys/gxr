@@ -12,9 +12,9 @@
 
 #include "openvr-glib.h"
 
-GulkanTexture *texture;
+static GulkanTexture *texture;
 
-gboolean
+static gboolean
 _poll_cb (gpointer data)
 {
   OpenVROverlay *overlay = (OpenVROverlay*) data;
@@ -22,7 +22,7 @@ _poll_cb (gpointer data)
   return TRUE;
 }
 
-gboolean
+static gboolean
 _sigint_cb (gpointer _loop)
 {
   GMainLoop *loop = (GMainLoop*) _loop;
@@ -30,7 +30,7 @@ _sigint_cb (gpointer _loop)
   return TRUE;
 }
 
-void
+static void
 print_pixbuf_info (GdkPixbuf * pixbuf)
 {
   gint n_channels = gdk_pixbuf_get_n_channels (pixbuf);
@@ -54,7 +54,7 @@ print_pixbuf_info (GdkPixbuf * pixbuf)
   g_print ("rowstride %d\n", rowstride);
 }
 
-GdkPixbuf *
+static GdkPixbuf *
 load_gdk_pixbuf ()
 {
   GError *error = NULL;
@@ -117,7 +117,7 @@ _destroy_cb (OpenVROverlay *overlay,
   g_main_loop_quit (loop);
 }
 
-bool
+static bool
 _init_openvr ()
 {
   if (!openvr_context_is_installed ())
@@ -142,7 +142,7 @@ _init_openvr ()
   return true;
 }
 
-int
+static int
 test_cat_overlay ()
 {
   GMainLoop *loop;
@@ -181,8 +181,8 @@ test_cat_overlay ()
   }
 
   openvr_overlay_set_mouse_scale (overlay,
-                                  (float) gdk_pixbuf_get_width (pixbuf),
-                                  (float) gdk_pixbuf_get_height (pixbuf));
+                                  gdk_pixbuf_get_width (pixbuf),
+                                  gdk_pixbuf_get_height (pixbuf));
 
   openvr_overlay_submit_texture (overlay, client, texture);
 

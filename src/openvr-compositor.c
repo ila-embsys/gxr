@@ -12,7 +12,7 @@
 #include "openvr-compositor.h"
 #include "openvr-context.h"
 
-void
+static void
 _split (gchar *str, GSList **out_list)
 {
   gchar **array = g_strsplit (str, " ", 0);

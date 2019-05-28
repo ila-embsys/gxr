@@ -8,7 +8,7 @@
 #include <glib.h>
 #include "openvr-glib.h"
 
-void
+static void
 _test_minimal ()
 {
   openvr_system_print_device_info ();

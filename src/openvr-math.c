@@ -29,8 +29,8 @@ openvr_math_vec3_to_string (graphene_vec3_t *vec)
 void
 openvr_math_graphene_to_matrix34 (graphene_matrix_t *mat, HmdMatrix34_t *mat34)
 {
-  for (int i = 0; i < 3; i++)
-    for (int j = 0; j < 4; j++)
+  for (guint i = 0; i < 3; i++)
+    for (guint j = 0; j < 4; j++)
       mat34->m[i][j] = graphene_matrix_get_value (mat, j, i);
 }
 
@@ -183,7 +183,7 @@ openvr_math_worldspace_to_screenspace (graphene_point3d_t *worldspace_point,
 
   *w = graphene_vec4_get_w (&screenspace_vec4);
 
-  graphene_vec4_scale (&screenspace_vec4, 1. / *w, &screenspace_vec4);
+  graphene_vec4_scale (&screenspace_vec4, 1.f / *w, &screenspace_vec4);
 
   graphene_point3d_init (screenspace_point,
                          graphene_vec4_get_x (&screenspace_vec4),

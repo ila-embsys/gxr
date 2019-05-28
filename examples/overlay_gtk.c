@@ -14,8 +14,8 @@
 
 #include "openvr-glib.h"
 
-GulkanTexture *texture = NULL;
-GulkanClient *uploader;
+static GulkanTexture *texture = NULL;
+static GulkanClient *uploader;
 
 static gboolean
 _damage_cb (GtkWidget *widget, GdkEventExpose *event, OpenVROverlay *overlay)
@@ -110,7 +110,7 @@ _draw_cb (GtkWidget *widget, cairo_t *cr, struct Labels* labels)
   return FALSE;
 }
 
-gboolean
+static gboolean
 timeout_callback (gpointer data)
 {
   OpenVROverlay *overlay = (OpenVROverlay*) data;
@@ -140,7 +140,7 @@ _destroy_cb (OpenVROverlay *overlay,
   g_main_loop_quit (loop);
 }
 
-bool
+static bool
 _init_openvr ()
 {
   if (!openvr_context_is_installed ())

@@ -3,6 +3,23 @@
 #include <glib.h>
 
 void
+draw_gradient_quad (cairo_t *cr, unsigned width, unsigned height);
+
+void
+draw_rotated_quad (cairo_t *cr, double width, double rotation);
+
+void
+draw_fps (cairo_t     *cr,
+          double       width,
+          const gchar *str);
+
+void
+draw_gradient_circle (cairo_t *cr, unsigned width, unsigned height);
+
+void
+draw_rounded_quad (cairo_t *cr, unsigned width, unsigned height);
+
+void
 draw_gradient_quad (cairo_t *cr, unsigned width, unsigned height)
 {
   cairo_pattern_t *pat = cairo_pattern_create_linear (0.0, 0.0, 0.0, height);

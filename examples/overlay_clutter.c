@@ -18,10 +18,10 @@
 #include <clutter/clutter.h>
 #include "clutter_content.h"
 
-GulkanTexture *texture = NULL;
-GulkanClient *uploader;
+static GulkanTexture *texture = NULL;
+static GulkanClient *uploader;
 
-gboolean
+static gboolean
 timeout_callback (gpointer data)
 {
   OpenVROverlay *overlay = (OpenVROverlay*) data;
@@ -35,7 +35,8 @@ typedef struct
   OpenVROverlay *overlay;
 } Data;
 
-void
+#if 0
+static void
 print_pixbuf_info (GdkPixbuf * pixbuf)
 {
   gint n_channels = gdk_pixbuf_get_n_channels (pixbuf);
@@ -58,6 +59,7 @@ print_pixbuf_info (GdkPixbuf * pixbuf)
   g_print ("pixel dimensions %dx%d\n", width, height);
   g_print ("rowstride %d\n", rowstride);
 }
+#endif
 
 static void
 _press_cb (OpenVROverlay  *overlay,
@@ -101,7 +103,7 @@ repaint_cb (gpointer user_data)
   uint64_t size = (uint64_t) stride * height;
 
   guchar* pixels = clutter_stage_read_pixels
-    (CLUTTER_STAGE(data->stage), 0, 0, width, height);
+    (CLUTTER_STAGE(data->stage), 0, 0, (gint)width, (gint)height);
 
   GulkanClient *client = GULKAN_CLIENT (uploader);
   GulkanDevice *device = gulkan_client_get_device (client);
@@ -119,7 +121,7 @@ repaint_cb (gpointer user_data)
   return TRUE;
 }
 
-bool
+static bool
 _init_openvr ()
 {
   if (!openvr_context_is_installed ())
@@ -144,7 +146,7 @@ _init_openvr ()
   return true;
 }
 
-int
+static int
 test_cat_overlay (int argc, char *argv[])
 {
   GMainLoop *loop;

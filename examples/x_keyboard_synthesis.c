@@ -25,8 +25,8 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/XTest.h>
 
-Display *dpy;
-graphene_matrix_t keyboard_position;
+static Display *dpy;
+static graphene_matrix_t keyboard_position;
 
 typedef struct KeySymTable {
   KeySym *table;
@@ -44,14 +44,14 @@ typedef struct ModifierKeyCodes {
   int length;
 } ModifierKeyCodes;
 
-gboolean
+static gboolean
 timeout_callback (OpenVRContext *context)
 {
   openvr_context_poll_event (context);
   return TRUE;
 }
 
-bool
+static bool
 _init_openvr ()
 {
   if (!openvr_context_is_installed ())
@@ -97,19 +97,19 @@ _keyboard_input (OpenVRContext  *context,
                  KeySymTable    *keysym_table)
 {
   (void) context;
-  for (int i = 0; i < event->length; i++)
+  for (int char_index = 0; char_index < event->length; char_index++)
     {
-      unsigned char c = event->string[i];
+      char c = event->string[char_index];
       //g_print ("Got char %d\n", c);
 
       // TODO: many openvr key codes match Latin 1 keysyms from X11/keysymdef.h
       // lucky coincidence or subject to change?
-      int key_sym;
+      KeySym key_sym;
       // OpenVR Backspace = 8 and XK_Backspace = 0xff08 etc.
       if (c >= 8 && c <= 17)
-        key_sym = 0xff00 + c;
+        key_sym = (KeySym) (0xff00 + c);
       else
-        key_sym = c;
+        key_sym = (KeySym) c;
 
       // character 10 on the open vr keyboard (Line Feed)
       // should be return for us. There is no return on the openvr keyboard?!
@@ -121,8 +121,9 @@ _keyboard_input (OpenVRContext  *context,
 
       if (mod_key_codes.length == -1)
         {
-          g_print ("There was an error, not synthing %c keysym %d %s\n",
-                   event->string[i], key_sym, XKeysymToString (key_sym));
+          g_print ("There was an error, not synthing %c keysym %lu %s\n",
+                   event->string[char_index], key_sym,
+                   XKeysymToString (key_sym));
           return;
         }
 
@@ -130,27 +131,27 @@ _keyboard_input (OpenVRContext  *context,
         {
           KeySym key_code = mod_key_codes.key_codes[i];
           //g_print ("%c: modkey %lu\n", c, key_code);
-          XTestFakeKeyEvent (dpy,key_code, true, 0);
+          XTestFakeKeyEvent (dpy, (guint) key_code, true, 0);
         }
 
       unsigned int key_code = XKeysymToKeycode (dpy, key_sym);
       //g_print ("%c (%d): keycode %d (keysym %d)\n", c, c, key_code, key_sym);
-      XTestFakeKeyEvent (dpy,key_code, true, 0);
-      XTestFakeKeyEvent (dpy,key_code, false, 0);
+      XTestFakeKeyEvent (dpy, key_code, true, 0);
+      XTestFakeKeyEvent (dpy, key_code, false, 0);
 
       for (int i = 0; i < mod_key_codes.length; i++)
         {
-          KeySym key_code = mod_key_codes.key_codes[i];
+          KeySym key_code_to_send = mod_key_codes.key_codes[i];
           //g_print ("%c: modkey %lu\n", c, key_code);
-          XTestFakeKeyEvent (dpy,key_code, false, 0);
+          XTestFakeKeyEvent (dpy, (guint)key_code_to_send, false, 0);
         }
 
       XSync (dpy, false);
     }
 }
 
-KeySymTable *
-_init_keysym_table (Display *dpy)
+static KeySymTable *
+_init_keysym_table ()
 {
   int min_keycode;
   int max_keycode;
@@ -159,7 +160,9 @@ _init_keysym_table (Display *dpy)
 
 
   int keycode_count = max_keycode - min_keycode + 1;
-  KeySym *keysyms = XGetKeyboardMapping (dpy, min_keycode, keycode_count,
+  KeySym *keysyms = XGetKeyboardMapping (dpy,
+                                         (KeyCode) min_keycode,
+                                         (KeyCode) keycode_count,
                                          &keysyms_per_keycode);
 
   int num_elements = keycode_count * keysyms_per_keycode;
@@ -214,7 +217,7 @@ _init_keysym_table (Display *dpy)
   return keysym_table;
 }
 
-int
+static int
 _find_modifier_num (KeySymTable *keysym_table, KeySym sym)
 {
   int min_keycode = keysym_table->min_keycode;
@@ -344,7 +347,7 @@ main (int argc, char *argv[])
 
   dpy = XOpenDisplay (NULL);
 
-  KeySymTable *keysym_table = _init_keysym_table (dpy);
+  KeySymTable *keysym_table = _init_keysym_table ();
 /*
   KeySym test_key = XK_at;
   ModifierKeyCodes modifier_key_code =

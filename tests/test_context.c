@@ -11,7 +11,7 @@
 #include "openvr_capi_global.h"
 #include "openvr-context.h"
 
-void
+static void
 _test_vr_init_shutdown ()
 {
   EVRInitError error;
@@ -20,7 +20,7 @@ _test_vr_init_shutdown ()
   VR_ShutdownInternal ();
 }
 
-void
+static void
 _test_minimal ()
 {
   OpenVRContext *context = openvr_context_get_instance ();

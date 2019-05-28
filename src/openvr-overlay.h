@@ -199,11 +199,10 @@ G_END_DECLS
 
 #define OVERLAY_CHECK_ERROR(fun, res) \
 { \
-  EVROverlayError r = (res); \
-  if (r != EVROverlayError_VROverlayError_None) \
+  if (res != EVROverlayError_VROverlayError_None) \
     { \
       g_printerr ("ERROR: " fun ": failed with %s in %s:%d\n", \
-                  f->GetOverlayErrorNameFromEnum (r), __FILE__, __LINE__); \
+                  f->GetOverlayErrorNameFromEnum (res), __FILE__, __LINE__); \
       return FALSE; \
     } \
 }

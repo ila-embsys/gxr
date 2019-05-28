@@ -17,9 +17,9 @@
 
 #include "dmabuf_content.h"
 
-GulkanTexture *texture;
+static GulkanTexture *texture;
 
-gboolean
+static gboolean
 timeout_callback (gpointer data)
 {
   OpenVROverlay *overlay = (OpenVROverlay*) data;
@@ -27,8 +27,8 @@ timeout_callback (gpointer data)
   return TRUE;
 }
 
-void*
-allocate_dmabuf_amd (int size, int *fd)
+static void*
+allocate_dmabuf_amd (gsize size, int *fd)
 {
   amdgpu_device_handle amd_dev;
   amdgpu_bo_handle amd_bo;
@@ -128,7 +128,7 @@ _destroy_cb (OpenVROverlay *overlay,
   g_main_loop_quit (loop);
 }
 
-bool
+static bool
 _init_openvr ()
 {
   if (!openvr_context_is_installed ())
@@ -165,8 +165,8 @@ main ()
   uint32_t height = 512;
 
   int fd;
-  int stride = ALIGN ((int) width, 32) * 4;
-  uint64_t size = (uint64_t) stride * height;
+  guint stride = (guint) ALIGN ((int)width, 32) * 4;
+  gsize size = stride * height;
   char* map = (char*) allocate_dmabuf_amd (size, &fd);
 
   dma_buf_fill (map, width, height, stride);

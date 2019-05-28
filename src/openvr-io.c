@@ -32,7 +32,7 @@ openvr_io_write_resource_to_file (const gchar *res_base_path,
 
   GInputStream * res_input_stream =
     g_resources_open_stream (res_path->str,
-                             G_RESOURCE_FLAGS_NONE,
+                             G_RESOURCE_LOOKUP_FLAGS_NONE,
                             &error);
 
   g_string_free (res_path, TRUE);
@@ -57,8 +57,9 @@ openvr_io_write_resource_to_file (const gchar *res_base_path,
   gssize n_bytes_written =
     g_output_stream_splice (G_OUTPUT_STREAM (output_stream),
                             res_input_stream,
-                            G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET |
-                            G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE,
+                            (GOutputStreamSpliceFlags)
+                              (G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET |
+                               G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE),
                             NULL, &error);
 
   if (error != NULL)

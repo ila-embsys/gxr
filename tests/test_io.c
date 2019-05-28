@@ -12,7 +12,7 @@
 #define CACHE_DIR "openvr-glib"
 #define RES_BASE_PATH "/res/bindings"
 
-gboolean
+static gboolean
 _cache_bindings (GString *actions_path)
 {
   GString* cache_path = openvr_io_get_cache_path (CACHE_DIR);

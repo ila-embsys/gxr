@@ -21,18 +21,18 @@
 
 #include <vulkan/vulkan.h>
 
-GdkPixbuf *pixbuf;
-GulkanClient *uploader;
+static GdkPixbuf *pixbuf;
+static GulkanClient *uploader;
 
-GulkanTexture *gk_texture;
-OpenVROverlay *overlay;
-GLuint gl_texture;
+static GulkanTexture *gk_texture;
+static OpenVROverlay *overlay;
+static GLuint gl_texture;
 
-void
+static void
 create_overlay ()
 {
-  uint32_t width = gdk_pixbuf_get_width (pixbuf);
-  uint32_t height = gdk_pixbuf_get_height (pixbuf);
+  guint width = (guint)gdk_pixbuf_get_width (pixbuf);
+  guint height = (guint)gdk_pixbuf_get_height (pixbuf);
 
   guchar* rgb = gdk_pixbuf_get_pixels (pixbuf);
 
@@ -78,8 +78,8 @@ create_overlay ()
    * for now we leave it here */
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_TILING_EXT, GL_LINEAR_TILING_EXT);
 
-  glTexSubImage2D (GL_TEXTURE_2D, 0 ,0, 0, width, height, GL_RGBA,
-                   GL_UNSIGNED_BYTE, (GLvoid*)rgb);
+  glTexSubImage2D (GL_TEXTURE_2D, 0 ,0, 0, (GLsizei)width, (GLsizei)height,
+                   GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)rgb);
 
 
   if (!gulkan_client_transfer_layout (client,
@@ -110,16 +110,16 @@ create_overlay ()
   graphene_matrix_init_translate (&transform, &pos);
   openvr_overlay_set_transform_absolute (overlay, &transform);
 
-  guint64 start = g_get_monotonic_time ();
+  gint64 start = g_get_monotonic_time ();
   openvr_overlay_submit_texture (overlay, uploader, gk_texture);
-  guint64 end = g_get_monotonic_time ();
+  gint64 end = g_get_monotonic_time ();
   g_print ("Submit frame took %f ms\n",
            (end - start) / (1000.));
 
   openvr_overlay_show (overlay);
 }
 
-void
+static void
 destroy_overlay ()
 {
   g_object_unref (overlay);
@@ -128,13 +128,14 @@ destroy_overlay ()
   overlay = NULL;
 }
 
-gboolean change_callback()
+static gboolean
+change_callback ()
 {
   if (!overlay)
     return FALSE;
 
-  uint32_t width = gdk_pixbuf_get_width (pixbuf);
-  uint32_t height = gdk_pixbuf_get_height (pixbuf);
+  guint width = (guint)gdk_pixbuf_get_width (pixbuf);
+  guint height = (guint)gdk_pixbuf_get_height (pixbuf);
 
   GdkPixbuf *original = pixbuf;
   pixbuf = gdk_pixbuf_flip  (pixbuf, TRUE);
@@ -142,31 +143,31 @@ gboolean change_callback()
 
   guchar *rgb = gdk_pixbuf_get_pixels (pixbuf);
 
-  glTexSubImage2D (GL_TEXTURE_2D, 0 ,0, 0, width, height, GL_RGBA,
-                   GL_UNSIGNED_BYTE, (GLvoid*)rgb);
+  glTexSubImage2D (GL_TEXTURE_2D, 0 ,0, 0, (GLsizei)width, (GLsizei)height,
+                   GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)rgb);
 
   openvr_overlay_submit_texture (overlay, uploader, gk_texture);
 
   return TRUE;
 }
 
-gboolean
+static gboolean
 timeout_callback ()
 {
   if (overlay)
     {
-      guint64 start = g_get_monotonic_time ();
+      gint64 start = g_get_monotonic_time ();
       destroy_overlay ();
-      guint64 end = g_get_monotonic_time ();
+      gint64 end = g_get_monotonic_time ();
       g_print ("Destroy overlay took %f ms\n",
                (end - start) / (1000.));
     }
   else
     {
-      guint64 start = g_get_monotonic_time ();
+      gint64 start = g_get_monotonic_time ();
       create_overlay ();
       g_timeout_add (250, change_callback, NULL);
-      guint64 end = g_get_monotonic_time ();
+      gint64 end = g_get_monotonic_time ();
       g_print ("Create overlay took %f ms\n",
                (end - start) / (1000.));
     }
@@ -174,7 +175,7 @@ timeout_callback ()
   return TRUE;
 }
 
-bool
+static bool
 _init_openvr ()
 {
   if (!openvr_context_is_installed ())
@@ -199,7 +200,7 @@ _init_openvr ()
   return true;
 }
 
-GdkPixbuf *
+static GdkPixbuf *
 load_gdk_pixbuf ()
 {
   GError *error = NULL;
@@ -211,9 +212,9 @@ load_gdk_pixbuf ()
     g_error_free (error);
     return NULL;
   } else {
-    GdkPixbuf *pixbuf = gdk_pixbuf_add_alpha (pixbuf_unflipped, false, 0, 0, 0);
+    GdkPixbuf *pb = gdk_pixbuf_add_alpha (pixbuf_unflipped, false, 0, 0, 0);
     g_object_unref (pixbuf_unflipped);
-    return pixbuf;
+    return pb;
   }
 }
 
