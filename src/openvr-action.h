@@ -75,7 +75,11 @@ gboolean
 openvr_action_poll_analog (OpenVRAction *self);
 
 gboolean
-openvr_action_poll_pose (OpenVRAction *self);
+openvr_action_poll_pose_secs_from_now (OpenVRAction *self,
+                                       float         secs);
+
+gboolean
+openvr_action_poll_pose_next_frame (OpenVRAction *self);
 
 gboolean
 openvr_action_trigger_haptic (OpenVRAction *self,
