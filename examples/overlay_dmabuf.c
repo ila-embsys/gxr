@@ -164,7 +164,7 @@ main ()
   uint32_t width = 512;
   uint32_t height = 512;
 
-  int fd;
+  int fd = -1;
   guint stride = (guint) ALIGN ((int)width, 32) * 4;
   gsize size = stride * height;
   char* map = (char*) allocate_dmabuf_amd (size, &fd);
