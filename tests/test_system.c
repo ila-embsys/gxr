@@ -11,7 +11,13 @@
 static void
 _test_minimal ()
 {
+  OpenVRContext *context = openvr_context_get_instance ();
+  g_assert_nonnull (context);
+  g_assert (openvr_context_init_overlay (context));
+  g_assert (openvr_context_is_valid (context));
+
   openvr_system_print_device_info ();
+  g_object_unref (context);
 }
 
 int
