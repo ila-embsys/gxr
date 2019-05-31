@@ -33,15 +33,17 @@ struct _OpenVRContext
   enum ETrackingUniverseOrigin origin;
 };
 
+typedef enum {
+  OPENVR_APP_SCENE = 0,
+  OPENVR_APP_OVERLAY
+} OpenVRAppType;
+
 typedef struct OpenVRDeviceIndexEvent
 {
   guint64 controller_handle;
 } OpenVRDeviceIndexEvent;
 
 OpenVRContext *openvr_context_get_instance (void);
-
-gboolean
-openvr_context_init_overlay (OpenVRContext *self);
 
 gboolean
 openvr_context_is_valid (OpenVRContext *self);
@@ -57,7 +59,6 @@ openvr_context_print_model_list (OpenVRContext *self);
 
 GSList *
 openvr_context_get_model_list (OpenVRContext *self);
-
 
 const gchar*
 openvr_input_error_string (EVRInputError err);
@@ -76,7 +77,7 @@ void
 openvr_context_acknowledge_quit (OpenVRContext *self);
 
 gboolean
-openvr_context_init_scene (OpenVRContext *self);
+openvr_context_initialize (OpenVRContext *self, OpenVRAppType type);
 
 G_END_DECLS
 

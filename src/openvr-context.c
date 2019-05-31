@@ -158,7 +158,6 @@ _init_function_tables (OpenVRContext *self)
   return true;
 }
 
-/* TODO: Create app type enum to make this public */
 static gboolean
 _vr_init (OpenVRContext *self, EVRApplicationType app_type)
 {
@@ -184,15 +183,39 @@ _vr_init (OpenVRContext *self, EVRApplicationType app_type)
 }
 
 gboolean
-openvr_context_init_overlay (OpenVRContext * self)
+openvr_context_initialize (OpenVRContext *self, OpenVRAppType type)
 {
-  return _vr_init (self, EVRApplicationType_VRApplication_Overlay);
-}
+  if (!openvr_context_is_installed ())
+    {
+      g_printerr ("VR Runtime not installed.\n");
+      return FALSE;
+    }
 
-gboolean
-openvr_context_init_scene (OpenVRContext * self)
-{
-  return _vr_init (self, EVRApplicationType_VRApplication_Scene);
+  EVRApplicationType app_type;
+
+  switch (type)
+    {
+      case OPENVR_APP_SCENE:
+        app_type = EVRApplicationType_VRApplication_Scene;
+        break;
+      case OPENVR_APP_OVERLAY:
+        app_type = EVRApplicationType_VRApplication_Overlay;
+        break;
+      default:
+        app_type = EVRApplicationType_VRApplication_Scene;
+        g_warning ("Unknown app type %d\n", type);
+    }
+
+  if (!_vr_init (self, app_type))
+    return FALSE;
+
+  if (!openvr_context_is_valid (context))
+    {
+      g_printerr ("Could not load OpenVR function pointers.\n");
+      return FALSE;
+    }
+
+  return TRUE;
 }
 
 gboolean

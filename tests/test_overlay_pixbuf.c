@@ -69,7 +69,7 @@ test_overlay_pixbuf ()
   g_assert (openvr_context_is_installed ());
   OpenVRContext *context = openvr_context_get_instance ();
   g_assert_nonnull (context);
-  g_assert (openvr_context_init_overlay (context));
+  g_assert (openvr_context_initialize (context, OPENVR_APP_OVERLAY));
   g_assert (openvr_context_is_valid (context));
 
   GulkanClient *uploader = openvr_compositor_gulkan_client_new (true);
