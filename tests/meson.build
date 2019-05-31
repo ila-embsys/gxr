@@ -4,7 +4,7 @@ test_context = executable(
   link_with: openvr_glib_lib,
   include_directories: openvr_glib_inc,
   install: false)
-test('test_context', test_context)
+test('test_context', test_context, suite: ['xr'])
 
 test_system = executable(
   'test_system', 'test_system.c',
@@ -12,7 +12,7 @@ test_system = executable(
   link_with: openvr_glib_lib,
   include_directories: openvr_glib_inc,
   install: false)
-test('test_system', test_system)
+test('test_system', test_system, suite: ['xr'])
 
 test_overlay_pixbuf = executable(
   'test_overlay_pixbuf', ['test_overlay_pixbuf.c', test_resources],
@@ -20,7 +20,7 @@ test_overlay_pixbuf = executable(
   link_with: openvr_glib_lib,
   include_directories: openvr_glib_inc,
   install: false)
-test('test_overlay_pixbuf', test_overlay_pixbuf)
+test('test_overlay_pixbuf', test_overlay_pixbuf, suite: ['xr'])
 
 test_io = executable(
   'test_io', ['test_io.c', test_resources],
@@ -36,4 +36,4 @@ test_vulkan_uploader = executable(
   link_with: openvr_glib_lib,
   include_directories: openvr_glib_inc,
   install: false)
-test('test_vulkan_uploader', test_vulkan_uploader)
+test('test_vulkan_uploader', test_vulkan_uploader, suite: ['xr'])
