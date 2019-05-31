@@ -38,37 +38,3 @@ Don't run tests that require a running XR runtime.
 ```
 meson test -C build/ --no-suite xr
 ```
-
-
-## DBUS
-
-### Start DBUS server
-```
-$ ./build/dbus/gdbus-vr-server
-```
-
-### Toggle VR enabled status
-
-SteamVR should be already running for this. Otherwise it will be launched.
-Python 3 is required for this.
-
-```
-$ ./dbus/gdbus-vr-caller.py
-```
-
-## GNOME Shell
-
-### Get current upload method
-```
-$ gsettings get org.gnome.shell.vr upload-method
-```
-
-### List upload methods
-```
-$ gsettings range org.gnome.shell.vr upload-method
-```
-
-### Set upload method
-```
-$ gsettings set org.gnome.shell.vr upload-method vk-upload-raw
-```
