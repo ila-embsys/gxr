@@ -183,6 +183,17 @@ openvr_action_poll_digital (OpenVRAction *self)
                                                         &origin_info,
                                                         sizeof (origin_info));
 
+      if (err != EVRInputError_VRInputError_None)
+        {
+          /* controller is not active, but might be active later */
+          if (err == EVRInputError_VRInputError_InvalidHandle)
+            continue;
+
+          g_printerr ("ERROR: GetOriginTrackedDeviceInfo: %s\n",
+                      openvr_input_error_string (err));
+          return FALSE;
+        }
+
       OpenVRDigitalEvent *event = g_malloc (sizeof (OpenVRDigitalEvent));
       event->controller_handle = origin_info.trackedDeviceIndex;
       event->active = data.bActive;
@@ -241,6 +252,17 @@ openvr_action_poll_analog (OpenVRAction *self)
                                                         &origin_info,
                                                         sizeof (origin_info));
 
+      if (err != EVRInputError_VRInputError_None)
+        {
+          /* controller is not active, but might be active later */
+          if (err == EVRInputError_VRInputError_InvalidHandle)
+            continue;
+
+          g_printerr ("ERROR: GetOriginTrackedDeviceInfo: %s\n",
+                      openvr_input_error_string (err));
+          return FALSE;
+        }
+
       OpenVRAnalogEvent *event = g_malloc (sizeof (OpenVRAnalogEvent));
       event->active = data.bActive;
       event->controller_handle = origin_info.trackedDeviceIndex;
@@ -267,6 +289,10 @@ _emit_pose_event (OpenVRAction          *self,
                                                     sizeof (origin_info));
   if (err != EVRInputError_VRInputError_None)
     {
+      /* controller is not active, but might be active later */
+      if (err == EVRInputError_VRInputError_InvalidHandle)
+        return TRUE;
+
       g_printerr ("ERROR: GetOriginTrackedDeviceInfo: %s\n",
                   openvr_input_error_string (err));
       return FALSE;
