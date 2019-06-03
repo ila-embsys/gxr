@@ -305,6 +305,12 @@ openvr_input_error_string (EVRInputError err)
 void
 openvr_context_poll_event (OpenVRContext *self)
 {
+  /* Starting another VR app will first emit a shutdown event, and then the
+   * app transition event. In openvr-glib, a shutdown event is only emitted
+   * when the app should completely quit.
+   * If another VR app is started, only the app transition event is emitted. */
+  gboolean shutdown_event_pending = FALSE;
+
   struct VREvent_t vr_event;
   while (self->system->PollNextEvent (&vr_event, sizeof (vr_event)))
   {
@@ -331,10 +337,25 @@ openvr_context_poll_event (OpenVRContext *self)
         g_signal_emit (self, context_signals[KEYBOARD_CLOSE_EVENT], 0);
       } break;
 
+      case EVREventType_VREvent_ApplicationTransitionStarted:
+      {
+        shutdown_event_pending = FALSE;
+        OpenVRQuitEvent *event = g_malloc (sizeof (OpenVRQuitEvent));
+        event->reason = VR_QUIT_APPLICATION_TRANSITION;
+        g_signal_emit (self, context_signals[QUIT_EVENT], 0, event);
+      } break;
+
+      case EVREventType_VREvent_ProcessQuit:
+      {
+        shutdown_event_pending = FALSE;
+        OpenVRQuitEvent *event = g_malloc (sizeof (OpenVRQuitEvent));
+        event->reason = VR_QUIT_PROCESS_QUIT;
+        g_signal_emit (self, context_signals[QUIT_EVENT], 0, event);
+      } break;
+
       case EVREventType_VREvent_Quit:
       {
-        GdkEvent *event = gdk_event_new (GDK_DESTROY);
-        g_signal_emit (self, context_signals[QUIT_EVENT], 0, event);
+        shutdown_event_pending = TRUE;
       } break;
 
       case EVREventType_VREvent_TrackedDeviceActivated:
@@ -367,6 +388,13 @@ openvr_context_poll_event (OpenVRContext *self)
       break;
     }
   }
+
+  if (shutdown_event_pending)
+    {
+      OpenVRQuitEvent *event = g_malloc (sizeof (OpenVRQuitEvent));
+      event->reason = VR_QUIT_SHUTDOWN;
+      g_signal_emit (self, context_signals[QUIT_EVENT], 0, event);
+    }
 }
 
 void

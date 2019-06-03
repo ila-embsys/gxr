@@ -38,6 +38,17 @@ typedef enum {
   OPENVR_APP_OVERLAY
 } OpenVRAppType;
 
+typedef enum {
+  VR_QUIT_SHUTDOWN,
+  VR_QUIT_APPLICATION_TRANSITION,
+  VR_QUIT_PROCESS_QUIT
+} OpenVRQuitReason;
+
+typedef struct OpenVRQuitEvent
+{
+  OpenVRQuitReason reason;
+} OpenVRQuitEvent;
+
 typedef struct OpenVRDeviceIndexEvent
 {
   guint64 controller_handle;
