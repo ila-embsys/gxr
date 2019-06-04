@@ -34,6 +34,15 @@ openvr_compositor_gulkan_client_init (GulkanClient *client,
 GulkanClient*
 openvr_compositor_gulkan_client_new (bool enable_validation);
 
+bool
+openvr_compositor_submit (GulkanClient         *client,
+                          uint32_t              width,
+                          uint32_t              height,
+                          VkFormat              format,
+                          VkSampleCountFlagBits sample_count,
+                          VkImage               left,
+                          VkImage               right);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_COMPOSITOR_H_ */
