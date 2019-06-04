@@ -26,42 +26,58 @@ _split (gchar *str, GSList **out_list)
 }
 
 /* Ask OpenVR for the list of instance extensions required */
-void
+bool
 openvr_compositor_get_instance_extensions (GSList **out_list)
 {
   OpenVRContext *context = openvr_context_get_instance ();
+  if (!openvr_context_is_valid (context))
+    {
+      g_printerr ("OpenVR context was not initialized.\n");
+      return FALSE;
+    }
+
   uint32_t size =
     context->compositor->GetVulkanInstanceExtensionsRequired (NULL, 0);
 
   if (size > 0)
-  {
-    gchar *extensions = g_malloc(sizeof(gchar) * size);
-    extensions[0] = 0;
-    context->compositor->GetVulkanInstanceExtensionsRequired (extensions, size);
-    _split (extensions, out_list);
-    g_free(extensions);
-  }
+    {
+      gchar *extensions = g_malloc(sizeof(gchar) * size);
+      extensions[0] = 0;
+      context->compositor->GetVulkanInstanceExtensionsRequired (extensions, size);
+      _split (extensions, out_list);
+      g_free(extensions);
+    }
+
+  return TRUE;
 }
 
 /* Ask OpenVR for the list of device extensions required */
-void
+bool
 openvr_compositor_get_device_extensions (VkPhysicalDevice  physical_device,
                                          GSList          **out_list)
 {
   OpenVRContext *context = openvr_context_get_instance ();
+  if (!openvr_context_is_valid (context))
+    {
+      g_printerr ("OpenVR context was not initialized.\n");
+      return FALSE;
+    }
+
   uint32_t size = context->compositor->
     GetVulkanDeviceExtensionsRequired (physical_device, NULL, 0);
 
   if (size > 0)
-  {
-    gchar *extensions = g_malloc(sizeof(gchar) * size);
-    extensions[0] = 0;
-    context->compositor->GetVulkanDeviceExtensionsRequired (
-      physical_device, extensions, size);
+    {
+      gchar *extensions = g_malloc(sizeof(gchar) * size);
+      extensions[0] = 0;
+      context->compositor->GetVulkanDeviceExtensionsRequired (
+        physical_device, extensions, size);
 
-    _split (extensions, out_list);
-    g_free (extensions);
-  }
+      _split (extensions, out_list);
+      g_free (extensions);
+    }
+
+  return TRUE;
 }
 
 bool
@@ -69,7 +85,8 @@ openvr_compositor_gulkan_client_init (GulkanClient *client,
                                       bool          enable_validation)
 {
   GSList* openvr_instance_extensions = NULL;
-  openvr_compositor_get_instance_extensions (&openvr_instance_extensions);
+  if (!openvr_compositor_get_instance_extensions (&openvr_instance_extensions))
+    return FALSE;
 
   GulkanInstance *instance = gulkan_client_get_instance (client);
   if (!gulkan_instance_create (instance,

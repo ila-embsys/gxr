@@ -20,10 +20,10 @@
 
 G_BEGIN_DECLS
 
-void
+bool
 openvr_compositor_get_instance_extensions (GSList **out_list);
 
-void
+bool
 openvr_compositor_get_device_extensions (VkPhysicalDevice  physical_device,
                                          GSList          **out_list);
 
