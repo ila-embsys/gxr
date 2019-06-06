@@ -38,9 +38,6 @@ test_color (OpenVROverlay *overlay)
   graphene_vec3_t *color = graphene_vec3_alloc ();
   g_assert (openvr_overlay_get_color (overlay, color));
 
-  GString *str = openvr_math_vec3_to_string (color);
-  g_print ("Initial color is %s\n", str->str);
-
   graphene_vec3_init (color, 1.0f, 0.5f, 0.5f);
 
   g_assert (openvr_overlay_set_color (overlay, color));
@@ -48,12 +45,8 @@ test_color (OpenVROverlay *overlay)
   graphene_vec3_t *color_ret = graphene_vec3_alloc ();
   g_assert (openvr_overlay_get_color (overlay, color_ret));
 
-  str = openvr_math_vec3_to_string (color_ret);
-  g_print ("We have set color to %s\n", str->str);
-
   g_assert (graphene_vec3_equal (color, color_ret));
 
-  g_string_free (str, TRUE);
   graphene_vec3_free (color);
   graphene_vec3_free (color_ret);
 }
