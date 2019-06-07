@@ -138,9 +138,7 @@ test_cat_overlay ()
     return false;
   }
 
-  GulkanClient *client = GULKAN_CLIENT (uploader);
-
-  texture = gulkan_client_texture_new_from_cairo_surface (client, surface,
+  texture = gulkan_client_texture_new_from_cairo_surface (uploader, surface,
                                                           VK_FORMAT_R8G8B8A8_UNORM,
                                                           VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
