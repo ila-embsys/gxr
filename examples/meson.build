@@ -15,6 +15,13 @@ executable(
   install: false)
 
 executable(
+  'overlay_multi_stresstest', ['overlay_multi_stresstest.c', test_resources],
+  dependencies: openvr_glib_deps,
+  link_with: openvr_glib_lib,
+  include_directories: openvr_glib_inc,
+  install: false)
+
+executable(
   'actions', ['actions.c', test_resources],
   dependencies: openvr_glib_deps,
   link_with: openvr_glib_lib,
