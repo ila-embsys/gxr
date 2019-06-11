@@ -142,6 +142,8 @@ openvr_compositor_gulkan_client_new (bool enable_validation)
   return client;
 }
 
+#define ENUM_TO_STR(r) case r: return #r
+
 static const gchar*
 _compositor_error_to_str (EVRCompositorError err)
 {
