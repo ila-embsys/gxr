@@ -22,6 +22,9 @@ G_BEGIN_DECLS
 #define OPENVR_TYPE_ACTION openvr_action_get_type()
 G_DECLARE_FINAL_TYPE (OpenVRAction, openvr_action, OPENVR, ACTION, GObject)
 
+// circular include when including openvr-action-set.h
+struct _OpenVRActionSet;
+
 typedef enum OpenVRActionType {
   OPENVR_ACTION_DIGITAL,
   OPENVR_ACTION_ANALOG,
@@ -60,10 +63,12 @@ openvr_action_load_manifest (char *path);
 OpenVRAction *openvr_action_new (void);
 
 OpenVRAction *
-openvr_action_new_from_url (char *url);
+openvr_action_new_from_url (struct _OpenVRActionSet *action_set,
+                            char *url);
 
 OpenVRAction *
-openvr_action_new_from_type_url (OpenVRActionType type, char *url);
+openvr_action_new_from_type_url (struct _OpenVRActionSet *action_set,
+                                 OpenVRActionType type, char *url);
 
 gboolean
 openvr_action_poll (OpenVRAction *self);
@@ -91,6 +96,9 @@ openvr_action_trigger_haptic (OpenVRAction *self,
 /* name openvr_action_get_type is already taken by gobject function */
 OpenVRActionType
 openvr_action_get_action_type (OpenVRAction *self);
+
+void
+openvr_action_update_input_handles (OpenVRAction *self);
 
 G_END_DECLS
 

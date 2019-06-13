@@ -96,6 +96,12 @@ openvr_action_set_poll (OpenVRActionSet *self)
   for (GSList *l = self->actions; l != NULL; l = l->next)
     {
       OpenVRAction *action = (OpenVRAction*) l->data;
+
+      /* Can't query for origins directly after creating action.
+       * TODO: maybe we can do this once, but later, and only update after
+       * activate-device event. */
+      openvr_action_update_input_handles (action);
+
       if (!openvr_action_poll (action))
         return FALSE;
     }
@@ -134,7 +140,7 @@ openvr_action_set_connect (OpenVRActionSet *self,
                            GCallback        callback,
                            gpointer         data)
 {
-  OpenVRAction *action = openvr_action_new_from_type_url (type, url);
+  OpenVRAction *action = openvr_action_new_from_type_url (self, type, url);
 
   if (action != NULL)
     self->actions = g_slist_append (self->actions, action);
@@ -157,4 +163,10 @@ openvr_action_set_connect (OpenVRActionSet *self,
 
   return TRUE;
 
+}
+
+VRActionSetHandle_t
+openvr_action_set_get_handle (OpenVRActionSet *self)
+{
+  return self->handle;
 }

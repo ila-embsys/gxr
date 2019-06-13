@@ -153,12 +153,14 @@ main ()
     .wm_action_set = openvr_action_set_new_from_url ("/actions/wm"),
     .mouse_synth_action_set =
       openvr_action_set_new_from_url ("/actions/mouse_synth"),
-    .haptic_left =
-      openvr_action_new_from_url ("/actions/wm/out/haptic_left"),
-    .haptic_right =
-      openvr_action_new_from_url ("/actions/wm/out/haptic_right")
-
   };
+
+  self.haptic_left =
+    openvr_action_new_from_url (self.wm_action_set,
+                                "/actions/wm/out/haptic_left");
+  self.haptic_right =
+    openvr_action_new_from_url (self.wm_action_set,
+                                "/actions/wm/out/haptic_right");
 
   ActionCallbackData data_left =
     {

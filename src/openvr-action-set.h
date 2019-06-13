@@ -42,6 +42,9 @@ openvr_action_set_connect (OpenVRActionSet *self,
                            GCallback        callback,
                            gpointer         data);
 
+VRActionSetHandle_t
+openvr_action_set_get_handle (OpenVRActionSet *self);
+
 G_END_DECLS
 
 #endif /* OPENVR_GLIB_ACTION_SET_H_ */

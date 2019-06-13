@@ -12,11 +12,16 @@
 #include "openvr-context.h"
 #include "openvr-math.h"
 
+#include "openvr-action-set.h"
+
 struct _OpenVRAction
 {
   GObject parent;
 
   VRActionHandle_t handle;
+
+  OpenVRActionSet *action_set;
+  gchar *url;
 
   GSList *input_handles;
 
@@ -92,18 +97,74 @@ openvr_action_init (OpenVRAction *self)
 {
   self->handle = k_ulInvalidActionHandle;
   self->input_handles = NULL;
+  self->action_set = NULL;
+  self->url = NULL;
+}
 
+static gboolean
+_input_handle_already_known (OpenVRAction *self, VRInputValueHandle_t handle)
+{
+  for(GSList *e = self->input_handles; e; e = e->next)
+    {
+      VRActionHandle_t *input_handle = e->data;
+      if (handle == *input_handle)
+        return TRUE;
+    }
+  return FALSE;
+}
+
+void
+openvr_action_update_input_handles (OpenVRAction *self)
+{
   OpenVRContext *context = openvr_context_get_instance ();
 
-  /* TODO: don't hardcode input paths */
-  VRInputValueHandle_t *input_handle = g_malloc (sizeof (VRInputValueHandle_t));
+  VRActionSetHandle_t set_handle =
+    openvr_action_set_get_handle (self->action_set);
 
-  context->input->GetInputSourceHandle ("/user/hand/left", input_handle);
-  self->input_handles = g_slist_append (self->input_handles, input_handle);
+  VRInputValueHandle_t origin_handles[k_unMaxActionOriginCount];
+  EVRInputError err =
+    context->input->GetActionOrigins (set_handle, self->handle,
+                                      origin_handles, k_unMaxActionOriginCount);
 
-  input_handle = g_malloc (sizeof (VRInputValueHandle_t));
-  context->input->GetInputSourceHandle ("/user/hand/right", input_handle);
-  self->input_handles = g_slist_append (self->input_handles, input_handle);
+  if (err != EVRInputError_VRInputError_None)
+    {
+      g_printerr ("GetActionOrigins for %s failed, retrying later...\n",
+                  self->url);
+      return;
+    }
+
+  int origin_count = -1;
+  while (origin_handles[++origin_count] != k_ulInvalidInputValueHandle);
+
+  /* g_print ("Action %s has %d origins\n", self->url, origin_count); */
+
+  for (int i = 0; i < origin_count; i++)
+    {
+      InputOriginInfo_t origin_info;
+      err = context->input->GetOriginTrackedDeviceInfo (origin_handles[i],
+                                                        &origin_info,
+                                                        sizeof (origin_info));
+      if (err != EVRInputError_VRInputError_None)
+        {
+          g_printerr ("GetOriginTrackedDeviceInfo for %s failed\n", self->url);
+          return;
+        }
+
+      if (_input_handle_already_known (self, origin_info.devicePath))
+        continue;
+
+      VRInputValueHandle_t *input_handle =
+        g_malloc (sizeof (VRInputValueHandle_t));
+      *input_handle = origin_info.devicePath;
+      self->input_handles = g_slist_append (self->input_handles, input_handle);
+
+      /* TODO: origin localized name max length same as action name? */
+      char origin_name[k_unMaxActionNameLength];
+      context->input->GetOriginLocalizedName (origin_handles[i], origin_name,
+                                              k_unMaxActionNameLength,
+                                              EVRInputStringBits_VRInputString_All);
+      g_print ("Added origin %s for action %s\n", origin_name, self->url);
+    }
 }
 
 OpenVRAction *
@@ -113,7 +174,7 @@ openvr_action_new (void)
 }
 
 OpenVRAction *
-openvr_action_new_from_url (char *url)
+openvr_action_new_from_url (OpenVRActionSet *action_set, char *url)
 {
   OpenVRAction *self = openvr_action_new ();
   if (!openvr_action_load_handle (self, url))
@@ -121,11 +182,15 @@ openvr_action_new_from_url (char *url)
       g_object_unref (self);
       self = NULL;
     }
+
+  self->url = g_strdup (url);
+  self->action_set = action_set;
   return self;
 }
 
 OpenVRAction *
-openvr_action_new_from_type_url (OpenVRActionType type, char *url)
+openvr_action_new_from_type_url (OpenVRActionSet *action_set,
+                                 OpenVRActionType type, char *url)
 {
   OpenVRAction *self = openvr_action_new ();
   self->type = type;
@@ -134,6 +199,9 @@ openvr_action_new_from_type_url (OpenVRActionType type, char *url)
       g_object_unref (self);
       self = NULL;
     }
+
+  self->url = g_strdup (url);
+  self->action_set = action_set;
   return self;
 }
 
@@ -408,6 +476,7 @@ openvr_action_finalize (GObject *gobject)
 {
   OpenVRAction *self = OPENVR_ACTION (gobject);
   g_slist_free_full (self->input_handles, g_free);
+  g_free (self->url);
 }
 
 OpenVRActionType
