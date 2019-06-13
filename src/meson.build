@@ -83,7 +83,7 @@ pkg.generate(
      filebase: api_path,
       version: meson.project_version(),
       subdirs: api_path,
-     requires: ['gulkan-' + api_version, 'gdk-3.0'],
+     requires: ['gulkan-' + api_version, 'gdk-3.0', 'openvr'],
   install_dir: join_paths(get_option('libdir'), 'pkgconfig')
 )
 
