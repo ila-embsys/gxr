@@ -1,5 +1,17 @@
-#ifndef OPENVR_CAPI_GLOBAL_H_
-#define OPENVR_CAPI_GLOBAL_H_
+#ifndef OPENVR_WRAPPER_H_
+#define OPENVR_WRAPPER_H_
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wstrict-prototypes"
+#include <openvr_capi.h>
+#pragma clang diagnostic pop
+
+#pragma GCC diagnostic pop
+
 
 // missing from openvr_capi.h
 
@@ -17,4 +29,4 @@ static inline uint64_t ButtonMaskFromId (EVRButtonId id)
   return 1ull << id;
 }
 
-#endif /* OPENVR_CAPI_GLOBAL_H_ */
+#endif /* OPENVR_WRAPPER_H_ */

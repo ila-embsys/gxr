@@ -19,7 +19,7 @@
 
 #include "openvr-action.h"
 
-#include <openvr_capi.h>
+#include "openvr-wrapper.h"
 #include <graphene.h>
 #include <gulkan.h>
 

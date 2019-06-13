@@ -12,8 +12,6 @@
 
 #include "openvr-context.h"
 #include "openvr-overlay.h"
-#include <openvr_capi.h>
-#include "openvr_capi_global.h"
 
 #include "openvr-time.h"
 #include "openvr-math.h"

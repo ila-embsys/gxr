@@ -14,7 +14,7 @@
 
 #include <glib-object.h>
 
-#include <openvr_capi.h>
+#include "openvr-wrapper.h"
 
 #include "openvr-action.h"
 

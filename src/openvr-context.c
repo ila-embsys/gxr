@@ -9,7 +9,7 @@
 #include "openvr-context.h"
 
 #include <glib/gprintf.h>
-#include "openvr_capi_global.h"
+#include "openvr-wrapper.h"
 
 #include <gdk/gdk.h>
 

@@ -14,7 +14,7 @@
 
 #include "openvr-context.h"
 
-#include <openvr_capi.h>
+#include "openvr-wrapper.h"
 
 void
 openvr_system_print_device_info (void);
