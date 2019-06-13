@@ -53,7 +53,8 @@ src_inc = include_directories('src')
 c = meson.get_compiler('c')
 
 ## Required
-openvr_dep = c.find_library('openvr_api')
+openvr_dep = c.find_library('openvr_api',
+                            has_headers: 'openvr_capi.h')
 
 # For a statically linked libopenvr_api we also need to link to the
 # Standard C++ library and the implementation of dlopen()
