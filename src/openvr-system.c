@@ -6,8 +6,8 @@
  */
 
 #include <glib/gprintf.h>
-#include <openvr_capi.h>
-#include "openvr_capi_global.h"
+
+#include "openvr-wrapper.h"
 
 #include "openvr-context.h"
 #include "openvr-system.h"

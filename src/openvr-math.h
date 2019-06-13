@@ -12,7 +12,7 @@
 #error "Only <openvr-glib.h> can be included directly."
 #endif
 
-#include <openvr_capi.h>
+#include "openvr-wrapper.h"
 #include <graphene.h>
 #include <glib.h>
 

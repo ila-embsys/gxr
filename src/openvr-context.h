@@ -13,7 +13,9 @@
 #endif
 
 #include <glib-object.h>
-#include <openvr_capi.h>
+
+#include "openvr-wrapper.h"
+
 #include <graphene.h>
 
 G_BEGIN_DECLS

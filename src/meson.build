@@ -24,7 +24,8 @@ openvr_glib_headers = [
   'openvr-context.h',
   'openvr-action.h',
   'openvr-action-set.h',
-  'openvr-io.h'
+  'openvr-io.h',
+  'openvr-wrapper.h'
 ]
 
 version_split = meson.project_version().split('.')

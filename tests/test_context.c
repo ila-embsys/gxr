@@ -7,8 +7,7 @@
 
 #include <glib.h>
 #include <openvr-glib.h>
-#include <openvr_capi.h>
-#include "openvr_capi_global.h"
+#include "openvr-wrapper.h"
 #include "openvr-context.h"
 
 static void
