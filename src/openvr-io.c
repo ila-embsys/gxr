@@ -81,28 +81,6 @@ openvr_io_write_resource_to_file (const gchar *res_base_path,
 }
 
 gboolean
-openvr_io_create_directory_if_needed (gchar *path)
-{
-  GFile *directory = g_file_new_for_path (path);
-
-  if (!g_file_query_exists (directory, NULL))
-    {
-      GError *error = NULL;
-      g_file_make_directory (directory, NULL, &error);
-      if (error != NULL)
-        {
-          g_printerr ("Unable to create directory: %s\n", error->message);
-          g_error_free (error);
-          return FALSE;
-        }
-    }
-
-  g_object_unref (directory);
-
-  return TRUE;
-}
-
-gboolean
 openvr_io_load_cached_action_manifest (const char* cache_name,
                                        const char* resource_path,
                                        const char* manifest_name,
@@ -111,8 +89,12 @@ openvr_io_load_cached_action_manifest (const char* cache_name,
 {
   /* Create cache directory if needed */
   GString* cache_path = openvr_io_get_cache_path (cache_name);
-  if (!openvr_io_create_directory_if_needed (cache_path->str))
-    return FALSE;
+
+  if (g_mkdir_with_parents (cache_path->str, 0700) == -1)
+    {
+      g_printerr ("Unable to create directory %s\n", cache_path->str);
+      return FALSE;
+    }
 
   /* Cache actions manifest */
   GString *actions_path = g_string_new ("");

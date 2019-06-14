@@ -17,8 +17,11 @@ _cache_bindings (GString *actions_path)
 {
   GString* cache_path = openvr_io_get_cache_path (CACHE_DIR);
 
-  if (!openvr_io_create_directory_if_needed (cache_path->str))
-    return FALSE;
+  if (g_mkdir_with_parents (cache_path->str, 0700) == -1)
+    {
+      g_printerr ("Unable to create directory %s\n", cache_path->str);
+      return FALSE;
+    }
 
   if (!openvr_io_write_resource_to_file (RES_BASE_PATH, cache_path->str,
                                          "actions.json", actions_path))
