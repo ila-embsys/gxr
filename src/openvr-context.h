@@ -32,12 +32,14 @@ struct _OpenVRContext
   struct VR_IVRCompositor_FnTable *compositor;
   struct VR_IVRInput_FnTable *input;
   struct VR_IVRRenderModels_FnTable *model;
+  struct VR_IVRApplications_FnTable *applications;
   enum ETrackingUniverseOrigin origin;
 };
 
 typedef enum {
   OPENVR_APP_SCENE = 0,
-  OPENVR_APP_OVERLAY
+  OPENVR_APP_OVERLAY,
+  OPENVR_APP_BACKGROUND
 } OpenVRAppType;
 
 typedef enum {
@@ -91,6 +93,9 @@ openvr_context_acknowledge_quit (OpenVRContext *self);
 
 gboolean
 openvr_context_initialize (OpenVRContext *self, OpenVRAppType type);
+
+gboolean
+openvr_context_is_another_scene_running (void);
 
 G_END_DECLS
 

@@ -155,6 +155,7 @@ _init_function_tables (OpenVRContext *self)
   INIT_FN_TABLE (self->compositor, Compositor)
   INIT_FN_TABLE (self->input, Input)
   INIT_FN_TABLE (self->model, RenderModels)
+  INIT_FN_TABLE (self->applications, Applications)
   return true;
 }
 
@@ -201,6 +202,9 @@ openvr_context_initialize (OpenVRContext *self, OpenVRAppType type)
       case OPENVR_APP_OVERLAY:
         app_type = EVRApplicationType_VRApplication_Overlay;
         break;
+      case OPENVR_APP_BACKGROUND:
+        app_type = EVRApplicationType_VRApplication_Background;
+        break;
       default:
         app_type = EVRApplicationType_VRApplication_Scene;
         g_warning ("Unknown app type %d\n", type);
@@ -209,7 +213,7 @@ openvr_context_initialize (OpenVRContext *self, OpenVRAppType type)
   if (!_vr_init (self, app_type))
     return FALSE;
 
-  if (!openvr_context_is_valid (context))
+  if (!openvr_context_is_valid (self))
     {
       g_printerr ("Could not load OpenVR function pointers.\n");
       return FALSE;
@@ -420,3 +424,17 @@ openvr_context_acknowledge_quit (OpenVRContext *self)
 {
   self->system->AcknowledgeQuit_Exiting ();
 }
+
+gboolean
+openvr_context_is_another_scene_running (void)
+{
+  OpenVRContext *ctx = openvr_context_new ();
+  openvr_context_initialize (ctx, OPENVR_APP_BACKGROUND);
+
+  uint32_t pid = ctx->applications->GetCurrentSceneProcessId ();
+
+  g_object_unref (ctx);
+
+  return pid != 0;
+}
+
