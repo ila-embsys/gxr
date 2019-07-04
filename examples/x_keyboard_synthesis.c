@@ -45,8 +45,9 @@ typedef struct ModifierKeyCodes {
 } ModifierKeyCodes;
 
 static gboolean
-timeout_callback (OpenVRContext *context)
+timeout_callback (gpointer data)
 {
+  OpenVRContext *context = data;
   openvr_context_poll_event (context);
   return TRUE;
 }
@@ -375,7 +376,7 @@ main (int argc, char *argv[])
                     (GCallback) _keyboard_input, keysym_table);
   g_signal_connect (context, "keyboard-close-event",
                     (GCallback) _keyboard_closed, context);
-  g_timeout_add (20, G_SOURCE_FUNC (timeout_callback), context);
+  g_timeout_add (20, timeout_callback, context);
 
   g_main_loop_run (loop);
   g_main_loop_unref (loop);
