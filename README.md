@@ -36,5 +36,11 @@ $ ninja -C build test
 
 Don't run tests that require a running XR runtime.
 ```
+meson test -C build/ --no-suite openvr-glib:xr
+```
+
+Since meson `0.46` the project name can be omitted from the test suite:
+```
 meson test -C build/ --no-suite xr
+
 ```
