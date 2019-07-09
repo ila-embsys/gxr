@@ -16,20 +16,12 @@
 #include <graphene.h>
 
 #include "openvr-wrapper.h"
+#include "openvr-action-set.h"
 
 G_BEGIN_DECLS
 
 #define OPENVR_TYPE_ACTION openvr_action_get_type()
 G_DECLARE_FINAL_TYPE (OpenVRAction, openvr_action, OPENVR, ACTION, GObject)
-
-// circular include when including openvr-action-set.h
-struct _OpenVRActionSet;
-
-typedef enum OpenVRActionType {
-  OPENVR_ACTION_DIGITAL,
-  OPENVR_ACTION_ANALOG,
-  OPENVR_ACTION_POSE
-} OpenVRActionType;
 
 typedef struct OpenVRDigitalEvent {
   gboolean active;
@@ -63,11 +55,11 @@ openvr_action_load_manifest (char *path);
 OpenVRAction *openvr_action_new (void);
 
 OpenVRAction *
-openvr_action_new_from_url (struct _OpenVRActionSet *action_set,
+openvr_action_new_from_url (OpenVRActionSet *action_set,
                             char *url);
 
 OpenVRAction *
-openvr_action_new_from_type_url (struct _OpenVRActionSet *action_set,
+openvr_action_new_from_type_url (OpenVRActionSet *action_set,
                                  OpenVRActionType type, char *url);
 
 gboolean

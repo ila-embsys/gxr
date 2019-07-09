@@ -8,6 +8,7 @@
 #include "openvr-action-set.h"
 
 #include "openvr-context.h"
+#include "openvr-action.h"
 
 struct _OpenVRActionSet
 {

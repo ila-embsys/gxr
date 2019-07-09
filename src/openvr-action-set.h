@@ -16,9 +16,22 @@
 
 #include "openvr-wrapper.h"
 
-#include "openvr-action.h"
-
 G_BEGIN_DECLS
+
+/**
+ * OpenVRActionType:
+ * @OPENVR_ACTION_DIGITAL: A digital action.
+ * @OPENVR_ACTION_ANALOG: An analog action.
+ * @OPENVR_ACTION_POSE: A pose action.
+ *
+ * The type of the OpenVR action.
+ *
+ **/
+typedef enum OpenVRActionType {
+  OPENVR_ACTION_DIGITAL,
+  OPENVR_ACTION_ANALOG,
+  OPENVR_ACTION_POSE
+} OpenVRActionType;
 
 #define OPENVR_TYPE_ACTION_SET openvr_action_set_get_type()
 G_DECLARE_FINAL_TYPE (OpenVRActionSet, openvr_action_set,
