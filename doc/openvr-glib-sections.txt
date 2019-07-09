@@ -8,8 +8,6 @@ openvr_overlay_create_for_dashboard
 openvr_overlay_create_width
 openvr_overlay_destroy
 openvr_overlay_enable_mouse_input
-openvr_overlay_get_2d_intersection
-openvr_overlay_get_2d_offset
 openvr_overlay_get_color
 openvr_overlay_get_size_meters
 openvr_overlay_get_size_pixels
@@ -35,13 +33,7 @@ openvr_overlay_set_width_meters
 openvr_overlay_show
 openvr_overlay_show_keyboard
 openvr_overlay_thumbnail_is_visible
-openvr_overlay_uploader_init_vulkan
-openvr_overlay_uploader_new
-openvr_overlay_uploader_submit_frame
-OpenVROverlayUploader
-OpenVROverlayUploaderClass
 OPENVR_TYPE_OVERLAY
-OPENVR_TYPE_OVERLAY_UPLOADER
 OVERLAY_CHECK_ERROR
 GET_OVERLAY_FUNCTIONS
 </SECTION>
@@ -57,11 +49,9 @@ openvr_action_load_manifest
 openvr_action_poll
 openvr_action_poll_analog
 openvr_action_poll_digital
-openvr_action_poll_pose
 openvr_action_trigger_haptic
 OpenVRAnalogEvent
 OpenVRDigitalEvent
-OPENVR_CONTROLLER_COUNT
 OPENVR_TYPE_ACTION
 </SECTION>
 
@@ -82,8 +72,6 @@ OpenVRContext
 openvr_context_acknowledge_quit
 openvr_context_get_instance
 openvr_context_get_model_list
-openvr_context_init_overlay
-openvr_context_init_scene
 openvr_context_is_hmd_present
 openvr_context_is_installed
 openvr_context_is_valid
@@ -102,14 +90,8 @@ openvr_math_graphene_to_matrix34
 openvr_math_matrix34_to_graphene
 openvr_math_matrix44_to_graphene
 openvr_math_matrix_get_translation
-openvr_math_matrix_interpolate
-openvr_math_matrix_set_translation
 openvr_math_pose_to_matrix
 openvr_math_print_matrix34
-openvr_math_print_point3d
-openvr_math_screenspace_to_worldspace
-openvr_math_vec3_to_string
-openvr_math_worldspace_to_screenspace
 </SECTION>
 
 <SECTION>
@@ -150,7 +132,6 @@ openvr_io_write_resource_to_file
 
 <SECTION>
 <FILE>Misc</FILE>
-VK_USE_PLATFORM_XLIB_KHR
 openvr_compositor_get_device_extensions
 openvr_compositor_get_instance_extensions
 </SECTION>
