@@ -81,8 +81,7 @@ openvr_compositor_get_device_extensions (VkPhysicalDevice  physical_device,
 }
 
 bool
-openvr_compositor_gulkan_client_init (GulkanClient *client,
-                                      bool          enable_validation)
+openvr_compositor_gulkan_client_init (GulkanClient *client)
 {
   GSList* openvr_instance_extensions = NULL;
   if (!openvr_compositor_get_instance_extensions (&openvr_instance_extensions))
@@ -90,7 +89,6 @@ openvr_compositor_gulkan_client_init (GulkanClient *client,
 
   GulkanInstance *instance = gulkan_client_get_instance (client);
   if (!gulkan_instance_create (instance,
-                               enable_validation,
                                openvr_instance_extensions))
     {
       g_printerr ("Failed to create instance.\n");
@@ -135,10 +133,10 @@ openvr_compositor_gulkan_client_init (GulkanClient *client,
 }
 
 GulkanClient*
-openvr_compositor_gulkan_client_new (bool enable_validation)
+openvr_compositor_gulkan_client_new (void)
 {
   GulkanClient *client = gulkan_client_new ();
-  if (!openvr_compositor_gulkan_client_init (client, enable_validation))
+  if (!openvr_compositor_gulkan_client_init (client))
     {
       g_object_unref (client);
       return NULL;

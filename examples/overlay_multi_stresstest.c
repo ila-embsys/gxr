@@ -158,7 +158,7 @@ int main () {
     return -1;
 
   /* Upload vulkan texture */
-  ex.uploader = openvr_compositor_gulkan_client_new (true);
+  ex.uploader = openvr_compositor_gulkan_client_new ();
   if (!ex.uploader)
   {
     g_printerr ("Unable to initialize Vulkan!\n");

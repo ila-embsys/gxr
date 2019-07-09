@@ -131,7 +131,7 @@ test_cat_overlay ()
     return -1;
 
   /* Upload vulkan texture */
-  GulkanClient *uploader = openvr_compositor_gulkan_client_new (true);
+  GulkanClient *uploader = openvr_compositor_gulkan_client_new ();
   if (!uploader)
   {
     g_printerr ("Unable to initialize Vulkan!\n");

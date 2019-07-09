@@ -147,7 +147,7 @@ test_cat_overlay ()
   if (!_init_openvr ())
     return -1;
 
-  GulkanClient *client = openvr_compositor_gulkan_client_new (true);
+  GulkanClient *client = openvr_compositor_gulkan_client_new ();
   if (!client)
   {
     g_printerr ("Unable to initialize Vulkan!\n");

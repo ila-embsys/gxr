@@ -164,7 +164,7 @@ test_overlay ()
       return false;
     }
 
-  GulkanClient *uploader = openvr_compositor_gulkan_client_new (true);
+  GulkanClient *uploader = openvr_compositor_gulkan_client_new ();
   if (!uploader)
   {
     g_printerr ("Unable to initialize Vulkan uploader!\n");

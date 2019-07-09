@@ -297,7 +297,7 @@ main (int argc, char *argv[])
     .size_y = 600,
     .text_cursor = 0,
     .texture = NULL,
-    .uploader = openvr_compositor_gulkan_client_new (true),
+    .uploader = openvr_compositor_gulkan_client_new (),
     .action_set = openvr_action_set_new_from_url ("/actions/wm")
   };
 
