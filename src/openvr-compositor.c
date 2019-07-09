@@ -94,9 +94,11 @@ openvr_compositor_gulkan_client_init (GulkanClient *client,
                                openvr_instance_extensions))
     {
       g_printerr ("Failed to create instance.\n");
+      g_slist_free_full (openvr_instance_extensions, g_free);
       return false;
     }
 
+  g_slist_free_full (openvr_instance_extensions, g_free);
   VkInstance instance_handle = gulkan_instance_get_handle (instance);
 
   /* Query OpenVR for the physical device to use */
@@ -118,8 +120,10 @@ openvr_compositor_gulkan_client_init (GulkanClient *client,
                              openvr_device_extensions))
     {
       g_printerr ("Failed to create device.\n");
+      g_slist_free_full (openvr_device_extensions, g_free);
       return false;
     }
+  g_slist_free_full (openvr_device_extensions, g_free);
 
   if (!gulkan_client_init_command_pool (client))
     {
