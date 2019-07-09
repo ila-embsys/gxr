@@ -28,15 +28,15 @@
       </para>
     </refsect2>
 
-    <xi:include href="xml/OpenVRContext.xml"/>
-    <xi:include href="xml/OpenVROverlay.xml"/>
     <xi:include href="xml/OpenVRAction.xml"/>
     <xi:include href="xml/OpenVRActionSet.xml"/>
-    <xi:include href="xml/OpenVRMath.xml"/>
-    <xi:include href="xml/OpenVRTime.xml"/>
-    <xi:include href="xml/OpenVRSystem.xml"/>
+    <xi:include href="xml/OpenVRContext.xml"/>
+    <xi:include href="xml/OpenVRCompositor.xml"/>
     <xi:include href="xml/OpenVRIO.xml"/>
-    <xi:include href="xml/Misc.xml"/>
+    <xi:include href="xml/OpenVRMath.xml"/>
+    <xi:include href="xml/OpenVROverlay.xml"/>
+    <xi:include href="xml/OpenVRSystem.xml"/>
+    <xi:include href="xml/OpenVRTime.xml"/>
 
   </chapter>
   <index id="api-index">
