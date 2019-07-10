@@ -39,8 +39,6 @@ openvr_overlay_set_flip_y
 openvr_overlay_set_model
 openvr_overlay_submit_texture
 OPENVR_TYPE_OVERLAY
-OVERLAY_CHECK_ERROR
-GET_OVERLAY_FUNCTIONS
 OpenVROverlayClass
 </SECTION>
 

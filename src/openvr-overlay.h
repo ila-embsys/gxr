@@ -199,19 +199,4 @@ openvr_overlay_submit_texture (OpenVROverlay *self,
 
 G_END_DECLS
 
-#define GET_OVERLAY_FUNCTIONS \
-  EVROverlayError err; \
-  OpenVRContext *context = openvr_context_get_instance (); \
-  struct VR_IVROverlay_FnTable *f = context->overlay;
-
-#define OVERLAY_CHECK_ERROR(fun, res) \
-{ \
-  if (res != EVROverlayError_VROverlayError_None) \
-    { \
-      g_printerr ("ERROR: " fun ": failed with %s in %s:%d\n", \
-                  f->GetOverlayErrorNameFromEnum (res), __FILE__, __LINE__); \
-      return FALSE; \
-    } \
-}
-
 #endif /* OPENVR_GLIB_OVERLAY_H_ */
