@@ -23,6 +23,16 @@ G_BEGIN_DECLS
 #define OPENVR_TYPE_ACTION openvr_action_get_type()
 G_DECLARE_FINAL_TYPE (OpenVRAction, openvr_action, OPENVR, ACTION, GObject)
 
+/**
+ * OpenVRDigitalEvent:
+ * @active: Whether or not this action is currently available to be bound in the active action set.
+ * @state: Pressed or released.
+ * @changed: Whether the state has changed since last event.
+ * @controller_handle: The controller identifier.
+ * @time: The time of the event.
+ *
+ * Digital event.
+ **/
 typedef struct OpenVRDigitalEvent {
   gboolean active;
   gboolean state;
@@ -31,6 +41,16 @@ typedef struct OpenVRDigitalEvent {
   gfloat time;
 } OpenVRDigitalEvent;
 
+/**
+ * OpenVRAnalogEvent:
+ * @active: Whether or not this action is currently available to be bound in the active action set.
+ * @state: A #graphene_vec3_t analog state.
+ * @delta: State delta since last event.
+ * @controller_handle: The controller identifier.
+ * @time: The time of the event.
+ *
+ * Analog event.
+ **/
 typedef struct OpenVRAnalogEvent {
   gboolean active;
   graphene_vec3_t state;
@@ -39,6 +59,18 @@ typedef struct OpenVRAnalogEvent {
   gfloat time;
 } OpenVRAnalogEvent;
 
+/**
+ * OpenVRPoseEvent:
+ * @active: Whether or not this action is currently available to be bound in the active action set.
+ * @pose: The #graphene_matrix_t pose.
+ * @velocity: Velocity
+ * @angular_velocity: Angular velocity.
+ * @valid: Whether the pose is valid.
+ * @device_connected: Whether the device is currently connected.
+ * @controller_handle: The controller identifier.
+ *
+ * Pose event.
+ **/
 typedef struct OpenVRPoseEvent {
   gboolean active;
   graphene_matrix_t pose;
