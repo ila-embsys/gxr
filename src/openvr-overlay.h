@@ -33,11 +33,18 @@ struct _OpenVROverlayClass
   GObjectClass parent_class;
 };
 
-typedef struct PixelSize
+/**
+ * OpenVRPixelSize:
+ * @width: Width
+ * @height: Height
+ *
+ * Size in pixels.
+ **/
+typedef struct _OpenVRPixelSize
 {
   uint32_t width;
   uint32_t height;
-} PixelSize;
+} OpenVRPixelSize;
 
 typedef struct OpenVRHoverEvent
 {
@@ -139,7 +146,7 @@ gboolean
 openvr_overlay_set_gdk_pixbuf_raw (OpenVROverlay *self, GdkPixbuf * pixbuf);
 
 gboolean
-openvr_overlay_get_size_pixels (OpenVROverlay *self, PixelSize *size);
+openvr_overlay_get_size_pixels (OpenVROverlay *self, OpenVRPixelSize *size);
 
 gboolean
 openvr_overlay_get_width_meters (OpenVROverlay *self, float *width);
