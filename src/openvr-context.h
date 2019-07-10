@@ -66,13 +66,24 @@ typedef enum {
   VR_QUIT_PROCESS_QUIT
 } OpenVRQuitReason;
 
-typedef struct OpenVRQuitEvent
-{
+/**
+ * OpenVRQuitEvent:
+ * @reason: The #OpenVRQuitReason.
+ *
+ * Event that is emitted when the application needs to quit.
+ **/
+typedef struct {
   OpenVRQuitReason reason;
 } OpenVRQuitEvent;
 
-typedef struct OpenVRDeviceIndexEvent
-{
+/**
+ * OpenVRDeviceIndexEvent:
+ * @controller_handle: A #guint64 controller handle.
+ *
+ * Event that is emitted when a controller is activated or deaktivated.
+ * It carries the handle of a controller.
+ **/
+typedef struct {
   guint64 controller_handle;
 } OpenVRDeviceIndexEvent;
 

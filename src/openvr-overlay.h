@@ -40,8 +40,7 @@ struct _OpenVROverlayClass
  *
  * Size in pixels.
  **/
-typedef struct _OpenVRPixelSize
-{
+typedef struct {
   uint32_t width;
   uint32_t height;
 } OpenVRPixelSize;

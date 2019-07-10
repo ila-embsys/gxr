@@ -33,7 +33,7 @@ G_DECLARE_FINAL_TYPE (OpenVRAction, openvr_action, OPENVR, ACTION, GObject)
  *
  * Digital event.
  **/
-typedef struct OpenVRDigitalEvent {
+typedef struct {
   gboolean active;
   gboolean state;
   gboolean changed;
@@ -51,7 +51,7 @@ typedef struct OpenVRDigitalEvent {
  *
  * Analog event.
  **/
-typedef struct OpenVRAnalogEvent {
+typedef struct {
   gboolean active;
   graphene_vec3_t state;
   graphene_vec3_t delta;
@@ -71,7 +71,7 @@ typedef struct OpenVRAnalogEvent {
  *
  * Pose event.
  **/
-typedef struct OpenVRPoseEvent {
+typedef struct {
   gboolean active;
   graphene_matrix_t pose;
   graphene_vec3_t velocity;

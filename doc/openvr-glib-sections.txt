@@ -40,6 +40,7 @@ openvr_overlay_set_model
 openvr_overlay_submit_texture
 OPENVR_TYPE_OVERLAY
 OpenVROverlayClass
+OpenVRPixelSize
 </SECTION>
 
 <SECTION>
@@ -92,6 +93,8 @@ openvr_context_initialize
 openvr_context_is_another_scene_running
 OpenVRAppType
 OpenVRQuitReason
+OpenVRQuitEvent
+OpenVRDeviceIndexEvent
 OPENVR_TYPE_CONTEXT
 </SECTION>
 
