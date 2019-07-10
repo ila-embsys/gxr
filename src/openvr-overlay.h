@@ -46,25 +46,6 @@ typedef struct _OpenVRPixelSize
   uint32_t height;
 } OpenVRPixelSize;
 
-typedef struct OpenVRHoverEvent
-{
-  graphene_point3d_t point;
-  graphene_matrix_t  pose;
-  float              distance;
-  int                controller_index;
-} OpenVRHoverEvent;
-
-typedef struct OpenVRGrabEvent
-{
-  graphene_matrix_t  pose;
-  int                controller_index;
-} OpenVRGrabEvent;
-
-typedef struct OpenVRControllerIndexEvent
-{
-  int index;
-} OpenVRControllerIndexEvent;
-
 OpenVROverlay *openvr_overlay_new (void);
 
 gboolean
