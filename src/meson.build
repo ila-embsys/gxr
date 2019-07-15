@@ -1,5 +1,5 @@
 so_version = 0
-api_version = '0.11'
+api_version = '0.12'
 api_path = 'openvr-glib-' + api_version
 
 openvr_glib_sources = [

@@ -1,4 +1,4 @@
-project('openvr-glib', 'c', version: '0.11.1',
+project('openvr-glib', 'c', version: '0.12.0',
   meson_version: '>= 0.45.1',
 )
 
@@ -60,7 +60,7 @@ openvr_dep = dependency('openvr')
 stdcpp_dep = c.find_library('stdc++')
 dl_dep = c.find_library('dl')
 
-gulkan_dep = dependency('gulkan-0.11', version: '>= 0.11.0')
+gulkan_dep = dependency('gulkan-0.12', version: '>= 0.12.0')
 gdk_dep = dependency('gdk-3.0', version: '>= 3.22')
 
 ## Optional
