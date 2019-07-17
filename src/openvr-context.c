@@ -431,6 +431,10 @@ openvr_context_is_another_scene_running (void)
   OpenVRContext *ctx = openvr_context_new ();
   openvr_context_initialize (ctx, OPENVR_APP_BACKGROUND);
 
+  /* if applications fntable is not loaded, SteamVR is probably not running. */
+  if (ctx->applications == NULL)
+    return FALSE;
+
   uint32_t pid = ctx->applications->GetCurrentSceneProcessId ();
 
   g_object_unref (ctx);
