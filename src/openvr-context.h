@@ -1,15 +1,15 @@
 /*
- * OpenVR GLib
+ * gxr
  * Copyright 2018 Collabora Ltd.
  * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
  * SPDX-License-Identifier: MIT
  */
 
-#ifndef OPENVR_GLIB_CONTEXT_H_
-#define OPENVR_GLIB_CONTEXT_H_
+#ifndef GXR_CONTEXT_H_
+#define GXR_CONTEXT_H_
 
-#if !defined (OPENVR_GLIB_INSIDE) && !defined (OPENVR_GLIB_COMPILATION)
-#error "Only <openvr-glib.h> can be included directly."
+#if !defined (GXR_INSIDE) && !defined (GXR_COMPILATION)
+#error "Only <gxr.h> can be included directly."
 #endif
 
 #include <glib-object.h>
@@ -128,4 +128,4 @@ openvr_context_is_another_scene_running (void);
 
 G_END_DECLS
 
-#endif /* OPENVR_GLIB_CONTEXT_H_ */
+#endif /* GXR_CONTEXT_H_ */

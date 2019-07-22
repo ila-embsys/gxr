@@ -1,5 +1,5 @@
 /*
- * OpenVR GLib
+ * gxr
  * Copyright 2018 Collabora Ltd.
  * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
  * Author: Christoph Haag <christoph.haag@collabora.com>
@@ -13,7 +13,7 @@
 
 #include <gdk/gdk.h>
 
-#include "openvr-math.h"
+#include "gxr-math.h"
 
 G_DEFINE_TYPE (OpenVRContext, openvr_context, G_TYPE_OBJECT)
 
@@ -310,7 +310,7 @@ void
 openvr_context_poll_event (OpenVRContext *self)
 {
   /* Starting another VR app will first emit a shutdown event, and then the
-   * app transition event. In openvr-glib, a shutdown event is only emitted
+   * app transition event. In gxr, a shutdown event is only emitted
    * when the app should completely quit.
    * If another VR app is started, only the app transition event is emitted. */
   gboolean shutdown_event_pending = FALSE;
@@ -415,7 +415,7 @@ openvr_context_set_system_keyboard_transform (OpenVRContext *self,
                                               graphene_matrix_t *transform)
 {
   HmdMatrix34_t openvr_transform;
-  openvr_math_graphene_to_matrix34 (transform, &openvr_transform);
+  gxr_math_graphene_to_matrix34 (transform, &openvr_transform);
   self->overlay->SetKeyboardTransformAbsolute (self->origin, &openvr_transform);
 }
 

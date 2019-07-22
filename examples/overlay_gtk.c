@@ -1,5 +1,5 @@
 /*
- * OpenVR GLib
+ * gxr
  * Copyright 2018 Collabora Ltd.
  * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
  * SPDX-License-Identifier: MIT
@@ -12,7 +12,7 @@
 #include <gdk/gdk.h>
 #include <gtk/gtk.h>
 
-#include "openvr-glib.h"
+#include "gxr.h"
 
 static GulkanTexture *texture = NULL;
 static GulkanClient *uploader;
@@ -87,9 +87,9 @@ _draw_cb (GtkWidget *widget, cairo_t *cr, struct Labels* labels)
   }
 
   struct timespec diff;
-  openvr_time_substract (&now, &labels->last_time, &diff);
+  gxr_time_substract (&now, &labels->last_time, &diff);
 
-  double diff_s = openvr_time_to_double_secs (&diff);
+  double diff_s = gxr_time_to_double_secs (&diff);
   double diff_ms = diff_s * SEC_IN_MSEC_D;
   double fps = SEC_IN_MSEC_D / diff_ms;
 

@@ -1,5 +1,5 @@
 /*
- * OpenVR GLib
+ * gxr
  * Copyright 2018 Collabora Ltd.
  * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
  * Author: Christoph Haag <christoph.haag@collabora.com>
@@ -13,7 +13,7 @@
 #include <glib/gprintf.h>
 #include <gdk/gdk.h>
 
-#include "openvr-glib.h"
+#include "gxr.h"
 
 #include <graphene.h>
 

@@ -1,5 +1,5 @@
 /*
- * OpenVR GLib
+ * gxr
  * Copyright 2018 Collabora Ltd.
  * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
 
 #include <glib-unix.h>
 
-#include "openvr-glib.h"
+#include "gxr.h"
 
 typedef struct Example
 {
@@ -50,7 +50,7 @@ _poll_events_cb (gpointer _self)
 static gboolean
 _cache_bindings (GString *actions_path)
 {
-  GString* cache_path = openvr_io_get_cache_path ("openvr-glib");
+  GString* cache_path = gxr_io_get_cache_path ("gxr");
 
   if (g_mkdir_with_parents (cache_path->str, 0700) == -1)
     {
@@ -58,14 +58,14 @@ _cache_bindings (GString *actions_path)
       return FALSE;
     }
 
-  if (!openvr_io_write_resource_to_file ("/res/bindings", cache_path->str,
-                                         "actions.json", actions_path))
+  if (!gxr_io_write_resource_to_file ("/res/bindings", cache_path->str,
+                                      "actions.json", actions_path))
     return FALSE;
 
   GString *bindings_path = g_string_new ("");
-  if (!openvr_io_write_resource_to_file ("/res/bindings", cache_path->str,
-                                         "bindings_vive_controller.json",
-                                         bindings_path))
+  if (!gxr_io_write_resource_to_file ("/res/bindings", cache_path->str,
+                                      "bindings_vive_controller.json",
+                                      bindings_path))
     return FALSE;
 
   g_string_free (bindings_path, TRUE);

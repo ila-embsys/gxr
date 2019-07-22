@@ -99,23 +99,23 @@ OPENVR_TYPE_CONTEXT
 </SECTION>
 
 <SECTION>
-<FILE>OpenVRMath</FILE>
-openvr_math_direction_from_matrix
-openvr_math_direction_from_matrix_vec3
-openvr_math_graphene_to_matrix34
-openvr_math_matrix34_to_graphene
-openvr_math_matrix44_to_graphene
-openvr_math_matrix_get_translation
-openvr_math_pose_to_matrix
-openvr_math_print_matrix34
+<FILE>GxrMath</FILE>
+gxr_math_direction_from_matrix
+gxr_math_direction_from_matrix_vec3
+gxr_math_graphene_to_matrix34
+gxr_math_matrix34_to_graphene
+gxr_math_matrix44_to_graphene
+gxr_math_matrix_get_translation
+gxr_math_pose_to_matrix
+gxr_math_print_matrix34
 </SECTION>
 
 <SECTION>
-<FILE>OpenVRTime</FILE>
-openvr_time_age_secs_to_monotonic_msecs
-openvr_time_float_secs_to_timespec
-openvr_time_substract
-openvr_time_to_double_secs
+<FILE>GxrTime</FILE>
+gxr_time_age_secs_to_monotonic_msecs
+gxr_time_float_secs_to_timespec
+gxr_time_substract
+gxr_time_to_double_secs
 SEC_IN_MSEC_D
 SEC_IN_NSEC_D
 SEC_IN_NSEC_L
@@ -141,11 +141,11 @@ OpenVRPoseEvent
 </SECTION>
 
 <SECTION>
-<FILE>OpenVRIO</FILE>
-openvr_io_create_directory_if_needed
-openvr_io_get_cache_path
-openvr_io_load_cached_action_manifest
-openvr_io_write_resource_to_file
+<FILE>GxrIO</FILE>
+gxr_io_create_directory_if_needed
+gxr_io_get_cache_path
+gxr_io_load_cached_action_manifest
+gxr_io_write_resource_to_file
 </SECTION>
 
 <SECTION>
@@ -156,8 +156,3 @@ openvr_compositor_gulkan_client_init
 openvr_compositor_gulkan_client_new
 openvr_compositor_submit
 </SECTION>
-
-<SECTION>
-<FILE>openvrversion</FILE>
-</SECTION>
-

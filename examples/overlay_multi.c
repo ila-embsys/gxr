@@ -1,5 +1,5 @@
 /*
- * OpenVR GLib
+ * gxr
  * Copyright 2018 Collabora Ltd.
  * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
  * SPDX-License-Identifier: MIT
@@ -10,7 +10,7 @@
 #include <gdk/gdk.h>
 #include <graphene.h>
 
-#include "openvr-glib.h"
+#include "gxr.h"
 
 static GulkanTexture *texture;
 
@@ -175,7 +175,7 @@ show_overlay_info (OpenVROverlay *overlay)
       break;
     }
 
-  openvr_math_print_matrix34 (transform);
+  gxr_math_print_matrix34 (transform);
 
   graphene_point3d_t translation_vec;
   graphene_point3d_init (&translation_vec, 1.1f, 0.5f, 0.1f);
@@ -188,9 +188,9 @@ show_overlay_info (OpenVROverlay *overlay)
   graphene_matrix_print (&translation);
 
   HmdMatrix34_t translation34;
-  openvr_math_graphene_to_matrix34 (&translation, &translation34);
+  gxr_math_graphene_to_matrix34 (&translation, &translation34);
 
-  openvr_math_print_matrix34 (translation34);
+  gxr_math_print_matrix34 (translation34);
 
   err = f->SetOverlayTransformAbsolute (
     overlay_handle,

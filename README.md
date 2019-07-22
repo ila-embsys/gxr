@@ -1,6 +1,7 @@
-# openvr-glib
+gxr
+===
 
-A GLib wrapper for the OpenVR API.
+A GLib wrapper for the OpenVR API. OpenXR support coming soon.
 
 ## Build
 
@@ -16,7 +17,7 @@ $ ninja -C build
 
 #### Build the docs
 ```
-$ ninja -C build openvr-glib-doc
+$ ninja -C build gxr-doc
 ```
 
 ## Run
@@ -36,7 +37,7 @@ $ ninja -C build test
 
 Don't run tests that require a running XR runtime.
 ```
-meson test -C build/ --no-suite openvr-glib:xr
+meson test -C build/ --no-suite gxr:xr
 ```
 
 Since meson `0.46` the project name can be omitted from the test suite:

@@ -1,4 +1,4 @@
-project('openvr-glib', 'c', version: '0.12.0',
+project('gxr', 'c', version: '0.12.0',
   meson_version: '>= 0.45.1',
 )
 
@@ -6,7 +6,7 @@ gnome = import('gnome')
 
 config_h = configuration_data()
 configure_file(
-  output: 'openvr-glib-config.h',
+  output: 'gxr-config.h',
   configuration: config_h,
 )
 
@@ -43,10 +43,10 @@ endif
 add_project_arguments([project_args], language: ['c'])
 
 # Paths
-openvr_glib_prefix = get_option('prefix')
-openvr_glib_libdir = join_paths(openvr_glib_prefix, get_option('libdir'))
-openvr_glib_includedir = join_paths(openvr_glib_prefix, get_option('includedir'))
-openvr_glib_datadir = join_paths(openvr_glib_prefix, get_option('datadir'))
+gxr_prefix = get_option('prefix')
+gxr_libdir = join_paths(gxr_prefix, get_option('libdir'))
+gxr_includedir = join_paths(gxr_prefix, get_option('includedir'))
+gxr_datadir = join_paths(gxr_prefix, get_option('datadir'))
 src_inc = include_directories('src')
 
 ### Dependencies

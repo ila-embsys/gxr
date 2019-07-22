@@ -1,12 +1,12 @@
 /*
- * OpenVR GLib
+ * gxr
  * Copyright 2018 Collabora Ltd.
  * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
  * SPDX-License-Identifier: MIT
  */
 
 #include <glib.h>
-#include <openvr-glib.h>
+#include <gxr.h>
 #include "openvr-wrapper.h"
 #include "openvr-context.h"
 

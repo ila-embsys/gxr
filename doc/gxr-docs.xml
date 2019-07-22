@@ -6,37 +6,37 @@
 ]>
 <book id="index">
   <bookinfo>
-    <title>openvr-glib Reference Manual</title>
+    <title>Gxr Reference Manual</title>
     <releaseinfo>
-      <para>This document is the API reference for the openvr-glib library.</para>
+      <para>This document is the API reference for the gxr library.</para>
       <para>
-        The latest version of openvr-glib, as well as the latest version of
+        The latest version of gxr, as well as the latest version of
         this API reference, is <ulink role="online-location" url="http://gitlab.com/">available online</ulink>.
       </para>
     </releaseinfo>
   </bookinfo>
 
   <chapter>
-    <title>openvr-glib</title>
+    <title>gxr</title>
 
     <refsect2 id="overview">
       <para>
-        openvr-glib is a Vulkan wrapper for glib.
+        gxr is a glib wrapper for OpenVR.
       </para>
       <para>
-        openvr-glib manages Vulkan.
+        gxr manages OpenVR API calls.
       </para>
     </refsect2>
 
+    <xi:include href="xml/GxrIO.xml"/>
+    <xi:include href="xml/GxrMath.xml"/>
+    <xi:include href="xml/GxrTime.xml"/>
     <xi:include href="xml/OpenVRAction.xml"/>
     <xi:include href="xml/OpenVRActionSet.xml"/>
     <xi:include href="xml/OpenVRContext.xml"/>
     <xi:include href="xml/OpenVRCompositor.xml"/>
-    <xi:include href="xml/OpenVRIO.xml"/>
-    <xi:include href="xml/OpenVRMath.xml"/>
     <xi:include href="xml/OpenVROverlay.xml"/>
     <xi:include href="xml/OpenVRSystem.xml"/>
-    <xi:include href="xml/OpenVRTime.xml"/>
 
   </chapter>
   <index id="api-index">

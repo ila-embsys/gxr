@@ -1,5 +1,5 @@
 /*
- * OpenVR GLib
+ * gxr
  * Copyright 2018 Collabora Ltd.
  * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
  * SPDX-License-Identifier: MIT
@@ -13,8 +13,8 @@
 #include "openvr-context.h"
 #include "openvr-overlay.h"
 
-#include "openvr-time.h"
-#include "openvr-math.h"
+#include "gxr-time.h"
+#include "gxr-math.h"
 
 #define GET_OVERLAY_FUNCTIONS \
   EVROverlayError err; \
@@ -314,7 +314,7 @@ openvr_overlay_poll_event (OpenVROverlay *self)
         event->motion.x = vr_event.data.mouse.x;
         event->motion.y = vr_event.data.mouse.y;
         event->motion.time =
-          openvr_time_age_secs_to_monotonic_msecs (vr_event.eventAgeSeconds);
+          gxr_time_age_secs_to_monotonic_msecs (vr_event.eventAgeSeconds);
         g_signal_emit (self, overlay_signals[MOTION_NOTIFY_EVENT], 0, event);
       } break;
 
@@ -324,7 +324,7 @@ openvr_overlay_poll_event (OpenVROverlay *self)
         event->button.x = vr_event.data.mouse.x;
         event->button.y = vr_event.data.mouse.y;
         event->button.time =
-          openvr_time_age_secs_to_monotonic_msecs (vr_event.eventAgeSeconds);
+          gxr_time_age_secs_to_monotonic_msecs (vr_event.eventAgeSeconds);
         event->button.button =
           _vr_to_gdk_mouse_button (vr_event.data.mouse.button);
         g_signal_emit (self, overlay_signals[BUTTON_PRESS_EVENT], 0, event);
@@ -336,7 +336,7 @@ openvr_overlay_poll_event (OpenVROverlay *self)
         event->button.x = vr_event.data.mouse.x;
         event->button.y = vr_event.data.mouse.y;
         event->button.time =
-          openvr_time_age_secs_to_monotonic_msecs (vr_event.eventAgeSeconds);
+          gxr_time_age_secs_to_monotonic_msecs (vr_event.eventAgeSeconds);
         event->button.button =
           _vr_to_gdk_mouse_button (vr_event.data.mouse.button);
         g_signal_emit (self, overlay_signals[BUTTON_RELEASE_EVENT], 0, event);
@@ -471,7 +471,7 @@ openvr_overlay_set_transform_absolute (OpenVROverlay *self,
   GET_OVERLAY_FUNCTIONS
 
   HmdMatrix34_t translation34;
-  openvr_math_graphene_to_matrix34 (mat, &translation34);
+  gxr_math_graphene_to_matrix34 (mat, &translation34);
 
   err = f->SetOverlayTransformAbsolute (priv->overlay_handle,
                                         context->origin, &translation34);
@@ -494,7 +494,7 @@ openvr_overlay_get_transform_absolute (OpenVROverlay *self,
                                        &context->origin,
                                        &translation34);
 
-  openvr_math_matrix34_to_graphene (&translation34, mat);
+  gxr_math_matrix34_to_graphene (&translation34, mat);
 
   OVERLAY_CHECK_ERROR ("GetOverlayTransformAbsolute", err)
   return TRUE;
@@ -513,11 +513,11 @@ openvr_overlay_intersects (OpenVROverlay      *self,
   };
 
   graphene_vec3_t direction;
-  openvr_math_direction_from_matrix (transform, &direction);
+  gxr_math_direction_from_matrix (transform, &direction);
   graphene_vec3_to_float (&direction, params.vDirection.v);
 
   graphene_vec3_t translation;
-  openvr_math_matrix_get_translation (transform, &translation);
+  gxr_math_matrix_get_translation (transform, &translation);
   graphene_vec3_to_float (&translation, params.vSource.v);
 
   struct VROverlayIntersectionResults_t results;

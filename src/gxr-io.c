@@ -1,5 +1,5 @@
 /*
- * OpenVR GLib
+ * gxr
  * Copyright 2018 Collabora Ltd.
  * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
  * SPDX-License-Identifier: MIT
@@ -7,11 +7,11 @@
 
 #include <gio/gio.h>
 
-#include "openvr-io.h"
+#include "gxr-io.h"
 #include "openvr-action.h"
 
 GString*
-openvr_io_get_cache_path (const gchar* dir_name)
+gxr_io_get_cache_path (const gchar* dir_name)
 {
   GString *string = g_string_new ("");
   g_string_printf (string, "%s/%s", g_get_user_cache_dir (), dir_name);
@@ -19,10 +19,10 @@ openvr_io_get_cache_path (const gchar* dir_name)
 }
 
 gboolean
-openvr_io_write_resource_to_file (const gchar *res_base_path,
-                                  gchar *cache_path,
-                                  const gchar *file_name,
-                                  GString *file_path)
+gxr_io_write_resource_to_file (const gchar *res_base_path,
+                               gchar *cache_path,
+                               const gchar *file_name,
+                               GString *file_path)
 {
   GError *error = NULL;
 
@@ -81,14 +81,14 @@ openvr_io_write_resource_to_file (const gchar *res_base_path,
 }
 
 gboolean
-openvr_io_load_cached_action_manifest (const char* cache_name,
-                                       const char* resource_path,
-                                       const char* manifest_name,
-                                       const char* first_binding,
-                                       ...)
+gxr_io_load_cached_action_manifest (const char* cache_name,
+                                    const char* resource_path,
+                                    const char* manifest_name,
+                                    const char* first_binding,
+                                    ...)
 {
   /* Create cache directory if needed */
-  GString* cache_path = openvr_io_get_cache_path (cache_name);
+  GString* cache_path = gxr_io_get_cache_path (cache_name);
 
   if (g_mkdir_with_parents (cache_path->str, 0700) == -1)
     {
@@ -98,10 +98,10 @@ openvr_io_load_cached_action_manifest (const char* cache_name,
 
   /* Cache actions manifest */
   GString *actions_path = g_string_new ("");
-  if (!openvr_io_write_resource_to_file (resource_path,
-                                         cache_path->str,
-                                         manifest_name,
-                                         actions_path))
+  if (!gxr_io_write_resource_to_file (resource_path,
+                                      cache_path->str,
+                                      manifest_name,
+                                      actions_path))
     return FALSE;
 
   va_list args;
@@ -113,10 +113,10 @@ openvr_io_load_cached_action_manifest (const char* cache_name,
   while (current != NULL)
     {
       GString *bindings_path = g_string_new ("");
-      if (!openvr_io_write_resource_to_file (resource_path,
-                                             cache_path->str,
-                                             current,
-                                             bindings_path))
+      if (!gxr_io_write_resource_to_file (resource_path,
+                                          cache_path->str,
+                                          current,
+                                          bindings_path))
         return FALSE;
 
       g_string_free (bindings_path, TRUE);

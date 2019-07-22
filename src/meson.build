@@ -1,30 +1,30 @@
 so_version = 0
 api_version = '0.12'
-api_path = 'openvr-glib-' + api_version
+api_path = 'gxr-' + api_version
 
-openvr_glib_sources = [
+gxr_sources = [
+  'gxr-time.c',
+  'gxr-math.c',
+  'gxr-io.c',
   'openvr-system.c',
   'openvr-overlay.c',
   'openvr-compositor.c',
-  'openvr-time.c',
-  'openvr-math.c',
   'openvr-context.c',
   'openvr-action.c',
-  'openvr-action-set.c',
-  'openvr-io.c'
+  'openvr-action-set.c'
 ]
 
-openvr_glib_headers = [
-  'openvr-glib.h',
+gxr_headers = [
+  'gxr.h',
+  'gxr-time.h',
+  'gxr-math.h',
+  'gxr-io.h',
   'openvr-system.h',
   'openvr-overlay.h',
   'openvr-compositor.h',
-  'openvr-time.h',
-  'openvr-math.h',
   'openvr-context.h',
   'openvr-action.h',
   'openvr-action-set.h',
-  'openvr-io.h',
   'openvr-wrapper.h'
 ]
 
@@ -40,13 +40,13 @@ version_conf.set('MINOR_VERSION', MINOR_VERSION)
 version_conf.set('MICRO_VERSION', MICRO_VERSION)
 
 configure_file(
-  input: 'openvr-glib-version.h.in',
-  output: 'openvr-glib-version.h',
+  input: 'gxr-version.h.in',
+  output: 'gxr-version.h',
   configuration: version_conf,
   install_dir: join_paths(get_option('includedir'), api_path)
 )
 
-openvr_glib_deps = [
+gxr_deps = [
   gulkan_dep,
   openvr_dep,
   gdk_dep,
@@ -54,32 +54,32 @@ openvr_glib_deps = [
   dl_dep
 ]
 
-openvr_glib_lib = shared_library(api_path,
-  openvr_glib_sources,
+gxr_lib = shared_library(api_path,
+  gxr_sources,
   version: meson.project_version(),
   soversion: so_version,
-  dependencies: openvr_glib_deps,
+  dependencies: gxr_deps,
   install: true,
-  c_args : ['-DOPENVR_GLIB_COMPILATION']
+  c_args : ['-DGXR_COMPILATION']
 )
 
-openvr_glib_inc = include_directories('.')
+gxr_inc = include_directories('.')
 
-openvr_glib_dep = declare_dependency(
+gxr_dep = declare_dependency(
   sources: [],
-  link_with: openvr_glib_lib,
-  include_directories: [ openvr_glib_inc ],
-  dependencies: openvr_glib_deps,
+  link_with: gxr_lib,
+  include_directories: [ gxr_inc ],
+  dependencies: gxr_deps,
 )
 
-install_headers(openvr_glib_headers, subdir: api_path)
+install_headers(gxr_headers, subdir: api_path)
 
 pkg = import('pkgconfig')
 
 pkg.generate(
   description: 'GLib wrapper for OpenVR',
-    libraries: openvr_glib_lib,
-         name: 'openvr-glib',
+    libraries: gxr_lib,
+         name: 'gxr',
      filebase: api_path,
       version: meson.project_version(),
       subdirs: api_path,
@@ -88,16 +88,16 @@ pkg.generate(
 )
 
 if get_option('introspection')
-  openvr_glib_gir = gnome.generate_gir(
-    openvr_glib_lib,
-    sources: openvr_glib_sources + openvr_glib_headers,
-    namespace: 'OpenVR',
+  gxr_gir = gnome.generate_gir(
+    gxr_lib,
+    sources: gxr_sources + gxr_headers,
+    namespace: 'Gxr',
     nsversion: api_version,
-    identifier_prefix: 'OpenVR',
-    symbol_prefix: 'openvr',
+    identifier_prefix: 'Gxr',
+    symbol_prefix: 'gxr',
     export_packages: api_path,
     includes: [ 'cairo-1.0', 'GdkPixbuf-2.0', 'Gdk-3.0'],
-    header: 'openvr-glib/openvr-glib.h',
+    header: 'gxr/gxr.h',
     install: true,
   )
 endif

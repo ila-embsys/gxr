@@ -1,15 +1,15 @@
 /*
- * OpenVR GLib
+ * gxr
  * Copyright 2018 Collabora Ltd.
  * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
  * SPDX-License-Identifier: MIT
  */
 
-#ifndef OPENVR_GLIB_OVERLAY_H_
-#define OPENVR_GLIB_OVERLAY_H_
+#ifndef GXR_OVERLAY_H_
+#define GXR_OVERLAY_H_
 
-#if !defined (OPENVR_GLIB_INSIDE) && !defined (OPENVR_GLIB_COMPILATION)
-#error "Only <openvr-glib.h> can be included directly."
+#if !defined (GXR_INSIDE) && !defined (GXR_COMPILATION)
+#error "Only <gxr.h> can be included directly."
 #endif
 
 #include <stdint.h>
@@ -179,4 +179,4 @@ openvr_overlay_submit_texture (OpenVROverlay *self,
 
 G_END_DECLS
 
-#endif /* OPENVR_GLIB_OVERLAY_H_ */
+#endif /* GXR_OVERLAY_H_ */

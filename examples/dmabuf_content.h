@@ -1,5 +1,5 @@
 /*
- * OpenVR GLib
+ * gxr
  * Copyright 2014 Rob Clark <robdclark@gmail.com>
  * Copyright 2018 Collabora Ltd.
  * Authors: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
@@ -10,8 +10,8 @@
  * From egl_dma_buf.c demo
  */
 
-#ifndef OPENVR_GLIB_DMABUF_CONTENT_H_
-#define OPENVR_GLIB_DMABUF_CONTENT_H_
+#ifndef GXR_DMABUF_CONTENT_H_
+#define GXR_DMABUF_CONTENT_H_
 
 #include <stdint.h>
 
@@ -38,4 +38,4 @@ dma_buf_fill (char *pixels, uint32_t width, uint32_t height, uint32_t stride)
     }
 }
 
-#endif /* OPENVR_GLIB_DMABUF_CONTENT_H_ */
+#endif /* GXR_DMABUF_CONTENT_H_ */

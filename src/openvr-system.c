@@ -1,5 +1,5 @@
 /*
- * OpenVR GLib
+ * gxr
  * Copyright 2018 Collabora Ltd.
  * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
  * SPDX-License-Identifier: MIT
@@ -11,7 +11,7 @@
 
 #include "openvr-context.h"
 #include "openvr-system.h"
-#include "openvr-math.h"
+#include "gxr-math.h"
 
 #define STRING_BUFFER_SIZE 128
 
@@ -58,7 +58,7 @@ openvr_system_get_projection_matrix (EVREye eye, float near, float far)
     context->system->GetProjectionMatrix (eye, near, far);
 
   graphene_matrix_t mat;
-  openvr_math_matrix44_to_graphene (&openvr_mat, &mat);
+  gxr_math_matrix44_to_graphene (&openvr_mat, &mat);
   return mat;
 }
 
@@ -69,7 +69,7 @@ openvr_system_get_eye_to_head_transform (EVREye eye)
   HmdMatrix34_t openvr_mat = context->system->GetEyeToHeadTransform (eye);
 
   graphene_matrix_t mat;
-  openvr_math_matrix34_to_graphene (&openvr_mat, &mat);
+  gxr_math_matrix34_to_graphene (&openvr_mat, &mat);
   return mat;
 }
 
@@ -88,7 +88,7 @@ openvr_system_get_hmd_pose (graphene_matrix_t *pose)
       TrackedDevicePose_t openvr_pose;
       context->system->GetDeviceToAbsoluteTrackingPose (context->origin, 0,
                                                         &openvr_pose, 1);
-      openvr_math_matrix34_to_graphene (&openvr_pose.mDeviceToAbsoluteTracking,
+      gxr_math_matrix34_to_graphene (&openvr_pose.mDeviceToAbsoluteTracking,
                                         pose);
 
       return openvr_pose.bDeviceIsConnected &&

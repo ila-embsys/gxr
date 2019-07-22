@@ -1,15 +1,15 @@
 /*
- * OpenVR GLib
+ * gxr
  * Copyright 2018 Collabora Ltd.
  * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
  * SPDX-License-Identifier: MIT
  */
 
-#ifndef OPENVR_GLIB_ACTION_H_
-#define OPENVR_GLIB_ACTION_H_
+#ifndef GXR_ACTION_H_
+#define GXR_ACTION_H_
 
-#if !defined (OPENVR_GLIB_INSIDE) && !defined (OPENVR_GLIB_COMPILATION)
-#error "Only <openvr-glib.h> can be included directly."
+#if !defined (GXR_INSIDE) && !defined (GXR_COMPILATION)
+#error "Only <gxr.h> can be included directly."
 #endif
 
 #include <glib-object.h>
@@ -126,4 +126,4 @@ openvr_action_update_input_handles (OpenVRAction *self);
 
 G_END_DECLS
 
-#endif /* OPENVR_GLIB_ACTION_H_ */
+#endif /* GXR_ACTION_H_ */

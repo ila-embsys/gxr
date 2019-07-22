@@ -1,5 +1,5 @@
 /*
- * OpenVR GLib
+ * gxr
  * Copyright 2018 Collabora Ltd.
  * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
  * Author: Christoph Haag <christoph.haag@collabora.com>
@@ -16,7 +16,7 @@
 #include <gdk/gdk.h>
 #include <gtk/gtk.h>
 
-#include "openvr-glib.h"
+#include "gxr.h"
 
 static gboolean use_system_keyboard = FALSE;
 
@@ -282,8 +282,8 @@ main (int argc, char *argv[])
       return -1;
     }
 
-  if (!openvr_io_load_cached_action_manifest (
-      "openvr-glib",
+  if (!gxr_io_load_cached_action_manifest (
+      "gxr",
       "/res/bindings",
       "actions.json",
       "bindings_vive_controller.json",

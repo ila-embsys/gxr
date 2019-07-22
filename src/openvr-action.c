@@ -1,5 +1,5 @@
 /*
- * OpenVR GLib
+ * gxr
  * Copyright 2018 Collabora Ltd.
  * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
  * SPDX-License-Identifier: MIT
@@ -7,11 +7,9 @@
 
 #include <gdk/gdk.h>
 
+#include "gxr-math.h"
 #include "openvr-action.h"
-
 #include "openvr-context.h"
-#include "openvr-math.h"
-
 #include "openvr-action-set.h"
 
 struct _OpenVRAction
@@ -369,7 +367,7 @@ _emit_pose_event (OpenVRAction          *self,
   OpenVRPoseEvent *event = g_malloc (sizeof (OpenVRPoseEvent));
   event->active = data->bActive;
   event->controller_handle = origin_info.trackedDeviceIndex;
-  openvr_math_matrix34_to_graphene (&data->pose.mDeviceToAbsoluteTracking,
+  gxr_math_matrix34_to_graphene (&data->pose.mDeviceToAbsoluteTracking,
                                     &event->pose);
   graphene_vec3_init_from_float (&event->velocity,
                                  data->pose.vVelocity.v);

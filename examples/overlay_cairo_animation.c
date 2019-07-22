@@ -1,5 +1,5 @@
 /*
- * OpenVR GLib
+ * gxr
  * Copyright 2018 Collabora Ltd.
  * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
  * SPDX-License-Identifier: MIT
@@ -12,7 +12,7 @@
 #include <gdk/gdk.h>
 #include <glib/gprintf.h>
 
-#include "openvr-glib.h"
+#include "gxr.h"
 
 #define WIDTH 1000
 #define HEIGHT 1000
@@ -28,8 +28,8 @@ static void
 update_fps (struct timespec* now)
 {
   struct timespec diff;
-  openvr_time_substract (now, &last_time, &diff);
-  double diff_s = openvr_time_to_double_secs (&diff);
+  gxr_time_substract (now, &last_time, &diff);
+  double diff_s = gxr_time_to_double_secs (&diff);
   double diff_ms = diff_s * SEC_IN_MSEC_D;
   double fps = SEC_IN_MSEC_D / diff_ms;
   g_sprintf (fps_str, "FPS %.2f (%.2fms)", fps, diff_ms);
@@ -46,7 +46,7 @@ create_cairo_surface (unsigned char *image)
     return NULL;
   }
 
-  double now_secs = openvr_time_to_double_secs (&now);
+  double now_secs = gxr_time_to_double_secs (&now);
 
   cairo_surface_t *surface =
     cairo_image_surface_create_for_data (image,
