@@ -14,7 +14,6 @@ openvr_overlay_get_size_pixels
 openvr_overlay_get_transform_absolute
 openvr_overlay_get_width_meters
 openvr_overlay_hide
-openvr_overlay_intersects
 openvr_overlay_is_valid
 openvr_overlay_is_visible
 openvr_overlay_poll_event
@@ -100,12 +99,9 @@ OPENVR_TYPE_CONTEXT
 
 <SECTION>
 <FILE>GxrMath</FILE>
-gxr_math_direction_from_matrix
-gxr_math_direction_from_matrix_vec3
 gxr_math_graphene_to_matrix34
 gxr_math_matrix34_to_graphene
 gxr_math_matrix44_to_graphene
-gxr_math_matrix_get_translation
 gxr_math_pose_to_matrix
 gxr_math_print_matrix34
 </SECTION>

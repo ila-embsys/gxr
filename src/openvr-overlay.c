@@ -501,37 +501,6 @@ openvr_overlay_get_transform_absolute (OpenVROverlay *self,
 }
 
 gboolean
-openvr_overlay_intersects (OpenVROverlay      *self,
-                           graphene_point3d_t *intersection_point,
-                           graphene_matrix_t  *transform)
-{
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
-
-  OpenVRContext *context = openvr_context_get_instance ();
-  VROverlayIntersectionParams_t params = {
-    .eOrigin = context->origin
-  };
-
-  graphene_vec3_t direction;
-  gxr_math_direction_from_matrix (transform, &direction);
-  graphene_vec3_to_float (&direction, params.vDirection.v);
-
-  graphene_vec3_t translation;
-  gxr_math_matrix_get_translation (transform, &translation);
-  graphene_vec3_to_float (&translation, params.vSource.v);
-
-  struct VROverlayIntersectionResults_t results;
-  gboolean intersects = context->overlay->ComputeOverlayIntersection (
-      priv->overlay_handle, &params, &results);
-
-  intersection_point->x = results.vPoint.v[0];
-  intersection_point->y = results.vPoint.v[1];
-  intersection_point->z = results.vPoint.v[2];
-
-  return intersects;
-}
-
-gboolean
 openvr_overlay_set_gdk_pixbuf_raw (OpenVROverlay *self, GdkPixbuf * pixbuf)
 {
   guint width = (guint)gdk_pixbuf_get_width (pixbuf);

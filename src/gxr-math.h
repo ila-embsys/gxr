@@ -32,19 +32,4 @@ gxr_math_matrix34_to_graphene (HmdMatrix34_t *mat34, graphene_matrix_t *mat);
 void
 gxr_math_matrix44_to_graphene (HmdMatrix44_t *mat44, graphene_matrix_t *mat);
 
-
-gboolean
-gxr_math_direction_from_matrix_vec3 (graphene_matrix_t *matrix,
-                                     graphene_vec3_t   *start,
-                                     graphene_vec3_t   *direction);
-
-gboolean
-gxr_math_direction_from_matrix (graphene_matrix_t *matrix,
-                                graphene_vec3_t   *direction);
-
-void
-gxr_math_matrix_get_translation (graphene_matrix_t *matrix,
-                                 graphene_vec3_t   *vec);
-
-
 #endif /* GXR_MATH_H_ */
