@@ -79,4 +79,7 @@ subdir('src')
 subdir('res')
 subdir('tests')
 subdir('examples')
-subdir('doc')
+
+if get_option('api_doc')
+    subdir('doc')
+endif
