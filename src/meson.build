@@ -16,6 +16,7 @@ gxr_sources = [
 
 gxr_headers = [
   'gxr.h',
+  'gxr-enums.h',
   'gxr-time.h',
   'gxr-math.h',
   'gxr-io.h',

@@ -15,6 +15,7 @@
 #define GXR_INSIDE
 
 #include "gxr-version.h"
+#include "gxr-enums.h"
 #include "gxr-io.h"
 #include "gxr-math.h"
 #include "gxr-time.h"

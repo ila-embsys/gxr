@@ -13,10 +13,10 @@
 #endif
 
 #include <glib-object.h>
-
+#include <graphene.h>
 #include "openvr-wrapper.h"
 
-#include <graphene.h>
+#include "gxr-enums.h"
 
 G_BEGIN_DECLS
 
@@ -35,36 +35,6 @@ struct _OpenVRContext
   struct VR_IVRApplications_FnTable *applications;
   enum ETrackingUniverseOrigin origin;
 };
-
-/**
- * OpenVRAppType:
- * @OPENVR_APP_SCENE: Scene application. Renders stereo viewports for the whole scene.
- * @OPENVR_APP_OVERLAY: Overlay application. Renders mono buffers to overlays.
- * @OPENVR_APP_BACKGROUND: Background application. Does not render anything.
- *
- * Type of OpenVR application.
- *
- **/
-typedef enum {
-  OPENVR_APP_SCENE = 0,
-  OPENVR_APP_OVERLAY,
-  OPENVR_APP_BACKGROUND
-} OpenVRAppType;
-
-/**
- * OpenVRQuitReason:
- * @VR_QUIT_SHUTDOWN: Runtime is shutting down.
- * @VR_QUIT_APPLICATION_TRANSITION: A new scene application was opened.
- * @VR_QUIT_PROCESS_QUIT: .VR_QUIT_PROCESS_QUIT
- *
- * Reason why an quit signal was received
- *
- **/
-typedef enum {
-  VR_QUIT_SHUTDOWN,
-  VR_QUIT_APPLICATION_TRANSITION,
-  VR_QUIT_PROCESS_QUIT
-} OpenVRQuitReason;
 
 /**
  * OpenVRQuitEvent:
