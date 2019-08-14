@@ -7,6 +7,7 @@
 
 #include <gdk/gdk.h>
 
+#include "openvr-wrapper.h"
 #include "gxr-math.h"
 #include "openvr-action.h"
 #include "openvr-context.h"

@@ -13,7 +13,6 @@
 #endif
 
 #include <glib-object.h>
-#include "openvr-wrapper.h"
 
 #include <vulkan/vulkan.h>
 #include <gulkan.h>
