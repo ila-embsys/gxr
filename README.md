@@ -17,6 +17,7 @@ $ ninja -C build
 
 #### Build the docs
 ```
+meson build -Dapi_doc=true
 $ ninja -C build gxr-doc
 ```
 
