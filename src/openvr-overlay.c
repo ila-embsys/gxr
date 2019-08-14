@@ -12,6 +12,7 @@
 
 #include "openvr-context.h"
 #include "openvr-overlay.h"
+#include "openvr-context-private.h"
 
 #include "gxr-time.h"
 #include "gxr-math.h"
@@ -19,7 +20,8 @@
 #define GET_OVERLAY_FUNCTIONS \
   EVROverlayError err; \
   OpenVRContext *context = openvr_context_get_instance (); \
-  struct VR_IVROverlay_FnTable *f = context->overlay;
+  OpenVRFunctions* fun = openvr_context_get_functions (context); \
+  struct VR_IVROverlay_FnTable *f = fun->overlay;
 
 #define OVERLAY_CHECK_ERROR(fun, res) \
 { \
@@ -243,16 +245,16 @@ gboolean
 openvr_overlay_is_visible (OpenVROverlay *self)
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
-  OpenVRContext *context = openvr_context_get_instance ();
-  return context->overlay->IsOverlayVisible (priv->overlay_handle);
+  GET_OVERLAY_FUNCTIONS
+  return f->IsOverlayVisible (priv->overlay_handle);
 }
 
 gboolean
 openvr_overlay_thumbnail_is_visible (OpenVROverlay *self)
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
-  OpenVRContext *context = openvr_context_get_instance ();
-  return context->overlay->IsOverlayVisible (priv->thumbnail_handle);
+  GET_OVERLAY_FUNCTIONS
+  return f->IsOverlayVisible (priv->thumbnail_handle);
 }
 
 gboolean
@@ -306,11 +308,10 @@ openvr_overlay_poll_event (OpenVROverlay *self)
 
   struct VREvent_t vr_event;
 
-  OpenVRContext *context = openvr_context_get_instance ();
+  GET_OVERLAY_FUNCTIONS
 
-  while (context->overlay->PollNextOverlayEvent (priv->overlay_handle,
-                                                &vr_event,
-                                                 sizeof (vr_event)))
+  while (f->PollNextOverlayEvent (priv->overlay_handle, &vr_event,
+                                  sizeof (vr_event)))
   {
     switch (vr_event.eventType)
     {
@@ -479,8 +480,10 @@ openvr_overlay_set_transform_absolute (OpenVROverlay *self,
   HmdMatrix34_t translation34;
   gxr_math_graphene_to_matrix34 (mat, &translation34);
 
+  ETrackingUniverseOrigin origin = openvr_context_get_origin (context);
+
   err = f->SetOverlayTransformAbsolute (priv->overlay_handle,
-                                        context->origin, &translation34);
+                                        origin, &translation34);
 
   OVERLAY_CHECK_ERROR ("SetOverlayTransformAbsolute", err)
   return TRUE;
@@ -496,8 +499,10 @@ openvr_overlay_get_transform_absolute (OpenVROverlay *self,
 
   HmdMatrix34_t translation34;
 
+  ETrackingUniverseOrigin origin = openvr_context_get_origin (context);
+
   err = f->GetOverlayTransformAbsolute (priv->overlay_handle,
-                                       &context->origin,
+                                       &origin,
                                        &translation34);
 
   gxr_math_matrix34_to_graphene (&translation34, mat);
@@ -761,13 +766,13 @@ openvr_overlay_set_flip_y (OpenVROverlay *self,
                            gboolean flip_y)
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
+
+  GET_OVERLAY_FUNCTIONS
+
   if (flip_y != priv->flip_y)
     {
-      OpenVRContext *openvrContext = openvr_context_get_instance();
       VRTextureBounds_t *bounds = flip_y ? &flippedBounds : &defaultBounds;
-      openvrContext->overlay->SetOverlayTextureBounds (priv->overlay_handle,
-                                                       bounds);
-
+      f->SetOverlayTextureBounds (priv->overlay_handle, bounds);
       priv->flip_y = flip_y;
     }
 }

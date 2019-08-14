@@ -13,6 +13,7 @@
 #include "openvr-context.h"
 #include "openvr-action-set.h"
 #include "openvr-action-set-private.h"
+#include "openvr-context-private.h"
 
 struct _OpenVRAction
 {
@@ -43,9 +44,10 @@ gboolean
 openvr_action_load_manifest (char *path)
 {
   OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRFunctions *f = openvr_context_get_functions (context);
 
   EVRInputError err;
-  err = context->input->SetActionManifestPath (path);
+  err = f->input->SetActionManifestPath (path);
 
   if (err != EVRInputError_VRInputError_None)
     {
@@ -117,14 +119,15 @@ void
 openvr_action_update_input_handles (OpenVRAction *self)
 {
   OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRFunctions *f = openvr_context_get_functions (context);
 
   VRActionSetHandle_t set_handle =
     openvr_action_set_get_handle (self->action_set);
 
   VRInputValueHandle_t origin_handles[k_unMaxActionOriginCount];
   EVRInputError err =
-    context->input->GetActionOrigins (set_handle, self->handle,
-                                      origin_handles, k_unMaxActionOriginCount);
+    f->input->GetActionOrigins (set_handle, self->handle,
+                                origin_handles, k_unMaxActionOriginCount);
 
   if (err != EVRInputError_VRInputError_None)
     {
@@ -141,9 +144,9 @@ openvr_action_update_input_handles (OpenVRAction *self)
   for (int i = 0; i < origin_count; i++)
     {
       InputOriginInfo_t origin_info;
-      err = context->input->GetOriginTrackedDeviceInfo (origin_handles[i],
-                                                        &origin_info,
-                                                        sizeof (origin_info));
+      err = f->input->GetOriginTrackedDeviceInfo (origin_handles[i],
+                                                 &origin_info,
+                                                  sizeof (origin_info));
       if (err != EVRInputError_VRInputError_None)
         {
           g_printerr ("GetOriginTrackedDeviceInfo for %s failed\n", self->url);
@@ -160,9 +163,9 @@ openvr_action_update_input_handles (OpenVRAction *self)
 
       /* TODO: origin localized name max length same as action name? */
       char origin_name[k_unMaxActionNameLength];
-      context->input->GetOriginLocalizedName (origin_handles[i], origin_name,
-                                              k_unMaxActionNameLength,
-                                              EVRInputStringBits_VRInputString_All);
+      f->input->GetOriginLocalizedName (origin_handles[i], origin_name,
+                                        k_unMaxActionNameLength,
+                                        EVRInputStringBits_VRInputString_All);
       g_print ("Added origin %s for action %s\n", origin_name, self->url);
     }
 }
@@ -210,9 +213,8 @@ openvr_action_load_handle (OpenVRAction *self,
                            char         *url)
 {
   OpenVRContext *context = openvr_context_get_instance ();
-
-  EVRInputError err;
-  err = context->input->GetActionHandle (url, &self->handle);
+  OpenVRFunctions *f = openvr_context_get_functions (context);
+  EVRInputError err = f->input->GetActionHandle (url, &self->handle);
 
   if (err != EVRInputError_VRInputError_None)
     {
@@ -227,6 +229,7 @@ gboolean
 openvr_action_poll_digital (OpenVRAction *self)
 {
   OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRFunctions *f = openvr_context_get_functions (context);
 
   InputDigitalActionData_t data;
 
@@ -235,9 +238,8 @@ openvr_action_poll_digital (OpenVRAction *self)
     {
       VRActionHandle_t *input_handle = e->data;
 
-      err = context->input->GetDigitalActionData (self->handle, &data,
-                                                  sizeof(data),
-                                                  *input_handle);
+      err = f->input->GetDigitalActionData (self->handle, &data,
+                                            sizeof(data), *input_handle);
 
       if (err != EVRInputError_VRInputError_None)
         {
@@ -247,9 +249,9 @@ openvr_action_poll_digital (OpenVRAction *self)
         }
 
       InputOriginInfo_t origin_info;
-      err = context->input->GetOriginTrackedDeviceInfo (data.activeOrigin,
-                                                        &origin_info,
-                                                        sizeof (origin_info));
+      err = f->input->GetOriginTrackedDeviceInfo (data.activeOrigin,
+                                                 &origin_info,
+                                                  sizeof (origin_info));
 
       if (err != EVRInputError_VRInputError_None)
         {
@@ -296,6 +298,7 @@ gboolean
 openvr_action_poll_analog (OpenVRAction *self)
 {
   OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRFunctions *f = openvr_context_get_functions (context);
 
   InputAnalogActionData_t data;
 
@@ -304,9 +307,8 @@ openvr_action_poll_analog (OpenVRAction *self)
   for(GSList *e = self->input_handles; e; e = e->next)
     {
       VRActionHandle_t *input_handle = e->data;
-      err = context->input->GetAnalogActionData (self->handle, &data,
-                                                 sizeof(data),
-                                                 *input_handle);
+      err = f->input->GetAnalogActionData (self->handle, &data,
+                                           sizeof(data), *input_handle);
 
       if (err != EVRInputError_VRInputError_None)
         {
@@ -316,9 +318,9 @@ openvr_action_poll_analog (OpenVRAction *self)
         }
 
       InputOriginInfo_t origin_info;
-      err = context->input->GetOriginTrackedDeviceInfo (data.activeOrigin,
-                                                        &origin_info,
-                                                        sizeof (origin_info));
+      err = f->input->GetOriginTrackedDeviceInfo (data.activeOrigin,
+                                                 &origin_info,
+                                                  sizeof (origin_info));
 
       if (err != EVRInputError_VRInputError_None)
         {
@@ -349,12 +351,13 @@ _emit_pose_event (OpenVRAction          *self,
                   InputPoseActionData_t *data)
 {
   OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRFunctions *f = openvr_context_get_functions (context);
 
   InputOriginInfo_t origin_info;
   EVRInputError err;
-  err = context->input->GetOriginTrackedDeviceInfo (data->activeOrigin,
-                                                   &origin_info,
-                                                    sizeof (origin_info));
+  err = f->input->GetOriginTrackedDeviceInfo (data->activeOrigin,
+                                             &origin_info,
+                                              sizeof (origin_info));
   if (err != EVRInputError_VRInputError_None)
     {
       /* controller is not active, but might be active later */
@@ -388,18 +391,23 @@ openvr_action_poll_pose_secs_from_now (OpenVRAction *self,
                                        float         secs)
 {
   OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRFunctions *f = openvr_context_get_functions (context);
+
   EVRInputError err;
 
   for(GSList *e = self->input_handles; e; e = e->next)
     {
       VRActionHandle_t *input_handle = e->data;
       InputPoseActionData_t data;
-      err = context->input->GetPoseActionDataRelativeToNow (self->handle,
-                                                            context->origin,
-                                                            secs,
-                                                           &data,
-                                                            sizeof(data),
-                                                           *input_handle);
+
+      ETrackingUniverseOrigin origin = openvr_context_get_origin (context);
+
+      err = f->input->GetPoseActionDataRelativeToNow (self->handle,
+                                                      origin,
+                                                      secs,
+                                                     &data,
+                                                      sizeof(data),
+                                                     *input_handle);
       if (err != EVRInputError_VRInputError_None)
         {
           g_printerr ("ERROR: GetPoseActionData: %s\n",
@@ -418,17 +426,19 @@ gboolean
 openvr_action_poll_pose_next_frame (OpenVRAction *self)
 {
   OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRFunctions *f = openvr_context_get_functions (context);
   EVRInputError err;
 
   for(GSList *e = self->input_handles; e; e = e->next)
     {
       VRActionHandle_t *input_handle = e->data;
       InputPoseActionData_t data;
-      err = context->input->GetPoseActionDataForNextFrame (self->handle,
-                                                           context->origin,
-                                                          &data,
-                                                           sizeof(data),
-                                                          *input_handle);
+
+      ETrackingUniverseOrigin origin = openvr_context_get_origin (context);
+
+      err = f->input->GetPoseActionDataForNextFrame (self->handle, origin,
+                                                    &data, sizeof(data),
+                                                    *input_handle);
       if (err != EVRInputError_VRInputError_None)
         {
           g_printerr ("ERROR: GetPoseActionData: %s\n",
@@ -451,9 +461,10 @@ openvr_action_trigger_haptic (OpenVRAction *self,
                               float amplitude)
 {
   OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRFunctions *f = openvr_context_get_functions (context);
 
   EVRInputError err;
-  err = context->input->TriggerHapticVibrationAction (
+  err = f->input->TriggerHapticVibrationAction (
     self->handle,
     start_seconds_from_now,
     duration_seconds,

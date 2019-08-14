@@ -15,6 +15,17 @@
 
 #include "gxr-math.h"
 
+#include "openvr-context-private.h"
+
+typedef struct _OpenVRContext
+{
+  GObject parent;
+
+  OpenVRFunctions f;
+
+  enum ETrackingUniverseOrigin origin;
+} OpenVROverlayPrivate;
+
 G_DEFINE_TYPE (OpenVRContext, openvr_context, G_TYPE_OBJECT)
 
 #define INIT_FN_TABLE(target, type) \
@@ -95,11 +106,11 @@ openvr_context_class_init (OpenVRContextClass *klass)
 static void
 openvr_context_init (OpenVRContext *self)
 {
-  self->system = NULL;
-  self->overlay = NULL;
-  self->compositor = NULL;
-  self->input = NULL;
-  self->model = NULL;
+  self->f.system = NULL;
+  self->f.overlay = NULL;
+  self->f.compositor = NULL;
+  self->f.input = NULL;
+  self->f.model = NULL;
 }
 
 static void
@@ -150,12 +161,12 @@ _init_fn_table (const char *type, intptr_t *ret)
 static bool
 _init_function_tables (OpenVRContext *self)
 {
-  INIT_FN_TABLE (self->system, System)
-  INIT_FN_TABLE (self->overlay, Overlay)
-  INIT_FN_TABLE (self->compositor, Compositor)
-  INIT_FN_TABLE (self->input, Input)
-  INIT_FN_TABLE (self->model, RenderModels)
-  INIT_FN_TABLE (self->applications, Applications)
+  INIT_FN_TABLE (self->f.system, System)
+  INIT_FN_TABLE (self->f.overlay, Overlay)
+  INIT_FN_TABLE (self->f.compositor, Compositor)
+  INIT_FN_TABLE (self->f.input, Input)
+  INIT_FN_TABLE (self->f.model, RenderModels)
+  INIT_FN_TABLE (self->f.applications, Applications)
   return true;
 }
 
@@ -178,7 +189,7 @@ _vr_init (OpenVRContext *self, EVRApplicationType app_type)
       return FALSE;
     }
 
-  self->origin = self->compositor->GetTrackingSpace ();
+  self->origin = self->f.compositor->GetTrackingSpace ();
 
   return TRUE;
 }
@@ -225,11 +236,11 @@ openvr_context_initialize (OpenVRContext *self, OpenVRAppType type)
 gboolean
 openvr_context_is_valid (OpenVRContext * self)
 {
-  return self->system != NULL
-    && self->overlay != NULL
-    && self->compositor != NULL
-    && self->input != NULL
-    && self->model != NULL;
+  return self->f.system != NULL
+    && self->f.overlay != NULL
+    && self->f.compositor != NULL
+    && self->f.input != NULL
+    && self->f.model != NULL;
 }
 
 gboolean
@@ -247,7 +258,7 @@ openvr_context_is_hmd_present (void)
 void
 openvr_context_print_model_list (OpenVRContext *self)
 {
-  struct VR_IVRRenderModels_FnTable *f = self->model;
+  struct VR_IVRRenderModels_FnTable *f = self->f.model;
 
   uint32_t model_count = f->GetRenderModelCount ();
   char name[k_unMaxPropertyStringSize];
@@ -263,7 +274,7 @@ openvr_context_print_model_list (OpenVRContext *self)
 GSList *
 openvr_context_get_model_list (OpenVRContext *self)
 {
-  struct VR_IVRRenderModels_FnTable *f = self->model;
+  struct VR_IVRRenderModels_FnTable *f = self->f.model;
 
   GSList *models = NULL;
 
@@ -287,7 +298,7 @@ openvr_context_poll_event (OpenVRContext *self)
   gboolean shutdown_event_pending = FALSE;
 
   struct VREvent_t vr_event;
-  while (self->system->PollNextEvent (&vr_event, sizeof (vr_event)))
+  while (self->f.system->PollNextEvent (&vr_event, sizeof (vr_event)))
   {
     switch (vr_event.eventType)
     {
@@ -375,7 +386,7 @@ openvr_context_poll_event (OpenVRContext *self)
 void
 openvr_context_show_system_keyboard (OpenVRContext *self)
 {
-  self->overlay->ShowKeyboard (
+  self->f.overlay->ShowKeyboard (
     EGamepadTextInputMode_k_EGamepadTextInputModeNormal,
     EGamepadTextInputLineMode_k_EGamepadTextInputLineModeSingleLine,
     "OpenVR System Keyboard", 1, "", TRUE, 0);
@@ -387,13 +398,14 @@ openvr_context_set_system_keyboard_transform (OpenVRContext *self,
 {
   HmdMatrix34_t openvr_transform;
   gxr_math_graphene_to_matrix34 (transform, &openvr_transform);
-  self->overlay->SetKeyboardTransformAbsolute (self->origin, &openvr_transform);
+  self->f.overlay->SetKeyboardTransformAbsolute (self->origin,
+                                                &openvr_transform);
 }
 
 void
 openvr_context_acknowledge_quit (OpenVRContext *self)
 {
-  self->system->AcknowledgeQuit_Exiting ();
+  self->f.system->AcknowledgeQuit_Exiting ();
 }
 
 gboolean
@@ -403,13 +415,24 @@ openvr_context_is_another_scene_running (void)
   openvr_context_initialize (ctx, OPENVR_APP_BACKGROUND);
 
   /* if applications fntable is not loaded, SteamVR is probably not running. */
-  if (ctx->applications == NULL)
+  if (ctx->f.applications == NULL)
     return FALSE;
 
-  uint32_t pid = ctx->applications->GetCurrentSceneProcessId ();
+  uint32_t pid = ctx->f.applications->GetCurrentSceneProcessId ();
 
   g_object_unref (ctx);
 
   return pid != 0;
 }
 
+OpenVRFunctions*
+openvr_context_get_functions (OpenVRContext *self)
+{
+  return &self->f;
+}
+
+enum ETrackingUniverseOrigin
+openvr_context_get_origin (OpenVRContext *self)
+{
+  return self->origin;
+}

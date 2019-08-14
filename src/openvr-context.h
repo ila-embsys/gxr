@@ -14,7 +14,6 @@
 
 #include <glib-object.h>
 #include <graphene.h>
-#include "openvr-wrapper.h"
 
 #include "gxr-enums.h"
 
@@ -22,19 +21,6 @@ G_BEGIN_DECLS
 
 #define OPENVR_TYPE_CONTEXT openvr_context_get_type()
 G_DECLARE_FINAL_TYPE (OpenVRContext, openvr_context, OPENVR, CONTEXT, GObject)
-
-struct _OpenVRContext
-{
-  GObject parent;
-
-  struct VR_IVRSystem_FnTable *system;
-  struct VR_IVROverlay_FnTable *overlay;
-  struct VR_IVRCompositor_FnTable *compositor;
-  struct VR_IVRInput_FnTable *input;
-  struct VR_IVRRenderModels_FnTable *model;
-  struct VR_IVRApplications_FnTable *applications;
-  enum ETrackingUniverseOrigin origin;
-};
 
 /**
  * OpenVRQuitEvent:
