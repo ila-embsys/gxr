@@ -11,8 +11,8 @@
 /* assuming a > b */
 void
 gxr_time_substract (struct timespec* a,
-                       struct timespec* b,
-                       struct timespec* out)
+                    struct timespec* b,
+                    struct timespec* out)
 {
   out->tv_sec = a->tv_sec - b->tv_sec;
 

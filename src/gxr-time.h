@@ -21,8 +21,8 @@
 
 void
 gxr_time_substract (struct timespec* a,
-                       struct timespec* b,
-                       struct timespec* out);
+                    struct timespec* b,
+                    struct timespec* out);
 
 double
 gxr_time_to_double_secs (struct timespec* time);
