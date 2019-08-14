@@ -6,6 +6,7 @@
  */
 
 #include "openvr-action-set.h"
+#include "openvr-action-set-private.h"
 
 #include "openvr-context.h"
 #include "openvr-action.h"
@@ -170,4 +171,33 @@ VRActionSetHandle_t
 openvr_action_set_get_handle (OpenVRActionSet *self)
 {
   return self->handle;
+}
+
+#define ENUM_TO_STR(r) case r: return #r
+
+const gchar*
+openvr_input_error_string (EVRInputError err)
+{
+  switch (err)
+    {
+      ENUM_TO_STR(EVRInputError_VRInputError_None);
+      ENUM_TO_STR(EVRInputError_VRInputError_NameNotFound);
+      ENUM_TO_STR(EVRInputError_VRInputError_WrongType);
+      ENUM_TO_STR(EVRInputError_VRInputError_InvalidHandle);
+      ENUM_TO_STR(EVRInputError_VRInputError_InvalidParam);
+      ENUM_TO_STR(EVRInputError_VRInputError_NoSteam);
+      ENUM_TO_STR(EVRInputError_VRInputError_MaxCapacityReached);
+      ENUM_TO_STR(EVRInputError_VRInputError_IPCError);
+      ENUM_TO_STR(EVRInputError_VRInputError_NoActiveActionSet);
+      ENUM_TO_STR(EVRInputError_VRInputError_InvalidDevice);
+      ENUM_TO_STR(EVRInputError_VRInputError_InvalidSkeleton);
+      ENUM_TO_STR(EVRInputError_VRInputError_InvalidBoneCount);
+      ENUM_TO_STR(EVRInputError_VRInputError_InvalidCompressedData);
+      ENUM_TO_STR(EVRInputError_VRInputError_NoData);
+      ENUM_TO_STR(EVRInputError_VRInputError_BufferTooSmall);
+      ENUM_TO_STR(EVRInputError_VRInputError_MismatchedActionManifest);
+      ENUM_TO_STR(EVRInputError_VRInputError_MissingSkeletonData);
+      default:
+        return "UNKNOWN EVRInputError";
+    }
 }

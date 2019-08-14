@@ -14,8 +14,6 @@
 
 #include <glib-object.h>
 
-#include "openvr-wrapper.h"
-
 G_BEGIN_DECLS
 
 /**
@@ -54,9 +52,6 @@ openvr_action_set_connect (OpenVRActionSet *self,
                            gchar           *url,
                            GCallback        callback,
                            gpointer         data);
-
-VRActionSetHandle_t
-openvr_action_set_get_handle (OpenVRActionSet *self);
 
 G_END_DECLS
 

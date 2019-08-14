@@ -12,6 +12,7 @@
 #include "openvr-action.h"
 #include "openvr-context.h"
 #include "openvr-action-set.h"
+#include "openvr-action-set-private.h"
 
 struct _OpenVRAction
 {
