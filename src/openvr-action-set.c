@@ -8,7 +8,7 @@
 #include "openvr-action-set.h"
 #include "openvr-action-set-private.h"
 
-#include "openvr-context.h"
+#include "openvr-context-private.h"
 #include "openvr-action.h"
 
 struct _OpenVRActionSet
@@ -76,8 +76,9 @@ openvr_action_set_load_handle (OpenVRActionSet *self,
   EVRInputError err;
 
   OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRFunctions *f = openvr_context_get_functions (context);
 
-  err = context->input->GetActionSetHandle (url, &self->handle);
+  err = f->input->GetActionSetHandle (url, &self->handle);
 
   if (err != EVRInputError_VRInputError_None)
     {
@@ -119,11 +120,11 @@ openvr_action_set_update (OpenVRActionSet *self)
   active_action_set.ulActionSet = self->handle;
 
   OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRFunctions *f = openvr_context_get_functions (context);
 
   EVRInputError err;
-  err = context->input->UpdateActionState (&active_action_set,
-                                           sizeof(active_action_set),
-                                           1);
+  err = f->input->UpdateActionState (&active_action_set,
+                                     sizeof(active_action_set), 1);
 
   if (err != EVRInputError_VRInputError_None)
     {
