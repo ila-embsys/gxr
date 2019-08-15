@@ -11,7 +11,8 @@ gxr_sources = [
   'openvr-compositor.c',
   'openvr-context.c',
   'openvr-action.c',
-  'openvr-action-set.c'
+  'openvr-action-set.c',
+  'openvr-model.c'
 ]
 
 gxr_headers = [
@@ -26,7 +27,8 @@ gxr_headers = [
   'openvr-context.h',
   'openvr-action.h',
   'openvr-action-set.h',
-  'openvr-wrapper.h'
+  'openvr-wrapper.h',
+  'openvr-model.h'
 ]
 
 version_split = meson.project_version().split('.')

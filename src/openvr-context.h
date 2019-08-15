@@ -55,12 +55,6 @@ gboolean
 openvr_context_is_hmd_present (void);
 
 void
-openvr_context_print_model_list (OpenVRContext *self);
-
-GSList *
-openvr_context_get_model_list (OpenVRContext *self);
-
-void
 openvr_context_poll_event (OpenVRContext *self);
 
 void

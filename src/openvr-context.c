@@ -256,39 +256,6 @@ openvr_context_is_hmd_present (void)
 }
 
 void
-openvr_context_print_model_list (OpenVRContext *self)
-{
-  struct VR_IVRRenderModels_FnTable *f = self->f.model;
-
-  uint32_t model_count = f->GetRenderModelCount ();
-  char name[k_unMaxPropertyStringSize];
-
-  g_print ("You have %d render models:\n", model_count);
-  for (uint32_t i = 0; i < model_count; i++)
-    {
-      uint32_t ret = f->GetRenderModelName (i, name,k_unMaxPropertyStringSize);
-      g_print ("\t%03d: %s\n", ret, name);
-    }
-}
-
-GSList *
-openvr_context_get_model_list (OpenVRContext *self)
-{
-  struct VR_IVRRenderModels_FnTable *f = self->f.model;
-
-  GSList *models = NULL;
-
-  char name[k_unMaxPropertyStringSize];
-  for (uint32_t i = 0; i < f->GetRenderModelCount (); i++)
-    {
-      f->GetRenderModelName (i, name,k_unMaxPropertyStringSize);
-      models = g_slist_append (models, g_strdup (name));
-    }
-
-  return models;
-}
-
-void
 openvr_context_poll_event (OpenVRContext *self)
 {
   /* Starting another VR app will first emit a shutdown event, and then the
