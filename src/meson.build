@@ -52,7 +52,8 @@ gxr_deps = [
   openvr_dep,
   gdk_dep,
   stdcpp_dep,
-  dl_dep
+  dl_dep,
+  m_dep
 ]
 
 gxr_lib = shared_library(api_path,

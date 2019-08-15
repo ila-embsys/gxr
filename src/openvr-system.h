@@ -33,4 +33,20 @@ openvr_system_get_eye_to_head_transform (EVREye eye);
 gboolean
 openvr_system_get_hmd_pose (graphene_matrix_t *pose);
 
+gboolean
+openvr_system_is_input_available (void);
+
+gboolean
+openvr_system_is_tracked_device_connected (uint32_t i);
+
+gboolean
+openvr_system_device_is_controller (uint32_t i);
+
+void
+openvr_system_get_render_target_size (uint32_t *w, uint32_t *h);
+
+void
+openvr_system_get_frustum_angles (float *left, float *right,
+                                  float *top, float *bottom);
+
 #endif /* GXR_SYSTEM_H_ */

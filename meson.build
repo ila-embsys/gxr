@@ -59,6 +59,7 @@ openvr_dep = dependency('openvr')
 # Standard C++ library and the implementation of dlopen()
 stdcpp_dep = c.find_library('stdc++')
 dl_dep = c.find_library('dl')
+m_dep = c.find_library('m')
 
 gulkan_dep = dependency('gulkan-0.12', version: '>= 0.12.0')
 gdk_dep = dependency('gdk-3.0', version: '>= 3.22')

@@ -107,3 +107,65 @@ openvr_system_get_hmd_pose (graphene_matrix_t *pose)
     }
   return FALSE;
 }
+
+gboolean
+openvr_system_is_input_available (void)
+{
+  OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRFunctions *f = openvr_context_get_functions (context);
+  return f->system->IsInputAvailable ();
+}
+
+gboolean
+openvr_system_is_tracked_device_connected (uint32_t i)
+{
+  OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRFunctions *f = openvr_context_get_functions (context);
+  return f->system->IsTrackedDeviceConnected (i);
+}
+
+gboolean
+openvr_system_device_is_controller (uint32_t i)
+{
+  OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRFunctions *f = openvr_context_get_functions (context);
+  return f->system->GetTrackedDeviceClass (i) ==
+    ETrackedDeviceClass_TrackedDeviceClass_Controller;
+}
+
+void
+openvr_system_get_render_target_size (uint32_t *w, uint32_t *h)
+{
+  OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRFunctions *f = openvr_context_get_functions (context);
+  f->system->GetRecommendedRenderTargetSize (w, h);
+}
+
+/**
+ * openvr_system_get_frustum_angles:
+ * @left: The angle from the center view axis to the left in deg.
+ * @right: The angle from the center view axis to the right in deg.
+ * @top: The angle from the center view axis to the top in deg.
+ * @bottom: The angle from the center view axis to the bottom in deg.
+ *
+ * Left and bottom are usually negative, top and right usually positive.
+ * Exceptions are FOVs where both opposing sides are on the same side of the
+ * center view axis (e.g. 2+ viewports per eye).
+ */
+
+#define PI 3.1415926535f
+#define RAD_TO_DEG(x) ( (x) * 360.0f / ( 2.0f * PI ) )
+
+void
+openvr_system_get_frustum_angles (float *left, float *right,
+                                  float *top, float *bottom)
+{
+  OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRFunctions *f = openvr_context_get_functions (context);
+  f->system->GetProjectionRaw (EVREye_Eye_Left, left, right, top, bottom);
+
+  *left = RAD_TO_DEG (atanf (*left));
+  *right = RAD_TO_DEG (atanf (*right));
+  *top = - RAD_TO_DEG (atanf (*top));
+  *bottom = - RAD_TO_DEG (atanf (*bottom));
+}
