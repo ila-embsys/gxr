@@ -12,6 +12,7 @@
 #include "openvr-context.h"
 #include "openvr-system.h"
 #include "gxr-math.h"
+#include "openvr-context-private.h"
 
 #define STRING_BUFFER_SIZE 128
 
@@ -22,14 +23,15 @@ openvr_system_get_device_string (TrackedDeviceIndex_t device_index,
   gchar *string = (gchar*) g_malloc (STRING_BUFFER_SIZE);
 
   OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRFunctions *f = openvr_context_get_functions (context);
 
   ETrackedPropertyError error;
-  context->system->GetStringTrackedDeviceProperty(
+  f->system->GetStringTrackedDeviceProperty(
     device_index, property, string, STRING_BUFFER_SIZE, &error);
 
   if (error != ETrackedPropertyError_TrackedProp_Success)
     g_print ("Error getting string: %s\n",
-      context->system->GetPropErrorNameFromEnum (error));
+      f->system->GetPropErrorNameFromEnum (error));
 
   return string;
 }
@@ -54,8 +56,10 @@ graphene_matrix_t
 openvr_system_get_projection_matrix (EVREye eye, float near, float far)
 {
   OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRFunctions *f = openvr_context_get_functions (context);
+
   HmdMatrix44_t openvr_mat =
-    context->system->GetProjectionMatrix (eye, near, far);
+    f->system->GetProjectionMatrix (eye, near, far);
 
   graphene_matrix_t mat;
   gxr_math_matrix44_to_graphene (&openvr_mat, &mat);
@@ -66,7 +70,9 @@ graphene_matrix_t
 openvr_system_get_eye_to_head_transform (EVREye eye)
 {
   OpenVRContext *context = openvr_context_get_instance ();
-  HmdMatrix34_t openvr_mat = context->system->GetEyeToHeadTransform (eye);
+  OpenVRFunctions *f = openvr_context_get_functions (context);
+
+  HmdMatrix34_t openvr_mat = f->system->GetEyeToHeadTransform (eye);
 
   graphene_matrix_t mat;
   gxr_math_matrix34_to_graphene (&openvr_mat, &mat);
@@ -77,19 +83,22 @@ gboolean
 openvr_system_get_hmd_pose (graphene_matrix_t *pose)
 {
   OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRFunctions *f = openvr_context_get_functions (context);
+
   VRControllerState_t state;
-  if (context->system->IsTrackedDeviceConnected(k_unTrackedDeviceIndex_Hmd) &&
-      context->system->GetTrackedDeviceClass (k_unTrackedDeviceIndex_Hmd) ==
+  if (f->system->IsTrackedDeviceConnected(k_unTrackedDeviceIndex_Hmd) &&
+      f->system->GetTrackedDeviceClass (k_unTrackedDeviceIndex_Hmd) ==
           ETrackedDeviceClass_TrackedDeviceClass_HMD &&
-      context->system->GetControllerState (k_unTrackedDeviceIndex_Hmd,
+      f->system->GetControllerState (k_unTrackedDeviceIndex_Hmd,
                                            &state, sizeof(state)))
     {
       /* k_unTrackedDeviceIndex_Hmd should be 0 => posearray[0] */
+      ETrackingUniverseOrigin origin = openvr_context_get_origin (context);
+
       TrackedDevicePose_t openvr_pose;
-      context->system->GetDeviceToAbsoluteTrackingPose (context->origin, 0,
-                                                        &openvr_pose, 1);
+      f->system->GetDeviceToAbsoluteTrackingPose (origin, 0, &openvr_pose, 1);
       gxr_math_matrix34_to_graphene (&openvr_pose.mDeviceToAbsoluteTracking,
-                                        pose);
+                                     pose);
 
       return openvr_pose.bDeviceIsConnected &&
              openvr_pose.bPoseIsValid &&
