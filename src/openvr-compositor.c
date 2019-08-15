@@ -12,6 +12,7 @@
 #include "openvr-compositor.h"
 #include "openvr-context.h"
 #include "openvr-context-private.h"
+#include "gxr-math.h"
 
 static void
 _split (gchar *str, GSList **out_list)
@@ -241,3 +242,20 @@ openvr_compositor_submit (GulkanClient         *client,
   return true;
 }
 
+void
+openvr_compositor_wait_get_poses (GxrPose *poses, uint32_t count)
+{
+  OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRFunctions *f = openvr_context_get_functions (context);
+  TrackedDevicePose_t p[count];
+  f->compositor->WaitGetPoses (p, count, NULL, 0);
+
+  for (uint32_t i = 0; i < count; i++)
+    {
+      poses[i].is_valid = p[i].bPoseIsValid;
+      if (poses[i].is_valid)
+        gxr_math_matrix34_to_graphene (&p[i].mDeviceToAbsoluteTracking,
+                                       &poses[i].transformation);
+    }
+
+}

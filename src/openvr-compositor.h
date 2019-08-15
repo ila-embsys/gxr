@@ -19,6 +19,14 @@
 
 G_BEGIN_DECLS
 
+typedef struct {
+  graphene_matrix_t transformation;
+  gboolean is_valid;
+} GxrPose;
+
+static const uint32_t OPENVR_DEVICE_INDEX_HMD = 0;
+static const uint32_t OPENVR_DEVICE_INDEX_MAX = 64;
+
 bool
 openvr_compositor_get_instance_extensions (GSList **out_list);
 
@@ -40,6 +48,9 @@ openvr_compositor_submit (GulkanClient         *client,
                           VkSampleCountFlagBits sample_count,
                           VkImage               left,
                           VkImage               right);
+
+void
+openvr_compositor_wait_get_poses (GxrPose *poses, uint32_t count);
 
 G_END_DECLS
 
