@@ -105,99 +105,6 @@ _destroy_cb (OpenVROverlay *overlay,
   g_main_loop_quit (loop);
 }
 
-static void
-show_overlay_info (OpenVROverlay *overlay)
-{
-  struct HmdVector2_t center;
-  float radius;
-  EDualAnalogWhich which = EDualAnalogWhich_k_EDualAnalog_Left;
-
-  OpenVRContext *context = openvr_context_get_instance ();
-  struct VR_IVROverlay_FnTable *f = context->overlay;
-
-  VROverlayHandle_t overlay_handle = openvr_overlay_get_handle (overlay);
-  EVROverlayError err = f->GetOverlayDualAnalogTransform (
-    overlay_handle, which, &center, &radius);
-
-  if (err != EVROverlayError_VROverlayError_None)
-    {
-      g_printerr ("Could not GetOverlayDualAnalogTransform: %s\n",
-                  f->GetOverlayErrorNameFromEnum (err));
-    }
-
-  g_print ("Center [%f, %f] Radius %f\n", center.v[0], center.v[1], radius);
-
-  VROverlayTransformType transform_type;
-  err = f->GetOverlayTransformType (overlay_handle, &transform_type);
-
-  switch (transform_type)
-    {
-    case VROverlayTransformType_VROverlayTransform_Absolute:
-      g_print ("VROverlayTransform_Absolute\n");
-      break;
-    case VROverlayTransformType_VROverlayTransform_TrackedDeviceRelative:
-      g_print ("VROverlayTransform_TrackedDeviceRelative\n");
-      break;
-    case VROverlayTransformType_VROverlayTransform_SystemOverlay:
-      g_print ("VROverlayTransform_SystemOverlay\n");
-      break;
-    case VROverlayTransformType_VROverlayTransform_TrackedComponent:
-      g_print ("VROverlayTransform_TrackedComponent\n");
-      break;
-    }
-
-  bool anti_alias = false;
-
-  err = f->GetOverlayFlag (overlay_handle,
-                           VROverlayFlags_RGSS4X,
-                          &anti_alias);
-
-  g_print ("VROverlayFlags_RGSS4X: %d\n", anti_alias);
-
-  TrackingUniverseOrigin tracking_origin;
-  HmdMatrix34_t transform;
-
-  err = f->GetOverlayTransformAbsolute (
-    overlay_handle,
-    &tracking_origin,
-    &transform);
-
-  switch (tracking_origin)
-    {
-    case ETrackingUniverseOrigin_TrackingUniverseSeated:
-      g_print ("ETrackingUniverseOrigin_TrackingUniverseSeated\n");
-      break;
-    case ETrackingUniverseOrigin_TrackingUniverseStanding:
-      g_print ("ETrackingUniverseOrigin_TrackingUniverseStanding\n");
-      break;
-    case ETrackingUniverseOrigin_TrackingUniverseRawAndUncalibrated:
-      g_print ("ETrackingUniverseOrigin_TrackingUniverseRawAndUncalibrated\n");
-      break;
-    }
-
-  gxr_math_print_matrix34 (transform);
-
-  graphene_point3d_t translation_vec;
-  graphene_point3d_init (&translation_vec, 1.1f, 0.5f, 0.1f);
-
-  graphene_matrix_t translation;
-  graphene_matrix_init_translate (&translation, &translation_vec);
-
-  graphene_matrix_rotate_y (&translation, -30.4f);
-
-  graphene_matrix_print (&translation);
-
-  HmdMatrix34_t translation34;
-  gxr_math_graphene_to_matrix34 (&translation, &translation34);
-
-  gxr_math_print_matrix34 (translation34);
-
-  err = f->SetOverlayTransformAbsolute (
-    overlay_handle,
-    tracking_origin,
-    &translation34);
-}
-
 static bool
 _init_openvr ()
 {
@@ -268,7 +175,18 @@ test_cat_overlay ()
   if (!openvr_overlay_show (overlay2))
     return -1;
 
-  show_overlay_info (overlay);
+  openvr_overlay_print_info (overlay);
+
+  graphene_point3d_t translation_vec;
+  graphene_point3d_init (&translation_vec, 1.1f, 0.5f, 0.1f);
+
+  graphene_matrix_t translation;
+  graphene_matrix_init_translate (&translation, &translation_vec);
+  graphene_matrix_rotate_y (&translation, -30.4f);
+
+  graphene_matrix_print (&translation);
+
+  openvr_overlay_get_transform_absolute (overlay, &translation);
 
   openvr_overlay_submit_texture (overlay, client, texture);
   openvr_overlay_submit_texture (overlay2, client, texture);

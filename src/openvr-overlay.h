@@ -150,9 +150,6 @@ openvr_overlay_set_translation (OpenVROverlay      *self,
 gboolean
 openvr_overlay_destroy (OpenVROverlay *self);
 
-VROverlayHandle_t
-openvr_overlay_get_handle (OpenVROverlay *self);
-
 gboolean
 openvr_overlay_set_model (OpenVROverlay *self,
                           gchar *name,
@@ -170,6 +167,9 @@ bool
 openvr_overlay_submit_texture (OpenVROverlay *self,
                                GulkanClient  *client,
                                GulkanTexture *texture);
+
+gboolean
+openvr_overlay_print_info (OpenVROverlay *self);
 
 G_END_DECLS
 

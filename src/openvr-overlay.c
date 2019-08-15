@@ -246,6 +246,7 @@ openvr_overlay_is_visible (OpenVROverlay *self)
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
   GET_OVERLAY_FUNCTIONS
+  (void) err;
   return f->IsOverlayVisible (priv->overlay_handle);
 }
 
@@ -254,6 +255,7 @@ openvr_overlay_thumbnail_is_visible (OpenVROverlay *self)
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
   GET_OVERLAY_FUNCTIONS
+  (void) err;
   return f->IsOverlayVisible (priv->thumbnail_handle);
 }
 
@@ -309,6 +311,7 @@ openvr_overlay_poll_event (OpenVROverlay *self)
   struct VREvent_t vr_event;
 
   GET_OVERLAY_FUNCTIONS
+  (void) err;
 
   while (f->PollNextOverlayEvent (priv->overlay_handle, &vr_event,
                                   sizeof (vr_event)))
@@ -711,13 +714,6 @@ openvr_overlay_finalize (GObject *gobject)
   G_OBJECT_CLASS (openvr_overlay_parent_class)->finalize (gobject);
 }
 
-VROverlayHandle_t
-openvr_overlay_get_handle (OpenVROverlay *self)
-{
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
-  return priv->overlay_handle;
-}
-
 gboolean
 openvr_overlay_set_model (OpenVROverlay *self,
                           gchar *name,
@@ -768,6 +764,7 @@ openvr_overlay_set_flip_y (OpenVROverlay *self,
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
   GET_OVERLAY_FUNCTIONS
+  (void) err;
 
   if (flip_y != priv->flip_y)
     {
@@ -783,6 +780,8 @@ openvr_overlay_submit_texture (OpenVROverlay *self,
                                GulkanClient  *client,
                                GulkanTexture *texture)
 {
+  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
+
   GET_OVERLAY_FUNCTIONS
 
   GulkanDevice *device = gulkan_client_get_device (client);
@@ -809,9 +808,101 @@ openvr_overlay_submit_texture (OpenVROverlay *self,
       .eColorSpace = EColorSpace_ColorSpace_Auto
     };
 
-  VROverlayHandle_t overlay_handle = openvr_overlay_get_handle (self);
-  err = f->SetOverlayTexture (overlay_handle, &vr_texture);
+  err = f->SetOverlayTexture (priv->overlay_handle, &vr_texture);
 
   OVERLAY_CHECK_ERROR ("SetOverlayTexture", err)
+  return TRUE;
+}
+
+gboolean
+openvr_overlay_print_info (OpenVROverlay *self)
+{
+  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
+
+  struct HmdVector2_t center;
+  float radius;
+  EDualAnalogWhich which = EDualAnalogWhich_k_EDualAnalog_Left;
+
+  GET_OVERLAY_FUNCTIONS
+
+  err = f->GetOverlayDualAnalogTransform (priv->overlay_handle, which,
+                                         &center, &radius);
+
+  if (err != EVROverlayError_VROverlayError_None)
+    {
+      g_printerr ("Could not GetOverlayDualAnalogTransform: %s\n",
+                  f->GetOverlayErrorNameFromEnum (err));
+      return FALSE;
+    }
+
+  g_print ("Center [%f, %f] Radius %f\n", center.v[0], center.v[1], radius);
+
+  VROverlayTransformType transform_type;
+  err = f->GetOverlayTransformType (priv->overlay_handle, &transform_type);
+  if (err != EVROverlayError_VROverlayError_None)
+    {
+      g_printerr ("Could not GetOverlayTransformType: %s\n",
+                  f->GetOverlayErrorNameFromEnum (err));
+      return FALSE;
+    }
+
+  switch (transform_type)
+    {
+    case VROverlayTransformType_VROverlayTransform_Absolute:
+      g_print ("VROverlayTransform_Absolute\n");
+      break;
+    case VROverlayTransformType_VROverlayTransform_TrackedDeviceRelative:
+      g_print ("VROverlayTransform_TrackedDeviceRelative\n");
+      break;
+    case VROverlayTransformType_VROverlayTransform_SystemOverlay:
+      g_print ("VROverlayTransform_SystemOverlay\n");
+      break;
+    case VROverlayTransformType_VROverlayTransform_TrackedComponent:
+      g_print ("VROverlayTransform_TrackedComponent\n");
+      break;
+    }
+
+  bool anti_alias = false;
+  err = f->GetOverlayFlag (priv->overlay_handle,
+                           VROverlayFlags_RGSS4X,
+                          &anti_alias);
+  if (err != EVROverlayError_VROverlayError_None)
+    {
+      g_printerr ("Could not GetOverlayFlag: %s\n",
+                  f->GetOverlayErrorNameFromEnum (err));
+      return FALSE;
+    }
+
+  g_print ("VROverlayFlags_RGSS4X: %d\n", anti_alias);
+
+  TrackingUniverseOrigin tracking_origin;
+  HmdMatrix34_t transform;
+
+  err = f->GetOverlayTransformAbsolute (
+    priv->overlay_handle,
+    &tracking_origin,
+    &transform);
+  if (err != EVROverlayError_VROverlayError_None)
+    {
+      g_printerr ("Could not GetOverlayTransformAbsolute: %s\n",
+                  f->GetOverlayErrorNameFromEnum (err));
+      return FALSE;
+    }
+
+  switch (tracking_origin)
+    {
+    case ETrackingUniverseOrigin_TrackingUniverseSeated:
+      g_print ("ETrackingUniverseOrigin_TrackingUniverseSeated\n");
+      break;
+    case ETrackingUniverseOrigin_TrackingUniverseStanding:
+      g_print ("ETrackingUniverseOrigin_TrackingUniverseStanding\n");
+      break;
+    case ETrackingUniverseOrigin_TrackingUniverseRawAndUncalibrated:
+      g_print ("ETrackingUniverseOrigin_TrackingUniverseRawAndUncalibrated\n");
+      break;
+    }
+
+  gxr_math_print_matrix34 (transform);
+
   return TRUE;
 }
