@@ -15,12 +15,18 @@
 #include <glib-object.h>
 #include <graphene.h>
 
+#include <stdint.h>
+
 #include "gxr-enums.h"
 
 G_BEGIN_DECLS
 
 #define OPENVR_TYPE_CONTEXT openvr_context_get_type()
 G_DECLARE_FINAL_TYPE (OpenVRContext, openvr_context, OPENVR, CONTEXT, GObject)
+
+static const uint32_t OPENVR_DEVICE_INDEX_HMD = 0;
+static const uint32_t OPENVR_DEVICE_INDEX_MAX = 64;
+static const uint32_t OPENVR_PROPERTY_STRING_MAX = 32768;
 
 /**
  * OpenVRQuitEvent:

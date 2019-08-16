@@ -24,9 +24,6 @@ typedef struct {
   gboolean is_valid;
 } GxrPose;
 
-static const uint32_t OPENVR_DEVICE_INDEX_HMD = 0;
-static const uint32_t OPENVR_DEVICE_INDEX_MAX = 64;
-
 bool
 openvr_compositor_get_instance_extensions (GSList **out_list);
 
