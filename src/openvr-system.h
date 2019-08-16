@@ -49,4 +49,7 @@ openvr_system_get_frustum_angles (GxrEye eye,
                                   float *left, float *right,
                                   float *top, float *bottom);
 
+gchar*
+openvr_system_get_device_model_name (uint32_t i);
+
 #endif /* GXR_SYSTEM_H_ */

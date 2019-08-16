@@ -201,3 +201,10 @@ openvr_system_eye_to_openvr (GxrEye eye)
         return EVREye_Eye_Left;
     }
 }
+
+gchar*
+openvr_system_get_device_model_name (uint32_t i)
+{
+  return openvr_system_get_device_string (
+    i, ETrackedDeviceProperty_Prop_RenderModelName_String);
+}
