@@ -11,7 +11,7 @@
 
 #include "openvr-context.h"
 #include "openvr-system.h"
-#include "gxr-math.h"
+#include "openvr-math-private.h"
 #include "openvr-context-private.h"
 
 #define STRING_BUFFER_SIZE 128
@@ -62,7 +62,7 @@ openvr_system_get_projection_matrix (EVREye eye, float near, float far)
     f->system->GetProjectionMatrix (eye, near, far);
 
   graphene_matrix_t mat;
-  gxr_math_matrix44_to_graphene (&openvr_mat, &mat);
+  openvr_math_matrix44_to_graphene (&openvr_mat, &mat);
   return mat;
 }
 
@@ -75,7 +75,7 @@ openvr_system_get_eye_to_head_transform (EVREye eye)
   HmdMatrix34_t openvr_mat = f->system->GetEyeToHeadTransform (eye);
 
   graphene_matrix_t mat;
-  gxr_math_matrix34_to_graphene (&openvr_mat, &mat);
+  openvr_math_matrix34_to_graphene (&openvr_mat, &mat);
   return mat;
 }
 
@@ -97,7 +97,7 @@ openvr_system_get_hmd_pose (graphene_matrix_t *pose)
 
       TrackedDevicePose_t openvr_pose;
       f->system->GetDeviceToAbsoluteTrackingPose (origin, 0, &openvr_pose, 1);
-      gxr_math_matrix34_to_graphene (&openvr_pose.mDeviceToAbsoluteTracking,
+      openvr_math_matrix34_to_graphene (&openvr_pose.mDeviceToAbsoluteTracking,
                                      pose);
 
       return openvr_pose.bDeviceIsConnected &&

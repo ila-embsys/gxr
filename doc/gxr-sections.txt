@@ -99,11 +99,11 @@ OPENVR_TYPE_CONTEXT
 
 <SECTION>
 <FILE>GxrMath</FILE>
-gxr_math_graphene_to_matrix34
-gxr_math_matrix34_to_graphene
-gxr_math_matrix44_to_graphene
-gxr_math_pose_to_matrix
-gxr_math_print_matrix34
+openvr_math_graphene_to_matrix34
+openvr_math_matrix34_to_graphene
+openvr_math_matrix44_to_graphene
+openvr_math_pose_to_matrix
+openvr_math_print_matrix34
 </SECTION>
 
 <SECTION>

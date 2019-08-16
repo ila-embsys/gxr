@@ -13,7 +13,7 @@
 
 #include <gdk/gdk.h>
 
-#include "gxr-math.h"
+#include "openvr-math-private.h"
 
 #include "openvr-context-private.h"
 
@@ -364,7 +364,7 @@ openvr_context_set_system_keyboard_transform (OpenVRContext *self,
                                               graphene_matrix_t *transform)
 {
   HmdMatrix34_t openvr_transform;
-  gxr_math_graphene_to_matrix34 (transform, &openvr_transform);
+  openvr_math_graphene_to_matrix34 (transform, &openvr_transform);
   self->f.overlay->SetKeyboardTransformAbsolute (self->origin,
                                                 &openvr_transform);
 }

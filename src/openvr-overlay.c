@@ -15,7 +15,7 @@
 #include "openvr-context-private.h"
 
 #include "gxr-time.h"
-#include "gxr-math.h"
+#include "openvr-math-private.h"
 
 #define GET_OVERLAY_FUNCTIONS \
   EVROverlayError err; \
@@ -481,7 +481,7 @@ openvr_overlay_set_transform_absolute (OpenVROverlay *self,
   GET_OVERLAY_FUNCTIONS
 
   HmdMatrix34_t translation34;
-  gxr_math_graphene_to_matrix34 (mat, &translation34);
+  openvr_math_graphene_to_matrix34 (mat, &translation34);
 
   ETrackingUniverseOrigin origin = openvr_context_get_origin (context);
 
@@ -508,7 +508,7 @@ openvr_overlay_get_transform_absolute (OpenVROverlay *self,
                                        &origin,
                                        &translation34);
 
-  gxr_math_matrix34_to_graphene (&translation34, mat);
+  openvr_math_matrix34_to_graphene (&translation34, mat);
 
   OVERLAY_CHECK_ERROR ("GetOverlayTransformAbsolute", err)
   return TRUE;
@@ -902,7 +902,7 @@ openvr_overlay_print_info (OpenVROverlay *self)
       break;
     }
 
-  gxr_math_print_matrix34 (transform);
+  openvr_math_print_matrix34 (transform);
 
   return TRUE;
 }

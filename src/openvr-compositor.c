@@ -12,7 +12,7 @@
 #include "openvr-compositor.h"
 #include "openvr-context.h"
 #include "openvr-context-private.h"
-#include "gxr-math.h"
+#include "openvr-math-private.h"
 
 static void
 _split (gchar *str, GSList **out_list)
@@ -254,8 +254,8 @@ openvr_compositor_wait_get_poses (GxrPose *poses, uint32_t count)
     {
       poses[i].is_valid = p[i].bPoseIsValid;
       if (poses[i].is_valid)
-        gxr_math_matrix34_to_graphene (&p[i].mDeviceToAbsoluteTracking,
-                                       &poses[i].transformation);
+        openvr_math_matrix34_to_graphene (&p[i].mDeviceToAbsoluteTracking,
+                                          &poses[i].transformation);
     }
 
 }

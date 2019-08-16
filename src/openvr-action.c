@@ -8,7 +8,7 @@
 #include <gdk/gdk.h>
 
 #include "openvr-wrapper.h"
-#include "gxr-math.h"
+#include "openvr-math-private.h"
 #include "openvr-action.h"
 #include "openvr-context.h"
 #include "openvr-action-set.h"
@@ -372,7 +372,7 @@ _emit_pose_event (OpenVRAction          *self,
   OpenVRPoseEvent *event = g_malloc (sizeof (OpenVRPoseEvent));
   event->active = data->bActive;
   event->controller_handle = origin_info.trackedDeviceIndex;
-  gxr_math_matrix34_to_graphene (&data->pose.mDeviceToAbsoluteTracking,
+  openvr_math_matrix34_to_graphene (&data->pose.mDeviceToAbsoluteTracking,
                                     &event->pose);
   graphene_vec3_init_from_float (&event->velocity,
                                  data->pose.vVelocity.v);

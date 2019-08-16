@@ -1,16 +1,16 @@
 #include <glib.h>
 
-#include "gxr-math.h"
+#include "openvr-math-private.h"
 
 void
-gxr_math_print_matrix34 (HmdMatrix34_t mat)
+openvr_math_print_matrix34 (HmdMatrix34_t mat)
 {
   for (int i = 0; i < 4; i++)
     g_print ("| %+.6f %+.6f %+.6f |\n", mat.m[0][i], mat.m[1][i], mat.m[2][i]);
 }
 
 void
-gxr_math_graphene_to_matrix34 (graphene_matrix_t *mat, HmdMatrix34_t *mat34)
+openvr_math_graphene_to_matrix34 (graphene_matrix_t *mat, HmdMatrix34_t *mat34)
 {
   for (guint i = 0; i < 3; i++)
     for (guint j = 0; j < 4; j++)
@@ -18,7 +18,7 @@ gxr_math_graphene_to_matrix34 (graphene_matrix_t *mat, HmdMatrix34_t *mat34)
 }
 
 void
-gxr_math_matrix34_to_graphene (HmdMatrix34_t *mat34, graphene_matrix_t *mat)
+openvr_math_matrix34_to_graphene (HmdMatrix34_t *mat34, graphene_matrix_t *mat)
 {
   float m[16] = {
     mat34->m[0][0], mat34->m[1][0], mat34->m[2][0], 0,
@@ -30,7 +30,7 @@ gxr_math_matrix34_to_graphene (HmdMatrix34_t *mat34, graphene_matrix_t *mat)
 }
 
 void
-gxr_math_matrix44_to_graphene (HmdMatrix44_t *mat44, graphene_matrix_t *mat)
+openvr_math_matrix44_to_graphene (HmdMatrix44_t *mat44, graphene_matrix_t *mat)
 {
   float m[16] = {
     mat44->m[0][0], mat44->m[1][0], mat44->m[2][0], mat44->m[3][0],
@@ -42,8 +42,8 @@ gxr_math_matrix44_to_graphene (HmdMatrix44_t *mat44, graphene_matrix_t *mat)
 }
 
 gboolean
-gxr_math_pose_to_matrix (TrackedDevicePose_t *pose,
-                         graphene_matrix_t   *transform)
+openvr_math_pose_to_matrix (TrackedDevicePose_t *pose,
+                            graphene_matrix_t   *transform)
 {
   if (pose->eTrackingResult != ETrackingResult_TrackingResult_Running_OK)
     {
@@ -53,7 +53,7 @@ gxr_math_pose_to_matrix (TrackedDevicePose_t *pose,
     }
   else if (pose->bPoseIsValid)
     {
-      gxr_math_matrix34_to_graphene (&pose->mDeviceToAbsoluteTracking,
+      openvr_math_matrix34_to_graphene (&pose->mDeviceToAbsoluteTracking,
                                         transform);
       return TRUE;
     }
