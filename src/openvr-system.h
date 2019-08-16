@@ -12,23 +12,22 @@
 #error "Only <gxr.h> can be included directly."
 #endif
 
-#include "openvr-context.h"
+#include <stdint.h>
 
-#include "openvr-wrapper.h"
+#include <glib.h>
+#include <graphene.h>
+
+#include "gxr-enums.h"
 
 void
 openvr_system_print_device_info (void);
 
 
-gchar*
-openvr_system_get_device_string (TrackedDeviceIndex_t device_index,
-                                 ETrackedDeviceProperty property);
+graphene_matrix_t
+openvr_system_get_projection_matrix (GxrEye eye, float near, float far);
 
 graphene_matrix_t
-openvr_system_get_projection_matrix (EVREye eye, float near, float far);
-
-graphene_matrix_t
-openvr_system_get_eye_to_head_transform (EVREye eye);
+openvr_system_get_eye_to_head_transform (GxrEye eye);
 
 gboolean
 openvr_system_get_hmd_pose (graphene_matrix_t *pose);
@@ -46,7 +45,8 @@ void
 openvr_system_get_render_target_size (uint32_t *w, uint32_t *h);
 
 void
-openvr_system_get_frustum_angles (float *left, float *right,
+openvr_system_get_frustum_angles (GxrEye eye,
+                                  float *left, float *right,
                                   float *top, float *bottom);
 
 #endif /* GXR_SYSTEM_H_ */

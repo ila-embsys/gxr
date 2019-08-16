@@ -44,6 +44,11 @@ typedef enum {
   VR_QUIT_PROCESS_QUIT
 } OpenVRQuitReason;
 
+typedef enum {
+  GXR_EYE_LEFT,
+  GXR_EYE_RIGHT
+} GxrEye;
+
 G_END_DECLS
 
 #endif /* GXR_ENUMS_H_ */

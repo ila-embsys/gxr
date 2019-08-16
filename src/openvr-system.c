@@ -13,6 +13,7 @@
 #include "openvr-system.h"
 #include "openvr-math-private.h"
 #include "openvr-context-private.h"
+#include "openvr-system-private.h"
 
 #define STRING_BUFFER_SIZE 128
 
@@ -53,13 +54,13 @@ openvr_system_print_device_info ()
 }
 
 graphene_matrix_t
-openvr_system_get_projection_matrix (EVREye eye, float near, float far)
+openvr_system_get_projection_matrix (GxrEye eye, float near, float far)
 {
   OpenVRContext *context = openvr_context_get_instance ();
   OpenVRFunctions *f = openvr_context_get_functions (context);
 
   HmdMatrix44_t openvr_mat =
-    f->system->GetProjectionMatrix (eye, near, far);
+    f->system->GetProjectionMatrix (openvr_system_eye_to_openvr (eye), near, far);
 
   graphene_matrix_t mat;
   openvr_math_matrix44_to_graphene (&openvr_mat, &mat);
@@ -67,12 +68,13 @@ openvr_system_get_projection_matrix (EVREye eye, float near, float far)
 }
 
 graphene_matrix_t
-openvr_system_get_eye_to_head_transform (EVREye eye)
+openvr_system_get_eye_to_head_transform (GxrEye eye)
 {
   OpenVRContext *context = openvr_context_get_instance ();
   OpenVRFunctions *f = openvr_context_get_functions (context);
 
-  HmdMatrix34_t openvr_mat = f->system->GetEyeToHeadTransform (eye);
+  HmdMatrix34_t openvr_mat =
+    f->system->GetEyeToHeadTransform (openvr_system_eye_to_openvr (eye));
 
   graphene_matrix_t mat;
   openvr_math_matrix34_to_graphene (&openvr_mat, &mat);
@@ -157,15 +159,45 @@ openvr_system_get_render_target_size (uint32_t *w, uint32_t *h)
 #define RAD_TO_DEG(x) ( (x) * 360.0f / ( 2.0f * PI ) )
 
 void
-openvr_system_get_frustum_angles (float *left, float *right,
+openvr_system_get_frustum_angles (GxrEye eye,
+                                  float *left, float *right,
                                   float *top, float *bottom)
 {
   OpenVRContext *context = openvr_context_get_instance ();
   OpenVRFunctions *f = openvr_context_get_functions (context);
-  f->system->GetProjectionRaw (EVREye_Eye_Left, left, right, top, bottom);
+  f->system->GetProjectionRaw (openvr_system_eye_to_openvr (eye),
+                               left, right, top, bottom);
 
   *left = RAD_TO_DEG (atanf (*left));
   *right = RAD_TO_DEG (atanf (*right));
   *top = - RAD_TO_DEG (atanf (*top));
   *bottom = - RAD_TO_DEG (atanf (*bottom));
+}
+
+GxrEye
+openvr_system_eye_to_gxr (EVREye eye)
+{
+  switch (eye)
+    {
+      case EVREye_Eye_Left:
+        return GXR_EYE_LEFT;
+      case EVREye_Eye_Right:
+        return GXR_EYE_RIGHT;
+      default:
+        return GXR_EYE_LEFT;
+    }
+}
+
+EVREye
+openvr_system_eye_to_openvr (GxrEye eye)
+{
+  switch (eye)
+    {
+      case GXR_EYE_LEFT:
+        return EVREye_Eye_Left;
+      case GXR_EYE_RIGHT:
+        return EVREye_Eye_Right;
+      default:
+        return EVREye_Eye_Left;
+    }
 }
