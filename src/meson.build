@@ -26,7 +26,6 @@ gxr_headers = [
   'openvr-context.h',
   'openvr-action.h',
   'openvr-action-set.h',
-  'openvr-wrapper.h',
   'openvr-model.h'
 ]
 
