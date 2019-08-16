@@ -81,8 +81,8 @@ timeout_callback (gpointer data)
   Example *self = en->example;
   OpenVROverlay *overlay = self->overlays[en->i];
 
-  char key[k_unVROverlayMaxKeyLength];
-  snprintf (key, k_unVROverlayMaxKeyLength, "texture #%d\n", self->tex_count++);
+  char key[16];
+  snprintf (key, 16, "texture-%d", self->tex_count++);
 
   cairo_surface_t *surface = create_cairo_surface (image, key);
 
@@ -178,8 +178,8 @@ int main () {
     {
       ex.textures[i] = NULL;
       ex.overlays[i] = openvr_overlay_new ();
-      char key[k_unVROverlayMaxKeyLength];
-      snprintf (key, k_unVROverlayMaxKeyLength, "examples.cairo-%d\n", i);
+      char key[16];
+      snprintf (key, 16, "test-%d", i);
       openvr_overlay_create (ex.overlays[i], key, "Gradient");
 
       if (!openvr_overlay_is_valid (ex.overlays[i]))
