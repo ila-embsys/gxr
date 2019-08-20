@@ -95,6 +95,12 @@ openvr_overlay_class_init (OpenVROverlayClass *klass)
                    G_SIGNAL_RUN_FIRST,
                    0, NULL, NULL, NULL, G_TYPE_NONE, 0);
 
+  overlay_signals[HIDE] =
+    g_signal_new ("hide",
+                   G_TYPE_FROM_CLASS (klass),
+                   G_SIGNAL_RUN_FIRST,
+                   0, NULL, NULL, NULL, G_TYPE_NONE, 0);
+
   overlay_signals[DESTROY] =
     g_signal_new ("destroy",
                    G_TYPE_FROM_CLASS (klass),
