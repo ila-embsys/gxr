@@ -180,8 +180,8 @@ main (int argc, char *argv[])
   GtkWidget *button = gtk_button_new_with_label ("Button");
 
   gtk_box_pack_start (GTK_BOX (box), button, FALSE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (box), labels.time_label, TRUE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (box), labels.fps_label, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (box), labels.time_label, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (box), labels.fps_label, FALSE, TRUE, 0);
 
   gtk_widget_set_size_request (window , 500, 300);
   gtk_container_add (GTK_CONTAINER (window), box);
@@ -200,7 +200,10 @@ main (int argc, char *argv[])
   }
 
   OpenVROverlay *overlay = openvr_overlay_new ();
-  openvr_overlay_create_for_dashboard (overlay, "openvr.example.gtk", "GTK+");
+  openvr_overlay_create_width (overlay, "openvr.example.gtk", "GTK+", 1.0);
+  openvr_overlay_show (overlay);
+  graphene_point3d_t position = { .x = 0.f, .y = 1.2f, .z = -1.f };
+  openvr_overlay_set_translation (overlay, &position);
 
   if (!openvr_overlay_is_valid (overlay))
   {
