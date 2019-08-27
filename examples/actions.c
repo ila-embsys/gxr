@@ -9,21 +9,20 @@
 
 #include "gxr.h"
 
+enum {
+  WM_ACTIONSET,
+  SYNTH_ACTIONSET,
+  LAST_ACTIONSET
+};
+
 typedef struct Example
 {
   GMainLoop *loop;
-  OpenVRAction *haptic_left;
-  OpenVRAction *haptic_right;
+  OpenVRAction *haptic;
 
-  OpenVRActionSet *wm_action_set;
-  OpenVRActionSet *mouse_synth_action_set;
+  /* array of action sets */
+  OpenVRActionSet *action_sets[LAST_ACTIONSET];
 } Example;
-
-typedef struct ActionCallbackData
-{
-  Example     *self;
-  int         controller_index;
-} ActionCallbackData;
 
 static gboolean
 _sigint_cb (gpointer _self)
@@ -38,38 +37,8 @@ _poll_events_cb (gpointer _self)
 {
   Example *self = (Example*) _self;
 
-  if (!openvr_action_set_poll (self->wm_action_set))
+  if (!openvr_action_sets_poll (self->action_sets, 2))
     return FALSE;
-
-  if (!openvr_action_set_poll (self->mouse_synth_action_set))
-    return FALSE;
-
-  return TRUE;
-}
-
-static gboolean
-_cache_bindings (GString *actions_path)
-{
-  GString* cache_path = gxr_io_get_cache_path ("gxr");
-
-  if (g_mkdir_with_parents (cache_path->str, 0700) == -1)
-    {
-      g_printerr ("Unable to create directory %s\n", cache_path->str);
-      return FALSE;
-    }
-
-  if (!gxr_io_write_resource_to_file ("/res/bindings", cache_path->str,
-                                      "actions.json", actions_path))
-    return FALSE;
-
-  GString *bindings_path = g_string_new ("");
-  if (!gxr_io_write_resource_to_file ("/res/bindings", cache_path->str,
-                                      "bindings_vive_controller.json",
-                                      bindings_path))
-    return FALSE;
-
-  g_string_free (bindings_path, TRUE);
-  g_string_free (cache_path, TRUE);
 
   return TRUE;
 }
@@ -77,32 +46,37 @@ _cache_bindings (GString *actions_path)
 static void
 _digital_cb (OpenVRAction       *action,
              OpenVRDigitalEvent *event,
-             ActionCallbackData *data)
+             Example            *self)
 {
   (void) action;
+  (void) self;
 
-  g_print ("DIGITAL (%d): %d | %d\n",
-           data->controller_index, event->active, event->state);
+  g_print ("DIGITAL (%lu): %d | %d\n",
+           event->controller_handle, event->active, event->state);
 
   if (event->changed)
     {
+      /* TODO: left/right
       openvr_action_trigger_haptic (
           (data->controller_index == 0 ?
-           data->self->haptic_left : data->self->haptic_right),
+           data->self->haptic : data->self->haptic),
            0.0f ,1.0f, 4.0f, 1.0f);
+           */
     }
+
   g_free (event);
 }
 #include <stdio.h>
 static void
 _hand_pose_cb (OpenVRAction       *action,
                OpenVRPoseEvent    *event,
-               ActionCallbackData *data)
+               Example            *self)
 {
   (void) action;
+  (void) self;
 
-  g_print ("POSE (%d): %d | %f %f %f | %f %f %f\n",
-           data->controller_index,
+  g_print ("POSE (%lu): %d | %f %f %f | %f %f %f\n",
+           event->controller_handle,
            event->active,
            graphene_vec3_get_x (&event->velocity),
            graphene_vec3_get_y (&event->velocity),
@@ -126,10 +100,9 @@ _cleanup (Example *self)
   OpenVRContext *context = openvr_context_get_instance ();
   g_object_unref (context);
 
-  g_object_unref (self->wm_action_set);
-  g_object_unref (self->mouse_synth_action_set);
-  g_object_unref (self->haptic_left);
-  g_object_unref (self->haptic_right);
+  for (int i = 0; i < 2; i++)
+    g_object_unref (self->action_sets[i]);
+  g_object_unref (self->haptic);
 }
 
 int
@@ -142,55 +115,39 @@ main ()
       return false;
     }
 
-  GString *action_manifest_path = g_string_new ("");
-  if (!_cache_bindings (action_manifest_path))
-    return FALSE;
-
-  if (!openvr_action_load_manifest (action_manifest_path->str))
-    return FALSE;
-
-  g_string_free (action_manifest_path, TRUE);
+  if (!gxr_io_load_cached_action_manifest (
+        "gxr",
+        "/res/bindings",
+        "actions.json",
+        "bindings_vive_controller.json",
+        "bindings_knuckles_controller.json",
+        NULL))
+    {
+      g_print ("Failed to load action bindings!\n");
+      return 1;
+    }
 
   Example self = {
     .loop = g_main_loop_new (NULL, FALSE),
-    .wm_action_set = openvr_action_set_new_from_url ("/actions/wm"),
-    .mouse_synth_action_set =
-      openvr_action_set_new_from_url ("/actions/mouse_synth"),
   };
 
-  self.haptic_left =
-    openvr_action_new_from_url (self.wm_action_set,
-                                "/actions/wm/out/haptic_left");
-  self.haptic_right =
-    openvr_action_new_from_url (self.wm_action_set,
-                                "/actions/wm/out/haptic_right");
+  self.action_sets[WM_ACTIONSET] =
+    openvr_action_set_new_from_url ("/actions/wm");
+  self.action_sets[SYNTH_ACTIONSET] =
+    openvr_action_set_new_from_url ("/actions/mouse_synth");
 
-  ActionCallbackData data_left =
-    {
-      .self = &self,
-      .controller_index = 0
-    };
-  ActionCallbackData data_right =
-    {
-      .self = &self,
-      .controller_index = 1
-    };
+  self.haptic =
+    openvr_action_new_from_url (self.action_sets[WM_ACTIONSET],
+                                "/actions/wm/out/haptic");
 
-  openvr_action_set_connect (self.wm_action_set, OPENVR_ACTION_POSE,
-                             "/actions/wm/in/hand_pose_left",
-                             (GCallback) _hand_pose_cb, &data_left);
-  openvr_action_set_connect (self.wm_action_set, OPENVR_ACTION_POSE,
-                             "/actions/wm/in/hand_pose_right",
-                             (GCallback) _hand_pose_cb, &data_right);
+  openvr_action_set_connect (self.action_sets[WM_ACTIONSET], OPENVR_ACTION_POSE,
+                             "/actions/wm/in/hand_pose",
+                             (GCallback) _hand_pose_cb, &self);
 
-  openvr_action_set_connect (self.mouse_synth_action_set,
+  openvr_action_set_connect (self.action_sets[SYNTH_ACTIONSET],
                              OPENVR_ACTION_DIGITAL,
-                             "/actions/mouse_synth/in/left_click_left",
-                             (GCallback) _digital_cb, &data_left);
-  openvr_action_set_connect (self.mouse_synth_action_set,
-                             OPENVR_ACTION_DIGITAL,
-                             "/actions/mouse_synth/in/left_click_right",
-                             (GCallback) _digital_cb, &data_right);
+                             "/actions/mouse_synth/in/left_click",
+                             (GCallback) _digital_cb, &self);
 
   g_timeout_add (20, _poll_events_cb, &self);
 

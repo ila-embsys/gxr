@@ -13,6 +13,7 @@
 #endif
 
 #include <glib-object.h>
+#include <stdint.h>
 
 G_BEGIN_DECLS
 
@@ -41,10 +42,7 @@ OpenVRActionSet *
 openvr_action_set_new_from_url (gchar *url);
 
 gboolean
-openvr_action_set_update (OpenVRActionSet *self);
-
-gboolean
-openvr_action_set_poll (OpenVRActionSet *self);
+openvr_action_sets_poll (OpenVRActionSet **sets, uint32_t count);
 
 gboolean
 openvr_action_set_connect (OpenVRActionSet *self,

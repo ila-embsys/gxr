@@ -7,7 +7,7 @@
                "mode": "button",
                "inputs": {
                   "click": {
-                     "output": "/actions/mouse_synth/in/left_click_right"
+                     "output": "/actions/mouse_synth/in/left_click"
                   }
                }
             },
@@ -16,7 +16,7 @@
                "mode": "button",
                "inputs": {
                   "click": {
-                     "output": "/actions/mouse_synth/in/right_click_right"
+                     "output": "/actions/mouse_synth/in/right_click"
                   }
                }
             },
@@ -25,7 +25,7 @@
                "mode": "button",
                "inputs": {
                   "click": {
-                     "output": "/actions/mouse_synth/in/left_click_left"
+                     "output": "/actions/mouse_synth/in/left_click"
                   }
                }
             },
@@ -34,7 +34,7 @@
                "mode": "button",
                "inputs": {
                   "click": {
-                     "output": "/actions/mouse_synth/in/right_click_left"
+                     "output": "/actions/mouse_synth/in/right_click"
                   }
                }
             },
@@ -42,8 +42,8 @@
                "path": "/user/hand/left/input/trackpad",
                "mode": "trackpad",
                "inputs": {
-                  "scroll": {
-                     "output": "/actions/mouse_synth/in/scroll_left"
+                  "position": {
+                     "output": "/actions/mouse_synth/in/scroll"
                   }
                }
             },
@@ -51,8 +51,8 @@
                "path": "/user/hand/right/input/trackpad",
                "mode": "trackpad",
                "inputs": {
-                  "scroll": {
-                     "output": "/actions/mouse_synth/in/scroll_right"
+                  "position": {
+                     "output": "/actions/mouse_synth/in/scroll"
                   }
                }
             }
@@ -61,21 +61,29 @@
       "/actions/wm": {
          "poses": [
             {
-               "output": "/actions/wm/in/hand_pose_right",
+               "output": "/actions/wm/in/hand_pose",
                "path": "/user/hand/right/pose/tip"
             },
             {
-               "output": "/actions/wm/in/hand_pose_left",
+               "output": "/actions/wm/in/hand_pose",
                "path": "/user/hand/left/pose/tip"
+            },
+            {
+               "output": "/actions/wm/in/hand_pose_hand_grip",
+               "path": "/user/hand/right/pose/handgrip"
+            },
+            {
+               "output": "/actions/wm/in/hand_pose_hand_grip",
+               "path": "/user/hand/left/pose/handgrip"
             }
          ],
          "haptics": [
             {
-               "output": "/actions/wm/out/haptic_right",
+               "output": "/actions/wm/out/haptic",
                "path": "/user/hand/right/output/haptic"
             },
             {
-               "output": "/actions/wm/out/haptic_left",
+               "output": "/actions/wm/out/haptic",
                "path": "/user/hand/left/output/haptic"
             }
          ],
@@ -85,7 +93,16 @@
                "mode": "button",
                "inputs": {
                   "click": {
-                     "output": "/actions/wm/in/grab_window_right"
+                     "output": "/actions/wm/in/grab_window"
+                  }
+               }
+            },
+            {
+               "path": "/user/hand/right/input/trigger/click",
+               "mode": "button",
+               "inputs": {
+                  "click": {
+                     "output": "/actions/wm/in/reset_orientation"
                   }
                }
             },
@@ -93,8 +110,26 @@
                "path": "/user/hand/right/input/trackpad",
                "mode": "trackpad",
                "inputs": {
-                  "scroll": {
-                     "output": "/actions/wm/in/push_pull_right"
+                  "position": {
+                     "output": "/actions/wm/in/push_pull"
+                  }
+               }
+            },
+            {
+               "path": "/user/hand/right/input/b",
+               "mode": "button",
+               "inputs": {
+                  "click": {
+                     "output": "/actions/wm/in/menu"
+                  }
+               }
+            },
+            {
+               "path": "/user/hand/left/input/b",
+               "mode": "button",
+               "inputs": {
+                  "click": {
+                     "output": "/actions/wm/in/menu"
                   }
                }
             },
@@ -103,7 +138,16 @@
                "mode": "button",
                "inputs": {
                   "click": {
-                     "output": "/actions/wm/in/grab_window_left"
+                     "output": "/actions/wm/in/grab_window"
+                  }
+               }
+            },
+            {
+               "path": "/user/hand/left/input/trigger/click",
+               "mode": "button",
+               "inputs": {
+                  "click": {
+                     "output": "/actions/wm/in/reset_orientation"
                   }
                }
             },
@@ -111,8 +155,8 @@
                "path": "/user/hand/left/input/trackpad",
                "mode": "trackpad",
                "inputs": {
-                  "scroll": {
-                     "output": "/actions/wm/in/push_pull_left"
+                  "position": {
+                     "output": "/actions/wm/in/push_pull"
                   }
                }
             },
@@ -120,8 +164,11 @@
                "path": "/user/hand/left/input/thumbstick",
                "mode": "joystick",
                "inputs": {
+                  "click": {
+                     "output": "/actions/wm/in/show_keyboard"
+                  },
                   "position": {
-                     "output": "/actions/wm/in/push_pull_scale_left"
+                     "output": "/actions/wm/in/push_pull_scale"
                   }
                }
             },
@@ -129,26 +176,11 @@
                "path": "/user/hand/right/input/thumbstick",
                "mode": "joystick",
                "inputs": {
+                  "click": {
+                     "output": "/actions/wm/in/show_keyboard"
+                  },
                   "position": {
-                     "output": "/actions/wm/in/push_pull_scale_right"
-                  }
-               }
-            },
-            {
-               "path": "/user/hand/left/input/grip",
-               "mode": "button",
-               "inputs": {
-                  "click": {
-                     "output": "/actions/wm/in/show_keyboard_left"
-                  }
-               }
-            },
-            {
-               "path": "/user/hand/right/input/grip",
-               "mode": "button",
-               "inputs": {
-                  "click": {
-                     "output": "/actions/wm/in/show_keyboard_right"
+                     "output": "/actions/wm/in/push_pull_scale"
                   }
                }
             }
@@ -156,6 +188,6 @@
       }
    },
    "controller_type" : "knuckles",
-   "description" : "GNOME VR bindings for the Knuckles Controller",
-   "name" : "GNOME VR Knuckles Controller"
+   "description" : "xrdesktop bindings for the Knuckles Controller",
+   "name" : "xrdesktop Knuckles Controller"
 }

@@ -121,12 +121,12 @@ openvr_action_update_input_handles (OpenVRAction *self)
   OpenVRContext *context = openvr_context_get_instance ();
   OpenVRFunctions *f = openvr_context_get_functions (context);
 
-  VRActionSetHandle_t set_handle =
+  VRActionSetHandle_t actionset_handle =
     openvr_action_set_get_handle (self->action_set);
 
   VRInputValueHandle_t origin_handles[k_unMaxActionOriginCount];
   EVRInputError err =
-    f->input->GetActionOrigins (set_handle, self->handle,
+    f->input->GetActionOrigins (actionset_handle, self->handle,
                                 origin_handles, k_unMaxActionOriginCount);
 
   if (err != EVRInputError_VRInputError_None)
@@ -398,6 +398,7 @@ openvr_action_poll_pose_secs_from_now (OpenVRAction *self,
   for(GSList *e = self->input_handles; e; e = e->next)
     {
       VRActionHandle_t *input_handle = e->data;
+
       InputPoseActionData_t data;
 
       ETrackingUniverseOrigin origin = openvr_context_get_origin (context);

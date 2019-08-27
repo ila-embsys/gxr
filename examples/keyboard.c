@@ -148,7 +148,7 @@ _poll_events_cb (gpointer _self)
 {
   Example *self = (Example*) _self;
 
-  openvr_action_set_poll (self->action_set);
+  openvr_action_sets_poll (&self->action_set, 1);
   openvr_overlay_poll_event (self->overlay);
 
   OpenVRContext *context = openvr_context_get_instance ();

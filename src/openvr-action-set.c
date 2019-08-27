@@ -26,6 +26,12 @@ gboolean
 openvr_action_set_load_handle (OpenVRActionSet *self,
                                gchar           *url);
 
+VRActionSetHandle_t
+openvr_action_set_get_handle (OpenVRActionSet *self)
+{
+  return self->handle;
+}
+
 static void
 openvr_action_set_finalize (GObject *gobject);
 
@@ -90,47 +96,61 @@ openvr_action_set_load_handle (OpenVRActionSet *self,
   return TRUE;
 }
 
-gboolean
-openvr_action_set_poll (OpenVRActionSet *self)
+static gboolean
+_action_sets_update (OpenVRActionSet **sets, uint32_t count)
 {
-  if (!openvr_action_set_update (self))
-    return FALSE;
+  struct VRActiveActionSet_t *active_action_sets =
+    g_malloc (sizeof (struct VRActiveActionSet_t) * count);
 
-  for (GSList *l = self->actions; l != NULL; l = l->next)
+  for (uint32_t i = 0; i < count; i++)
     {
-      OpenVRAction *action = (OpenVRAction*) l->data;
-
-      /* Can't query for origins directly after creating action.
-       * TODO: maybe we can do this once, but later, and only update after
-       * activate-device event. */
-      openvr_action_update_input_handles (action);
-
-      if (!openvr_action_poll (action))
-        return FALSE;
+      active_action_sets[i].ulActionSet = sets[i]->handle;
+      active_action_sets[i].ulRestrictedToDevice = 0;
+      active_action_sets[i].ulSecondaryActionSet = 0;
+      active_action_sets[i].unPadding = 0;
+      active_action_sets[i].nPriority = 0;
     }
-
-  return TRUE;
-}
-
-
-gboolean
-openvr_action_set_update (OpenVRActionSet *self)
-{
-  struct VRActiveActionSet_t active_action_set = {};
-  active_action_set.ulActionSet = self->handle;
 
   OpenVRContext *context = openvr_context_get_instance ();
   OpenVRFunctions *f = openvr_context_get_functions (context);
 
   EVRInputError err;
-  err = f->input->UpdateActionState (&active_action_set,
-                                     sizeof(active_action_set), 1);
+  err = f->input->UpdateActionState (active_action_sets,
+                                     sizeof (struct VRActiveActionSet_t),
+                                     count);
+
+  g_free (active_action_sets);
 
   if (err != EVRInputError_VRInputError_None)
     {
       g_printerr ("ERROR: UpdateActionState: %s\n",
                   openvr_input_error_string (err));
       return FALSE;
+    }
+
+  return TRUE;
+}
+
+gboolean
+openvr_action_sets_poll (OpenVRActionSet **sets, uint32_t count)
+{
+  if (!_action_sets_update (sets, count))
+    return FALSE;
+
+  for (uint32_t i = 0; i < count; i++)
+    {
+      for (GSList *l = sets[i]->actions; l != NULL; l = l->next)
+        {
+          OpenVRAction *action = (OpenVRAction*) l->data;
+
+          /* Can't query for origins directly after creating action.
+           * TODO: maybe we can do this once, but later, and only update after
+           * activate-device event. */
+          openvr_action_update_input_handles (action);
+
+          if (!openvr_action_poll (action))
+            return FALSE;
+        }
     }
 
   return TRUE;
@@ -166,12 +186,6 @@ openvr_action_set_connect (OpenVRActionSet *self,
 
   return TRUE;
 
-}
-
-VRActionSetHandle_t
-openvr_action_set_get_handle (OpenVRActionSet *self)
-{
-  return self->handle;
 }
 
 #define ENUM_TO_STR(r) case r: return #r
