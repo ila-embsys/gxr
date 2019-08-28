@@ -56,12 +56,8 @@ _digital_cb (OpenVRAction       *action,
 
   if (event->changed)
     {
-      /* TODO: left/right
-      openvr_action_trigger_haptic (
-          (data->controller_index == 0 ?
-           data->self->haptic : data->self->haptic),
-           0.0f ,1.0f, 4.0f, 1.0f);
-           */
+      openvr_action_trigger_haptic (self->haptic, 0.0f ,.2f, 160.f, 1.0f,
+                                    event->controller_handle);
     }
 
   g_free (event);

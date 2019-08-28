@@ -459,7 +459,8 @@ openvr_action_trigger_haptic (OpenVRAction *self,
                               float start_seconds_from_now,
                               float duration_seconds,
                               float frequency,
-                              float amplitude)
+                              float amplitude,
+                              guint64 controller_handle)
 {
   OpenVRContext *context = openvr_context_get_instance ();
   OpenVRFunctions *f = openvr_context_get_functions (context);
@@ -471,7 +472,7 @@ openvr_action_trigger_haptic (OpenVRAction *self,
     duration_seconds,
     frequency,
     amplitude,
-    k_ulInvalidInputValueHandle);
+    controller_handle);
 
   if (err != EVRInputError_VRInputError_None)
     {

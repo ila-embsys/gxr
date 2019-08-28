@@ -114,7 +114,8 @@ openvr_action_trigger_haptic (OpenVRAction *self,
                               float start_seconds_from_now,
                               float duration_seconds,
                               float frequency,
-                              float amplitude);
+                              float amplitude,
+                              guint64 controller_handle);
 
 /* name openvr_action_get_type is already taken by gobject function */
 OpenVRActionType
