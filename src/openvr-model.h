@@ -26,7 +26,7 @@ openvr_model_get_list (void);
 gboolean
 openvr_model_load (GulkanClient       *gc,
                    GulkanVertexBuffer *vbo,
-                   GulkanTexture      *texture,
+                   GulkanTexture      **texture,
                    VkSampler          *sampler,
                    const char         *model_name);
 

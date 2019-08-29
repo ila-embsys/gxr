@@ -114,7 +114,7 @@ _load_mesh (GulkanVertexBuffer *vbo,
 }
 
 static gboolean
-_load_texture (GulkanTexture            *texture,
+_load_texture (GulkanTexture            **texture,
                VkSampler                *sampler,
                GulkanClient             *gc,
                RenderModel_TextureMap_t *texture_map)
@@ -124,13 +124,13 @@ _load_texture (GulkanTexture            *texture,
       texture_map->unWidth, texture_map->unHeight,
       4 * texture_map->unWidth, NULL, NULL);
 
-  texture =
+  *texture =
     gulkan_client_texture_new_from_pixbuf (gc, pixbuf,
                                            VK_FORMAT_R8G8B8A8_UNORM,
                                            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                                            true);
 
-  guint mip_levels = gulkan_texture_get_mip_levels (texture);
+  guint mip_levels = gulkan_texture_get_mip_levels (*texture);
 
   VkSamplerCreateInfo sampler_info = {
     .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -155,7 +155,7 @@ _load_texture (GulkanTexture            *texture,
 gboolean
 openvr_model_load (GulkanClient       *gc,
                    GulkanVertexBuffer *vbo,
-                   GulkanTexture      *texture,
+                   GulkanTexture      **texture,
                    VkSampler          *sampler,
                    const char         *model_name)
 {
@@ -178,6 +178,7 @@ openvr_model_load (GulkanClient       *gc,
 
   if (!_load_texture (texture, sampler, gc, vr_diffuse_texture))
     return FALSE;
+  g_print ("FOO %p!\n", *texture);
 
   f->model->FreeRenderModel (vr_model);
   f->model->FreeTexture (vr_diffuse_texture);
