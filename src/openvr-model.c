@@ -178,7 +178,6 @@ openvr_model_load (GulkanClient       *gc,
 
   if (!_load_texture (texture, sampler, gc, vr_diffuse_texture))
     return FALSE;
-  g_print ("FOO %p!\n", *texture);
 
   f->model->FreeRenderModel (vr_model);
   f->model->FreeTexture (vr_diffuse_texture);
