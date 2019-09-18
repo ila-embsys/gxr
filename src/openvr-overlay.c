@@ -862,19 +862,6 @@ openvr_overlay_print_info (OpenVROverlay *self)
       break;
     }
 
-  bool anti_alias = false;
-  err = f->GetOverlayFlag (priv->overlay_handle,
-                           VROverlayFlags_RGSS4X,
-                          &anti_alias);
-  if (err != EVROverlayError_VROverlayError_None)
-    {
-      g_printerr ("Could not GetOverlayFlag: %s\n",
-                  f->GetOverlayErrorNameFromEnum (err));
-      return FALSE;
-    }
-
-  g_print ("VROverlayFlags_RGSS4X: %d\n", anti_alias);
-
   TrackingUniverseOrigin tracking_origin;
   HmdMatrix34_t transform;
 
