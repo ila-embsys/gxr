@@ -247,7 +247,10 @@ openvr_compositor_wait_get_poses (GxrPose *poses, uint32_t count)
 {
   OpenVRContext *context = openvr_context_get_instance ();
   OpenVRFunctions *f = openvr_context_get_functions (context);
-  TrackedDevicePose_t p[count];
+
+  struct TrackedDevicePose_t *p =
+    g_malloc (sizeof (struct TrackedDevicePose_t) * count);
+
   f->compositor->WaitGetPoses (p, count, NULL, 0);
 
   for (uint32_t i = 0; i < count; i++)
@@ -257,5 +260,7 @@ openvr_compositor_wait_get_poses (GxrPose *poses, uint32_t count)
         openvr_math_matrix34_to_graphene (&p[i].mDeviceToAbsoluteTracking,
                                           &poses[i].transformation);
     }
+
+  g_free (p);
 
 }
