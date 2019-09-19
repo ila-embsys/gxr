@@ -32,11 +32,11 @@ openvr_overlay_set_width_meters
 openvr_overlay_show
 openvr_overlay_show_keyboard
 openvr_overlay_thumbnail_is_visible
-openvr_overlay_get_handle
 openvr_overlay_get_model
 openvr_overlay_set_flip_y
 openvr_overlay_set_model
 openvr_overlay_submit_texture
+openvr_overlay_print_info
 OPENVR_TYPE_OVERLAY
 OpenVROverlayClass
 OpenVRPixelSize
@@ -69,9 +69,8 @@ OpenVRActionSet
 openvr_action_set_connect
 openvr_action_set_new
 openvr_action_set_new_from_url
-openvr_action_set_poll
-openvr_action_set_update
 openvr_action_set_get_handle
+openvr_action_sets_poll
 OPENVR_TYPE_ACTION_SET
 </SECTION>
 
@@ -80,21 +79,22 @@ OPENVR_TYPE_ACTION_SET
 OpenVRContext
 openvr_context_acknowledge_quit
 openvr_context_get_instance
-openvr_context_get_model_list
 openvr_context_is_hmd_present
 openvr_context_is_installed
 openvr_context_is_valid
 openvr_context_poll_event
-openvr_context_print_model_list
 openvr_context_set_system_keyboard_transform
 openvr_context_show_system_keyboard
 openvr_context_initialize
 openvr_context_is_another_scene_running
+openvr_context_get_functions
+openvr_context_get_origin
 OpenVRAppType
 OpenVRQuitReason
 OpenVRQuitEvent
 OpenVRDeviceIndexEvent
 OPENVR_TYPE_CONTEXT
+openvr_get_functions
 </SECTION>
 
 <SECTION>
@@ -124,6 +124,14 @@ openvr_system_get_eye_to_head_transform
 openvr_system_get_projection_matrix
 openvr_system_print_device_info
 openvr_system_get_hmd_pose
+openvr_system_device_is_controller
+openvr_system_eye_to_gxr
+openvr_system_eye_to_openvr
+openvr_system_get_device_model_name
+openvr_system_get_frustum_angles
+openvr_system_get_render_target_size
+openvr_system_is_input_available
+openvr_system_is_tracked_device_connected
 VR_GetGenericInterface
 VR_GetVRInitErrorAsEnglishDescription
 VR_GetVRInitErrorAsSymbol
@@ -134,6 +142,11 @@ VR_ShutdownInternal
 ButtonMaskFromId
 openvr_input_error_string
 OpenVRPoseEvent
+GxrEye
+GxrPose
+OPENVR_DEVICE_INDEX_HMD
+OPENVR_DEVICE_INDEX_MAX
+OPENVR_PROPERTY_STRING_MAX
 </SECTION>
 
 <SECTION>
@@ -151,4 +164,19 @@ openvr_compositor_get_instance_extensions
 openvr_compositor_gulkan_client_init
 openvr_compositor_gulkan_client_new
 openvr_compositor_submit
+openvr_compositor_wait_get_poses
+</SECTION>
+
+<SECTION>
+<FILE>OpenVRModel</FILE>
+openvr_model_get_list
+openvr_model_get_normal_offset
+openvr_model_get_uv_offset
+openvr_model_get_vertex_stride
+openvr_model_load
+openvr_model_print_list
+</SECTION>
+
+<SECTION>
+<FILE>gxrversion</FILE>
 </SECTION>

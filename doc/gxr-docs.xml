@@ -37,6 +37,7 @@
     <xi:include href="xml/OpenVRCompositor.xml"/>
     <xi:include href="xml/OpenVROverlay.xml"/>
     <xi:include href="xml/OpenVRSystem.xml"/>
+    <xi:include href="xml/OpenVRModel.xml"/>
 
   </chapter>
   <index id="api-index">

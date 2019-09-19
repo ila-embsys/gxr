@@ -44,6 +44,14 @@ typedef enum {
   VR_QUIT_PROCESS_QUIT
 } OpenVRQuitReason;
 
+/**
+ * GxrEye:
+ * @GXR_EYE_LEFT: Left eye.
+ * @GXR_EYE_RIGHT: Right eye.
+ *
+ * Type of OpenVR viewport.
+ *
+ **/
 typedef enum {
   GXR_EYE_LEFT,
   GXR_EYE_RIGHT

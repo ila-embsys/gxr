@@ -145,6 +145,7 @@ openvr_system_get_render_target_size (uint32_t *w, uint32_t *h)
 
 /**
  * openvr_system_get_frustum_angles:
+ * @eye: The #GxrEye.
  * @left: The angle from the center view axis to the left in deg.
  * @right: The angle from the center view axis to the right in deg.
  * @top: The angle from the center view axis to the top in deg.
