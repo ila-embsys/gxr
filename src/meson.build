@@ -63,7 +63,8 @@ gxr_lib = shared_library(api_path,
   dependencies: gxr_deps,
   install: true,
   c_args : ['-DGXR_COMPILATION'],
-  build_rpath : openvr_dep.get_pkgconfig_variable('libdir')
+  build_rpath : openvr_dep.get_pkgconfig_variable('libdir'),
+  install_rpath : openvr_dep.get_pkgconfig_variable('libdir')
 )
 
 gxr_inc = include_directories('.')
