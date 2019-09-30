@@ -44,6 +44,9 @@ enum {
   DEVICE_ACTIVATE_EVENT,
   DEVICE_DEACTIVATE_EVENT,
   DEVICE_UPDATE_EVENT,
+  BINDING_LOADED,
+  BINDINGS_UPDATE,
+  ACTIONSET_UPDATE,
   LAST_SIGNAL
 };
 
@@ -101,6 +104,24 @@ openvr_context_class_init (OpenVRContextClass *klass)
                   G_SIGNAL_RUN_LAST,
                   0, NULL, NULL, NULL, G_TYPE_NONE,
                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  context_signals[BINDINGS_UPDATE] =
+    g_signal_new ("bindings-update-event",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_FIRST,
+                  0, NULL, NULL, NULL, G_TYPE_NONE, 0);
+
+  context_signals[BINDING_LOADED] =
+    g_signal_new ("binding-loaded-event",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_FIRST,
+                  0, NULL, NULL, NULL, G_TYPE_NONE, 0);
+
+  context_signals[ACTIONSET_UPDATE] =
+    g_signal_new ("action-set-update-event",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_FIRST,
+                  0, NULL, NULL, NULL, G_TYPE_NONE, 0);
 }
 
 static void
@@ -335,9 +356,47 @@ openvr_context_poll_event (OpenVRContext *self)
         g_signal_emit (self, context_signals[DEVICE_UPDATE_EVENT], 0, event);
       } break;
 
+      case EVREventType_VREvent_ActionBindingReloaded:
+      {
+        g_signal_emit (self, context_signals[BINDINGS_UPDATE], 0);
+      } break;
+
+      case EVREventType_VREvent_Input_ActionManifestReloaded:
+      {
+        g_signal_emit (self, context_signals[ACTIONSET_UPDATE], 0);
+      } break;
+
+      case EVREventType_VREvent_Input_BindingLoadSuccessful:
+      {
+        g_debug ("Event: VREvent_Input_BindingLoadSuccessful\n");
+        g_signal_emit (self, context_signals[BINDING_LOADED], 0);
+      } break;
+
+      case EVREventType_VREvent_Input_BindingLoadFailed:
+      {
+        g_debug ("Event: VREvent_Input_BindingLoadFailed\n");
+      } break;
+
+      case EVREventType_VREvent_ProcessConnected:
+      {
+        g_debug ("Event: VREvent_ProcessConnected\n");
+      } break;
+
+      case EVREventType_VREvent_PropertyChanged:
+      {
+        g_debug ("Event: VREvent_PropertyChanged\n");
+        if (vr_event.data.property.prop ==
+                ETrackedDeviceProperty_Prop_SecondsFromVsyncToPhotons_Float)
+        {
+          float latency = self->f.system->GetFloatTrackedDeviceProperty (
+            0, vr_event.data.property.prop, NULL);
+          g_debug ("Vsync To Photon Latency Prop: %f ms\n", latency * 1000.f);
+        }
+      } break;
+
     default:
-      //g_print ("Context: Unhandled OpenVR system event: %s\n",
-      //         self->system->GetEventTypeNameFromEnum (vr_event.eventType));
+      g_debug ("Context: Unhandled OpenVR system event: %s\n",
+               self->f.system->GetEventTypeNameFromEnum (vr_event.eventType));
       break;
     }
   }
