@@ -43,11 +43,42 @@ openvr_action_set_class_init (OpenVRActionSetClass *klass)
   object_class->finalize = openvr_action_set_finalize;
 }
 
+static gboolean
+_action_sets_update (OpenVRActionSet **sets, uint32_t count);
+
+static void
+_update_input_handles (OpenVRActionSet *self)
+{
+  if (!_action_sets_update (&self, 1))
+    {
+      g_print ("Failed to update Action Set after binding update!\n");
+      return;
+    }
+
+  for (GSList *l = self->actions; l != NULL; l = l->next)
+    {
+      OpenVRAction *action = (OpenVRAction*) l->data;
+      openvr_action_update_input_handles (action);
+    }
+}
+
+static void
+_binding_loaded_cb (OpenVRContext   *context,
+                    OpenVRActionSet *self)
+{
+  (void) context;
+  _update_input_handles (self);
+}
+
 static void
 openvr_action_set_init (OpenVRActionSet *self)
 {
   self->handle = k_ulInvalidActionSetHandle;
   self->actions = NULL;
+
+  OpenVRContext *context = openvr_context_get_instance ();
+  g_signal_connect (context, "binding-loaded-event",
+                    (GCallback) _binding_loaded_cb, self);
 }
 
 OpenVRActionSet *
@@ -142,11 +173,6 @@ openvr_action_sets_poll (OpenVRActionSet **sets, uint32_t count)
       for (GSList *l = sets[i]->actions; l != NULL; l = l->next)
         {
           OpenVRAction *action = (OpenVRAction*) l->data;
-
-          /* Can't query for origins directly after creating action.
-           * TODO: maybe we can do this once, but later, and only update after
-           * activate-device event. */
-          openvr_action_update_input_handles (action);
 
           if (!openvr_action_poll (action))
             return FALSE;
