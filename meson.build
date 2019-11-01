@@ -65,6 +65,8 @@ gulkan_dep = dependency('gulkan-0.13', version: '>= 0.13.0')
 gdk_dep = dependency('gdk-3.0', version: '>= 3.22')
 
 ## Optional
+openxr_dep = dependency('openxr', required: false)
+
 gtk3_dep = dependency('gtk+-3.0', version: '>= 3.22', required : false)
 x11_dep = dependency('x11', required : false)
 xtst_dep = dependency('xtst', required : false)

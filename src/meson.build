@@ -12,7 +12,8 @@ gxr_sources = [
   'openvr-action.c',
   'openvr-action-set.c',
   'openvr-model.c',
-  'openvr-math.c'
+  'openvr-math.c',
+  'openxr-context.c'
 ]
 
 gxr_headers = [
@@ -26,7 +27,8 @@ gxr_headers = [
   'openvr-context.h',
   'openvr-action.h',
   'openvr-action-set.h',
-  'openvr-model.h'
+  'openvr-model.h',
+  'openxr-context.h'
 ]
 
 version_split = meson.project_version().split('.')
@@ -53,7 +55,8 @@ gxr_deps = [
   gdk_dep,
   stdcpp_dep,
   dl_dep,
-  m_dep
+  m_dep,
+  openxr_dep
 ]
 
 gxr_lib = shared_library(api_path,

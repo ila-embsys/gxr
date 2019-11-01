@@ -37,3 +37,11 @@ test_vulkan_uploader = executable(
   include_directories: gxr_inc,
   install: false)
 test('test_vulkan_uploader', test_vulkan_uploader, suite: ['xr'])
+
+test_openxr_context = executable(
+  'test_openxr_context', ['test_openxr_context.c', test_resources],
+  dependencies: gxr_deps,
+  link_with: gxr_lib,
+  include_directories: gxr_inc,
+  install: false)
+test('test_openxr_context', test_openxr_context, suite: ['xr'])

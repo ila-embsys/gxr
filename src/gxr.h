@@ -25,6 +25,7 @@
 #include "openvr-overlay.h"
 #include "openvr-system.h"
 #include "openvr-model.h"
+#include "openxr-context.h"
 
 #undef GXR_INSIDE
 
