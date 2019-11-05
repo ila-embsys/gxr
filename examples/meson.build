@@ -94,6 +94,15 @@ if libdrm_amdgpu_dep.found()
     install: false)
 endif
 
+if json_glib_dep.found()
+  executable(
+    'parse_manifest', ['parse_manifest.c', test_resources],
+    dependencies: gxr_deps,
+    link_with: gxr_lib,
+    include_directories: gxr_inc,
+    install: false)
+endif
+
 if glew_dep.found() and glfw_dep.found() and egl_dep.found()
   executable(
     'overlay_mesa_dmabuf', ['overlay_mesa_dmabuf.c', test_resources],

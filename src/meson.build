@@ -9,7 +9,8 @@ gxr_sources = [
   'gxr-action-set.c',
   'gxr-io.c',
   'gxr-overlay.c',
-  'gxr-overlay-model.c'
+  'gxr-overlay-model.c',
+  'gxr-manifest.c'
 ]
 
 gxr_headers = [
@@ -22,7 +23,8 @@ gxr_headers = [
   'gxr-action-set.h',
   'gxr-io.h',
   'gxr-overlay.h',
-  'gxr-overlay-model.h'
+  'gxr-overlay-model.h',
+  'gxr-manifest.h'
 ]
 
 version_split = meson.project_version().split('.')
@@ -53,6 +55,8 @@ gxr_deps = [
   gulkan_dep,
   gdk_dep,
   m_dep,
+  m_dep,
+  json_glib_dep
 ]
 
 gxr_inc = include_directories('.')

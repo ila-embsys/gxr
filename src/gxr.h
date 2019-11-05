@@ -25,6 +25,7 @@
 #include "gxr-io.h"
 #include "gxr-overlay.h"
 #include "gxr-overlay-model.h"
+#include "gxr-manifest.h"
 
 #undef GXR_INSIDE
 

@@ -56,6 +56,9 @@ m_dep = c.find_library('m')
 gulkan_dep = dependency('gulkan-0.14', version: '>= 0.13.0')
 gdk_dep = dependency('gdk-3.0', version: '>= 3.22')
 
+# TODO: only required when openxr support is built
+json_glib_dep = dependency('json-glib-1.0', required: true)
+
 ## Optional
 openxr_dep = dependency('openxr', required: false)
 if openxr_dep.found()
