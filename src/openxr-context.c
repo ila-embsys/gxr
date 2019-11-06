@@ -851,7 +851,7 @@ _get_view_matrix_from_pose (XrPosef *pose,
   graphene_matrix_init_translate (&translation, &position);
 
   graphene_matrix_t view;
-  graphene_matrix_multiply (&translation, &rotation, &view);
+  graphene_matrix_multiply (&rotation, &translation, &view);
 
   graphene_matrix_inverse (&view, mat);
 }
