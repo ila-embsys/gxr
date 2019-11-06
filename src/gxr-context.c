@@ -10,6 +10,7 @@
 struct _GxrContext
 {
   GObject parent;
+  GxrApi api;
 };
 
 G_DEFINE_TYPE (GxrContext, gxr_context, G_TYPE_OBJECT)
@@ -27,7 +28,7 @@ gxr_context_class_init (GxrContextClass *klass)
 static void
 gxr_context_init (GxrContext *self)
 {
-  (void) self;
+  self->api = GXR_API_OPENVR;
 }
 
 GxrContext *
@@ -44,3 +45,8 @@ gxr_context_finalize (GObject *gobject)
   G_OBJECT_CLASS (gxr_context_parent_class)->finalize (gobject);
 }
 
+GxrApi
+gxr_context_get_api (GxrContext *self)
+{
+  return self->api;
+}

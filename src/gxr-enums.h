@@ -57,6 +57,19 @@ typedef enum {
   GXR_EYE_RIGHT
 } GxrEye;
 
+/**
+ * GxrApi:
+ * @GXR_API_OPENVR: Use OpenVR.
+ * @GXR_API_OPENXR: Use OpenXR.
+ *
+ * Type of API backend to use.
+ *
+ **/
+typedef enum {
+  GXR_API_OPENVR,
+  GXR_API_OPENXR
+} GxrApi;
+
 G_END_DECLS
 
 #endif /* GXR_ENUMS_H_ */
