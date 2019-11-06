@@ -26,7 +26,7 @@ gxr_api_string (GxrApi v)
 static void
 _test_minimal ()
 {
-  GxrContext *context = gxr_context_new ();
+  GxrContext *context = gxr_context_get_instance ();
   g_assert_nonnull (context);
 
   GxrApi api = gxr_context_get_api (context);

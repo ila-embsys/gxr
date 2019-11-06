@@ -17,6 +17,9 @@ struct _GxrContext
 
 G_DEFINE_TYPE (GxrContext, gxr_context, G_TYPE_OBJECT)
 
+// singleton variable that can be set to NULL again when finalizing the context
+static GxrContext *singleton = NULL;
+
 static void
 gxr_context_finalize (GObject *gobject);
 
@@ -43,6 +46,15 @@ GxrContext *
 gxr_context_new (void)
 {
   return (GxrContext*) g_object_new (GXR_TYPE_CONTEXT, 0);
+}
+
+GxrContext *
+gxr_context_get_instance ()
+{
+  if (singleton == NULL)
+    singleton = gxr_context_new ();
+
+  return singleton;
 }
 
 static void

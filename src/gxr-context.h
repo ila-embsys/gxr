@@ -21,7 +21,9 @@ G_BEGIN_DECLS
 #define GXR_TYPE_CONTEXT gxr_context_get_type()
 G_DECLARE_FINAL_TYPE (GxrContext, gxr_context, GXR, CONTEXT, GObject)
 
-GxrContext *gxr_context_new (void);
+// GxrContext *gxr_context_new (void);
+
+GxrContext *gxr_context_get_instance (void);
 
 GxrApi
 gxr_context_get_api (GxrContext *self);
