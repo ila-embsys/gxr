@@ -5,8 +5,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-#ifndef GXR_CONTEXT_H_
-#define GXR_CONTEXT_H_
+#ifndef GXR_OPENVR_CONTEXT_H_
+#define GXR_OPENVR_CONTEXT_H_
 
 #if !defined (GXR_INSIDE) && !defined (GXR_COMPILATION)
 #error "Only <gxr.h> can be included directly."
@@ -81,4 +81,4 @@ openvr_context_is_another_scene_running (void);
 
 G_END_DECLS
 
-#endif /* GXR_CONTEXT_H_ */
+#endif /* GXR_OPENVR_CONTEXT_H_ */

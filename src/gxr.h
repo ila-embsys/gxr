@@ -18,6 +18,7 @@
 #include "gxr-enums.h"
 #include "gxr-io.h"
 #include "gxr-time.h"
+#include "gxr-context.h"
 #include "openvr-action.h"
 #include "openvr-action-set.h"
 #include "openvr-compositor.h"

@@ -5,6 +5,7 @@ api_path = 'gxr-' + api_version
 gxr_sources = [
   'gxr-time.c',
   'gxr-io.c',
+  'gxr-context.c',
   'openvr-system.c',
   'openvr-overlay.c',
   'openvr-compositor.c',
@@ -21,6 +22,7 @@ gxr_headers = [
   'gxr-enums.h',
   'gxr-time.h',
   'gxr-io.h',
+  'gxr-context.h',
   'openvr-system.h',
   'openvr-overlay.h',
   'openvr-compositor.h',
