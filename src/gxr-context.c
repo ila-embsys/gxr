@@ -13,6 +13,8 @@ struct _GxrContext
   GxrApi api;
 };
 
+#define GXR_DEFAULT_API GXR_API_OPENVR
+
 G_DEFINE_TYPE (GxrContext, gxr_context, G_TYPE_OBJECT)
 
 static void
@@ -28,7 +30,13 @@ gxr_context_class_init (GxrContextClass *klass)
 static void
 gxr_context_init (GxrContext *self)
 {
-  self->api = GXR_API_OPENVR;
+  const gchar *api_env = g_getenv ("GXR_API");
+  if (g_strcmp0 (api_env, "openxr") == 0)
+    self->api = GXR_API_OPENXR;
+  else if (g_strcmp0 (api_env, "openvr") == 0)
+    self->api = GXR_API_OPENVR;
+  else
+    self->api = GXR_DEFAULT_API;
 }
 
 GxrContext *
