@@ -45,3 +45,11 @@ test_openxr_context = executable(
   include_directories: gxr_inc,
   install: false)
 test('test_openxr_context', test_openxr_context, suite: ['xr'])
+
+test_gxr_context = executable(
+  'test_gxr_context', ['test_gxr_context.c', test_resources],
+  dependencies: gxr_deps,
+  link_with: gxr_lib,
+  include_directories: gxr_inc,
+  install: false)
+test('test_gxr_context', test_gxr_context, suite: ['xr'])
