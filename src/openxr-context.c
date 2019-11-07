@@ -32,6 +32,7 @@ struct _OpenXRContext
   XrInstance instance;
   XrSession session;
   XrSpace local_space;
+  XrSpace view_space;
   XrSystemId system_id;
   XrViewConfigurationType view_config_type;
 
@@ -455,6 +456,11 @@ _check_supported_spaces (OpenXRContext* self)
     return false;
   }
 
+  if (!_is_space_supported (spaces, count, XR_REFERENCE_SPACE_TYPE_VIEW)) {
+    g_print ("XR_REFERENCE_SPACE_TYPE_VIEW unsupported.\n");
+    return false;
+  }
+
   XrPosef identity = {
     .orientation = { .x = 0, .y = 0, .z = 0, .w = 1.0 },
     .position = { .x = 0, .y = 0, .z = 0 },
@@ -467,6 +473,11 @@ _check_supported_spaces (OpenXRContext* self)
   };
   result = xrCreateReferenceSpace(self->session, &info, &self->local_space);
   if (!xr_result (result, "Failed to create local space."))
+    return false;
+
+  info.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_VIEW;
+  result = xrCreateReferenceSpace(self->session, &info, &self->view_space);
+  if (!xr_result (result, "Failed to create view space."))
     return false;
 
   return true;
@@ -1068,6 +1079,32 @@ _space_location_valid (XrSpaceLocation *sl)
 {
   return (sl->locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)    != 0 &&
          (sl->locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT) != 0;
+}
+
+gboolean
+openxr_context_get_head_pose (OpenXRContext     *self,
+                              graphene_matrix_t *pose)
+{
+  XrSpaceLocation space_location = {
+    .type = XR_TYPE_SPACE_LOCATION,
+    .next = NULL
+  };
+
+  XrResult result = xrLocateSpace (self->view_space, self->local_space,
+                                   self->frame_state.predictedDisplayTime,
+                                  &space_location);
+  xr_result (result, "Failed to locate head space.");
+
+  bool valid = _space_location_valid (&space_location);
+  if (!valid)
+    {
+      g_printerr ("Could not get valid head pose.\n");
+      graphene_matrix_init_identity (pose);
+      return FALSE;
+    }
+
+  _get_view_matrix_from_pose(&space_location.pose, pose);
+  return TRUE;
 }
 
 void
