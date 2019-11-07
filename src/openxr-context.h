@@ -73,6 +73,9 @@ openxr_context_get_position (OpenXRContext *self,
                              graphene_vec4_t *v);
 
 void
+openxr_context_poll_controllers (OpenXRContext *self);
+
+void
 openxr_context_get_projection (OpenXRContext *self,
                                uint32_t i,
                                float near,
