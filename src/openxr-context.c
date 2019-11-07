@@ -427,30 +427,31 @@ _create_session(OpenXRContext* self)
 }
 
 static bool
-_check_supported_spaces(OpenXRContext* self)
+_is_space_supported (XrReferenceSpaceType *spaces,
+                     uint32_t count,
+                     XrReferenceSpaceType type)
 {
-  uint32_t referenceSpacesCount;
-  XrResult result =
-    xrEnumerateReferenceSpaces(self->session, 0, &referenceSpacesCount, NULL);
-  if (!xr_result(result, "Getting number of reference spaces failed!"))
+  for (uint32_t i = 0; i < count; i++)
+    if (spaces[i] == type)
+      return true;
+  return false;
+}
+
+static bool
+_check_supported_spaces (OpenXRContext* self)
+{
+  uint32_t count;
+  XrResult result = xrEnumerateReferenceSpaces (self->session, 0, &count, NULL);
+  if (!xr_result (result, "Getting number of reference spaces failed!"))
     return false;
 
-  XrReferenceSpaceType referenceSpaces[referenceSpacesCount];
-  result = xrEnumerateReferenceSpaces(self->session, referenceSpacesCount,
-                                      &referenceSpacesCount, referenceSpaces);
-  if (!xr_result(result, "Enumerating reference spaces failed!"))
+  XrReferenceSpaceType spaces[count];
+  result = xrEnumerateReferenceSpaces (self->session, count, &count, spaces);
+  if (!xr_result (result, "Enumerating reference spaces failed!"))
     return false;
 
-  bool localSpaceSupported = false;
-  g_print("Enumerated %d reference spaces.\n", referenceSpacesCount);
-  for (uint32_t i = 0; i < referenceSpacesCount; i++) {
-    if (referenceSpaces[i] == XR_REFERENCE_SPACE_TYPE_LOCAL) {
-      localSpaceSupported = true;
-    }
-  }
-
-  if (!localSpaceSupported) {
-    g_print("XR_REFERENCE_SPACE_TYPE_LOCAL unsupported.\n");
+  if (!_is_space_supported (spaces, count, XR_REFERENCE_SPACE_TYPE_LOCAL)) {
+    g_print ("XR_REFERENCE_SPACE_TYPE_LOCAL unsupported.\n");
     return false;
   }
 
@@ -459,15 +460,13 @@ _check_supported_spaces(OpenXRContext* self)
     .position = { .x = 0, .y = 0, .z = 0 },
   };
 
-  XrReferenceSpaceCreateInfo referenceSpaceCreateInfo = {
+  XrReferenceSpaceCreateInfo info = {
     .type = XR_TYPE_REFERENCE_SPACE_CREATE_INFO,
     .referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL,
     .poseInReferenceSpace = identity,
   };
-
-  result = xrCreateReferenceSpace(self->session, &referenceSpaceCreateInfo,
-                                  &self->local_space);
-  if (!xr_result(result, "Failed to create local space!"))
+  result = xrCreateReferenceSpace(self->session, &info, &self->local_space);
+  if (!xr_result (result, "Failed to create local space."))
     return false;
 
   return true;
@@ -1064,12 +1063,19 @@ openxr_context_get_position (OpenXRContext *self,
                       1.0f);
 }
 
+bool
+_space_location_valid (XrSpaceLocation *sl)
+{
+  return (sl->locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)    != 0 &&
+         (sl->locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT) != 0;
+}
+
 void
 openxr_context_poll_controllers (OpenXRContext *self)
 {
   XrResult result;
 
-  /* TODO: only sync once per framce */
+  /* TODO: only sync once per frame */
   const XrActiveActionSet activeActionSet = {
     .actionSet = self->wm_actionset,
     .subactionPath = XR_NULL_PATH
@@ -1100,19 +1106,16 @@ openxr_context_poll_controllers (OpenXRContext *self)
       result = xrGetActionStatePose(self->session, &getInfo, &poseState);
       xr_result(result, "failed to get pose value!");
 
-
       XrSpaceLocation spaceLocation;
       bool spaceLocationValid;
       spaceLocation.type = XR_TYPE_SPACE_LOCATION;
       spaceLocation.next = NULL;
 
-      result = xrLocateSpace(self->handSpaces[i], self->local_space, self->frame_state.predictedDisplayTime, &spaceLocation);
+      result = xrLocateSpace(self->handSpaces[i], self->local_space,
+                             self->frame_state.predictedDisplayTime,
+                             &spaceLocation);
       xr_result(result, "failed to locate hand space %d!", i);
-      spaceLocationValid =
-        (spaceLocation.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT) != 0 &&
-        (spaceLocation.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT) != 0;
-
-
+      spaceLocationValid = _space_location_valid (&spaceLocation);
 
       // TODO: merge with openvr action
       if (spaceLocationValid && poseState.isActive)
@@ -1129,14 +1132,12 @@ openxr_context_poll_controllers (OpenXRContext *self)
           event->device_connected = true;
 
           g_debug ("Controller %i pose valid: %d, pos %f %f %f",
-                  i, event->valid, spaceLocation.pose.position.x, spaceLocation.pose.position.y, spaceLocation.pose.position.z
-          );
+                   i, event->valid, spaceLocation.pose.position.x,
+                   spaceLocation.pose.position.y,
+                   spaceLocation.pose.position.z);
 
           g_signal_emit (self, action_signals[POSE_EVENT], 0, event);
         }
-
-
-
 
       getInfo.action = self->grabAction,
       getInfo.subactionPath = self->handPaths[i];
@@ -1148,7 +1149,6 @@ openxr_context_poll_controllers (OpenXRContext *self)
       xr_result(result, "failed to get grab value!");
       if (grabValue.isActive)
         {
-
           OpenVRDigitalEvent *event = g_malloc (sizeof (OpenVRDigitalEvent));
           event->controller_handle = i;
           event->active = grabValue.isActive;
@@ -1156,7 +1156,8 @@ openxr_context_poll_controllers (OpenXRContext *self)
           event->changed = grabValue.changedSinceLastSync;
           event->time = 0;
 
-          g_debug ("Grabvalue (active %d): %f, changed: %d\n", grabValue.isActive, grabValue.currentState, event->changed);
+          g_debug ("Grabvalue (active %d): %f, changed: %d\n",
+                   grabValue.isActive, grabValue.currentState, event->changed);
 
           g_signal_emit (self, action_signals[DIGITAL_EVENT], 0, event);
         }
