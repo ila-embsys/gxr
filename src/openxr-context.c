@@ -65,6 +65,9 @@ struct _OpenXRContext
 
 G_DEFINE_TYPE (OpenXRContext, openxr_context, G_TYPE_OBJECT)
 
+// singleton variable that can be set to NULL again when finalizing the context
+static OpenXRContext *singleton = NULL;
+
 enum {
   DIGITAL_EVENT,
   ANALOG_EVENT,
@@ -116,6 +119,15 @@ OpenXRContext *
 openxr_context_new (void)
 {
   return (OpenXRContext*) g_object_new (OPENXR_TYPE_CONTEXT, 0);
+}
+
+OpenXRContext *
+openxr_context_get_instance ()
+{
+  if (singleton == NULL)
+    singleton = openxr_context_new ();
+
+  return singleton;
 }
 
 static const char* viewport_config_name = "/viewport_configuration/vr";

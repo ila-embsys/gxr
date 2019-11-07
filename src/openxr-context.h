@@ -30,7 +30,9 @@ G_BEGIN_DECLS
 #define OPENXR_TYPE_CONTEXT openxr_context_get_type()
 G_DECLARE_FINAL_TYPE (OpenXRContext, openxr_context, OPENXR, CONTEXT, GObject)
 
-OpenXRContext *openxr_context_new (void);
+// OpenXRContext *openxr_context_new (void);
+
+OpenXRContext *openxr_context_get_instance (void);
 
 bool
 openxr_context_initialize(OpenXRContext *self,
