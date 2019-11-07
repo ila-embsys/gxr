@@ -1044,6 +1044,21 @@ _get_view_matrix_from_pose (XrPosef *pose,
   graphene_matrix_inverse (&view, mat);
 }
 
+static void
+_get_model_matrix_from_pose (XrPosef *pose,
+                             graphene_matrix_t *mat)
+{
+  graphene_quaternion_t q;
+  graphene_quaternion_init (&q,
+                            pose->orientation.x, pose->orientation.y,
+                            pose->orientation.z, pose->orientation.w);
+
+  graphene_matrix_init_identity (mat);
+  graphene_matrix_rotate_quaternion (mat, &q);
+  graphene_point3d_t translation = { .x = pose->position.x, pose->position.y, pose->position.z };
+  graphene_matrix_translate(mat, &translation);
+}
+
 void
 openxr_context_get_projection (OpenXRContext *self,
                                uint32_t i,
@@ -1172,7 +1187,7 @@ openxr_context_poll_controllers (OpenXRContext *self)
           OpenVRPoseEvent *event = g_malloc (sizeof (OpenVRPoseEvent));
           event->active = poseState.isActive;
           event->controller_handle = i;
-          _get_view_matrix_from_pose(&spaceLocation.pose, &event->pose);
+          _get_model_matrix_from_pose(&spaceLocation.pose, &event->pose);
 
           graphene_vec3_init (&event->velocity, 0, 0, 0);
           graphene_vec3_init (&event->angular_velocity, 0, 0, 0);
@@ -1218,3 +1233,4 @@ openxr_context_get_swapchain_format (OpenXRContext *self)
 {
   return (VkFormat) self->swapchain_format;
 }
+
