@@ -1,4 +1,4 @@
-project('gxr', 'c', version: '0.13.1',
+project('gxr', 'c', version: '0.13.2',
   meson_version: '>= 0.45.1',
 )
 
