@@ -6,6 +6,7 @@
  */
 
 #include "gxr-context.h"
+#include "gxr-config.h"
 
 struct _GxrContext
 {

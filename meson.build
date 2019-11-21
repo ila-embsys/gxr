@@ -5,10 +5,6 @@ project('gxr', 'c', version: '0.13.2',
 gnome = import('gnome')
 
 config_h = configuration_data()
-configure_file(
-  output: 'gxr-config.h',
-  configuration: config_h,
-)
 
 project_args = ['-I' + meson.build_root(),
    #'-Werror',
@@ -53,12 +49,8 @@ src_inc = include_directories('src')
 c = meson.get_compiler('c')
 
 ## Required
-openvr_dep = dependency('openvr')
 
-# For a statically linked libopenvr_api we also need to link to the
-# Standard C++ library and the implementation of dlopen()
-stdcpp_dep = c.find_library('stdc++')
-dl_dep = c.find_library('dl')
+
 m_dep = c.find_library('m')
 
 gulkan_dep = dependency('gulkan-0.13', version: '>= 0.13.0')
@@ -66,6 +58,18 @@ gdk_dep = dependency('gdk-3.0', version: '>= 3.22')
 
 ## Optional
 openxr_dep = dependency('openxr', required: false)
+if openxr_dep.found()
+  config_h.set('GXR_HAS_OPENXR', 1)
+endif
+
+openvr_dep = dependency('openvr', required: false)
+if openvr_dep.found()
+  config_h.set('GXR_HAS_OPENVR', 1)
+  # For a statically linked libopenvr_api we also need to link to the
+  # Standard C++ library and the implementation of dlopen()
+  stdcpp_dep = c.find_library('stdc++')
+  dl_dep = c.find_library('dl')
+endif
 
 gtk3_dep = dependency('gtk+-3.0', version: '>= 3.22', required : false)
 x11_dep = dependency('x11', required : false)
