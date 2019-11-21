@@ -311,12 +311,17 @@ openvr_context_poll_event (OpenVRContext *self)
         g_signal_emit (self, context_signals[KEYBOARD_CLOSE_EVENT], 0);
       } break;
 
-      case EVREventType_VREvent_ApplicationTransitionStarted:
+      case EVREventType_VREvent_SceneApplicationStateChanged:
       {
-        shutdown_event_pending = FALSE;
-        OpenVRQuitEvent *event = g_malloc (sizeof (OpenVRQuitEvent));
-        event->reason = VR_QUIT_APPLICATION_TRANSITION;
-        g_signal_emit (self, context_signals[QUIT_EVENT], 0, event);
+        EVRSceneApplicationState app_state =
+          self->f.applications->GetSceneApplicationState ();
+        if (app_state == EVRSceneApplicationState_Starting)
+          {
+            shutdown_event_pending = FALSE;
+            OpenVRQuitEvent *event = g_malloc (sizeof (OpenVRQuitEvent));
+            event->reason = VR_QUIT_APPLICATION_TRANSITION;
+            g_signal_emit (self, context_signals[QUIT_EVENT], 0, event);
+          }
       } break;
 
       case EVREventType_VREvent_ProcessQuit:
