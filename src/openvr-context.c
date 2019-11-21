@@ -279,11 +279,13 @@ openvr_context_is_hmd_present (void)
 void
 openvr_context_poll_event (OpenVRContext *self)
 {
-  /* Starting another VR app will first emit a shutdown event, and then the
-   * app transition event. In gxr, a shutdown event is only emitted
-   * when the app should completely quit.
-   * If another VR app is started, only the app transition event is emitted. */
-  gboolean shutdown_event_pending = FALSE;
+  /* When a(nother) scene app is started, OpenVR sends a
+   * SceneApplicationStateChanged event and a quit event, in this case we
+   * ignore the quit event and only send an app state changed event.
+   */
+  gboolean shutdown_event = FALSE;
+  gboolean scene_application_state_changed = FALSE;
+  OpenVRQuitReason quit_reason;
 
   struct VREvent_t vr_event;
   while (self->f.system->PollNextEvent (&vr_event, sizeof (vr_event)))
@@ -303,11 +305,13 @@ openvr_context_poll_event (OpenVRContext *self)
         event->key.state = TRUE;
         event->key.string = new_input;
         event->key.length = len;
+        g_debug ("Event: sending KEYBOARD_PRESS_EVENT signal\n");
         g_signal_emit (self, context_signals[KEYBOARD_PRESS_EVENT], 0, event);
       } break;
 
       case EVREventType_VREvent_KeyboardClosed:
       {
+        g_debug ("Event: sending KEYBOARD_CLOSE_EVENT signal\n");
         g_signal_emit (self, context_signals[KEYBOARD_CLOSE_EVENT], 0);
       } break;
 
@@ -317,24 +321,33 @@ openvr_context_poll_event (OpenVRContext *self)
           self->f.applications->GetSceneApplicationState ();
         if (app_state == EVRSceneApplicationState_Starting)
           {
-            shutdown_event_pending = FALSE;
-            OpenVRQuitEvent *event = g_malloc (sizeof (OpenVRQuitEvent));
-            event->reason = VR_QUIT_APPLICATION_TRANSITION;
-            g_signal_emit (self, context_signals[QUIT_EVENT], 0, event);
+            scene_application_state_changed = TRUE;
           }
       } break;
 
       case EVREventType_VREvent_ProcessQuit:
       {
-        shutdown_event_pending = FALSE;
-        OpenVRQuitEvent *event = g_malloc (sizeof (OpenVRQuitEvent));
-        event->reason = VR_QUIT_PROCESS_QUIT;
-        g_signal_emit (self, context_signals[QUIT_EVENT], 0, event);
+        scene_application_state_changed = TRUE;
+        quit_reason = VR_QUIT_PROCESS_QUIT;
       } break;
 
       case EVREventType_VREvent_Quit:
       {
-        shutdown_event_pending = TRUE;
+        g_debug ("Event: got quit event, finding out reason...");
+        EVRSceneApplicationState app_state =
+          self->f.applications->GetSceneApplicationState ();
+        if (app_state == EVRSceneApplicationState_Quitting)
+          {
+            g_debug ("Event: Another Scene app is starting");
+            scene_application_state_changed = TRUE;
+            quit_reason = VR_QUIT_APPLICATION_TRANSITION;
+          }
+        else if (app_state == EVRSceneApplicationState_Running)
+          {
+            g_debug ("Event: SteamVR is quitting");
+          }
+
+        shutdown_event = TRUE;
       } break;
 
       case EVREventType_VREvent_TrackedDeviceActivated:
@@ -342,6 +355,7 @@ openvr_context_poll_event (OpenVRContext *self)
         OpenVRDeviceIndexEvent *event =
           g_malloc (sizeof (OpenVRDeviceIndexEvent));
         event->controller_handle = vr_event.trackedDeviceIndex;
+        g_debug ("Event: sending DEVICE_ACTIVATE_EVENT signal\n");
         g_signal_emit (self, context_signals[DEVICE_ACTIVATE_EVENT], 0, event);
       } break;
 
@@ -350,6 +364,7 @@ openvr_context_poll_event (OpenVRContext *self)
         OpenVRDeviceIndexEvent *event =
           g_malloc (sizeof (OpenVRDeviceIndexEvent));
         event->controller_handle = vr_event.trackedDeviceIndex;
+        g_debug ("Event: sending DEVICE_DEACTIVATE_EVENT signal\n");
         g_signal_emit (self, context_signals[DEVICE_DEACTIVATE_EVENT], 0, event);
       } break;
 
@@ -358,16 +373,19 @@ openvr_context_poll_event (OpenVRContext *self)
         OpenVRDeviceIndexEvent *event =
           g_malloc (sizeof (OpenVRDeviceIndexEvent));
         event->controller_handle = vr_event.trackedDeviceIndex;
+        g_debug ("Event: sending DEVICE_UPDATE_EVENT signal\n");
         g_signal_emit (self, context_signals[DEVICE_UPDATE_EVENT], 0, event);
       } break;
 
       case EVREventType_VREvent_ActionBindingReloaded:
       {
+        g_debug ("Event: sending BINDINGS_UPDATE signal\n");
         g_signal_emit (self, context_signals[BINDINGS_UPDATE], 0);
       } break;
 
       case EVREventType_VREvent_Input_ActionManifestReloaded:
       {
+        g_debug ("Event: sending ACTIONSET_UPDATE signal\n");
         g_signal_emit (self, context_signals[ACTIONSET_UPDATE], 0);
       } break;
 
@@ -406,10 +424,17 @@ openvr_context_poll_event (OpenVRContext *self)
     }
   }
 
-  if (shutdown_event_pending)
+  if (shutdown_event && !scene_application_state_changed)
     {
       OpenVRQuitEvent *event = g_malloc (sizeof (OpenVRQuitEvent));
       event->reason = VR_QUIT_SHUTDOWN;
+      g_signal_emit (self, context_signals[QUIT_EVENT], 0, event);
+    }
+  else if (scene_application_state_changed)
+    {
+      OpenVRQuitEvent *event = g_malloc (sizeof (OpenVRQuitEvent));
+      event->reason = quit_reason;
+      g_debug ("Event: sending VR_QUIT_APPLICATION_TRANSITION signal\n");
       g_signal_emit (self, context_signals[QUIT_EVENT], 0, event);
     }
 }
