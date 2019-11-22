@@ -44,9 +44,9 @@ _poll_events_cb (gpointer _self)
 }
 
 static void
-_digital_cb (OpenVRAction       *action,
-             OpenVRDigitalEvent *event,
-             Example            *self)
+_digital_cb (OpenVRAction    *action,
+             GxrDigitalEvent *event,
+             Example         *self)
 {
   (void) action;
   (void) self;
@@ -64,9 +64,9 @@ _digital_cb (OpenVRAction       *action,
 }
 #include <stdio.h>
 static void
-_hand_pose_cb (OpenVRAction       *action,
-               OpenVRPoseEvent    *event,
-               Example            *self)
+_hand_pose_cb (OpenVRAction *action,
+               GxrPoseEvent *event,
+               Example      *self)
 {
   (void) action;
   (void) self;
@@ -105,7 +105,7 @@ int
 main ()
 {
   OpenVRContext *context = openvr_context_get_instance ();
-  if (!openvr_context_initialize (context, OPENVR_APP_OVERLAY))
+  if (!openvr_context_initialize (context, GXR_APP_OVERLAY))
     {
       g_printerr ("Could not init OpenVR.\n");
       return false;
@@ -136,12 +136,12 @@ main ()
     openvr_action_new_from_url (self.action_sets[WM_ACTIONSET],
                                 "/actions/wm/out/haptic");
 
-  openvr_action_set_connect (self.action_sets[WM_ACTIONSET], OPENVR_ACTION_POSE,
+  openvr_action_set_connect (self.action_sets[WM_ACTIONSET], GXR_ACTION_POSE,
                              "/actions/wm/in/hand_pose",
                              (GCallback) _hand_pose_cb, &self);
 
   openvr_action_set_connect (self.action_sets[SYNTH_ACTIONSET],
-                             OPENVR_ACTION_DIGITAL,
+                             GXR_ACTION_DIGITAL,
                              "/actions/mouse_synth/in/left_click",
                              (GCallback) _digital_cb, &self);
 

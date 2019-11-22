@@ -13,6 +13,8 @@
 
 #include <gdk/gdk.h>
 
+#include "gxr-types.h"
+
 #include "openvr-math-private.h"
 
 #include "openvr-context-private.h"
@@ -216,7 +218,7 @@ _vr_init (OpenVRContext *self, EVRApplicationType app_type)
 }
 
 gboolean
-openvr_context_initialize (OpenVRContext *self, OpenVRAppType type)
+openvr_context_initialize (OpenVRContext *self, GxrAppType type)
 {
   if (!openvr_context_is_installed ())
     {
@@ -228,13 +230,13 @@ openvr_context_initialize (OpenVRContext *self, OpenVRAppType type)
 
   switch (type)
     {
-      case OPENVR_APP_SCENE:
+      case GXR_APP_SCENE:
         app_type = EVRApplicationType_VRApplication_Scene;
         break;
-      case OPENVR_APP_OVERLAY:
+      case GXR_APP_OVERLAY:
         app_type = EVRApplicationType_VRApplication_Overlay;
         break;
-      case OPENVR_APP_BACKGROUND:
+      case GXR_APP_BACKGROUND:
         app_type = EVRApplicationType_VRApplication_Background;
         break;
       default:
@@ -285,7 +287,7 @@ openvr_context_poll_event (OpenVRContext *self)
    */
   gboolean shutdown_event = FALSE;
   gboolean scene_application_state_changed = FALSE;
-  OpenVRQuitReason quit_reason;
+  GxrQuitReason quit_reason;
 
   struct VREvent_t vr_event;
   while (self->f.system->PollNextEvent (&vr_event, sizeof (vr_event)))
@@ -328,7 +330,7 @@ openvr_context_poll_event (OpenVRContext *self)
       case EVREventType_VREvent_ProcessQuit:
       {
         scene_application_state_changed = TRUE;
-        quit_reason = VR_QUIT_PROCESS_QUIT;
+        quit_reason = GXR_QUIT_PROCESS_QUIT;
       } break;
 
       case EVREventType_VREvent_Quit:
@@ -340,7 +342,7 @@ openvr_context_poll_event (OpenVRContext *self)
           {
             g_debug ("Event: Another Scene app is starting");
             scene_application_state_changed = TRUE;
-            quit_reason = VR_QUIT_APPLICATION_TRANSITION;
+            quit_reason = GXR_QUIT_APPLICATION_TRANSITION;
           }
         else if (app_state == EVRSceneApplicationState_Running)
           {
@@ -352,8 +354,8 @@ openvr_context_poll_event (OpenVRContext *self)
 
       case EVREventType_VREvent_TrackedDeviceActivated:
       {
-        OpenVRDeviceIndexEvent *event =
-          g_malloc (sizeof (OpenVRDeviceIndexEvent));
+        GxrDeviceIndexEvent *event =
+          g_malloc (sizeof (GxrDeviceIndexEvent));
         event->controller_handle = vr_event.trackedDeviceIndex;
         g_debug ("Event: sending DEVICE_ACTIVATE_EVENT signal\n");
         g_signal_emit (self, context_signals[DEVICE_ACTIVATE_EVENT], 0, event);
@@ -361,8 +363,8 @@ openvr_context_poll_event (OpenVRContext *self)
 
       case EVREventType_VREvent_TrackedDeviceDeactivated:
       {
-        OpenVRDeviceIndexEvent *event =
-          g_malloc (sizeof (OpenVRDeviceIndexEvent));
+        GxrDeviceIndexEvent *event =
+          g_malloc (sizeof (GxrDeviceIndexEvent));
         event->controller_handle = vr_event.trackedDeviceIndex;
         g_debug ("Event: sending DEVICE_DEACTIVATE_EVENT signal\n");
         g_signal_emit (self, context_signals[DEVICE_DEACTIVATE_EVENT], 0, event);
@@ -370,8 +372,8 @@ openvr_context_poll_event (OpenVRContext *self)
 
       case EVREventType_VREvent_TrackedDeviceUpdated:
       {
-        OpenVRDeviceIndexEvent *event =
-          g_malloc (sizeof (OpenVRDeviceIndexEvent));
+        GxrDeviceIndexEvent *event =
+          g_malloc (sizeof (GxrDeviceIndexEvent));
         event->controller_handle = vr_event.trackedDeviceIndex;
         g_debug ("Event: sending DEVICE_UPDATE_EVENT signal\n");
         g_signal_emit (self, context_signals[DEVICE_UPDATE_EVENT], 0, event);
@@ -426,13 +428,13 @@ openvr_context_poll_event (OpenVRContext *self)
 
   if (shutdown_event && !scene_application_state_changed)
     {
-      OpenVRQuitEvent *event = g_malloc (sizeof (OpenVRQuitEvent));
-      event->reason = VR_QUIT_SHUTDOWN;
+      GxrQuitEvent *event = g_malloc (sizeof (GxrQuitEvent));
+      event->reason = GXR_QUIT_SHUTDOWN;
       g_signal_emit (self, context_signals[QUIT_EVENT], 0, event);
     }
   else if (scene_application_state_changed)
     {
-      OpenVRQuitEvent *event = g_malloc (sizeof (OpenVRQuitEvent));
+      GxrQuitEvent *event = g_malloc (sizeof (GxrQuitEvent));
       event->reason = quit_reason;
       g_debug ("Event: sending VR_QUIT_APPLICATION_TRANSITION signal\n");
       g_signal_emit (self, context_signals[QUIT_EVENT], 0, event);
@@ -468,7 +470,7 @@ gboolean
 openvr_context_is_another_scene_running (void)
 {
   OpenVRContext *ctx = openvr_context_new ();
-  openvr_context_initialize (ctx, OPENVR_APP_BACKGROUND);
+  openvr_context_initialize (ctx, GXR_APP_BACKGROUND);
 
   /* if applications fntable is not loaded, SteamVR is probably not running. */
   if (ctx->f.applications == NULL)

@@ -7,6 +7,8 @@
 
 #include <gdk/gdk.h>
 
+#include "gxr-types.h"
+
 #include "openvr-wrapper.h"
 #include "openvr-math-private.h"
 #include "openvr-action.h"
@@ -26,7 +28,7 @@ struct _OpenVRAction
 
   GSList *input_handles;
 
-  OpenVRActionType type;
+  GxrActionType type;
 };
 
 G_DEFINE_TYPE (OpenVRAction, openvr_action, G_TYPE_OBJECT)
@@ -193,7 +195,7 @@ openvr_action_new_from_url (OpenVRActionSet *action_set, char *url)
 
 OpenVRAction *
 openvr_action_new_from_type_url (OpenVRActionSet *action_set,
-                                 OpenVRActionType type, char *url)
+                                 GxrActionType type, char *url)
 {
   OpenVRAction *self = openvr_action_new ();
   self->type = type;
@@ -264,7 +266,7 @@ openvr_action_poll_digital (OpenVRAction *self)
           return FALSE;
         }
 
-      OpenVRDigitalEvent *event = g_malloc (sizeof (OpenVRDigitalEvent));
+      GxrDigitalEvent *event = g_malloc (sizeof (GxrDigitalEvent));
       event->controller_handle = origin_info.trackedDeviceIndex;
       event->active = data.bActive;
       event->state = data.bState;
@@ -281,11 +283,11 @@ openvr_action_poll (OpenVRAction *self)
 {
   switch (self->type)
     {
-    case OPENVR_ACTION_DIGITAL:
+    case GXR_ACTION_DIGITAL:
       return openvr_action_poll_digital (self);
-    case OPENVR_ACTION_ANALOG:
+    case GXR_ACTION_ANALOG:
       return openvr_action_poll_analog (self);
-    case OPENVR_ACTION_POSE:
+    case GXR_ACTION_POSE:
       return openvr_action_poll_pose_secs_from_now (self, 0);
     default:
       g_printerr ("Uknown action type %d\n", self->type);
@@ -333,7 +335,7 @@ openvr_action_poll_analog (OpenVRAction *self)
           return FALSE;
         }
 
-      OpenVRAnalogEvent *event = g_malloc (sizeof (OpenVRAnalogEvent));
+      GxrAnalogEvent *event = g_malloc (sizeof (GxrAnalogEvent));
       event->active = data.bActive;
       event->controller_handle = origin_info.trackedDeviceIndex;
       graphene_vec3_init (&event->state, data.x, data.y, data.z);
@@ -369,7 +371,7 @@ _emit_pose_event (OpenVRAction          *self,
       return FALSE;
     }
 
-  OpenVRPoseEvent *event = g_malloc (sizeof (OpenVRPoseEvent));
+  GxrPoseEvent *event = g_malloc (sizeof (GxrPoseEvent));
   event->active = data->bActive;
   event->controller_handle = origin_info.trackedDeviceIndex;
   openvr_math_matrix34_to_graphene (&data->pose.mDeviceToAbsoluteTracking,
@@ -492,7 +494,7 @@ openvr_action_finalize (GObject *gobject)
   g_free (self->url);
 }
 
-OpenVRActionType
+GxrActionType
 openvr_action_get_action_type (OpenVRAction *self)
 {
   return self->type;

@@ -7,6 +7,8 @@
 
 #include <glib/gprintf.h>
 
+#include "gxr-types.h"
+
 #include "openvr-wrapper.h"
 
 #include "openvr-compositor.h"

@@ -127,7 +127,7 @@ static bool
 _init_openvr ()
 {
   OpenVRContext *context = openvr_context_get_instance ();
-  if (!openvr_context_initialize (context, OPENVR_APP_OVERLAY))
+  if (!openvr_context_initialize (context, GXR_APP_OVERLAY))
     {
       g_printerr ("Could not init OpenVR.\n");
       return false;

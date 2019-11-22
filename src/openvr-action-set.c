@@ -184,7 +184,7 @@ openvr_action_sets_poll (OpenVRActionSet **sets, uint32_t count)
 
 gboolean
 openvr_action_set_connect (OpenVRActionSet *self,
-                           OpenVRActionType type,
+                           GxrActionType    type,
                            gchar           *url,
                            GCallback        callback,
                            gpointer         data)
@@ -196,13 +196,13 @@ openvr_action_set_connect (OpenVRActionSet *self,
 
   switch (type)
     {
-    case OPENVR_ACTION_DIGITAL:
+    case GXR_ACTION_DIGITAL:
       g_signal_connect (action, "digital-event", callback, data);
       break;
-    case OPENVR_ACTION_ANALOG:
+    case GXR_ACTION_ANALOG:
       g_signal_connect (action, "analog-event", callback, data);
       break;
-    case OPENVR_ACTION_POSE:
+    case GXR_ACTION_POSE:
       g_signal_connect (action, "pose-event", callback, data);
       break;
     default:

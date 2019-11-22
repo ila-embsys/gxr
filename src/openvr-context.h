@@ -25,29 +25,7 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (OpenVRContext, openvr_context, OPENVR, CONTEXT, GObject)
 
 #define OPENVR_DEVICE_INDEX_HMD 0
-#define OPENVR_DEVICE_INDEX_MAX 64
 #define OPENVR_PROPERTY_STRING_MAX 32768
-
-/**
- * OpenVRQuitEvent:
- * @reason: The #OpenVRQuitReason.
- *
- * Event that is emitted when the application needs to quit.
- **/
-typedef struct {
-  OpenVRQuitReason reason;
-} OpenVRQuitEvent;
-
-/**
- * OpenVRDeviceIndexEvent:
- * @controller_handle: A #guint64 controller handle.
- *
- * Event that is emitted when a controller is activated or deaktivated.
- * It carries the handle of a controller.
- **/
-typedef struct {
-  guint64 controller_handle;
-} OpenVRDeviceIndexEvent;
 
 OpenVRContext *openvr_context_get_instance (void);
 
@@ -74,7 +52,7 @@ void
 openvr_context_acknowledge_quit (OpenVRContext *self);
 
 gboolean
-openvr_context_initialize (OpenVRContext *self, OpenVRAppType type);
+openvr_context_initialize (OpenVRContext *self, GxrAppType type);
 
 gboolean
 openvr_context_is_another_scene_running (void);

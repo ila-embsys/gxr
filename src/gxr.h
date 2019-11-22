@@ -17,6 +17,7 @@
 #include "gxr-config.h"
 #include "gxr-version.h"
 #include "gxr-enums.h"
+#include "gxr-types.h"
 #include "gxr-time.h"
 #include "gxr-context.h"
 

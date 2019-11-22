@@ -21,7 +21,7 @@
 
 #include <openxr/openxr_reflection.h>
 
-#include <openvr-action.h>
+#include "gxr-types.h"
 
 #define NUM_CONTROLLERS 2
 
@@ -1184,7 +1184,7 @@ openxr_context_poll_controllers (OpenXRContext *self)
       // TODO: merge with openvr action
       if (spaceLocationValid && poseState.isActive)
         {
-          OpenVRPoseEvent *event = g_malloc (sizeof (OpenVRPoseEvent));
+          GxrPoseEvent *event = g_malloc (sizeof (GxrPoseEvent));
           event->active = poseState.isActive;
           event->controller_handle = i;
           _get_model_matrix_from_pose(&spaceLocation.pose, &event->pose);
@@ -1213,7 +1213,7 @@ openxr_context_poll_controllers (OpenXRContext *self)
       xr_result(result, "failed to get grab value!");
       if (grabValue.isActive)
         {
-          OpenVRDigitalEvent *event = g_malloc (sizeof (OpenVRDigitalEvent));
+          GxrDigitalEvent *event = g_malloc (sizeof (GxrDigitalEvent));
           event->controller_handle = i;
           event->active = grabValue.isActive;
           event->state = grabValue.currentState > 0.5; /* TODO */

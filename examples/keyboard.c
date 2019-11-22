@@ -158,9 +158,9 @@ _poll_events_cb (gpointer _self)
 }
 
 static void
-_show_keyboard_cb (OpenVRAction       *action,
-                   OpenVRDigitalEvent *event,
-                   gpointer           _self)
+_show_keyboard_cb (OpenVRAction    *action,
+                   GxrDigitalEvent *event,
+                   gpointer        _self)
 {
   (void) action;
   Example *self = (Example*) _self;
@@ -276,7 +276,7 @@ main (int argc, char *argv[])
   gtk_init (&argc, &argv);
 
   OpenVRContext *context = openvr_context_get_instance ();
-  if (!openvr_context_initialize (context, OPENVR_APP_OVERLAY))
+  if (!openvr_context_initialize (context, GXR_APP_OVERLAY))
     {
       g_printerr ("Could not init OpenVR.\n");
       return -1;
@@ -313,7 +313,7 @@ main (int argc, char *argv[])
   if (!_create_overlay (&self))
     return -1;
 
-  openvr_action_set_connect (self.action_set, OPENVR_ACTION_DIGITAL,
+  openvr_action_set_connect (self.action_set, GXR_ACTION_DIGITAL,
                              "/actions/wm/in/show_keyboard",
                              (GCallback) _show_keyboard_cb, &self);
 

@@ -15,22 +15,9 @@
 #include <glib-object.h>
 #include <stdint.h>
 
-G_BEGIN_DECLS
+#include "gxr-enums.h"
 
-/**
- * OpenVRActionType:
- * @OPENVR_ACTION_DIGITAL: A digital action.
- * @OPENVR_ACTION_ANALOG: An analog action.
- * @OPENVR_ACTION_POSE: A pose action.
- *
- * The type of the OpenVR action.
- *
- **/
-typedef enum OpenVRActionType {
-  OPENVR_ACTION_DIGITAL,
-  OPENVR_ACTION_ANALOG,
-  OPENVR_ACTION_POSE
-} OpenVRActionType;
+G_BEGIN_DECLS
 
 #define OPENVR_TYPE_ACTION_SET openvr_action_set_get_type()
 G_DECLARE_FINAL_TYPE (OpenVRActionSet, openvr_action_set,
@@ -46,7 +33,7 @@ openvr_action_sets_poll (OpenVRActionSet **sets, uint32_t count);
 
 gboolean
 openvr_action_set_connect (OpenVRActionSet *self,
-                           OpenVRActionType type,
+                           GxrActionType    type,
                            gchar           *url,
                            GCallback        callback,
                            gpointer         data);

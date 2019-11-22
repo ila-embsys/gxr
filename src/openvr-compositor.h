@@ -19,18 +19,6 @@
 
 G_BEGIN_DECLS
 
-/**
- * GxrPose:
- * @transformation: The #graphene_matrix_t.
- * @is_valid: Validity of the pose.
- *
- * A 4x4 matrix pose.
- **/
-typedef struct {
-  graphene_matrix_t transformation;
-  gboolean is_valid;
-} GxrPose;
-
 bool
 openvr_compositor_get_instance_extensions (GSList **out_list);
 
