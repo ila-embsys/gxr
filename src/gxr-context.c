@@ -97,3 +97,26 @@ gxr_context_get_head_pose (graphene_matrix_t *pose)
   };
   return FALSE;
 }
+
+void
+gxr_context_get_frustum_angles (GxrEye eye,
+                                float *left, float *right,
+                                float *top, float *bottom)
+{
+  GxrContext *self = gxr_context_get_instance ();
+  switch (self->api)
+    {
+    case GXR_API_OPENVR:
+#ifdef GXR_HAS_OPENVR
+      return openvr_system_get_frustum_angles (eye, left, right, top, bottom);
+#endif
+    /* TODO: Implement for OpenXR*/
+    default: {
+      (void) eye;
+      *left = 1, *right = 1, *top = 1, *bottom = 1;
+      g_warning ("gxr_context_get_frustum_angles not supported by backend.\n");
+      return;
+    }
+  };
+}
+

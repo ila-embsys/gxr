@@ -32,6 +32,11 @@ gxr_context_get_api (GxrContext *self);
 gboolean
 gxr_context_get_head_pose (graphene_matrix_t *pose);
 
+void
+gxr_context_get_frustum_angles (GxrEye eye,
+                                float *left, float *right,
+                                float *top, float *bottom);
+
 G_END_DECLS
 
 #endif /* GXR_CONTEXT_H_ */
