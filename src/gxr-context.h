@@ -37,6 +37,9 @@ gxr_context_get_frustum_angles (GxrEye eye,
                                 float *left, float *right,
                                 float *top, float *bottom);
 
+gboolean
+gxr_context_is_input_available (void);
+
 G_END_DECLS
 
 #endif /* GXR_CONTEXT_H_ */

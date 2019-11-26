@@ -120,3 +120,18 @@ gxr_context_get_frustum_angles (GxrEye eye,
   };
 }
 
+gboolean
+gxr_context_is_input_available (void)
+{
+  GxrContext *self = gxr_context_get_instance ();
+  switch (self->api)
+    {
+    case GXR_API_OPENVR:
+#ifdef GXR_HAS_OPENVR
+      return openvr_system_is_input_available ();
+#endif
+    /* TODO: Implement for OpenXR*/
+    default:
+      return TRUE;
+  };
+}
