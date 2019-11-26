@@ -8,6 +8,9 @@
 #include "gxr-context.h"
 #include "gxr-config.h"
 
+#include "openvr-system.h"
+#include "openxr-context.h"
+
 struct _GxrContext
 {
   GObject parent;
@@ -70,4 +73,27 @@ GxrApi
 gxr_context_get_api (GxrContext *self)
 {
   return self->api;
+}
+
+gboolean
+gxr_context_get_head_pose (graphene_matrix_t *pose)
+{
+  GxrContext *self = gxr_context_get_instance ();
+  switch (self->api)
+    {
+#ifdef GXR_HAS_OPENVR
+    case GXR_API_OPENVR:
+      return openvr_system_get_hmd_pose (pose);
+#endif
+#ifdef GXR_HAS_OPENXR
+    case GXR_API_OPENXR: {
+      OpenXRContext *xr_context = openxr_context_get_instance ();
+      return openxr_context_get_head_pose (xr_context, pose);
+    }
+#endif
+    default:
+      g_warning ("gxr_context_get_head_pose not supported by backend.\n");
+      return FALSE;
+  };
+  return FALSE;
 }

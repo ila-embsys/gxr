@@ -13,6 +13,7 @@
 #endif
 
 #include <glib-object.h>
+#include <graphene.h>
 
 #include "gxr-enums.h"
 
@@ -27,6 +28,9 @@ GxrContext *gxr_context_get_instance (void);
 
 GxrApi
 gxr_context_get_api (GxrContext *self);
+
+gboolean
+gxr_context_get_head_pose (graphene_matrix_t *pose);
 
 G_END_DECLS
 
