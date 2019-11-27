@@ -5,8 +5,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-#ifndef GXR_ACTION_SET_H_
-#define GXR_ACTION_SET_H_
+#ifndef GXR_OPENVR_ACTION_SET_H_
+#define GXR_OPENVR_ACTION_SET_H_
 
 #if !defined (GXR_INSIDE) && !defined (GXR_COMPILATION)
 #error "Only <gxr.h> can be included directly."
@@ -40,4 +40,4 @@ openvr_action_set_connect (OpenVRActionSet *self,
 
 G_END_DECLS
 
-#endif /* GXR_ACTION_SET_H_ */
+#endif /* GXR_OPENVR_ACTION_SET_H_ */
