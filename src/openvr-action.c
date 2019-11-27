@@ -426,37 +426,6 @@ openvr_action_poll_pose_secs_from_now (OpenVRAction *self,
 }
 
 gboolean
-openvr_action_poll_pose_next_frame (OpenVRAction *self)
-{
-  OpenVRContext *context = openvr_context_get_instance ();
-  OpenVRFunctions *f = openvr_context_get_functions (context);
-  EVRInputError err;
-
-  for(GSList *e = self->input_handles; e; e = e->next)
-    {
-      VRActionHandle_t *input_handle = e->data;
-      InputPoseActionData_t data;
-
-      ETrackingUniverseOrigin origin = openvr_context_get_origin (context);
-
-      err = f->input->GetPoseActionDataForNextFrame (self->handle, origin,
-                                                    &data, sizeof(data),
-                                                    *input_handle);
-      if (err != EVRInputError_VRInputError_None)
-        {
-          g_printerr ("ERROR: GetPoseActionData: %s\n",
-                      openvr_input_error_string (err));
-          return FALSE;
-        }
-
-      if (!_emit_pose_event (self, &data))
-        return FALSE;
-
-    }
-  return TRUE;
-}
-
-gboolean
 openvr_action_trigger_haptic (OpenVRAction *self,
                               float start_seconds_from_now,
                               float duration_seconds,
