@@ -13,18 +13,12 @@
 
 struct _OpenVRActionSet
 {
-  GObject parent;
-
-  GSList *actions;
+  GxrActionSet parent;
 
   VRActionSetHandle_t handle;
 };
 
-G_DEFINE_TYPE (OpenVRActionSet, openvr_action_set, G_TYPE_OBJECT)
-
-gboolean
-openvr_action_set_load_handle (OpenVRActionSet *self,
-                               gchar           *url);
+G_DEFINE_TYPE (OpenVRActionSet, openvr_action_set, GXR_TYPE_ACTION_SET)
 
 VRActionSetHandle_t
 openvr_action_set_get_handle (OpenVRActionSet *self)
@@ -35,27 +29,21 @@ openvr_action_set_get_handle (OpenVRActionSet *self)
 static void
 openvr_action_set_finalize (GObject *gobject);
 
-static void
-openvr_action_set_class_init (OpenVRActionSetClass *klass)
-{
-  GObjectClass *object_class = G_OBJECT_CLASS (klass);
-
-  object_class->finalize = openvr_action_set_finalize;
-}
-
 static gboolean
-_action_sets_update (OpenVRActionSet **sets, uint32_t count);
+_update (GxrActionSet **sets, uint32_t count);
 
 static void
 _update_input_handles (OpenVRActionSet *self)
 {
-  if (!_action_sets_update (&self, 1))
+  GxrActionSet *self_gxr = GXR_ACTION_SET (self);
+  if (!_update (&self_gxr, 1))
     {
       g_print ("Failed to update Action Set after binding update!\n");
       return;
     }
 
-  for (GSList *l = self->actions; l != NULL; l = l->next)
+  GSList *actions = gxr_action_set_get_actions (GXR_ACTION_SET (self));
+  for (GSList *l = actions; l != NULL; l = l->next)
     {
       OpenVRAction *action = (OpenVRAction*) l->data;
       openvr_action_update_input_handles (action);
@@ -74,7 +62,6 @@ static void
 openvr_action_set_init (OpenVRActionSet *self)
 {
   self->handle = k_ulInvalidActionSetHandle;
-  self->actions = NULL;
 
   OpenVRContext *context = openvr_context_get_instance ();
   g_signal_connect (context, "binding-loaded-event",
@@ -87,28 +74,9 @@ openvr_action_set_new (void)
   return (OpenVRActionSet*) g_object_new (OPENVR_TYPE_ACTION_SET, 0);
 }
 
-OpenVRActionSet *
-openvr_action_set_new_from_url (gchar *url)
-{
-  OpenVRActionSet *self = openvr_action_set_new ();
-  if (!openvr_action_set_load_handle (self, url))
-    {
-      g_object_unref (self);
-      self = NULL;
-    }
-  return self;
-}
-
-static void
-openvr_action_set_finalize (GObject *gobject)
-{
-  OpenVRActionSet *self = OPENVR_ACTION_SET (gobject);
-  g_slist_free (self->actions);
-}
-
 gboolean
-openvr_action_set_load_handle (OpenVRActionSet *self,
-                               gchar           *url)
+_load_handle (OpenVRActionSet *self,
+              gchar           *url)
 {
   EVRInputError err;
 
@@ -127,15 +95,33 @@ openvr_action_set_load_handle (OpenVRActionSet *self,
   return TRUE;
 }
 
+OpenVRActionSet *
+openvr_action_set_new_from_url (gchar *url)
+{
+  OpenVRActionSet *self = openvr_action_set_new ();
+  if (!_load_handle (self, url))
+    {
+      g_object_unref (self);
+      self = NULL;
+    }
+  return self;
+}
+
+static void
+openvr_action_set_finalize (GObject *gobject)
+{
+  G_OBJECT_CLASS (openvr_action_set_parent_class)->finalize (gobject);
+}
+
 static gboolean
-_action_sets_update (OpenVRActionSet **sets, uint32_t count)
+_update (GxrActionSet **sets, uint32_t count)
 {
   struct VRActiveActionSet_t *active_action_sets =
     g_malloc (sizeof (struct VRActiveActionSet_t) * count);
 
   for (uint32_t i = 0; i < count; i++)
     {
-      active_action_sets[i].ulActionSet = sets[i]->handle;
+      active_action_sets[i].ulActionSet = OPENVR_ACTION_SET (sets[i])->handle;
       active_action_sets[i].ulRestrictedToDevice = 0;
       active_action_sets[i].ulSecondaryActionSet = 0;
       active_action_sets[i].unPadding = 0;
@@ -160,58 +146,6 @@ _action_sets_update (OpenVRActionSet **sets, uint32_t count)
     }
 
   return TRUE;
-}
-
-gboolean
-openvr_action_sets_poll (OpenVRActionSet **sets, uint32_t count)
-{
-  if (!_action_sets_update (sets, count))
-    return FALSE;
-
-  for (uint32_t i = 0; i < count; i++)
-    {
-      for (GSList *l = sets[i]->actions; l != NULL; l = l->next)
-        {
-          OpenVRAction *action = (OpenVRAction*) l->data;
-
-          if (!openvr_action_poll (action))
-            return FALSE;
-        }
-    }
-
-  return TRUE;
-}
-
-gboolean
-openvr_action_set_connect (OpenVRActionSet *self,
-                           GxrActionType    type,
-                           gchar           *url,
-                           GCallback        callback,
-                           gpointer         data)
-{
-  OpenVRAction *action = openvr_action_new_from_type_url (self, type, url);
-
-  if (action != NULL)
-    self->actions = g_slist_append (self->actions, action);
-
-  switch (type)
-    {
-    case GXR_ACTION_DIGITAL:
-      g_signal_connect (action, "digital-event", callback, data);
-      break;
-    case GXR_ACTION_ANALOG:
-      g_signal_connect (action, "analog-event", callback, data);
-      break;
-    case GXR_ACTION_POSE:
-      g_signal_connect (action, "pose-event", callback, data);
-      break;
-    default:
-      g_printerr ("Uknown action type %d\n", type);
-      return FALSE;
-    }
-
-  return TRUE;
-
 }
 
 #define ENUM_TO_STR(r) case r: return #r
@@ -241,4 +175,23 @@ openvr_input_error_string (EVRInputError err)
       default:
         return "UNKNOWN EVRInputError";
     }
+}
+
+GxrAction*
+_create_action (GxrActionSet *self,
+                GxrActionType type, char *url)
+{
+  return (GxrAction*) openvr_action_new_from_type_url ((OpenVRActionSet*)self, type, url);
+}
+
+static void
+openvr_action_set_class_init (OpenVRActionSetClass *klass)
+{
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+
+  object_class->finalize = openvr_action_set_finalize;
+
+  GxrActionSetClass *gxr_action_set_class = GXR_ACTION_SET_CLASS (klass);
+  gxr_action_set_class->update = _update;
+  gxr_action_set_class->create_action = _create_action;
 }

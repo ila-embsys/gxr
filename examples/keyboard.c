@@ -31,7 +31,7 @@ typedef struct Example
   GulkanClient *uploader;
   OpenVROverlay *overlay;
 
-  OpenVRActionSet *action_set;
+  GxrActionSet *action_set;
 
   GtkWidget *label;
 
@@ -148,7 +148,7 @@ _poll_events_cb (gpointer _self)
 {
   Example *self = (Example*) _self;
 
-  openvr_action_sets_poll (&self->action_set, 1);
+  gxr_action_sets_poll (&self->action_set, 1);
   openvr_overlay_poll_event (self->overlay);
 
   OpenVRContext *context = openvr_context_get_instance ();
@@ -298,7 +298,7 @@ main (int argc, char *argv[])
     .text_cursor = 0,
     .texture = NULL,
     .uploader = openvr_compositor_gulkan_client_new (),
-    .action_set = openvr_action_set_new_from_url ("/actions/wm")
+    .action_set = (GxrActionSet*) openvr_action_set_new_from_url ("/actions/wm")
   };
 
   if (!_init_gtk (&self))
@@ -313,9 +313,9 @@ main (int argc, char *argv[])
   if (!_create_overlay (&self))
     return -1;
 
-  openvr_action_set_connect (self.action_set, GXR_ACTION_DIGITAL,
-                             "/actions/wm/in/show_keyboard",
-                             (GCallback) _show_keyboard_cb, &self);
+  gxr_action_set_connect (self.action_set, GXR_ACTION_DIGITAL,
+                          "/actions/wm/in/show_keyboard",
+                          (GCallback) _show_keyboard_cb, &self);
 
   if (use_system_keyboard)
     {

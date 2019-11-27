@@ -21,7 +21,7 @@ typedef struct Example
   OpenVRAction *haptic;
 
   /* array of action sets */
-  OpenVRActionSet *action_sets[LAST_ACTIONSET];
+  GxrActionSet *action_sets[LAST_ACTIONSET];
 } Example;
 
 static gboolean
@@ -37,7 +37,7 @@ _poll_events_cb (gpointer _self)
 {
   Example *self = (Example*) _self;
 
-  if (!openvr_action_sets_poll (self->action_sets, 2))
+  if (!gxr_action_sets_poll (self->action_sets, 2))
     return FALSE;
 
   return TRUE;
@@ -127,20 +127,20 @@ main ()
     .loop = g_main_loop_new (NULL, FALSE),
   };
 
-  self.action_sets[WM_ACTIONSET] =
+  self.action_sets[WM_ACTIONSET] = (GxrActionSet*)
     openvr_action_set_new_from_url ("/actions/wm");
-  self.action_sets[SYNTH_ACTIONSET] =
+  self.action_sets[SYNTH_ACTIONSET] = (GxrActionSet*)
     openvr_action_set_new_from_url ("/actions/mouse_synth");
 
   self.haptic =
-    openvr_action_new_from_url (self.action_sets[WM_ACTIONSET],
+    openvr_action_new_from_url ((OpenVRActionSet*)self.action_sets[WM_ACTIONSET],
                                 "/actions/wm/out/haptic");
 
-  openvr_action_set_connect (self.action_sets[WM_ACTIONSET], GXR_ACTION_POSE,
+  gxr_action_set_connect (self.action_sets[WM_ACTIONSET], GXR_ACTION_POSE,
                              "/actions/wm/in/hand_pose",
                              (GCallback) _hand_pose_cb, &self);
 
-  openvr_action_set_connect (self.action_sets[SYNTH_ACTIONSET],
+  gxr_action_set_connect (self.action_sets[SYNTH_ACTIONSET],
                              GXR_ACTION_DIGITAL,
                              "/actions/mouse_synth/in/left_click",
                              (GCallback) _digital_cb, &self);
