@@ -20,6 +20,8 @@
 #include "gxr-types.h"
 #include "gxr-time.h"
 #include "gxr-context.h"
+#include "gxr-action.h"
+#include "gxr-action-set.h"
 
 #ifdef GXR_HAS_OPENVR
   #include "gxr-io.h"
