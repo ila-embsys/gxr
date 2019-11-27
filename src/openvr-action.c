@@ -227,8 +227,8 @@ openvr_action_load_handle (OpenVRAction *self,
   return TRUE;
 }
 
-gboolean
-openvr_action_poll_digital (OpenVRAction *self)
+static gboolean
+_action_poll_digital (OpenVRAction *self)
 {
   OpenVRContext *context = openvr_context_get_instance ();
   OpenVRFunctions *f = openvr_context_get_functions (context);
@@ -278,26 +278,8 @@ openvr_action_poll_digital (OpenVRAction *self)
   return TRUE;
 }
 
-gboolean
-openvr_action_poll (OpenVRAction *self)
-{
-  switch (self->type)
-    {
-    case GXR_ACTION_DIGITAL:
-      return openvr_action_poll_digital (self);
-    case GXR_ACTION_ANALOG:
-      return openvr_action_poll_analog (self);
-    case GXR_ACTION_POSE:
-      return openvr_action_poll_pose_secs_from_now (self, 0);
-    default:
-      g_printerr ("Uknown action type %d\n", self->type);
-      return FALSE;
-    }
-}
-
-
-gboolean
-openvr_action_poll_analog (OpenVRAction *self)
+static gboolean
+_action_poll_analog (OpenVRAction *self)
 {
   OpenVRContext *context = openvr_context_get_instance ();
   OpenVRFunctions *f = openvr_context_get_functions (context);
@@ -388,9 +370,9 @@ _emit_pose_event (OpenVRAction          *self,
   return TRUE;
 }
 
-gboolean
-openvr_action_poll_pose_secs_from_now (OpenVRAction *self,
-                                       float         secs)
+static gboolean
+_action_poll_pose_secs_from_now (OpenVRAction *self,
+                                 float         secs)
 {
   OpenVRContext *context = openvr_context_get_instance ();
   OpenVRFunctions *f = openvr_context_get_functions (context);
@@ -423,6 +405,23 @@ openvr_action_poll_pose_secs_from_now (OpenVRAction *self,
 
     }
   return TRUE;
+}
+
+gboolean
+openvr_action_poll (OpenVRAction *self)
+{
+  switch (self->type)
+    {
+    case GXR_ACTION_DIGITAL:
+      return _action_poll_digital (self);
+    case GXR_ACTION_ANALOG:
+      return _action_poll_analog (self);
+    case GXR_ACTION_POSE:
+      return _action_poll_pose_secs_from_now (self, 0);
+    default:
+      g_printerr ("Uknown action type %d\n", self->type);
+      return FALSE;
+    }
 }
 
 gboolean

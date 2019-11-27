@@ -39,16 +39,6 @@ gboolean
 openvr_action_poll (OpenVRAction *self);
 
 gboolean
-openvr_action_poll_digital (OpenVRAction *self);
-
-gboolean
-openvr_action_poll_analog (OpenVRAction *self);
-
-gboolean
-openvr_action_poll_pose_secs_from_now (OpenVRAction *self,
-                                       float         secs);
-
-gboolean
 openvr_action_trigger_haptic (OpenVRAction *self,
                               float start_seconds_from_now,
                               float duration_seconds,
