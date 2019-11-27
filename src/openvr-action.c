@@ -19,28 +19,13 @@
 
 struct _OpenVRAction
 {
-  GObject parent;
+  GxrAction parent;
 
   VRActionHandle_t handle;
-
-  OpenVRActionSet *action_set;
-  gchar *url;
-
   GSList *input_handles;
-
-  GxrActionType type;
 };
 
-G_DEFINE_TYPE (OpenVRAction, openvr_action, G_TYPE_OBJECT)
-
-enum {
-  DIGITAL_EVENT,
-  ANALOG_EVENT,
-  POSE_EVENT,
-  LAST_SIGNAL
-};
-
-static guint action_signals[LAST_SIGNAL] = { 0 };
+G_DEFINE_TYPE (OpenVRAction, openvr_action, GXR_TYPE_ACTION)
 
 gboolean
 openvr_action_load_manifest (char *path)
@@ -60,49 +45,15 @@ openvr_action_load_manifest (char *path)
   return TRUE;
 }
 
-static void
-openvr_action_finalize (GObject *gobject);
-
 gboolean
 openvr_action_load_handle (OpenVRAction *self,
                            char         *url);
-
-static void
-openvr_action_class_init (OpenVRActionClass *klass)
-{
-  action_signals[DIGITAL_EVENT] =
-    g_signal_new ("digital-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_LAST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE,
-                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  action_signals[ANALOG_EVENT] =
-    g_signal_new ("analog-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_LAST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE,
-                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  action_signals[POSE_EVENT] =
-    g_signal_new ("pose-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_FIRST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE,
-                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  GObjectClass *object_class = G_OBJECT_CLASS (klass);
-
-  object_class->finalize = openvr_action_finalize;
-}
 
 static void
 openvr_action_init (OpenVRAction *self)
 {
   self->handle = k_ulInvalidActionHandle;
   self->input_handles = NULL;
-  self->action_set = NULL;
-  self->url = NULL;
 }
 
 static gboolean
@@ -123,8 +74,10 @@ openvr_action_update_input_handles (OpenVRAction *self)
   OpenVRContext *context = openvr_context_get_instance ();
   OpenVRFunctions *f = openvr_context_get_functions (context);
 
+  GxrActionSet *action_set = gxr_action_get_action_set (GXR_ACTION (self));
+
   VRActionSetHandle_t actionset_handle =
-    openvr_action_set_get_handle (self->action_set);
+    openvr_action_set_get_handle (OPENVR_ACTION_SET (action_set));
 
   VRInputValueHandle_t origin_handles[k_unMaxActionOriginCount];
   EVRInputError err =
@@ -134,7 +87,7 @@ openvr_action_update_input_handles (OpenVRAction *self)
   if (err != EVRInputError_VRInputError_None)
     {
       g_printerr ("GetActionOrigins for %s failed, retrying later...\n",
-                  self->url);
+                  gxr_action_get_url (GXR_ACTION (self)));
       return;
     }
 
@@ -151,7 +104,8 @@ openvr_action_update_input_handles (OpenVRAction *self)
                                                   sizeof (origin_info));
       if (err != EVRInputError_VRInputError_None)
         {
-          g_printerr ("GetOriginTrackedDeviceInfo for %s failed\n", self->url);
+          g_printerr ("GetOriginTrackedDeviceInfo for %s failed\n",
+                      gxr_action_get_url (GXR_ACTION (self)));
           return;
         }
 
@@ -168,7 +122,8 @@ openvr_action_update_input_handles (OpenVRAction *self)
       f->input->GetOriginLocalizedName (origin_handles[i], origin_name,
                                         k_unMaxActionNameLength,
                                         EVRInputStringBits_VRInputString_All);
-      g_print ("Added origin %s for action %s\n", origin_name, self->url);
+      g_print ("Added origin %s for action %s\n", origin_name,
+               gxr_action_get_url (GXR_ACTION (self)));
     }
 }
 
@@ -179,34 +134,35 @@ openvr_action_new (void)
 }
 
 OpenVRAction *
-openvr_action_new_from_url (OpenVRActionSet *action_set, char *url)
+openvr_action_new_from_url (GxrActionSet *action_set, char *url)
 {
   OpenVRAction *self = openvr_action_new ();
+  gxr_action_set_url (GXR_ACTION (self), g_strdup (url));
+  gxr_action_set_action_set(GXR_ACTION (self), action_set);
+
   if (!openvr_action_load_handle (self, url))
     {
       g_object_unref (self);
       self = NULL;
     }
 
-  self->url = g_strdup (url);
-  self->action_set = action_set;
   return self;
 }
 
 OpenVRAction *
-openvr_action_new_from_type_url (OpenVRActionSet *action_set,
+openvr_action_new_from_type_url (GxrActionSet *action_set,
                                  GxrActionType type, char *url)
 {
   OpenVRAction *self = openvr_action_new ();
-  self->type = type;
+  gxr_action_set_action_type (GXR_ACTION (self), type);
+  gxr_action_set_url (GXR_ACTION (self), g_strdup (url));
+  gxr_action_set_action_set(GXR_ACTION (self), action_set);
+
   if (!openvr_action_load_handle (self, url))
     {
       g_object_unref (self);
       self = NULL;
     }
-
-  self->url = g_strdup (url);
-  self->action_set = action_set;
   return self;
 }
 
@@ -273,7 +229,7 @@ _action_poll_digital (OpenVRAction *self)
       event->changed = data.bChanged;
       event->time = data.fUpdateTime;
 
-      g_signal_emit (self, action_signals[DIGITAL_EVENT], 0, event);
+      gxr_action_emit_digital (GXR_ACTION (self), event);
     }
   return TRUE;
 }
@@ -324,7 +280,7 @@ _action_poll_analog (OpenVRAction *self)
       graphene_vec3_init (&event->delta, data.deltaX, data.deltaY, data.deltaZ);
       event->time = data.fUpdateTime;
 
-      g_signal_emit (self, action_signals[ANALOG_EVENT], 0, event);
+      gxr_action_emit_analog (GXR_ACTION (self), event);
     }
 
   return TRUE;
@@ -365,7 +321,7 @@ _emit_pose_event (OpenVRAction          *self,
   event->valid = data->pose.bPoseIsValid;
   event->device_connected = data->pose.bDeviceIsConnected;
 
-  g_signal_emit (self, action_signals[POSE_EVENT], 0, event);
+  gxr_action_emit_pose (GXR_ACTION (self), event);
 
   return TRUE;
 }
@@ -407,10 +363,12 @@ _action_poll_pose_secs_from_now (OpenVRAction *self,
   return TRUE;
 }
 
-gboolean
-openvr_action_poll (OpenVRAction *self)
+static gboolean
+_poll (GxrAction *action)
 {
-  switch (self->type)
+  OpenVRAction *self = OPENVR_ACTION (action);
+  GxrActionType type = gxr_action_get_action_type (action);
+  switch (type)
     {
     case GXR_ACTION_DIGITAL:
       return _action_poll_digital (self);
@@ -419,19 +377,21 @@ openvr_action_poll (OpenVRAction *self)
     case GXR_ACTION_POSE:
       return _action_poll_pose_secs_from_now (self, 0);
     default:
-      g_printerr ("Uknown action type %d\n", self->type);
+      g_printerr ("Uknown action type %d\n", type);
       return FALSE;
     }
 }
 
-gboolean
-openvr_action_trigger_haptic (OpenVRAction *self,
-                              float start_seconds_from_now,
-                              float duration_seconds,
-                              float frequency,
-                              float amplitude,
-                              guint64 controller_handle)
+static gboolean
+_trigger_haptic (GxrAction *action,
+                 float start_seconds_from_now,
+                 float duration_seconds,
+                 float frequency,
+                 float amplitude,
+                 guint64 controller_handle)
 {
+  OpenVRAction *self = OPENVR_ACTION (action);
+
   OpenVRContext *context = openvr_context_get_instance ();
   OpenVRFunctions *f = openvr_context_get_functions (context);
 
@@ -455,15 +415,21 @@ openvr_action_trigger_haptic (OpenVRAction *self,
 }
 
 static void
-openvr_action_finalize (GObject *gobject)
+_finalize (GObject *gobject)
 {
   OpenVRAction *self = OPENVR_ACTION (gobject);
   g_slist_free_full (self->input_handles, g_free);
-  g_free (self->url);
 }
 
-GxrActionType
-openvr_action_get_action_type (OpenVRAction *self)
+static void
+openvr_action_class_init (OpenVRActionClass *klass)
 {
-  return self->type;
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+
+  object_class->finalize =_finalize;
+
+  GxrActionClass *gxr_action_class = GXR_ACTION_CLASS (klass);
+  gxr_action_class->poll = _poll;
+  gxr_action_class->trigger_haptic = _trigger_haptic;
 }
+

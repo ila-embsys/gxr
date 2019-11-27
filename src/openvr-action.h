@@ -15,12 +15,13 @@
 #include <glib-object.h>
 #include <graphene.h>
 
+#include "gxr-action.h"
 #include "openvr-action-set.h"
 
 G_BEGIN_DECLS
 
 #define OPENVR_TYPE_ACTION openvr_action_get_type()
-G_DECLARE_FINAL_TYPE (OpenVRAction, openvr_action, OPENVR, ACTION, GObject)
+G_DECLARE_FINAL_TYPE (OpenVRAction, openvr_action, OPENVR, ACTION, GxrAction)
 
 gboolean
 openvr_action_load_manifest (char *path);
@@ -28,26 +29,12 @@ openvr_action_load_manifest (char *path);
 OpenVRAction *openvr_action_new (void);
 
 OpenVRAction *
-openvr_action_new_from_url (OpenVRActionSet *action_set,
+openvr_action_new_from_url (GxrActionSet *action_set,
                             char *url);
 
 OpenVRAction *
-openvr_action_new_from_type_url (OpenVRActionSet *action_set,
+openvr_action_new_from_type_url (GxrActionSet *action_set,
                                  GxrActionType type, char *url);
-
-gboolean
-openvr_action_poll (OpenVRAction *self);
-
-gboolean
-openvr_action_trigger_haptic (OpenVRAction *self,
-                              float start_seconds_from_now,
-                              float duration_seconds,
-                              float frequency,
-                              float amplitude,
-                              guint64 controller_handle);
-
-GxrActionType
-openvr_action_get_action_type (OpenVRAction *self);
 
 void
 openvr_action_update_input_handles (OpenVRAction *self);

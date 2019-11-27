@@ -181,7 +181,7 @@ GxrAction*
 _create_action (GxrActionSet *self,
                 GxrActionType type, char *url)
 {
-  return (GxrAction*) openvr_action_new_from_type_url ((OpenVRActionSet*)self, type, url);
+  return (GxrAction*) openvr_action_new_from_type_url (self, type, url);
 }
 
 static void

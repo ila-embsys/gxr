@@ -18,7 +18,7 @@ enum {
 typedef struct Example
 {
   GMainLoop *loop;
-  OpenVRAction *haptic;
+  GxrAction *haptic;
 
   /* array of action sets */
   GxrActionSet *action_sets[LAST_ACTIONSET];
@@ -44,7 +44,7 @@ _poll_events_cb (gpointer _self)
 }
 
 static void
-_digital_cb (OpenVRAction    *action,
+_digital_cb (GxrAction       *action,
              GxrDigitalEvent *event,
              Example         *self)
 {
@@ -56,15 +56,15 @@ _digital_cb (OpenVRAction    *action,
 
   if (event->changed)
     {
-      openvr_action_trigger_haptic (self->haptic, 0.0f ,.2f, 160.f, 1.0f,
-                                    event->controller_handle);
+      gxr_action_trigger_haptic (self->haptic, 0.0f ,.2f, 160.f, 1.0f,
+                                 event->controller_handle);
     }
 
   g_free (event);
 }
 #include <stdio.h>
 static void
-_hand_pose_cb (OpenVRAction *action,
+_hand_pose_cb (GxrAction    *action,
                GxrPoseEvent *event,
                Example      *self)
 {
@@ -132,18 +132,18 @@ main ()
   self.action_sets[SYNTH_ACTIONSET] = (GxrActionSet*)
     openvr_action_set_new_from_url ("/actions/mouse_synth");
 
-  self.haptic =
-    openvr_action_new_from_url ((OpenVRActionSet*)self.action_sets[WM_ACTIONSET],
+  self.haptic = (GxrAction*)
+    openvr_action_new_from_url (self.action_sets[WM_ACTIONSET],
                                 "/actions/wm/out/haptic");
 
   gxr_action_set_connect (self.action_sets[WM_ACTIONSET], GXR_ACTION_POSE,
-                             "/actions/wm/in/hand_pose",
-                             (GCallback) _hand_pose_cb, &self);
+                          "/actions/wm/in/hand_pose",
+                          (GCallback) _hand_pose_cb, &self);
 
   gxr_action_set_connect (self.action_sets[SYNTH_ACTIONSET],
-                             GXR_ACTION_DIGITAL,
-                             "/actions/mouse_synth/in/left_click",
-                             (GCallback) _digital_cb, &self);
+                          GXR_ACTION_DIGITAL,
+                          "/actions/mouse_synth/in/left_click",
+                          (GCallback) _digital_cb, &self);
 
   g_timeout_add (20, _poll_events_cb, &self);
 
