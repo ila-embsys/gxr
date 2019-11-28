@@ -40,7 +40,7 @@ openvr_compositor_get_instance_extensions (GSList **out_list)
       return FALSE;
     }
 
-  OpenVRFunctions *f = openvr_context_get_functions (context);
+  OpenVRFunctions *f = openvr_get_functions ();
 
   uint32_t size =
     f->compositor->GetVulkanInstanceExtensionsRequired (NULL, 0);
@@ -62,14 +62,13 @@ bool
 openvr_compositor_get_device_extensions (VkPhysicalDevice  physical_device,
                                          GSList          **out_list)
 {
-  OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRFunctions *f = openvr_get_functions ();
+  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
   if (!openvr_context_is_valid (context))
     {
       g_printerr ("OpenVR context was not initialized.\n");
       return FALSE;
     }
-
-  OpenVRFunctions *f = openvr_context_get_functions (context);
 
   uint32_t size = f->compositor->
     GetVulkanDeviceExtensionsRequired (physical_device, NULL, 0);
@@ -109,8 +108,8 @@ openvr_compositor_gulkan_client_init (GulkanClient *client)
 
   /* Query OpenVR for the physical device to use */
   uint64_t physical_device = 0;
-  OpenVRContext *context = openvr_context_get_instance ();
-  OpenVRFunctions *f = openvr_context_get_functions (context);
+
+  OpenVRFunctions *f = openvr_get_functions ();
 
   f->system->GetOutputDevice (
     &physical_device, ETextureType_TextureType_Vulkan,
@@ -216,8 +215,7 @@ openvr_compositor_submit (GulkanClient         *client,
     .vMax = 1.0f
   };
 
-  OpenVRContext *context = openvr_context_get_instance ();
-  OpenVRFunctions *f = openvr_context_get_functions (context);
+  OpenVRFunctions *f = openvr_get_functions ();
 
   EVRCompositorError err =
     f->compositor->Submit (EVREye_Eye_Left, &texture, &bounds,
@@ -247,8 +245,7 @@ openvr_compositor_submit (GulkanClient         *client,
 void
 openvr_compositor_wait_get_poses (GxrPose *poses, uint32_t count)
 {
-  OpenVRContext *context = openvr_context_get_instance ();
-  OpenVRFunctions *f = openvr_context_get_functions (context);
+  OpenVRFunctions *f = openvr_get_functions ();
 
   struct TrackedDevicePose_t *p =
     g_malloc (sizeof (struct TrackedDevicePose_t) * count);

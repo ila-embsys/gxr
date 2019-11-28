@@ -23,8 +23,7 @@ openvr_system_get_device_string (TrackedDeviceIndex_t device_index,
 {
   gchar *string = (gchar*) g_malloc (STRING_BUFFER_SIZE);
 
-  OpenVRContext *context = openvr_context_get_instance ();
-  OpenVRFunctions *f = openvr_context_get_functions (context);
+  OpenVRFunctions *f = openvr_get_functions ();
 
   ETrackedPropertyError error;
   f->system->GetStringTrackedDeviceProperty(
@@ -56,8 +55,7 @@ openvr_system_print_device_info ()
 graphene_matrix_t
 openvr_system_get_projection_matrix (GxrEye eye, float near, float far)
 {
-  OpenVRContext *context = openvr_context_get_instance ();
-  OpenVRFunctions *f = openvr_context_get_functions (context);
+  OpenVRFunctions *f = openvr_get_functions ();
 
   HmdMatrix44_t openvr_mat =
     f->system->GetProjectionMatrix (openvr_system_eye_to_openvr (eye), near, far);
@@ -70,8 +68,7 @@ openvr_system_get_projection_matrix (GxrEye eye, float near, float far)
 graphene_matrix_t
 openvr_system_get_eye_to_head_transform (GxrEye eye)
 {
-  OpenVRContext *context = openvr_context_get_instance ();
-  OpenVRFunctions *f = openvr_context_get_functions (context);
+  OpenVRFunctions *f = openvr_get_functions ();
 
   HmdMatrix34_t openvr_mat =
     f->system->GetEyeToHeadTransform (openvr_system_eye_to_openvr (eye));
@@ -84,8 +81,8 @@ openvr_system_get_eye_to_head_transform (GxrEye eye)
 gboolean
 openvr_system_get_hmd_pose (graphene_matrix_t *pose)
 {
-  OpenVRContext *context = openvr_context_get_instance ();
-  OpenVRFunctions *f = openvr_context_get_functions (context);
+  OpenVRFunctions *f = openvr_get_functions ();
+  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
 
   VRControllerState_t state;
   if (f->system->IsTrackedDeviceConnected(k_unTrackedDeviceIndex_Hmd) &&
@@ -113,24 +110,21 @@ openvr_system_get_hmd_pose (graphene_matrix_t *pose)
 gboolean
 openvr_system_is_input_available (void)
 {
-  OpenVRContext *context = openvr_context_get_instance ();
-  OpenVRFunctions *f = openvr_context_get_functions (context);
+  OpenVRFunctions *f = openvr_get_functions ();
   return f->system->IsInputAvailable ();
 }
 
 gboolean
 openvr_system_is_tracked_device_connected (uint32_t i)
 {
-  OpenVRContext *context = openvr_context_get_instance ();
-  OpenVRFunctions *f = openvr_context_get_functions (context);
+  OpenVRFunctions *f = openvr_get_functions ();
   return f->system->IsTrackedDeviceConnected (i);
 }
 
 gboolean
 openvr_system_device_is_controller (uint32_t i)
 {
-  OpenVRContext *context = openvr_context_get_instance ();
-  OpenVRFunctions *f = openvr_context_get_functions (context);
+  OpenVRFunctions *f = openvr_get_functions ();
   return f->system->GetTrackedDeviceClass (i) ==
     ETrackedDeviceClass_TrackedDeviceClass_Controller;
 }
@@ -138,8 +132,7 @@ openvr_system_device_is_controller (uint32_t i)
 void
 openvr_system_get_render_target_size (uint32_t *w, uint32_t *h)
 {
-  OpenVRContext *context = openvr_context_get_instance ();
-  OpenVRFunctions *f = openvr_context_get_functions (context);
+  OpenVRFunctions *f = openvr_get_functions ();
   f->system->GetRecommendedRenderTargetSize (w, h);
 }
 
@@ -164,8 +157,7 @@ openvr_system_get_frustum_angles (GxrEye eye,
                                   float *left, float *right,
                                   float *top, float *bottom)
 {
-  OpenVRContext *context = openvr_context_get_instance ();
-  OpenVRFunctions *f = openvr_context_get_functions (context);
+  OpenVRFunctions *f = openvr_get_functions ();
   f->system->GetProjectionRaw (openvr_system_eye_to_openvr (eye),
                                left, right, top, bottom);
 

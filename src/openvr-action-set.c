@@ -80,8 +80,7 @@ _load_handle (OpenVRActionSet *self,
 {
   EVRInputError err;
 
-  OpenVRContext *context = openvr_context_get_instance ();
-  OpenVRFunctions *f = openvr_context_get_functions (context);
+  OpenVRFunctions *f = openvr_get_functions ();
 
   err = f->input->GetActionSetHandle (url, &self->handle);
 
@@ -128,8 +127,7 @@ _update (GxrActionSet **sets, uint32_t count)
       active_action_sets[i].nPriority = 0;
     }
 
-  OpenVRContext *context = openvr_context_get_instance ();
-  OpenVRFunctions *f = openvr_context_get_functions (context);
+  OpenVRFunctions *f = openvr_get_functions ();
 
   EVRInputError err;
   err = f->input->UpdateActionState (active_action_sets,

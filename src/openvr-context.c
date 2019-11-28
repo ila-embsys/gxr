@@ -484,16 +484,10 @@ openvr_context_is_another_scene_running (void)
 }
 
 OpenVRFunctions*
-openvr_context_get_functions (OpenVRContext *self)
-{
-  return &self->f;
-}
-
-OpenVRFunctions*
 openvr_get_functions (void)
 {
-  OpenVRContext *self = openvr_context_get_instance ();
-  return openvr_context_get_functions (self);
+  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
+  return &context->f;
 }
 
 enum ETrackingUniverseOrigin

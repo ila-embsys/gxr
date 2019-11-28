@@ -30,8 +30,7 @@ G_DEFINE_TYPE (OpenVRAction, openvr_action, GXR_TYPE_ACTION)
 gboolean
 openvr_action_load_manifest (char *path)
 {
-  OpenVRContext *context = openvr_context_get_instance ();
-  OpenVRFunctions *f = openvr_context_get_functions (context);
+  OpenVRFunctions *f = openvr_get_functions ();
 
   EVRInputError err;
   err = f->input->SetActionManifestPath (path);
@@ -71,8 +70,7 @@ _input_handle_already_known (OpenVRAction *self, VRInputValueHandle_t handle)
 void
 openvr_action_update_input_handles (OpenVRAction *self)
 {
-  OpenVRContext *context = openvr_context_get_instance ();
-  OpenVRFunctions *f = openvr_context_get_functions (context);
+  OpenVRFunctions *f = openvr_get_functions ();
 
   GxrActionSet *action_set = gxr_action_get_action_set (GXR_ACTION (self));
 
@@ -170,8 +168,7 @@ gboolean
 openvr_action_load_handle (OpenVRAction *self,
                            char         *url)
 {
-  OpenVRContext *context = openvr_context_get_instance ();
-  OpenVRFunctions *f = openvr_context_get_functions (context);
+  OpenVRFunctions *f = openvr_get_functions ();
   EVRInputError err = f->input->GetActionHandle (url, &self->handle);
 
   if (err != EVRInputError_VRInputError_None)
@@ -186,8 +183,7 @@ openvr_action_load_handle (OpenVRAction *self,
 static gboolean
 _action_poll_digital (OpenVRAction *self)
 {
-  OpenVRContext *context = openvr_context_get_instance ();
-  OpenVRFunctions *f = openvr_context_get_functions (context);
+  OpenVRFunctions *f = openvr_get_functions ();
 
   InputDigitalActionData_t data;
 
@@ -237,8 +233,7 @@ _action_poll_digital (OpenVRAction *self)
 static gboolean
 _action_poll_analog (OpenVRAction *self)
 {
-  OpenVRContext *context = openvr_context_get_instance ();
-  OpenVRFunctions *f = openvr_context_get_functions (context);
+  OpenVRFunctions *f = openvr_get_functions ();
 
   InputAnalogActionData_t data;
 
@@ -290,8 +285,7 @@ static gboolean
 _emit_pose_event (OpenVRAction          *self,
                   InputPoseActionData_t *data)
 {
-  OpenVRContext *context = openvr_context_get_instance ();
-  OpenVRFunctions *f = openvr_context_get_functions (context);
+  OpenVRFunctions *f = openvr_get_functions ();
 
   InputOriginInfo_t origin_info;
   EVRInputError err;
@@ -330,8 +324,7 @@ static gboolean
 _action_poll_pose_secs_from_now (OpenVRAction *self,
                                  float         secs)
 {
-  OpenVRContext *context = openvr_context_get_instance ();
-  OpenVRFunctions *f = openvr_context_get_functions (context);
+  OpenVRFunctions *f = openvr_get_functions ();
 
   EVRInputError err;
 
@@ -341,6 +334,7 @@ _action_poll_pose_secs_from_now (OpenVRAction *self,
 
       InputPoseActionData_t data;
 
+      OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
       ETrackingUniverseOrigin origin = openvr_context_get_origin (context);
 
       err = f->input->GetPoseActionDataRelativeToNow (self->handle,
@@ -392,8 +386,7 @@ _trigger_haptic (GxrAction *action,
 {
   OpenVRAction *self = OPENVR_ACTION (action);
 
-  OpenVRContext *context = openvr_context_get_instance ();
-  OpenVRFunctions *f = openvr_context_get_functions (context);
+  OpenVRFunctions *f = openvr_get_functions ();
 
   EVRInputError err;
   err = f->input->TriggerHapticVibrationAction (

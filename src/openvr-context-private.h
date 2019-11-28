@@ -24,9 +24,6 @@ typedef struct
 } OpenVRFunctions;
 
 OpenVRFunctions*
-openvr_context_get_functions (OpenVRContext *self);
-
-OpenVRFunctions*
 openvr_get_functions (void);
 
 enum ETrackingUniverseOrigin

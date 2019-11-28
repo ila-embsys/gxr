@@ -19,8 +19,9 @@
 
 #define GET_OVERLAY_FUNCTIONS \
   EVROverlayError err; \
-  OpenVRContext *context = openvr_context_get_instance (); \
-  OpenVRFunctions* fun = openvr_context_get_functions (context); \
+  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ()); \
+  (void) context; \
+  OpenVRFunctions *fun = openvr_get_functions (); \
   struct VR_IVROverlay_FnTable *f = fun->overlay;
 
 #define OVERLAY_CHECK_ERROR(fun, res) \
