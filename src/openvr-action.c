@@ -16,6 +16,7 @@
 #include "openvr-action-set.h"
 #include "openvr-action-set-private.h"
 #include "openvr-context-private.h"
+#include "openvr-compositor-private.h"
 
 struct _OpenVRAction
 {
@@ -334,8 +335,7 @@ _action_poll_pose_secs_from_now (OpenVRAction *self,
 
       InputPoseActionData_t data;
 
-      OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
-      ETrackingUniverseOrigin origin = openvr_context_get_origin (context);
+      ETrackingUniverseOrigin origin = openvr_compositor_get_tracking_space ();
 
       err = f->input->GetPoseActionDataRelativeToNow (self->handle,
                                                       origin,

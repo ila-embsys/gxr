@@ -18,6 +18,7 @@
 #include "openvr-math-private.h"
 
 #include "openvr-context-private.h"
+#include "openvr-compositor-private.h"
 
 typedef struct _OpenVRContext
 {
@@ -25,7 +26,6 @@ typedef struct _OpenVRContext
 
   OpenVRFunctions f;
 
-  enum ETrackingUniverseOrigin origin;
 } OpenVROverlayPrivate;
 
 G_DEFINE_TYPE (OpenVRContext, openvr_context, GXR_TYPE_CONTEXT)
@@ -196,8 +196,6 @@ _vr_init (OpenVRContext *self, EVRApplicationType app_type)
       g_printerr ("Functions failed to load.\n");
       return FALSE;
     }
-
-  self->origin = self->f.compositor->GetTrackingSpace ();
 
   return TRUE;
 }
@@ -441,7 +439,9 @@ openvr_context_set_system_keyboard_transform (OpenVRContext *self,
 {
   HmdMatrix34_t openvr_transform;
   openvr_math_graphene_to_matrix34 (transform, &openvr_transform);
-  self->f.overlay->SetKeyboardTransformAbsolute (self->origin,
+
+  enum ETrackingUniverseOrigin origin = openvr_compositor_get_tracking_space ();
+  self->f.overlay->SetKeyboardTransformAbsolute (origin,
                                                 &openvr_transform);
 }
 
@@ -475,9 +475,3 @@ openvr_get_functions (void)
   return &context->f;
 }
 
-
-enum ETrackingUniverseOrigin
-openvr_context_get_origin (OpenVRContext *self)
-{
-  return self->origin;
-}

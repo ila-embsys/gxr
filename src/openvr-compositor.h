@@ -17,6 +17,8 @@
 #include <vulkan/vulkan.h>
 #include <gulkan.h>
 
+#include "gxr-types.h"
+
 G_BEGIN_DECLS
 
 bool

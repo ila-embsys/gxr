@@ -14,6 +14,7 @@
 #include "openvr-math-private.h"
 #include "openvr-context-private.h"
 #include "openvr-system-private.h"
+#include "openvr-compositor-private.h"
 
 #define STRING_BUFFER_SIZE 128
 
@@ -82,7 +83,6 @@ gboolean
 openvr_system_get_hmd_pose (graphene_matrix_t *pose)
 {
   OpenVRFunctions *f = openvr_get_functions ();
-  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
 
   VRControllerState_t state;
   if (f->system->IsTrackedDeviceConnected(k_unTrackedDeviceIndex_Hmd) &&
@@ -92,7 +92,7 @@ openvr_system_get_hmd_pose (graphene_matrix_t *pose)
                                            &state, sizeof(state)))
     {
       /* k_unTrackedDeviceIndex_Hmd should be 0 => posearray[0] */
-      ETrackingUniverseOrigin origin = openvr_context_get_origin (context);
+      ETrackingUniverseOrigin origin = openvr_compositor_get_tracking_space ();
 
       TrackedDevicePose_t openvr_pose;
       f->system->GetDeviceToAbsoluteTrackingPose (origin, 0, &openvr_pose, 1);
