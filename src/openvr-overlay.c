@@ -17,19 +17,12 @@
 #include "gxr-time.h"
 #include "openvr-math-private.h"
 
-#define GET_OVERLAY_FUNCTIONS \
-  EVROverlayError err; \
-  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ()); \
-  (void) context; \
-  OpenVRFunctions *fun = openvr_get_functions (); \
-  struct VR_IVROverlay_FnTable *f = fun->overlay;
-
 #define OVERLAY_CHECK_ERROR(fun, res) \
 { \
   if (res != EVROverlayError_VROverlayError_None) \
     { \
       g_printerr ("ERROR: " fun ": failed with %s in %s:%d\n", \
-                  f->GetOverlayErrorNameFromEnum (res), __FILE__, __LINE__); \
+                  f->overlay->GetOverlayErrorNameFromEnum (res), __FILE__, __LINE__); \
       return FALSE; \
     } \
 }
@@ -146,7 +139,8 @@ openvr_overlay_create (OpenVROverlay *self, gchar* key, gchar* name)
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
-  GET_OVERLAY_FUNCTIONS
+  OpenVRFunctions *f = openvr_get_functions ();
+  EVROverlayError err;
 
   /* k_unVROverlayMaxKeyLength is the limit including the null terminator */
   if (strlen(key) + 1 > k_unVROverlayMaxKeyLength)
@@ -158,8 +152,7 @@ openvr_overlay_create (OpenVROverlay *self, gchar* key, gchar* name)
 
 
   char *name_trimmed = strndup(name, k_unVROverlayMaxNameLength - 1);
-
-  err = f->CreateOverlay (key, name_trimmed, &priv->overlay_handle);
+  err = f->overlay->CreateOverlay (key, name_trimmed, &priv->overlay_handle);
 
   free (name_trimmed);
 
@@ -190,10 +183,11 @@ openvr_overlay_create_for_dashboard (OpenVROverlay *self,
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
-  GET_OVERLAY_FUNCTIONS
+  OpenVRFunctions *f = openvr_get_functions ();
+  EVROverlayError err;
 
-  err = f->CreateDashboardOverlay (key, name, &priv->overlay_handle,
-                                  &priv->thumbnail_handle);
+  err = f->overlay->CreateDashboardOverlay (key, name, &priv->overlay_handle,
+                                           &priv->thumbnail_handle);
 
   OVERLAY_CHECK_ERROR ("CreateDashboardOverlay", err)
 
@@ -212,9 +206,10 @@ openvr_overlay_show (OpenVROverlay *self)
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
-  GET_OVERLAY_FUNCTIONS
+  OpenVRFunctions *f = openvr_get_functions ();
+  EVROverlayError err;
 
-  err = f->ShowOverlay (priv->overlay_handle);
+  err = f->overlay->ShowOverlay (priv->overlay_handle);
 
   OVERLAY_CHECK_ERROR ("ShowOverlay", err)
   return TRUE;
@@ -225,9 +220,10 @@ openvr_overlay_hide (OpenVROverlay *self)
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
-  GET_OVERLAY_FUNCTIONS
+  OpenVRFunctions *f = openvr_get_functions ();
+  EVROverlayError err;
 
-  err = f->HideOverlay (priv->overlay_handle);
+  err = f->overlay->HideOverlay (priv->overlay_handle);
 
   OVERLAY_CHECK_ERROR ("HideOverlay", err)
   return TRUE;
@@ -246,18 +242,16 @@ gboolean
 openvr_overlay_is_visible (OpenVROverlay *self)
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
-  GET_OVERLAY_FUNCTIONS
-  (void) err;
-  return f->IsOverlayVisible (priv->overlay_handle);
+  OpenVRFunctions *f = openvr_get_functions ();
+  return f->overlay->IsOverlayVisible (priv->overlay_handle);
 }
 
 gboolean
 openvr_overlay_thumbnail_is_visible (OpenVROverlay *self)
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
-  GET_OVERLAY_FUNCTIONS
-  (void) err;
-  return f->IsOverlayVisible (priv->thumbnail_handle);
+  OpenVRFunctions *f = openvr_get_functions ();
+  return f->overlay->IsOverlayVisible (priv->thumbnail_handle);
 }
 
 gboolean
@@ -265,9 +259,10 @@ openvr_overlay_set_sort_order (OpenVROverlay *self, uint32_t sort_order)
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
-  GET_OVERLAY_FUNCTIONS
+  OpenVRFunctions *f = openvr_get_functions ();
+  EVROverlayError err;
 
-  err = f->SetOverlaySortOrder (priv->overlay_handle, sort_order);
+  err = f->overlay->SetOverlaySortOrder (priv->overlay_handle, sort_order);
 
   OVERLAY_CHECK_ERROR ("SetOverlaySortOrder", err)
   return TRUE;
@@ -294,10 +289,11 @@ openvr_overlay_enable_mouse_input (OpenVROverlay *self)
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
-  GET_OVERLAY_FUNCTIONS
+  OpenVRFunctions *f = openvr_get_functions ();
+  EVROverlayError err;
 
-  err = f->SetOverlayInputMethod (priv->overlay_handle,
-                                  VROverlayInputMethod_Mouse);
+  err = f->overlay->SetOverlayInputMethod (priv->overlay_handle,
+                                           VROverlayInputMethod_Mouse);
 
   OVERLAY_CHECK_ERROR ("SetOverlayInputMethod", err)
 
@@ -311,11 +307,10 @@ openvr_overlay_poll_event (OpenVROverlay *self)
 
   struct VREvent_t vr_event;
 
-  GET_OVERLAY_FUNCTIONS
-  (void) err;
+  OpenVRFunctions *f = openvr_get_functions ();
 
-  while (f->PollNextOverlayEvent (priv->overlay_handle, &vr_event,
-                                  sizeof (vr_event)))
+  while (f->overlay->PollNextOverlayEvent (priv->overlay_handle, &vr_event,
+                                           sizeof (vr_event)))
   {
     switch (vr_event.eventType)
     {
@@ -392,10 +387,11 @@ openvr_overlay_set_mouse_scale (OpenVROverlay *self, float width, float height)
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
-  GET_OVERLAY_FUNCTIONS
+  OpenVRFunctions *f = openvr_get_functions ();
+  EVROverlayError err;
 
   struct HmdVector2_t mouse_scale = {{ width, height }};
-  err = f->SetOverlayMouseScale (priv->overlay_handle, &mouse_scale);
+  err = f->overlay->SetOverlayMouseScale (priv->overlay_handle, &mouse_scale);
 
   OVERLAY_CHECK_ERROR ("SetOverlayMouseScale", err)
   return TRUE;
@@ -406,9 +402,10 @@ openvr_overlay_clear_texture (OpenVROverlay *self)
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
-  GET_OVERLAY_FUNCTIONS
+  OpenVRFunctions *f = openvr_get_functions ();
+  EVROverlayError err;
 
-  err = f->ClearOverlayTexture (priv->overlay_handle);
+  err = f->overlay->ClearOverlayTexture (priv->overlay_handle);
 
   OVERLAY_CHECK_ERROR ("ClearOverlayTexture", err)
   return TRUE;
@@ -419,10 +416,11 @@ openvr_overlay_get_color (OpenVROverlay *self, graphene_vec3_t *color)
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
-  GET_OVERLAY_FUNCTIONS
+  OpenVRFunctions *f = openvr_get_functions ();
+  EVROverlayError err;
 
   float r, g, b;
-  err = f->GetOverlayColor (priv->overlay_handle, &r, &g, &b);
+  err = f->overlay->GetOverlayColor (priv->overlay_handle, &r, &g, &b);
 
   OVERLAY_CHECK_ERROR ("GetOverlayColor", err)
 
@@ -436,12 +434,13 @@ openvr_overlay_set_color (OpenVROverlay *self, const graphene_vec3_t *color)
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
-  GET_OVERLAY_FUNCTIONS
+  OpenVRFunctions *f = openvr_get_functions ();
+  EVROverlayError err;
 
-  err = f->SetOverlayColor (priv->overlay_handle,
-                            graphene_vec3_get_x (color),
-                            graphene_vec3_get_y (color),
-                            graphene_vec3_get_z (color));
+  err = f->overlay->SetOverlayColor (priv->overlay_handle,
+                                     graphene_vec3_get_x (color),
+                                     graphene_vec3_get_y (color),
+                                     graphene_vec3_get_z (color));
 
   OVERLAY_CHECK_ERROR ("SetOverlayColor", err)
   return TRUE;
@@ -452,9 +451,10 @@ openvr_overlay_set_alpha (OpenVROverlay *self, float alpha)
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
-  GET_OVERLAY_FUNCTIONS
+  OpenVRFunctions *f = openvr_get_functions ();
+  EVROverlayError err;
 
-  err = f->SetOverlayAlpha (priv->overlay_handle, alpha);
+  err = f->overlay->SetOverlayAlpha (priv->overlay_handle, alpha);
 
   OVERLAY_CHECK_ERROR ("SetOverlayAlpha", err)
   return TRUE;
@@ -465,9 +465,10 @@ openvr_overlay_set_width_meters (OpenVROverlay *self, float meters)
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
-  GET_OVERLAY_FUNCTIONS
+  OpenVRFunctions *f = openvr_get_functions ();
+  EVROverlayError err;
 
-  err = f->SetOverlayWidthInMeters (priv->overlay_handle, meters);
+  err = f->overlay->SetOverlayWidthInMeters (priv->overlay_handle, meters);
 
   OVERLAY_CHECK_ERROR ("SetOverlayWidthInMeters", err)
   return TRUE;
@@ -479,15 +480,17 @@ openvr_overlay_set_transform_absolute (OpenVROverlay *self,
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
-  GET_OVERLAY_FUNCTIONS
+  OpenVRFunctions *f = openvr_get_functions ();
+  EVROverlayError err;
 
   HmdMatrix34_t translation34;
   openvr_math_graphene_to_matrix34 (mat, &translation34);
 
+  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
   ETrackingUniverseOrigin origin = openvr_context_get_origin (context);
 
-  err = f->SetOverlayTransformAbsolute (priv->overlay_handle,
-                                        origin, &translation34);
+  err = f->overlay->SetOverlayTransformAbsolute (priv->overlay_handle,
+                                                 origin, &translation34);
 
   OVERLAY_CHECK_ERROR ("SetOverlayTransformAbsolute", err)
   return TRUE;
@@ -499,15 +502,17 @@ openvr_overlay_get_transform_absolute (OpenVROverlay *self,
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
-  GET_OVERLAY_FUNCTIONS
+  OpenVRFunctions *f = openvr_get_functions ();
+  EVROverlayError err;
 
   HmdMatrix34_t translation34;
 
+  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
   ETrackingUniverseOrigin origin = openvr_context_get_origin (context);
 
-  err = f->GetOverlayTransformAbsolute (priv->overlay_handle,
-                                       &origin,
-                                       &translation34);
+  err = f->overlay->GetOverlayTransformAbsolute (priv->overlay_handle,
+                                                &origin,
+                                                &translation34);
 
   openvr_math_matrix34_to_graphene (&translation34, mat);
 
@@ -580,10 +585,11 @@ openvr_overlay_set_raw (OpenVROverlay *self, guchar *pixels,
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
-  GET_OVERLAY_FUNCTIONS
+  OpenVRFunctions *f = openvr_get_functions ();
+  EVROverlayError err;
 
-  err = f->SetOverlayRaw (priv->overlay_handle,
-                          (void*) pixels, width, height, depth);
+  err = f->overlay->SetOverlayRaw (priv->overlay_handle,
+                                   (void*) pixels, width, height, depth);
 
   OVERLAY_CHECK_ERROR ("SetOverlayRaw", err)
   return TRUE;
@@ -594,10 +600,11 @@ openvr_overlay_get_size_pixels (OpenVROverlay *self, OpenVRPixelSize *size)
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
-  GET_OVERLAY_FUNCTIONS
+  OpenVRFunctions *f = openvr_get_functions ();
+  EVROverlayError err;
 
-  err =  f->GetOverlayTextureSize (priv->overlay_handle,
-                                   &size->width, &size->height);
+  err =  f->overlay->GetOverlayTextureSize (priv->overlay_handle,
+                                           &size->width, &size->height);
 
   OVERLAY_CHECK_ERROR ("GetOverlayTextureSize", err)
 
@@ -609,9 +616,10 @@ openvr_overlay_get_width_meters (OpenVROverlay *self, float *width)
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
-  GET_OVERLAY_FUNCTIONS
+  OpenVRFunctions *f = openvr_get_functions ();
+  EVROverlayError err;
 
-  err = f->GetOverlayWidthInMeters (priv->overlay_handle, width);
+  err = f->overlay->GetOverlayWidthInMeters (priv->overlay_handle, width);
 
   OVERLAY_CHECK_ERROR ("GetOverlayWidthInMeters", err)
 
@@ -648,9 +656,10 @@ openvr_overlay_show_keyboard (OpenVROverlay *self)
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
-  GET_OVERLAY_FUNCTIONS
+  OpenVRFunctions *f = openvr_get_functions ();
+  EVROverlayError err;
 
-  err = f->ShowKeyboardForOverlay (
+  err = f->overlay->ShowKeyboardForOverlay (
     priv->overlay_handle,
     EGamepadTextInputMode_k_EGamepadTextInputModeNormal,
     EGamepadTextInputLineMode_k_EGamepadTextInputLineModeSingleLine,
@@ -668,8 +677,7 @@ openvr_overlay_set_keyboard_position (OpenVROverlay   *self,
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
-  GET_OVERLAY_FUNCTIONS
-  (void) err;
+  OpenVRFunctions *f = openvr_get_functions ();
 
   HmdRect2_t rect = {
     .vTopLeft = {
@@ -681,7 +689,7 @@ openvr_overlay_set_keyboard_position (OpenVROverlay   *self,
       .v[1] = graphene_vec2_get_y (bottom_right)
     }
   };
-  f->SetKeyboardPositionForOverlay (priv->overlay_handle, rect);
+  f->overlay->SetKeyboardPositionForOverlay (priv->overlay_handle, rect);
 }
 
 gboolean
@@ -698,9 +706,10 @@ openvr_overlay_destroy (OpenVROverlay *self)
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
-  GET_OVERLAY_FUNCTIONS
+  OpenVRFunctions *f = openvr_get_functions ();
+  EVROverlayError err;
 
-  err = f->DestroyOverlay (priv->overlay_handle);
+  err = f->overlay->DestroyOverlay (priv->overlay_handle);
 
   OVERLAY_CHECK_ERROR ("DestroyOverlay", err)
 
@@ -722,7 +731,8 @@ openvr_overlay_set_model (OpenVROverlay *self,
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
-  GET_OVERLAY_FUNCTIONS
+  OpenVRFunctions *f = openvr_get_functions ();
+  EVROverlayError err;
 
   struct HmdColor_t hmd_color = {
     .r = graphene_vec4_get_x (color),
@@ -731,8 +741,8 @@ openvr_overlay_set_model (OpenVROverlay *self,
     .a = graphene_vec4_get_w (color)
   };
 
-  err = f->SetOverlayRenderModel (priv->overlay_handle,
-                                  name, &hmd_color);
+  err = f->overlay->SetOverlayRenderModel (priv->overlay_handle,
+                                           name, &hmd_color);
 
   OVERLAY_CHECK_ERROR ("SetOverlayRenderModel", err)
   return TRUE;
@@ -744,12 +754,13 @@ openvr_overlay_get_model (OpenVROverlay *self, gchar *name,
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
-  GET_OVERLAY_FUNCTIONS
+  OpenVRFunctions *f = openvr_get_functions ();
+  EVROverlayError err;
 
   struct HmdColor_t hmd_color;
-  *id = f->GetOverlayRenderModel (priv->overlay_handle,
-                                  name, k_unMaxPropertyStringSize,
-                                  &hmd_color, &err);
+  *id = f->overlay->GetOverlayRenderModel (priv->overlay_handle,
+                                           name, k_unMaxPropertyStringSize,
+                                          &hmd_color, &err);
 
   graphene_vec4_init (color,
                       hmd_color.r, hmd_color.g, hmd_color.b, hmd_color.a);
@@ -764,13 +775,12 @@ openvr_overlay_set_flip_y (OpenVROverlay *self,
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
-  GET_OVERLAY_FUNCTIONS
-  (void) err;
+  OpenVRFunctions *f = openvr_get_functions ();
 
   if (flip_y != priv->flip_y)
     {
       VRTextureBounds_t *bounds = flip_y ? &flippedBounds : &defaultBounds;
-      f->SetOverlayTextureBounds (priv->overlay_handle, bounds);
+      f->overlay->SetOverlayTextureBounds (priv->overlay_handle, bounds);
       priv->flip_y = flip_y;
     }
 }
@@ -783,7 +793,8 @@ openvr_overlay_submit_texture (OpenVROverlay *self,
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
-  GET_OVERLAY_FUNCTIONS
+  OpenVRFunctions *f = openvr_get_functions ();
+  EVROverlayError err;
 
   GulkanDevice *device = gulkan_client_get_device (client);
 
@@ -809,7 +820,7 @@ openvr_overlay_submit_texture (OpenVROverlay *self,
       .eColorSpace = EColorSpace_ColorSpace_Auto
     };
 
-  err = f->SetOverlayTexture (priv->overlay_handle, &vr_texture);
+  err = f->overlay->SetOverlayTexture (priv->overlay_handle, &vr_texture);
 
   OVERLAY_CHECK_ERROR ("SetOverlayTexture", err)
   return TRUE;
@@ -824,26 +835,28 @@ openvr_overlay_print_info (OpenVROverlay *self)
   float radius;
   EDualAnalogWhich which = EDualAnalogWhich_k_EDualAnalog_Left;
 
-  GET_OVERLAY_FUNCTIONS
+  OpenVRFunctions *f = openvr_get_functions ();
+  EVROverlayError err;
 
-  err = f->GetOverlayDualAnalogTransform (priv->overlay_handle, which,
-                                         &center, &radius);
+  err = f->overlay->GetOverlayDualAnalogTransform (priv->overlay_handle, which,
+                                                  &center, &radius);
 
   if (err != EVROverlayError_VROverlayError_None)
     {
       g_printerr ("Could not GetOverlayDualAnalogTransform: %s\n",
-                  f->GetOverlayErrorNameFromEnum (err));
+                  f->overlay->GetOverlayErrorNameFromEnum (err));
       return FALSE;
     }
 
   g_print ("Center [%f, %f] Radius %f\n", center.v[0], center.v[1], radius);
 
   VROverlayTransformType transform_type;
-  err = f->GetOverlayTransformType (priv->overlay_handle, &transform_type);
+  err = f->overlay->GetOverlayTransformType (priv->overlay_handle,
+                                            &transform_type);
   if (err != EVROverlayError_VROverlayError_None)
     {
       g_printerr ("Could not GetOverlayTransformType: %s\n",
-                  f->GetOverlayErrorNameFromEnum (err));
+                  f->overlay->GetOverlayErrorNameFromEnum (err));
       return FALSE;
     }
 
@@ -866,14 +879,14 @@ openvr_overlay_print_info (OpenVROverlay *self)
   TrackingUniverseOrigin tracking_origin;
   HmdMatrix34_t transform;
 
-  err = f->GetOverlayTransformAbsolute (
+  err = f->overlay->GetOverlayTransformAbsolute (
     priv->overlay_handle,
     &tracking_origin,
     &transform);
   if (err != EVROverlayError_VROverlayError_None)
     {
       g_printerr ("Could not GetOverlayTransformAbsolute: %s\n",
-                  f->GetOverlayErrorNameFromEnum (err));
+                  f->overlay->GetOverlayErrorNameFromEnum (err));
       return FALSE;
     }
 
