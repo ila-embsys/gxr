@@ -29,7 +29,8 @@ G_DECLARE_FINAL_TYPE (OpenVRContext, openvr_context,
 #define OPENVR_DEVICE_INDEX_HMD 0
 #define OPENVR_PROPERTY_STRING_MAX 32768
 
-OpenVRContext *openvr_context_get_instance (void);
+OpenVRContext *
+openvr_context_new (void);
 
 gboolean
 openvr_context_is_valid (OpenVRContext *self);

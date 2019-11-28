@@ -10,6 +10,7 @@
 
 #include "openvr-system.h"
 #include "openxr-context.h"
+#include "openvr-context.h"
 
 typedef struct _GxrContextPrivate
 {
@@ -50,6 +51,26 @@ _get_api_from_env ()
     return GXR_DEFAULT_API;
 }
 
+static GxrContext*
+_new_context_from_env ()
+{
+  GxrApi api = _get_api_from_env ();
+  switch (api)
+    {
+#ifdef GXR_HAS_OPENVR
+      case GXR_API_OPENVR:
+        return GXR_CONTEXT (openvr_context_new ());
+#endif
+#ifdef GXR_HAS_OPENXR
+      case GXR_API_OPENXR:
+        return GXR_CONTEXT (openxr_context_new ());
+#endif
+      default:
+        g_printerr ("ERROR: Could not init context: GXR API not supported.\n");
+        return NULL;
+    }
+}
+
 static void
 gxr_context_init (GxrContext *self)
 {
@@ -58,16 +79,10 @@ gxr_context_init (GxrContext *self)
 }
 
 GxrContext *
-gxr_context_new (void)
-{
-  return (GxrContext*) g_object_new (GXR_TYPE_CONTEXT, 0);
-}
-
-GxrContext *
 gxr_context_get_instance ()
 {
   if (singleton == NULL)
-    singleton = gxr_context_new ();
+    singleton = _new_context_from_env ();
 
   return singleton;
 }
@@ -99,10 +114,8 @@ gxr_context_get_head_pose (graphene_matrix_t *pose)
       return openvr_system_get_hmd_pose (pose);
 #endif
 #ifdef GXR_HAS_OPENXR
-    case GXR_API_OPENXR: {
-      OpenXRContext *xr_context = openxr_context_get_instance ();
-      return openxr_context_get_head_pose (xr_context, pose);
-    }
+    case GXR_API_OPENXR:
+      return openxr_context_get_head_pose (OPENXR_CONTEXT (self), pose);
 #endif
     default:
       g_warning ("gxr_context_get_head_pose not supported by backend.\n");

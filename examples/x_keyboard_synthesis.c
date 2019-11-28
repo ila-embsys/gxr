@@ -55,7 +55,7 @@ timeout_callback (gpointer data)
 static bool
 _init_openvr ()
 {
-  OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
   if (!openvr_context_initialize (context, GXR_APP_OVERLAY))
     {
       g_printerr ("Could not init OpenVR.\n");
@@ -361,7 +361,7 @@ main (int argc, char *argv[])
   if (!_init_openvr ())
     return -1;
 
-  OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
   openvr_context_show_system_keyboard (context);
 
   graphene_point3d_t position = {

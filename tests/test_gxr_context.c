@@ -32,6 +32,14 @@ _test_minimal ()
   GxrApi api = gxr_context_get_api (context);
   g_print ("Using API: %s\n", gxr_api_string (api));
 
+  switch (api)
+    {
+      case GXR_API_OPENVR:
+        break;
+      case GXR_API_OPENXR:
+        break;
+    }
+
   g_object_unref (context);
 }
 

@@ -33,9 +33,7 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (OpenXRContext, openxr_context,
                       OPENXR, CONTEXT, GxrContext)
 
-// OpenXRContext *openxr_context_new (void);
-
-OpenXRContext *openxr_context_get_instance (void);
+OpenXRContext *openxr_context_new (void);
 
 bool
 openxr_context_initialize(OpenXRContext *self,

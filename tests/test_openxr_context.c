@@ -13,7 +13,7 @@
 static void
 _test_minimal ()
 {
-  OpenXRContext *context = openxr_context_get_instance ();
+  OpenXRContext *context = OPENXR_CONTEXT (gxr_context_get_instance ());
   g_assert_nonnull (context);
 
   GulkanClient *gc = gulkan_client_new ();

@@ -151,7 +151,7 @@ _poll_events_cb (gpointer _self)
   gxr_action_sets_poll (&self->action_set, 1);
   openvr_overlay_poll_event (self->overlay);
 
-  OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
   openvr_context_poll_event (context);
 
   return TRUE;
@@ -169,7 +169,7 @@ _show_keyboard_cb (OpenVRAction    *action,
     {
       if (use_system_keyboard)
         {
-          OpenVRContext *context = openvr_context_get_instance ();
+          OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
           openvr_context_show_system_keyboard (context);
         }
       else
@@ -263,7 +263,7 @@ _cleanup (Example *self)
   g_object_unref (self->texture);
   g_object_unref (self->uploader);
 
-  OpenVRContext *context = openvr_context_get_instance ();
+  GxrContext *context = gxr_context_get_instance ();
   g_object_unref (context);
 }
 
@@ -275,7 +275,7 @@ main (int argc, char *argv[])
 
   gtk_init (&argc, &argv);
 
-  OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
   if (!openvr_context_initialize (context, GXR_APP_OVERLAY))
     {
       g_printerr ("Could not init OpenVR.\n");

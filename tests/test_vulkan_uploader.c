@@ -12,7 +12,7 @@ static void
 _test_minimal ()
 {
   g_assert (openvr_context_is_installed ());
-  OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
   g_assert_nonnull (context);
   g_assert (openvr_context_initialize (context, GXR_APP_OVERLAY));
   g_assert (openvr_context_is_valid (context));

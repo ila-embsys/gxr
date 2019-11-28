@@ -54,9 +54,6 @@ enum {
 
 static guint context_signals[LAST_SIGNAL] = { 0 };
 
-// singleton variable that can be set to NULL again when finalizing the context
-static OpenVRContext *context = NULL;
-
 static void
 openvr_context_finalize (GObject *gobject);
 
@@ -140,25 +137,13 @@ static void
 openvr_context_finalize (GObject *gobject)
 {
   VR_ShutdownInternal();
-
-  context = NULL;
-
   G_OBJECT_CLASS (openvr_context_parent_class)->finalize (gobject);
 }
 
-static OpenVRContext *
+OpenVRContext *
 openvr_context_new (void)
 {
   return (OpenVRContext*) g_object_new (OPENVR_TYPE_CONTEXT, 0);
-}
-
-OpenVRContext *
-openvr_context_get_instance ()
-{
-  if (context == NULL)
-    context = openvr_context_new ();
-
-  return context;
 }
 
 static gboolean
@@ -489,6 +474,7 @@ openvr_get_functions (void)
   OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
   return &context->f;
 }
+
 
 enum ETrackingUniverseOrigin
 openvr_context_get_origin (OpenVRContext *self)

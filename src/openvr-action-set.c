@@ -63,7 +63,7 @@ openvr_action_set_init (OpenVRActionSet *self)
 {
   self->handle = k_ulInvalidActionSetHandle;
 
-  OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
   g_signal_connect (context, "binding-loaded-event",
                     (GCallback) _binding_loaded_cb, self);
 }

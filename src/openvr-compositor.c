@@ -33,7 +33,7 @@ _split (gchar *str, GSList **out_list)
 bool
 openvr_compositor_get_instance_extensions (GSList **out_list)
 {
-  OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
   if (!openvr_context_is_valid (context))
     {
       g_printerr ("OpenVR context was not initialized.\n");

@@ -93,7 +93,7 @@ _cleanup (Example *self)
 
   g_main_loop_unref (self->loop);
 
-  OpenVRContext *context = openvr_context_get_instance ();
+  GxrContext *context = gxr_context_get_instance ();
   g_object_unref (context);
 
   for (int i = 0; i < 2; i++)
@@ -104,7 +104,7 @@ _cleanup (Example *self)
 int
 main ()
 {
-  OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
   if (!openvr_context_initialize (context, GXR_APP_OVERLAY))
     {
       g_printerr ("Could not init OpenVR.\n");

@@ -131,7 +131,7 @@ _destroy_cb (OpenVROverlay *overlay,
 static bool
 _init_openvr ()
 {
-  OpenVRContext *context = openvr_context_get_instance ();
+  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
   if (!openvr_context_initialize (context, GXR_APP_OVERLAY))
     {
       g_printerr ("Could not init OpenVR.\n");
@@ -215,7 +215,7 @@ main ()
   g_object_unref (texture);
   g_object_unref (uploader);
 
-  OpenVRContext *context = openvr_context_get_instance ();
+  GxrContext *context = gxr_context_get_instance ();
   g_object_unref (context);
 
   return 0;
