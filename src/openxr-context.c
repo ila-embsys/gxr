@@ -27,7 +27,7 @@
 
 struct _OpenXRContext
 {
-  GObject parent;
+  GxrContext parent;
 
   XrInstance instance;
   XrSession session;
@@ -63,7 +63,7 @@ struct _OpenXRContext
   XrSpace handSpaces[NUM_CONTROLLERS];
 };
 
-G_DEFINE_TYPE (OpenXRContext, openxr_context, G_TYPE_OBJECT)
+G_DEFINE_TYPE (OpenXRContext, openxr_context, GXR_TYPE_CONTEXT)
 
 // singleton variable that can be set to NULL again when finalizing the context
 static OpenXRContext *singleton = NULL;

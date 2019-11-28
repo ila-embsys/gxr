@@ -25,10 +25,13 @@
 #include <openxr/openxr.h>
 #include <openxr/openxr_platform.h>
 
+#include "gxr-context.h"
+
 G_BEGIN_DECLS
 
 #define OPENXR_TYPE_CONTEXT openxr_context_get_type()
-G_DECLARE_FINAL_TYPE (OpenXRContext, openxr_context, OPENXR, CONTEXT, GObject)
+G_DECLARE_FINAL_TYPE (OpenXRContext, openxr_context,
+                      OPENXR, CONTEXT, GxrContext)
 
 // OpenXRContext *openxr_context_new (void);
 
