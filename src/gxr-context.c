@@ -11,15 +11,15 @@
 #include "openvr-system.h"
 #include "openxr-context.h"
 
-struct _GxrContext
+typedef struct _GxrContextPrivate
 {
   GObject parent;
   GxrApi api;
-};
+} GxrContextPrivate;
 
 #define GXR_DEFAULT_API GXR_API_OPENVR
 
-G_DEFINE_TYPE (GxrContext, gxr_context, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_PRIVATE (GxrContext, gxr_context, G_TYPE_OBJECT)
 
 // singleton variable that can be set to NULL again when finalizing the context
 static GxrContext *singleton = NULL;
@@ -37,13 +37,14 @@ gxr_context_class_init (GxrContextClass *klass)
 static void
 gxr_context_init (GxrContext *self)
 {
+  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
   const gchar *api_env = g_getenv ("GXR_API");
   if (g_strcmp0 (api_env, "openxr") == 0)
-    self->api = GXR_API_OPENXR;
+    priv->api = GXR_API_OPENXR;
   else if (g_strcmp0 (api_env, "openvr") == 0)
-    self->api = GXR_API_OPENVR;
+    priv->api = GXR_API_OPENVR;
   else
-    self->api = GXR_DEFAULT_API;
+    priv->api = GXR_DEFAULT_API;
 }
 
 GxrContext *
@@ -72,14 +73,16 @@ gxr_context_finalize (GObject *gobject)
 GxrApi
 gxr_context_get_api (GxrContext *self)
 {
-  return self->api;
+  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
+  return priv->api;
 }
 
 gboolean
 gxr_context_get_head_pose (graphene_matrix_t *pose)
 {
   GxrContext *self = gxr_context_get_instance ();
-  switch (self->api)
+  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
+  switch (priv->api)
     {
 #ifdef GXR_HAS_OPENVR
     case GXR_API_OPENVR:
@@ -104,7 +107,8 @@ gxr_context_get_frustum_angles (GxrEye eye,
                                 float *top, float *bottom)
 {
   GxrContext *self = gxr_context_get_instance ();
-  switch (self->api)
+  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
+  switch (priv->api)
     {
     case GXR_API_OPENVR:
 #ifdef GXR_HAS_OPENVR
@@ -124,7 +128,8 @@ gboolean
 gxr_context_is_input_available (void)
 {
   GxrContext *self = gxr_context_get_instance ();
-  switch (self->api)
+  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
+  switch (priv->api)
     {
     case GXR_API_OPENVR:
 #ifdef GXR_HAS_OPENVR

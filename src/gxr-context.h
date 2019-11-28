@@ -20,9 +20,24 @@
 G_BEGIN_DECLS
 
 #define GXR_TYPE_CONTEXT gxr_context_get_type()
-G_DECLARE_FINAL_TYPE (GxrContext, gxr_context, GXR, CONTEXT, GObject)
+G_DECLARE_DERIVABLE_TYPE (GxrContext, gxr_context, GXR, CONTEXT, GObject)
 
-// GxrContext *gxr_context_new (void);
+struct _GxrContextClass
+{
+  GObjectClass parent;
+
+  gboolean
+  (*get_head_pose) (graphene_matrix_t *pose);
+
+  void
+  (*gxr_context_get_frustum_angles) (GxrEye eye,
+                                     float *left, float *right,
+                                     float *top, float *bottom);
+
+  gboolean
+  (*is_input_available) (void);
+};
+
 
 GxrContext *gxr_context_get_instance (void);
 
