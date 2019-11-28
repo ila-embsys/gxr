@@ -17,7 +17,11 @@ typedef struct _GxrContextPrivate
   GxrApi api;
 } GxrContextPrivate;
 
-#define GXR_DEFAULT_API GXR_API_OPENVR
+#ifdef GXR_HAS_OPENVR
+  #define GXR_DEFAULT_API GXR_API_OPENVR
+#else
+  #define GXR_DEFAULT_API GXR_API_OPENXR
+#endif
 
 G_DEFINE_TYPE_WITH_PRIVATE (GxrContext, gxr_context, G_TYPE_OBJECT)
 
@@ -34,17 +38,23 @@ gxr_context_class_init (GxrContextClass *klass)
   object_class->finalize = gxr_context_finalize;
 }
 
+static GxrApi
+_get_api_from_env ()
+{
+  const gchar *api_env = g_getenv ("GXR_API");
+  if (g_strcmp0 (api_env, "openxr") == 0)
+    return GXR_API_OPENXR;
+  else if (g_strcmp0 (api_env, "openvr") == 0)
+    return GXR_API_OPENVR;
+  else
+    return GXR_DEFAULT_API;
+}
+
 static void
 gxr_context_init (GxrContext *self)
 {
   GxrContextPrivate *priv = gxr_context_get_instance_private (self);
-  const gchar *api_env = g_getenv ("GXR_API");
-  if (g_strcmp0 (api_env, "openxr") == 0)
-    priv->api = GXR_API_OPENXR;
-  else if (g_strcmp0 (api_env, "openvr") == 0)
-    priv->api = GXR_API_OPENVR;
-  else
-    priv->api = GXR_DEFAULT_API;
+  priv->api = _get_api_from_env ();
 }
 
 GxrContext *
