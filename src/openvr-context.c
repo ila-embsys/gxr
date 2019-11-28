@@ -21,14 +21,14 @@
 
 typedef struct _OpenVRContext
 {
-  GObject parent;
+  GxrContext parent;
 
   OpenVRFunctions f;
 
   enum ETrackingUniverseOrigin origin;
 } OpenVROverlayPrivate;
 
-G_DEFINE_TYPE (OpenVRContext, openvr_context, G_TYPE_OBJECT)
+G_DEFINE_TYPE (OpenVRContext, openvr_context, GXR_TYPE_CONTEXT)
 
 #define INIT_FN_TABLE(target, type) \
 { \

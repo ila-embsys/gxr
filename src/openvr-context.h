@@ -18,11 +18,13 @@
 #include <stdint.h>
 
 #include "gxr-enums.h"
+#include "gxr-context.h"
 
 G_BEGIN_DECLS
 
 #define OPENVR_TYPE_CONTEXT openvr_context_get_type()
-G_DECLARE_FINAL_TYPE (OpenVRContext, openvr_context, OPENVR, CONTEXT, GObject)
+G_DECLARE_FINAL_TYPE (OpenVRContext, openvr_context,
+                      OPENVR, CONTEXT, GxrContext)
 
 #define OPENVR_DEVICE_INDEX_HMD 0
 #define OPENVR_PROPERTY_STRING_MAX 32768
