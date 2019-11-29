@@ -1,12 +1,4 @@
 if openvr_dep.found()
-  test_context = executable(
-    'test_context', 'test_context.c',
-    dependencies: gxr_deps,
-    link_with: gxr_lib,
-    include_directories: gxr_inc,
-    install: false)
-  test('test_context', test_context, suite: ['xr'])
-
   test_system = executable(
     'test_system', 'test_system.c',
     dependencies: gxr_deps,
@@ -39,14 +31,6 @@ if openvr_dep.found()
     install: false)
   test('test_io', test_io)
 endif
-
-test_openxr_context = executable(
-  'test_openxr_context', ['test_openxr_context.c', test_resources],
-  dependencies: gxr_deps,
-  link_with: gxr_lib,
-  include_directories: gxr_inc,
-  install: false)
-test('test_openxr_context', test_openxr_context, suite: ['xr'])
 
 test_gxr_context = executable(
   'test_gxr_context', ['test_gxr_context.c', test_resources],
