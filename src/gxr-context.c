@@ -8,7 +8,6 @@
 #include "gxr-context.h"
 #include "gxr-config.h"
 
-#include "openvr-system.h"
 #include "openxr-context.h"
 #include "openvr-context.h"
 

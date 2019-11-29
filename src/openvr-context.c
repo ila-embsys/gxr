@@ -19,7 +19,7 @@
 
 #include "openvr-context-private.h"
 #include "openvr-compositor-private.h"
-#include "openvr-system.h"
+#include "openvr-system-private.h"
 
 typedef struct _OpenVRContext
 {
@@ -416,6 +416,26 @@ _get_render_dimensions (GxrContext *context,
   openvr_system_get_render_target_size (width, height);
 }
 
+gboolean
+_is_input_available ()
+{
+  return openvr_system_is_input_available ();
+}
+
+void
+_get_frustum_angles (GxrEye eye,
+                     float *left, float *right,
+                     float *top, float *bottom)
+{
+  return openvr_system_get_frustum_angles (eye, left, right, top, bottom);
+}
+
+gboolean
+_get_head_pose (graphene_matrix_t *pose)
+{
+  return openvr_system_get_hmd_pose (pose);
+}
+
 static void
 openvr_context_class_init (OpenVRContextClass *klass)
 {
@@ -424,6 +444,9 @@ openvr_context_class_init (OpenVRContextClass *klass)
 
   GxrContextClass *gxr_context_class = GXR_CONTEXT_CLASS (klass);
   gxr_context_class->get_render_dimensions = _get_render_dimensions;
+  gxr_context_class->is_input_available = _is_input_available;
+  gxr_context_class->get_frustum_angles = _get_frustum_angles;
+  gxr_context_class->get_head_pose = _get_head_pose;
 
   context_signals[KEYBOARD_PRESS_EVENT] =
     g_signal_new ("keyboard-press-event",

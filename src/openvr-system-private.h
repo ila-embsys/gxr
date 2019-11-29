@@ -13,9 +13,10 @@
 #endif
 
 #include <glib.h>
+#include <graphene.h>
+
 #include "openvr-wrapper.h"
 #include "gxr-enums.h"
-
 
 gchar*
 openvr_system_get_device_string (TrackedDeviceIndex_t device_index,
@@ -26,5 +27,19 @@ openvr_system_eye_to_gxr (EVREye eye);
 
 EVREye
 openvr_system_eye_to_openvr (GxrEye eye);
+
+void
+openvr_system_get_render_target_size (uint32_t *w, uint32_t *h);
+
+void
+openvr_system_get_frustum_angles (GxrEye eye,
+                                  float *left, float *right,
+                                  float *top, float *bottom);
+
+gboolean
+openvr_system_get_hmd_pose (graphene_matrix_t *pose);
+
+gboolean
+openvr_system_is_input_available (void);
 
 #endif /* GXR_SYSTEM_PRIVATE_H_ */

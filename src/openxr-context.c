@@ -1202,6 +1202,29 @@ _get_render_dimensions (GxrContext *context,
   openxr_context_get_swapchain_dimensions (self, 0, width, height);
 }
 
+static gboolean
+_is_input_available ()
+{
+  return TRUE;
+}
+
+static void
+_get_frustum_angles (GxrEye eye,
+                     float *left, float *right,
+                     float *top, float *bottom)
+{
+  (void) eye;
+  *left = 1, *right = 1, *top = 1, *bottom = 1;
+  g_warning ("_get_frustum_angles not implemented in OpenXR.\n");
+}
+
+static gboolean
+_get_head_pose (graphene_matrix_t *pose)
+{
+  OpenXRContext *self = OPENXR_CONTEXT (gxr_context_get_instance ());
+  return openxr_context_get_head_pose (self, pose);
+}
+
 static void
 openxr_context_class_init (OpenXRContextClass *klass)
 {
@@ -1210,6 +1233,9 @@ openxr_context_class_init (OpenXRContextClass *klass)
 
   GxrContextClass *gxr_context_class = GXR_CONTEXT_CLASS (klass);
   gxr_context_class->get_render_dimensions = _get_render_dimensions;
+  gxr_context_class->is_input_available = _is_input_available;
+  gxr_context_class->get_frustum_angles = _get_frustum_angles;
+  gxr_context_class->get_head_pose = _get_head_pose;
 
   action_signals[DIGITAL_EVENT] =
   g_signal_new ("grab-event", /* TODO: binding, digital-event */

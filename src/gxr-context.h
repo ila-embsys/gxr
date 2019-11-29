@@ -31,9 +31,9 @@ struct _GxrContextClass
   (*get_head_pose) (graphene_matrix_t *pose);
 
   void
-  (*gxr_context_get_frustum_angles) (GxrEye eye,
-                                     float *left, float *right,
-                                     float *top, float *bottom);
+  (*get_frustum_angles) (GxrEye eye,
+                         float *left, float *right,
+                         float *top, float *bottom);
 
   gboolean
   (*is_input_available) (void);
