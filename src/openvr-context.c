@@ -132,6 +132,17 @@ _vr_init (OpenVRContext *self, EVRApplicationType app_type)
   return TRUE;
 }
 
+static gboolean
+_is_valid (GxrContext *context)
+{
+  OpenVRContext * self = OPENVR_CONTEXT (context);
+  return self->f.system != NULL
+    && self->f.overlay != NULL
+    && self->f.compositor != NULL
+    && self->f.input != NULL
+    && self->f.model != NULL;
+}
+
 gboolean
 openvr_context_initialize (OpenVRContext *self, GxrAppType type)
 {
@@ -162,23 +173,13 @@ openvr_context_initialize (OpenVRContext *self, GxrAppType type)
   if (!_vr_init (self, app_type))
     return FALSE;
 
-  if (!openvr_context_is_valid (self))
+  if (!_is_valid (GXR_CONTEXT (self)))
     {
       g_printerr ("Could not load OpenVR function pointers.\n");
       return FALSE;
     }
 
   return TRUE;
-}
-
-gboolean
-openvr_context_is_valid (OpenVRContext * self)
-{
-  return self->f.system != NULL
-    && self->f.overlay != NULL
-    && self->f.compositor != NULL
-    && self->f.input != NULL
-    && self->f.model != NULL;
 }
 
 gboolean
@@ -447,6 +448,7 @@ openvr_context_class_init (OpenVRContextClass *klass)
   gxr_context_class->is_input_available = _is_input_available;
   gxr_context_class->get_frustum_angles = _get_frustum_angles;
   gxr_context_class->get_head_pose = _get_head_pose;
+  gxr_context_class->is_valid = _is_valid;
 
   context_signals[KEYBOARD_PRESS_EVENT] =
     g_signal_new ("keyboard-press-event",

@@ -1218,6 +1218,14 @@ _get_frustum_angles (GxrEye eye,
   g_warning ("_get_frustum_angles not implemented in OpenXR.\n");
 }
 
+static gboolean
+_is_valid (GxrContext *context)
+{
+  (void) context;
+  g_warning ("_is_valid not implemented in OpenXR.\n");
+  return TRUE;
+}
+
 static void
 openxr_context_class_init (OpenXRContextClass *klass)
 {
@@ -1229,6 +1237,7 @@ openxr_context_class_init (OpenXRContextClass *klass)
   gxr_context_class->is_input_available = _is_input_available;
   gxr_context_class->get_frustum_angles = _get_frustum_angles;
   gxr_context_class->get_head_pose = _get_head_pose;
+  gxr_context_class->is_valid = _is_valid;
 
   action_signals[DIGITAL_EVENT] =
   g_signal_new ("grab-event", /* TODO: binding, digital-event */

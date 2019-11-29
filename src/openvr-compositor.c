@@ -33,8 +33,8 @@ _split (gchar *str, GSList **out_list)
 bool
 openvr_compositor_get_instance_extensions (GSList **out_list)
 {
-  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
-  if (!openvr_context_is_valid (context))
+  GxrContext *context = gxr_context_get_instance ();
+  if (!gxr_context_is_valid (context))
     {
       g_printerr ("OpenVR context was not initialized.\n");
       return FALSE;
@@ -63,8 +63,8 @@ openvr_compositor_get_device_extensions (VkPhysicalDevice  physical_device,
                                          GSList          **out_list)
 {
   OpenVRFunctions *f = openvr_get_functions ();
-  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
-  if (!openvr_context_is_valid (context))
+  GxrContext *context = gxr_context_get_instance ();
+  if (!gxr_context_is_valid (context))
     {
       g_printerr ("OpenVR context was not initialized.\n");
       return FALSE;

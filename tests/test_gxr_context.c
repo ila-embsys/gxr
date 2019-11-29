@@ -56,7 +56,7 @@ static void
 _init_openvr (OpenVRContext *context)
 {
   g_assert (openvr_context_initialize (context, GXR_APP_OVERLAY));
-  g_assert (openvr_context_is_valid (context));
+  g_assert (gxr_context_is_valid (GXR_CONTEXT (context)));
   g_object_unref (context);
 }
 #endif

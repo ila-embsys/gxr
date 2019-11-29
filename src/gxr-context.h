@@ -42,6 +42,9 @@ struct _GxrContextClass
   (*get_render_dimensions) (GxrContext *context,
                             uint32_t   *width,
                             uint32_t   *height);
+
+  gboolean
+  (*is_valid) (GxrContext *self);
 };
 
 
@@ -64,6 +67,9 @@ gxr_context_is_input_available (void);
 void
 gxr_context_get_render_dimensions (uint32_t *width,
                                    uint32_t *height);
+
+gboolean
+gxr_context_is_valid (GxrContext *self);
 
 G_END_DECLS
 

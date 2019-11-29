@@ -33,9 +33,6 @@ OpenVRContext *
 openvr_context_new (void);
 
 gboolean
-openvr_context_is_valid (OpenVRContext *self);
-
-gboolean
 openvr_context_is_installed (void);
 
 gboolean

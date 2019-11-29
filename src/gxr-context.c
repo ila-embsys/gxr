@@ -120,7 +120,7 @@ gxr_context_get_frustum_angles (GxrEye eye,
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->get_frustum_angles == NULL)
     return;
-  return klass->get_frustum_angles (eye, left, right, top, bottom);
+  klass->get_frustum_angles (eye, left, right, top, bottom);
 }
 
 gboolean
@@ -141,5 +141,14 @@ gxr_context_get_render_dimensions (uint32_t *width,
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->get_render_dimensions == NULL)
       return;
-  return klass->get_render_dimensions (self, width, height);
+  klass->get_render_dimensions (self, width, height);
+}
+
+gboolean
+gxr_context_is_valid (GxrContext *self)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->is_valid == NULL)
+      return FALSE;
+  return klass->is_valid (self);
 }
