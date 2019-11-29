@@ -93,10 +93,6 @@ openxr_context_get_view (OpenXRContext *self,
 VkFormat
 openxr_context_get_swapchain_format (OpenXRContext *self);
 
-gboolean
-openxr_context_get_head_pose (OpenXRContext     *self,
-                              graphene_matrix_t *pose);
-
 G_END_DECLS
 
 #endif /* GXR_OPENXR_CONTEXT_H_ */

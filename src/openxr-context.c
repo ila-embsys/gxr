@@ -1067,15 +1067,15 @@ _space_location_valid (XrSpaceLocation *sl)
          (sl->locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT) != 0;
 }
 
-gboolean
-openxr_context_get_head_pose (OpenXRContext     *self,
-                              graphene_matrix_t *pose)
+static gboolean
+_get_head_pose (graphene_matrix_t *pose)
 {
   XrSpaceLocation space_location = {
     .type = XR_TYPE_SPACE_LOCATION,
     .next = NULL
   };
 
+  OpenXRContext *self = OPENXR_CONTEXT (gxr_context_get_instance ());
   XrResult result = xrLocateSpace (self->view_space, self->local_space,
                                    self->frame_state.predictedDisplayTime,
                                   &space_location);
@@ -1216,13 +1216,6 @@ _get_frustum_angles (GxrEye eye,
   (void) eye;
   *left = 1, *right = 1, *top = 1, *bottom = 1;
   g_warning ("_get_frustum_angles not implemented in OpenXR.\n");
-}
-
-static gboolean
-_get_head_pose (graphene_matrix_t *pose)
-{
-  OpenXRContext *self = OPENXR_CONTEXT (gxr_context_get_instance ());
-  return openxr_context_get_head_pose (self, pose);
 }
 
 static void
