@@ -14,6 +14,7 @@
 
 #include <glib-object.h>
 #include <graphene.h>
+#include <stdint.h>
 
 #include "gxr-enums.h"
 
@@ -36,6 +37,11 @@ struct _GxrContextClass
 
   gboolean
   (*is_input_available) (void);
+
+  void
+  (*get_render_dimensions) (GxrContext *context,
+                            uint32_t   *width,
+                            uint32_t   *height);
 };
 
 
@@ -54,6 +60,10 @@ gxr_context_get_frustum_angles (GxrEye eye,
 
 gboolean
 gxr_context_is_input_available (void);
+
+void
+gxr_context_get_render_dimensions (uint32_t *width,
+                                   uint32_t *height);
 
 G_END_DECLS
 

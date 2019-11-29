@@ -78,35 +78,6 @@ static void
 openxr_context_finalize (GObject *gobject);
 
 static void
-openxr_context_class_init (OpenXRContextClass *klass)
-{
-  GObjectClass *object_class = G_OBJECT_CLASS (klass);
-  object_class->finalize = openxr_context_finalize;
-
-
-  action_signals[DIGITAL_EVENT] =
-  g_signal_new ("grab-event", /* TODO: binding, digital-event */
-                G_TYPE_FROM_CLASS (klass),
-                G_SIGNAL_RUN_LAST,
-                0, NULL, NULL, NULL, G_TYPE_NONE,
-                1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  action_signals[ANALOG_EVENT] =
-  g_signal_new ("analog-event",
-                G_TYPE_FROM_CLASS (klass),
-                G_SIGNAL_RUN_LAST,
-                0, NULL, NULL, NULL, G_TYPE_NONE,
-                1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  action_signals[POSE_EVENT] =
-  g_signal_new ("pose-event",
-                G_TYPE_FROM_CLASS (klass),
-                G_SIGNAL_RUN_FIRST,
-                0, NULL, NULL, NULL, G_TYPE_NONE,
-                1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-}
-
-static void
 openxr_context_init (OpenXRContext *self)
 {
   self->is_initialized = false;
@@ -1222,3 +1193,42 @@ openxr_context_get_swapchain_format (OpenXRContext *self)
   return (VkFormat) self->swapchain_format;
 }
 
+static void
+_get_render_dimensions (GxrContext *context,
+                        uint32_t   *width,
+                        uint32_t   *height)
+{
+  OpenXRContext *self = OPENXR_CONTEXT (context);
+  openxr_context_get_swapchain_dimensions (self, 0, width, height);
+}
+
+static void
+openxr_context_class_init (OpenXRContextClass *klass)
+{
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+  object_class->finalize = openxr_context_finalize;
+
+  GxrContextClass *gxr_context_class = GXR_CONTEXT_CLASS (klass);
+  gxr_context_class->get_render_dimensions = _get_render_dimensions;
+
+  action_signals[DIGITAL_EVENT] =
+  g_signal_new ("grab-event", /* TODO: binding, digital-event */
+                G_TYPE_FROM_CLASS (klass),
+                G_SIGNAL_RUN_LAST,
+                0, NULL, NULL, NULL, G_TYPE_NONE,
+                1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  action_signals[ANALOG_EVENT] =
+  g_signal_new ("analog-event",
+                G_TYPE_FROM_CLASS (klass),
+                G_SIGNAL_RUN_LAST,
+                0, NULL, NULL, NULL, G_TYPE_NONE,
+                1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  action_signals[POSE_EVENT] =
+  g_signal_new ("pose-event",
+                G_TYPE_FROM_CLASS (klass),
+                G_SIGNAL_RUN_FIRST,
+                0, NULL, NULL, NULL, G_TYPE_NONE,
+                1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+}

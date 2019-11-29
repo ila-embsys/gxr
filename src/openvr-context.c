@@ -19,6 +19,7 @@
 
 #include "openvr-context-private.h"
 #include "openvr-compositor-private.h"
+#include "openvr-system.h"
 
 typedef struct _OpenVRContext
 {
@@ -53,75 +54,6 @@ enum {
 };
 
 static guint context_signals[LAST_SIGNAL] = { 0 };
-
-static void
-openvr_context_finalize (GObject *gobject);
-
-static void
-openvr_context_class_init (OpenVRContextClass *klass)
-{
-  GObjectClass *object_class = G_OBJECT_CLASS (klass);
-  object_class->finalize = openvr_context_finalize;
-
-  context_signals[KEYBOARD_PRESS_EVENT] =
-    g_signal_new ("keyboard-press-event",
-                   G_TYPE_FROM_CLASS (klass),
-                   G_SIGNAL_RUN_LAST,
-                   0, NULL, NULL, NULL, G_TYPE_NONE,
-                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  context_signals[KEYBOARD_CLOSE_EVENT] =
-    g_signal_new ("keyboard-close-event",
-                   G_TYPE_FROM_CLASS (klass),
-                   G_SIGNAL_RUN_FIRST,
-                   0, NULL, NULL, NULL, G_TYPE_NONE, 0);
-
-  context_signals[QUIT_EVENT] =
-    g_signal_new ("quit-event",
-                   G_TYPE_FROM_CLASS (klass),
-                   G_SIGNAL_RUN_LAST,
-                   0, NULL, NULL, NULL, G_TYPE_NONE,
-                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  context_signals[DEVICE_ACTIVATE_EVENT] =
-    g_signal_new ("device-activate-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_LAST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE,
-                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  context_signals[DEVICE_DEACTIVATE_EVENT] =
-    g_signal_new ("device-deactivate-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_LAST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE,
-                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  context_signals[DEVICE_UPDATE_EVENT] =
-    g_signal_new ("device-update-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_LAST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE,
-                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  context_signals[BINDINGS_UPDATE] =
-    g_signal_new ("bindings-update-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_FIRST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE, 0);
-
-  context_signals[BINDING_LOADED] =
-    g_signal_new ("binding-loaded-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_FIRST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE, 0);
-
-  context_signals[ACTIONSET_UPDATE] =
-    g_signal_new ("action-set-update-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_FIRST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE, 0);
-}
 
 static void
 openvr_context_init (OpenVRContext *self)
@@ -475,3 +407,80 @@ openvr_get_functions (void)
   return &context->f;
 }
 
+static void
+_get_render_dimensions (GxrContext *context,
+                        uint32_t   *width,
+                        uint32_t   *height)
+{
+  (void) context;
+  openvr_system_get_render_target_size (width, height);
+}
+
+static void
+openvr_context_class_init (OpenVRContextClass *klass)
+{
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+  object_class->finalize = openvr_context_finalize;
+
+  GxrContextClass *gxr_context_class = GXR_CONTEXT_CLASS (klass);
+  gxr_context_class->get_render_dimensions = _get_render_dimensions;
+
+  context_signals[KEYBOARD_PRESS_EVENT] =
+    g_signal_new ("keyboard-press-event",
+                   G_TYPE_FROM_CLASS (klass),
+                   G_SIGNAL_RUN_LAST,
+                   0, NULL, NULL, NULL, G_TYPE_NONE,
+                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  context_signals[KEYBOARD_CLOSE_EVENT] =
+    g_signal_new ("keyboard-close-event",
+                   G_TYPE_FROM_CLASS (klass),
+                   G_SIGNAL_RUN_FIRST,
+                   0, NULL, NULL, NULL, G_TYPE_NONE, 0);
+
+  context_signals[QUIT_EVENT] =
+    g_signal_new ("quit-event",
+                   G_TYPE_FROM_CLASS (klass),
+                   G_SIGNAL_RUN_LAST,
+                   0, NULL, NULL, NULL, G_TYPE_NONE,
+                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  context_signals[DEVICE_ACTIVATE_EVENT] =
+    g_signal_new ("device-activate-event",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_LAST,
+                  0, NULL, NULL, NULL, G_TYPE_NONE,
+                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  context_signals[DEVICE_DEACTIVATE_EVENT] =
+    g_signal_new ("device-deactivate-event",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_LAST,
+                  0, NULL, NULL, NULL, G_TYPE_NONE,
+                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  context_signals[DEVICE_UPDATE_EVENT] =
+    g_signal_new ("device-update-event",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_LAST,
+                  0, NULL, NULL, NULL, G_TYPE_NONE,
+                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  context_signals[BINDINGS_UPDATE] =
+    g_signal_new ("bindings-update-event",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_FIRST,
+                  0, NULL, NULL, NULL, G_TYPE_NONE, 0);
+
+  context_signals[BINDING_LOADED] =
+    g_signal_new ("binding-loaded-event",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_FIRST,
+                  0, NULL, NULL, NULL, G_TYPE_NONE, 0);
+
+  context_signals[ACTIONSET_UPDATE] =
+    g_signal_new ("action-set-update-event",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_FIRST,
+                  0, NULL, NULL, NULL, G_TYPE_NONE, 0);
+}

@@ -163,3 +163,14 @@ gxr_context_is_input_available (void)
       return TRUE;
   };
 }
+
+void
+gxr_context_get_render_dimensions (uint32_t *width,
+                                   uint32_t *height)
+{
+  GxrContext *self = gxr_context_get_instance ();
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->get_render_dimensions == NULL)
+      return;
+  return klass->get_render_dimensions (self, width, height);
+}
