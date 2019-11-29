@@ -152,3 +152,12 @@ gxr_context_is_valid (GxrContext *self)
       return FALSE;
   return klass->is_valid (self);
 }
+
+gboolean
+gxr_context_init_gulkan (GxrContext *self, GulkanClient *gc)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->init_gulkan == NULL)
+      return FALSE;
+  return klass->init_gulkan (self, gc);
+}

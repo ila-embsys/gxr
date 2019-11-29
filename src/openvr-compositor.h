@@ -28,9 +28,6 @@ bool
 openvr_compositor_get_device_extensions (VkPhysicalDevice  physical_device,
                                          GSList          **out_list);
 
-bool
-openvr_compositor_gulkan_client_init (GulkanClient *client);
-
 GulkanClient*
 openvr_compositor_gulkan_client_new (void);
 

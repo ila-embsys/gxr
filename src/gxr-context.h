@@ -15,6 +15,7 @@
 #include <glib-object.h>
 #include <graphene.h>
 #include <stdint.h>
+#include <gulkan.h>
 
 #include "gxr-enums.h"
 
@@ -45,8 +46,10 @@ struct _GxrContextClass
 
   gboolean
   (*is_valid) (GxrContext *self);
-};
 
+  gboolean
+ (*init_gulkan) (GxrContext *self, GulkanClient *gc);
+};
 
 GxrContext *gxr_context_get_instance (void);
 
@@ -70,6 +73,9 @@ gxr_context_get_render_dimensions (uint32_t *width,
 
 gboolean
 gxr_context_is_valid (GxrContext *self);
+
+gboolean
+gxr_context_init_gulkan (GxrContext *self, GulkanClient *gc);
 
 G_END_DECLS
 

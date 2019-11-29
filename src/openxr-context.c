@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <graphene.h>
+#include <gulkan.h>
 
 #include <openxr/openxr_reflection.h>
 
@@ -1226,6 +1227,36 @@ _is_valid (GxrContext *context)
   return TRUE;
 }
 
+static gboolean
+_init_gulkan (GxrContext   *context,
+              GulkanClient *gc)
+{
+  gulkan_client_init_vulkan (gc, NULL, NULL);
+
+  GulkanInstance *gk_instance = gulkan_client_get_instance (gc);
+  VkInstance vk_instance = gulkan_instance_get_handle (gk_instance);
+
+  GulkanDevice *gk_device = gulkan_client_get_device (gc);
+  VkDevice vk_device = gulkan_device_get_handle (gk_device);
+
+  VkPhysicalDevice physical_device =
+    gulkan_device_get_physical_handle (gk_device);
+
+  uint32_t queue_family_index = gulkan_device_get_queue_family_index (gk_device);
+
+  uint32_t queue_index = 0;
+
+  if (!openxr_context_initialize (OPENXR_CONTEXT (context),
+                                  vk_instance,
+                                  physical_device,
+                                  vk_device,
+                                  queue_family_index,
+                                  queue_index))
+    return FALSE;
+
+  return TRUE;
+}
+
 static void
 openxr_context_class_init (OpenXRContextClass *klass)
 {
@@ -1238,6 +1269,7 @@ openxr_context_class_init (OpenXRContextClass *klass)
   gxr_context_class->get_frustum_angles = _get_frustum_angles;
   gxr_context_class->get_head_pose = _get_head_pose;
   gxr_context_class->is_valid = _is_valid;
+  gxr_context_class->init_gulkan = _init_gulkan;
 
   action_signals[DIGITAL_EVENT] =
   g_signal_new ("grab-event", /* TODO: binding, digital-event */
