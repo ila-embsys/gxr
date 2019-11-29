@@ -21,25 +21,25 @@ gxr_headers = [
 
 openvr_sources = [
   'gxr-io.c',
-  'openvr-system.c',
-  'openvr-overlay.c',
-  'openvr-compositor.c',
-  'openvr-context.c',
-  'openvr-action.c',
-  'openvr-action-set.c',
-  'openvr-model.c',
-  'openvr-math.c'
+  'openvr/openvr-system.c',
+  'openvr/openvr-overlay.c',
+  'openvr/openvr-compositor.c',
+  'openvr/openvr-context.c',
+  'openvr/openvr-action.c',
+  'openvr/openvr-action-set.c',
+  'openvr/openvr-model.c',
+  'openvr/openvr-math.c'
 ]
 
 openvr_headers = [
   'gxr-io.h',
-  'openvr-system.h',
-  'openvr-overlay.h',
-  'openvr-compositor.h',
-  'openvr-context.h',
-  'openvr-action.h',
-  'openvr-action-set.h',
-  'openvr-model.h'
+  'openvr/openvr-system.h',
+  'openvr/openvr-overlay.h',
+  'openvr/openvr-compositor.h',
+  'openvr/openvr-context.h',
+  'openvr/openvr-action.h',
+  'openvr/openvr-action-set.h',
+  'openvr/openvr-model.h'
 ]
 
 if openvr_dep.found()
@@ -48,11 +48,11 @@ if openvr_dep.found()
 endif
 
 openxr_sources = [
-  'openxr-context.c'
+  'openxr/openxr-context.c'
 ]
 
 openxr_headers = [
-  'openxr-context.h'
+  'openxr/openxr-context.h'
 ]
 
 if openxr_dep.found()
@@ -92,6 +92,16 @@ gxr_deps = [
   openxr_dep
 ]
 
+inc_dirs = ['.']
+if openvr_dep.found()
+  inc_dirs += ['openvr']
+endif
+if openxr_dep.found()
+  inc_dirs += ['openxr']
+endif
+
+gxr_inc = include_directories(inc_dirs)
+
 if openvr_dep.found()
   gxr_deps += [
     stdcpp_dep,
@@ -103,6 +113,7 @@ if openvr_dep.found()
     version: meson.project_version(),
     soversion: so_version,
     dependencies: gxr_deps,
+    include_directories: gxr_inc,
     install: true,
     c_args : ['-DGXR_COMPILATION'],
     build_rpath : openvr_dep.get_pkgconfig_variable('libdir'),
@@ -114,17 +125,16 @@ else
     version: meson.project_version(),
     soversion: so_version,
     dependencies: gxr_deps,
+    include_directories: gxr_inc,
     install: true,
     c_args : ['-DGXR_COMPILATION']
   )
 endif
 
-gxr_inc = include_directories('.')
-
 gxr_dep = declare_dependency(
   sources: [],
   link_with: gxr_lib,
-  include_directories: [ gxr_inc ],
+  include_directories: gxr_inc,
   dependencies: gxr_deps,
 )
 
