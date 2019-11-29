@@ -105,22 +105,10 @@ gboolean
 gxr_context_get_head_pose (graphene_matrix_t *pose)
 {
   GxrContext *self = gxr_context_get_instance ();
-  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
-  switch (priv->api)
-    {
-#ifdef GXR_HAS_OPENVR
-    case GXR_API_OPENVR:
-      return openvr_system_get_hmd_pose (pose);
-#endif
-#ifdef GXR_HAS_OPENXR
-    case GXR_API_OPENXR:
-      return openxr_context_get_head_pose (OPENXR_CONTEXT (self), pose);
-#endif
-    default:
-      g_warning ("gxr_context_get_head_pose not supported by backend.\n");
-      return FALSE;
-  };
-  return FALSE;
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->get_head_pose == NULL)
+    return FALSE;
+  return klass->get_head_pose (pose);
 }
 
 void
@@ -129,38 +117,20 @@ gxr_context_get_frustum_angles (GxrEye eye,
                                 float *top, float *bottom)
 {
   GxrContext *self = gxr_context_get_instance ();
-  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
-  switch (priv->api)
-    {
-    case GXR_API_OPENVR:
-#ifdef GXR_HAS_OPENVR
-      return openvr_system_get_frustum_angles (eye, left, right, top, bottom);
-#endif
-    /* TODO: Implement for OpenXR*/
-    default: {
-      (void) eye;
-      *left = 1, *right = 1, *top = 1, *bottom = 1;
-      g_warning ("gxr_context_get_frustum_angles not supported by backend.\n");
-      return;
-    }
-  };
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->get_frustum_angles == NULL)
+    return;
+  return klass->get_frustum_angles (eye, left, right, top, bottom);
 }
 
 gboolean
 gxr_context_is_input_available (void)
 {
   GxrContext *self = gxr_context_get_instance ();
-  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
-  switch (priv->api)
-    {
-    case GXR_API_OPENVR:
-#ifdef GXR_HAS_OPENVR
-      return openvr_system_is_input_available ();
-#endif
-    /* TODO: Implement for OpenXR*/
-    default:
-      return TRUE;
-  };
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->is_input_available == NULL)
+    return FALSE;
+  return klass->is_input_available ();
 }
 
 void
