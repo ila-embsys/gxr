@@ -22,9 +22,9 @@
 #include "gxr-context.h"
 #include "gxr-action.h"
 #include "gxr-action-set.h"
+#include "gxr-io.h"
 
 #ifdef GXR_HAS_OPENVR
-  #include "gxr-io.h"
   #include "openvr-action.h"
   #include "openvr-action-set.h"
   #include "openvr-compositor.h"

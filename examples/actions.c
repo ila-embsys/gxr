@@ -111,7 +111,7 @@ main ()
       return false;
     }
 
-  if (!gxr_io_load_cached_action_manifest (
+  if (!openvr_action_load_cached_manifest (
         "gxr",
         "/res/bindings",
         "actions.json",

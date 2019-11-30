@@ -39,6 +39,13 @@ openvr_action_new_from_type_url (GxrActionSet *action_set,
 void
 openvr_action_update_input_handles (OpenVRAction *self);
 
+gboolean
+openvr_action_load_cached_manifest (const char* cache_name,
+                                    const char* resource_path,
+                                    const char* manifest_name,
+                                    const char* first_binding,
+                                    ...);
+
 G_END_DECLS
 
 #endif /* GXR_OPENVR_ACTION_H_ */

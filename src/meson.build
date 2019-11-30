@@ -6,7 +6,8 @@ gxr_sources = [
   'gxr-time.c',
   'gxr-context.c',
   'gxr-action.c',
-  'gxr-action-set.c'
+  'gxr-action-set.c',
+  'gxr-io.c'
 ]
 
 gxr_headers = [
@@ -16,11 +17,11 @@ gxr_headers = [
   'gxr-time.h',
   'gxr-context.h',
   'gxr-action.h',
-  'gxr-action-set.h'
+  'gxr-action-set.h',
+  'gxr-io.h'
 ]
 
 openvr_sources = [
-  'gxr-io.c',
   'openvr/openvr-system.c',
   'openvr/openvr-overlay.c',
   'openvr/openvr-compositor.c',
@@ -32,7 +33,6 @@ openvr_sources = [
 ]
 
 openvr_headers = [
-  'gxr-io.h',
   'openvr/openvr-system.h',
   'openvr/openvr-overlay.h',
   'openvr/openvr-compositor.h',

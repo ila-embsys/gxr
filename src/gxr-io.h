@@ -26,11 +26,4 @@ gxr_io_write_resource_to_file (const gchar *res_base_path,
 GString*
 gxr_io_get_cache_path (const gchar* dir_name);
 
-gboolean
-gxr_io_load_cached_action_manifest (const char* cache_name,
-                                    const char* resource_path,
-                                    const char* manifest_name,
-                                    const char* first_binding,
-                                    ...);
-
 #endif /* GXR_IO_H_ */
