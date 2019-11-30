@@ -1,4 +1,4 @@
-project('gxr', 'c', version: '0.13.2',
+project('gxr', 'c', version: '0.13.99',
   meson_version: '>= 0.45.1',
 )
 
@@ -53,7 +53,7 @@ c = meson.get_compiler('c')
 
 m_dep = c.find_library('m')
 
-gulkan_dep = dependency('gulkan-0.13', version: '>= 0.13.0')
+gulkan_dep = dependency('gulkan-0.14', version: '>= 0.13.0')
 gdk_dep = dependency('gdk-3.0', version: '>= 3.22')
 
 ## Optional
