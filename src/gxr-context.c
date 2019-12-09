@@ -241,6 +241,14 @@ gxr_context_init_gulkan (GxrContext *self, GulkanClient *gc)
   return klass->init_gulkan (self, gc);
 }
 
+void
+gxr_context_poll_event (GxrContext *self)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->poll_event == NULL)
+    return;
+  klass->poll_event (self);
+}
 
 void
 gxr_context_emit_keyboard_press (GxrContext *self, gpointer event)

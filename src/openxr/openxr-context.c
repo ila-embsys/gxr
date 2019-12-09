@@ -695,11 +695,6 @@ openxr_context_begin_frame(OpenXRContext* self)
 {
   XrResult result;
 
-  XrEventDataBuffer runtimeEvent = {
-    .type = XR_TYPE_EVENT_DATA_BUFFER,
-    .next = NULL,
-  };
-
   self->frame_state = (XrFrameState){
     .type = XR_TYPE_FRAME_STATE,
   };
@@ -710,29 +705,6 @@ openxr_context_begin_frame(OpenXRContext* self)
   if (!xr_result(result, "xrWaitFrame() was not successful, exiting..."))
     return false;
 
-  XrResult pollResult = xrPollEvent(self->instance, &runtimeEvent);
-  if (pollResult == XR_SUCCESS) {
-    switch (runtimeEvent.type) {
-    case XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED: {
-      XrEventDataSessionStateChanged* event =
-        (XrEventDataSessionStateChanged*)&runtimeEvent;
-      XrSessionState state = event->state;
-      self->is_visible = event->state <= XR_SESSION_STATE_FOCUSED;
-      g_debug("EVENT: session state changed to %d. Visible: %d\n", state,
-              self->is_visible);
-      if (event->state >= XR_SESSION_STATE_STOPPING) { // TODO
-        self->is_runnting = false;
-      }
-      break;
-    }
-    default: break;
-    }
-  } else if (pollResult == XR_EVENT_UNAVAILABLE) {
-    // this is the usual case
-  } else {
-    g_printerr("Failed to poll events!\n");
-    return false;
-  }
   if (!self->is_visible)
     return false;
 
@@ -1258,6 +1230,84 @@ _init_gulkan (GxrContext   *context,
 }
 
 static void
+_poll_event (GxrContext *context)
+{
+  OpenXRContext * self = OPENXR_CONTEXT (context);
+
+  XrEventDataBuffer runtimeEvent = {
+    .type = XR_TYPE_EVENT_DATA_BUFFER,
+    .next = NULL,
+  };
+
+  XrResult pollResult = xrPollEvent (self->instance, &runtimeEvent);
+
+  while (pollResult == XR_SUCCESS)
+    {
+      switch (runtimeEvent.type)
+      {
+        case XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED:
+        {
+          XrEventDataSessionStateChanged* event =
+            (XrEventDataSessionStateChanged*)&runtimeEvent;
+          XrSessionState state = event->state;
+          self->is_visible = event->state <= XR_SESSION_STATE_FOCUSED;
+          g_debug ("EVENT: session state changed to %d. Visible: %d\n",
+                  state, self->is_visible);
+          if (event->state >= XR_SESSION_STATE_STOPPING)
+            {
+              self->is_runnting = false;
+
+              GxrQuitEvent *event = g_malloc (sizeof (GxrQuitEvent));
+              event->reason = GXR_QUIT_SHUTDOWN;
+              g_debug ("Event: sending VR_QUIT_SHUTDOWN signal\n");
+              gxr_context_emit_quit (context, event);
+            }
+          break;
+        }
+        case XR_TYPE_EVENT_DATA_INSTANCE_LOSS_PENDING:
+        {
+          GxrQuitEvent *event = g_malloc (sizeof (GxrQuitEvent));
+          event->reason = GXR_QUIT_SHUTDOWN;
+          g_debug ("Event: sending VR_QUIT_SHUTDOWN signal\n");
+          gxr_context_emit_quit (context, event);
+          break;
+        }
+        case XR_TYPE_EVENT_DATA_INTERACTION_PROFILE_CHANGED:
+        {
+          g_print ("Event: STUB: interaction profile changed\n");
+          break;
+        }
+        case XR_TYPE_EVENT_DATA_REFERENCE_SPACE_CHANGE_PENDING:
+        {
+          g_print ("Event: STUB: reference space change pending\n");
+          break;
+        }
+        default:
+        {
+          char buffer[XR_MAX_STRUCTURE_NAME_SIZE];
+          xrStructureTypeToString (self->instance, runtimeEvent.type, buffer);
+          g_print ("Event: Unhandled event type %s (%d)\n",
+                  buffer, runtimeEvent.type);
+          break;
+        }
+      }
+
+      pollResult = xrPollEvent (self->instance, &runtimeEvent);
+    }
+
+  if (pollResult == XR_EVENT_UNAVAILABLE)
+    {
+      // this is the usual case
+      // g_debug ("Poll events: No more events in queue\n");
+    }
+  else
+    {
+      g_printerr ("Failed to poll events!\n");
+      return;
+    }
+}
+
+static void
 openxr_context_class_init (OpenXRContextClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
@@ -1270,6 +1320,7 @@ openxr_context_class_init (OpenXRContextClass *klass)
   gxr_context_class->get_head_pose = _get_head_pose;
   gxr_context_class->is_valid = _is_valid;
   gxr_context_class->init_gulkan = _init_gulkan;
+  gxr_context_class->poll_event = _poll_event;
 
   action_signals[DIGITAL_EVENT] =
   g_signal_new ("grab-event", /* TODO: binding, digital-event */

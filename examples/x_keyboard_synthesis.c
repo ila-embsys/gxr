@@ -48,7 +48,7 @@ static gboolean
 timeout_callback (gpointer data)
 {
   OpenVRContext *context = data;
-  openvr_context_poll_event (context);
+  gxr_context_poll_event (GXR_CONTEXT (context));
   return TRUE;
 }
 

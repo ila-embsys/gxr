@@ -152,7 +152,7 @@ _poll_events_cb (gpointer _self)
   openvr_overlay_poll_event (self->overlay);
 
   OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
-  openvr_context_poll_event (context);
+  gxr_context_poll_event (GXR_CONTEXT (context));
 
   return TRUE;
 }

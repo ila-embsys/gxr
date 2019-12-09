@@ -49,6 +49,9 @@ struct _GxrContextClass
 
   gboolean
  (*init_gulkan) (GxrContext *self, GulkanClient *gc);
+
+ void
+ (*poll_event) (GxrContext *self);
 };
 
 GxrContext *gxr_context_get_instance (void);
@@ -76,6 +79,9 @@ gxr_context_is_valid (GxrContext *self);
 
 gboolean
 gxr_context_init_gulkan (GxrContext *self, GulkanClient *gc);
+
+void
+gxr_context_poll_event (GxrContext *self);
 
 
 void

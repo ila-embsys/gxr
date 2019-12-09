@@ -179,9 +179,11 @@ openvr_context_is_hmd_present (void)
   return VR_IsHmdPresent ();
 }
 
-void
-openvr_context_poll_event (OpenVRContext *self)
+static void
+_poll_event (GxrContext *context)
 {
+  OpenVRContext * self = OPENVR_CONTEXT (context);
+
   /* When a(nother) scene app is started, OpenVR sends a
    * SceneApplicationStateChanged event and a quit event, in this case we
    * ignore the quit event and only send an app state changed event.
@@ -189,8 +191,6 @@ openvr_context_poll_event (OpenVRContext *self)
   gboolean shutdown_event = FALSE;
   gboolean scene_application_state_changed = FALSE;
   GxrQuitReason quit_reason;
-
-  GxrContext *gctx = GXR_CONTEXT (self);
 
   struct VREvent_t vr_event;
   while (self->f.system->PollNextEvent (&vr_event, sizeof (vr_event)))
@@ -211,13 +211,13 @@ openvr_context_poll_event (OpenVRContext *self)
         event->key.string = new_input;
         event->key.length = len;
         g_debug ("Event: sending KEYBOARD_PRESS_EVENT signal\n");
-        gxr_context_emit_keyboard_press (gctx, event);
+        gxr_context_emit_keyboard_press (context, event);
       } break;
 
       case EVREventType_VREvent_KeyboardClosed:
       {
         g_debug ("Event: sending KEYBOARD_CLOSE_EVENT signal\n");
-        gxr_context_emit_keyboard_close (gctx);
+        gxr_context_emit_keyboard_close (context);
       } break;
 
       case EVREventType_VREvent_SceneApplicationStateChanged:
@@ -261,7 +261,7 @@ openvr_context_poll_event (OpenVRContext *self)
           g_malloc (sizeof (GxrDeviceIndexEvent));
         event->controller_handle = vr_event.trackedDeviceIndex;
         g_debug ("Event: sending DEVICE_ACTIVATE_EVENT signal\n");
-        gxr_context_emit_device_activate (gctx, event);
+        gxr_context_emit_device_activate (context, event);
       } break;
 
       case EVREventType_VREvent_TrackedDeviceDeactivated:
@@ -270,7 +270,7 @@ openvr_context_poll_event (OpenVRContext *self)
           g_malloc (sizeof (GxrDeviceIndexEvent));
         event->controller_handle = vr_event.trackedDeviceIndex;
         g_debug ("Event: sending DEVICE_DEACTIVATE_EVENT signal\n");
-        gxr_context_emit_device_deactivate (gctx, event);
+        gxr_context_emit_device_deactivate (context, event);
       } break;
 
       case EVREventType_VREvent_TrackedDeviceUpdated:
@@ -279,25 +279,25 @@ openvr_context_poll_event (OpenVRContext *self)
           g_malloc (sizeof (GxrDeviceIndexEvent));
         event->controller_handle = vr_event.trackedDeviceIndex;
         g_debug ("Event: sending DEVICE_UPDATE_EVENT signal\n");
-        gxr_context_emit_device_update (gctx, event);
+        gxr_context_emit_device_update (context, event);
       } break;
 
       case EVREventType_VREvent_ActionBindingReloaded:
       {
         g_debug ("Event: sending BINDINGS_UPDATE signal\n");
-        gxr_context_emit_bindings_update (gctx);
+        gxr_context_emit_bindings_update (context);
       } break;
 
       case EVREventType_VREvent_Input_ActionManifestReloaded:
       {
         g_debug ("Event: sending ACTIONSET_UPDATE signal\n");
-        gxr_context_emit_actionset_update (gctx);
+        gxr_context_emit_actionset_update (context);
       } break;
 
       case EVREventType_VREvent_Input_BindingLoadSuccessful:
       {
         g_debug ("Event: VREvent_Input_BindingLoadSuccessful\n");
-        gxr_context_emit_binding_loaded (gctx);
+        gxr_context_emit_binding_loaded (context);
       } break;
 
       case EVREventType_VREvent_Input_BindingLoadFailed:
@@ -334,7 +334,7 @@ openvr_context_poll_event (OpenVRContext *self)
       GxrQuitEvent *event = g_malloc (sizeof (GxrQuitEvent));
       event->reason = GXR_QUIT_SHUTDOWN;
       g_debug ("Event: sending VR_QUIT_SHUTDOWN signal\n");
-      gxr_context_emit_quit (gctx, event);
+      gxr_context_emit_quit (context, event);
     }
   else if (scene_application_state_changed)
     {
@@ -345,7 +345,7 @@ openvr_context_poll_event (OpenVRContext *self)
         "scene app start" : "scene app stop";
 
       g_debug ("Event: sending VR_QUIT signal for %s\n", reason);
-      gxr_context_emit_quit (gctx, event);
+      gxr_context_emit_quit (context, event);
     }
 }
 
@@ -450,4 +450,5 @@ openvr_context_class_init (OpenVRContextClass *klass)
   gxr_context_class->get_head_pose = _get_head_pose;
   gxr_context_class->is_valid = _is_valid;
   gxr_context_class->init_gulkan = _init_gulkan;
+  gxr_context_class->poll_event = _poll_event;
 }
