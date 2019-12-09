@@ -77,6 +77,34 @@ gxr_context_is_valid (GxrContext *self);
 gboolean
 gxr_context_init_gulkan (GxrContext *self, GulkanClient *gc);
 
+
+void
+gxr_context_emit_keyboard_press (GxrContext *self, gpointer event);
+
+void
+gxr_context_emit_keyboard_close (GxrContext *self);
+
+void
+gxr_context_emit_quit (GxrContext *self, gpointer event);
+
+void
+gxr_context_emit_device_activate (GxrContext *self, gpointer event);
+
+void
+gxr_context_emit_device_deactivate (GxrContext *self, gpointer event);
+
+void
+gxr_context_emit_device_update (GxrContext *self, gpointer event);
+
+void
+gxr_context_emit_bindings_update (GxrContext *self);
+
+void
+gxr_context_emit_binding_loaded (GxrContext *self);
+
+void
+gxr_context_emit_actionset_update (GxrContext *self);
+
 G_END_DECLS
 
 #endif /* GXR_CONTEXT_H_ */

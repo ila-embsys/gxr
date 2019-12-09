@@ -40,21 +40,6 @@ G_DEFINE_TYPE (OpenVRContext, openvr_context, GXR_TYPE_CONTEXT)
   target = (struct VR_IVR##type##_FnTable*) ptr; \
 }
 
-enum {
-  KEYBOARD_PRESS_EVENT,
-  KEYBOARD_CLOSE_EVENT,
-  QUIT_EVENT,
-  DEVICE_ACTIVATE_EVENT,
-  DEVICE_DEACTIVATE_EVENT,
-  DEVICE_UPDATE_EVENT,
-  BINDING_LOADED,
-  BINDINGS_UPDATE,
-  ACTIONSET_UPDATE,
-  LAST_SIGNAL
-};
-
-static guint context_signals[LAST_SIGNAL] = { 0 };
-
 static void
 openvr_context_init (OpenVRContext *self)
 {
@@ -205,6 +190,8 @@ openvr_context_poll_event (OpenVRContext *self)
   gboolean scene_application_state_changed = FALSE;
   GxrQuitReason quit_reason;
 
+  GxrContext *gctx = GXR_CONTEXT (self);
+
   struct VREvent_t vr_event;
   while (self->f.system->PollNextEvent (&vr_event, sizeof (vr_event)))
   {
@@ -224,13 +211,13 @@ openvr_context_poll_event (OpenVRContext *self)
         event->key.string = new_input;
         event->key.length = len;
         g_debug ("Event: sending KEYBOARD_PRESS_EVENT signal\n");
-        g_signal_emit (self, context_signals[KEYBOARD_PRESS_EVENT], 0, event);
+        gxr_context_emit_keyboard_press (gctx, event);
       } break;
 
       case EVREventType_VREvent_KeyboardClosed:
       {
         g_debug ("Event: sending KEYBOARD_CLOSE_EVENT signal\n");
-        g_signal_emit (self, context_signals[KEYBOARD_CLOSE_EVENT], 0);
+        gxr_context_emit_keyboard_close (gctx);
       } break;
 
       case EVREventType_VREvent_SceneApplicationStateChanged:
@@ -274,7 +261,7 @@ openvr_context_poll_event (OpenVRContext *self)
           g_malloc (sizeof (GxrDeviceIndexEvent));
         event->controller_handle = vr_event.trackedDeviceIndex;
         g_debug ("Event: sending DEVICE_ACTIVATE_EVENT signal\n");
-        g_signal_emit (self, context_signals[DEVICE_ACTIVATE_EVENT], 0, event);
+        gxr_context_emit_device_activate (gctx, event);
       } break;
 
       case EVREventType_VREvent_TrackedDeviceDeactivated:
@@ -283,7 +270,7 @@ openvr_context_poll_event (OpenVRContext *self)
           g_malloc (sizeof (GxrDeviceIndexEvent));
         event->controller_handle = vr_event.trackedDeviceIndex;
         g_debug ("Event: sending DEVICE_DEACTIVATE_EVENT signal\n");
-        g_signal_emit (self, context_signals[DEVICE_DEACTIVATE_EVENT], 0, event);
+        gxr_context_emit_device_deactivate (gctx, event);
       } break;
 
       case EVREventType_VREvent_TrackedDeviceUpdated:
@@ -292,25 +279,25 @@ openvr_context_poll_event (OpenVRContext *self)
           g_malloc (sizeof (GxrDeviceIndexEvent));
         event->controller_handle = vr_event.trackedDeviceIndex;
         g_debug ("Event: sending DEVICE_UPDATE_EVENT signal\n");
-        g_signal_emit (self, context_signals[DEVICE_UPDATE_EVENT], 0, event);
+        gxr_context_emit_device_update (gctx, event);
       } break;
 
       case EVREventType_VREvent_ActionBindingReloaded:
       {
         g_debug ("Event: sending BINDINGS_UPDATE signal\n");
-        g_signal_emit (self, context_signals[BINDINGS_UPDATE], 0);
+        gxr_context_emit_bindings_update (gctx);
       } break;
 
       case EVREventType_VREvent_Input_ActionManifestReloaded:
       {
         g_debug ("Event: sending ACTIONSET_UPDATE signal\n");
-        g_signal_emit (self, context_signals[ACTIONSET_UPDATE], 0);
+        gxr_context_emit_actionset_update (gctx);
       } break;
 
       case EVREventType_VREvent_Input_BindingLoadSuccessful:
       {
         g_debug ("Event: VREvent_Input_BindingLoadSuccessful\n");
-        g_signal_emit (self, context_signals[BINDING_LOADED], 0);
+        gxr_context_emit_binding_loaded (gctx);
       } break;
 
       case EVREventType_VREvent_Input_BindingLoadFailed:
@@ -346,14 +333,19 @@ openvr_context_poll_event (OpenVRContext *self)
     {
       GxrQuitEvent *event = g_malloc (sizeof (GxrQuitEvent));
       event->reason = GXR_QUIT_SHUTDOWN;
-      g_signal_emit (self, context_signals[QUIT_EVENT], 0, event);
+      g_debug ("Event: sending VR_QUIT_SHUTDOWN signal\n");
+      gxr_context_emit_quit (gctx, event);
     }
   else if (scene_application_state_changed)
     {
       GxrQuitEvent *event = g_malloc (sizeof (GxrQuitEvent));
       event->reason = quit_reason;
-      g_debug ("Event: sending VR_QUIT_APPLICATION_TRANSITION signal\n");
-      g_signal_emit (self, context_signals[QUIT_EVENT], 0, event);
+      gchar *reason =
+        (quit_reason == GXR_QUIT_APPLICATION_TRANSITION) ?
+        "scene app start" : "scene app stop";
+
+      g_debug ("Event: sending VR_QUIT signal for %s\n", reason);
+      gxr_context_emit_quit (gctx, event);
     }
 }
 
@@ -458,63 +450,4 @@ openvr_context_class_init (OpenVRContextClass *klass)
   gxr_context_class->get_head_pose = _get_head_pose;
   gxr_context_class->is_valid = _is_valid;
   gxr_context_class->init_gulkan = _init_gulkan;
-
-  context_signals[KEYBOARD_PRESS_EVENT] =
-    g_signal_new ("keyboard-press-event",
-                   G_TYPE_FROM_CLASS (klass),
-                   G_SIGNAL_RUN_LAST,
-                   0, NULL, NULL, NULL, G_TYPE_NONE,
-                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  context_signals[KEYBOARD_CLOSE_EVENT] =
-    g_signal_new ("keyboard-close-event",
-                   G_TYPE_FROM_CLASS (klass),
-                   G_SIGNAL_RUN_FIRST,
-                   0, NULL, NULL, NULL, G_TYPE_NONE, 0);
-
-  context_signals[QUIT_EVENT] =
-    g_signal_new ("quit-event",
-                   G_TYPE_FROM_CLASS (klass),
-                   G_SIGNAL_RUN_LAST,
-                   0, NULL, NULL, NULL, G_TYPE_NONE,
-                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  context_signals[DEVICE_ACTIVATE_EVENT] =
-    g_signal_new ("device-activate-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_LAST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE,
-                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  context_signals[DEVICE_DEACTIVATE_EVENT] =
-    g_signal_new ("device-deactivate-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_LAST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE,
-                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  context_signals[DEVICE_UPDATE_EVENT] =
-    g_signal_new ("device-update-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_LAST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE,
-                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  context_signals[BINDINGS_UPDATE] =
-    g_signal_new ("bindings-update-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_FIRST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE, 0);
-
-  context_signals[BINDING_LOADED] =
-    g_signal_new ("binding-loaded-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_FIRST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE, 0);
-
-  context_signals[ACTIONSET_UPDATE] =
-    g_signal_new ("action-set-update-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_FIRST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE, 0);
 }

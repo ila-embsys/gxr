@@ -33,6 +33,21 @@ G_DEFINE_TYPE_WITH_PRIVATE (GxrContext, gxr_context, G_TYPE_OBJECT)
 // singleton variable that can be set to NULL again when finalizing the context
 static GxrContext *singleton = NULL;
 
+enum {
+  KEYBOARD_PRESS_EVENT,
+  KEYBOARD_CLOSE_EVENT,
+  QUIT_EVENT,
+  DEVICE_ACTIVATE_EVENT,
+  DEVICE_DEACTIVATE_EVENT,
+  DEVICE_UPDATE_EVENT,
+  BINDING_LOADED,
+  BINDINGS_UPDATE,
+  ACTIONSET_UPDATE,
+  LAST_SIGNAL
+};
+
+static guint context_signals[LAST_SIGNAL] = { 0 };
+
 static void
 gxr_context_finalize (GObject *gobject);
 
@@ -41,6 +56,65 @@ gxr_context_class_init (GxrContextClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   object_class->finalize = gxr_context_finalize;
+
+  context_signals[KEYBOARD_PRESS_EVENT] =
+  g_signal_new ("keyboard-press-event",
+                G_TYPE_FROM_CLASS (klass),
+                G_SIGNAL_RUN_LAST,
+                0, NULL, NULL, NULL, G_TYPE_NONE,
+                1, G_TYPE_POINTER | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  context_signals[KEYBOARD_CLOSE_EVENT] =
+  g_signal_new ("keyboard-close-event",
+                G_TYPE_FROM_CLASS (klass),
+                G_SIGNAL_RUN_FIRST,
+                0, NULL, NULL, NULL, G_TYPE_NONE, 0);
+
+  context_signals[QUIT_EVENT] =
+  g_signal_new ("quit-event",
+                G_TYPE_FROM_CLASS (klass),
+                G_SIGNAL_RUN_LAST,
+                0, NULL, NULL, NULL, G_TYPE_NONE,
+                1, G_TYPE_POINTER | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  context_signals[DEVICE_ACTIVATE_EVENT] =
+  g_signal_new ("device-activate-event",
+                G_TYPE_FROM_CLASS (klass),
+                G_SIGNAL_RUN_LAST,
+                0, NULL, NULL, NULL, G_TYPE_NONE,
+                1, G_TYPE_POINTER | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  context_signals[DEVICE_DEACTIVATE_EVENT] =
+  g_signal_new ("device-deactivate-event",
+                G_TYPE_FROM_CLASS (klass),
+                G_SIGNAL_RUN_LAST,
+                0, NULL, NULL, NULL, G_TYPE_NONE,
+                1, G_TYPE_POINTER | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  context_signals[DEVICE_UPDATE_EVENT] =
+  g_signal_new ("device-update-event",
+                G_TYPE_FROM_CLASS (klass),
+                G_SIGNAL_RUN_LAST,
+                0, NULL, NULL, NULL, G_TYPE_NONE,
+                1, G_TYPE_POINTER | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  context_signals[BINDINGS_UPDATE] =
+  g_signal_new ("bindings-update-event",
+                G_TYPE_FROM_CLASS (klass),
+                G_SIGNAL_RUN_FIRST,
+                0, NULL, NULL, NULL, G_TYPE_NONE, 0);
+
+  context_signals[BINDING_LOADED] =
+  g_signal_new ("binding-loaded-event",
+                G_TYPE_FROM_CLASS (klass),
+                G_SIGNAL_RUN_FIRST,
+                0, NULL, NULL, NULL, G_TYPE_NONE, 0);
+
+  context_signals[ACTIONSET_UPDATE] =
+  g_signal_new ("action-set-update-event",
+                G_TYPE_FROM_CLASS (klass),
+                G_SIGNAL_RUN_FIRST,
+                0, NULL, NULL, NULL, G_TYPE_NONE, 0);
 }
 
 static GxrApi
@@ -165,4 +239,59 @@ gxr_context_init_gulkan (GxrContext *self, GulkanClient *gc)
   if (klass->init_gulkan == NULL)
       return FALSE;
   return klass->init_gulkan (self, gc);
+}
+
+
+void
+gxr_context_emit_keyboard_press (GxrContext *self, gpointer event)
+{
+  g_signal_emit (self, context_signals[KEYBOARD_PRESS_EVENT], 0, event);
+}
+
+void
+gxr_context_emit_keyboard_close (GxrContext *self)
+{
+  g_signal_emit (self, context_signals[KEYBOARD_CLOSE_EVENT], 0);
+}
+
+void
+gxr_context_emit_quit (GxrContext *self, gpointer event)
+{
+  g_signal_emit (self, context_signals[QUIT_EVENT], 0, event);
+}
+
+void
+gxr_context_emit_device_activate (GxrContext *self, gpointer event)
+{
+  g_signal_emit (self, context_signals[DEVICE_ACTIVATE_EVENT], 0, event);
+}
+
+void
+gxr_context_emit_device_deactivate (GxrContext *self, gpointer event)
+{
+  g_signal_emit (self, context_signals[DEVICE_DEACTIVATE_EVENT], 0, event);
+}
+
+void
+gxr_context_emit_device_update (GxrContext *self, gpointer event)
+{
+  g_signal_emit (self, context_signals[DEVICE_UPDATE_EVENT], 0, event);
+}
+
+void
+gxr_context_emit_bindings_update (GxrContext *self)
+{
+  g_signal_emit (self, context_signals[BINDINGS_UPDATE], 0);
+}
+
+void
+gxr_context_emit_binding_loaded (GxrContext *self)
+{
+  g_signal_emit (self, context_signals[BINDING_LOADED], 0);
+}
+
+void
+gxr_context_emit_actionset_update (GxrContext *self)
+{
+  g_signal_emit (self, context_signals[ACTIONSET_UPDATE], 0);
 }
