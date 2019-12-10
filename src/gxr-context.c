@@ -251,6 +251,15 @@ gxr_context_poll_event (GxrContext *self)
 }
 
 void
+gxr_context_show_keyboard (GxrContext *self)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->show_keyboard == NULL)
+    return;
+  klass->show_keyboard (self);
+}
+
+void
 gxr_context_emit_keyboard_press (GxrContext *self, gpointer event)
 {
   g_signal_emit (self, context_signals[KEYBOARD_PRESS_EVENT], 0, event);

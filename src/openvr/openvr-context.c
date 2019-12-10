@@ -349,9 +349,10 @@ _poll_event (GxrContext *context)
     }
 }
 
-void
-openvr_context_show_system_keyboard (OpenVRContext *self)
+static void
+_show_system_keyboard (GxrContext *context)
 {
+  OpenVRContext * self = OPENVR_CONTEXT (context);
   self->f.overlay->ShowKeyboard (
     EGamepadTextInputMode_k_EGamepadTextInputModeNormal,
     EGamepadTextInputLineMode_k_EGamepadTextInputLineModeSingleLine,
@@ -451,4 +452,5 @@ openvr_context_class_init (OpenVRContextClass *klass)
   gxr_context_class->is_valid = _is_valid;
   gxr_context_class->init_gulkan = _init_gulkan;
   gxr_context_class->poll_event = _poll_event;
+  gxr_context_class->show_keyboard = _show_system_keyboard;
 }

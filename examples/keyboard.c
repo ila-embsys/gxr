@@ -169,8 +169,7 @@ _show_keyboard_cb (OpenVRAction    *action,
     {
       if (use_system_keyboard)
         {
-          OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
-          openvr_context_show_system_keyboard (context);
+          gxr_context_show_keyboard (gxr_context_get_instance ());
         }
       else
         {

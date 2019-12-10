@@ -39,9 +39,6 @@ gboolean
 openvr_context_is_hmd_present (void);
 
 void
-openvr_context_show_system_keyboard (OpenVRContext *self);
-
-void
 openvr_context_set_system_keyboard_transform (OpenVRContext *self,
                                               graphene_matrix_t *transform);
 

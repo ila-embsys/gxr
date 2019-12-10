@@ -52,6 +52,9 @@ struct _GxrContextClass
 
  void
  (*poll_event) (GxrContext *self);
+
+ void
+ (*show_keyboard) (GxrContext *self);
 };
 
 GxrContext *gxr_context_get_instance (void);
@@ -82,6 +85,9 @@ gxr_context_init_gulkan (GxrContext *self, GulkanClient *gc);
 
 void
 gxr_context_poll_event (GxrContext *self);
+
+void
+gxr_context_show_keyboard (GxrContext *self);
 
 
 void

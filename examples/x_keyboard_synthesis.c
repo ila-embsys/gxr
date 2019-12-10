@@ -73,7 +73,7 @@ _keyboard_closed (OpenVRContext  *context,
   (void) event;
   (void) data;
   g_print ("Closed keyboard... Let's open it again!\n");
-  openvr_context_show_system_keyboard (context);
+  gxr_context_show_keyboard (GXR_CONTEXT (context));
   openvr_context_set_system_keyboard_transform (context, &keyboard_position);
 }
 
@@ -362,7 +362,7 @@ main (int argc, char *argv[])
     return -1;
 
   OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
-  openvr_context_show_system_keyboard (context);
+  gxr_context_show_keyboard (GXR_CONTEXT (context));
 
   graphene_point3d_t position = {
     .x = 0,
