@@ -141,17 +141,29 @@ _destroy_cb (OpenVROverlay *overlay,
 }
 
 static bool
-_init_openvr ()
+_init_openvr (GxrContext *context, GulkanClient *client)
 {
-  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
-  if (!openvr_context_initialize (context, GXR_APP_OVERLAY))
+  if (!gxr_context_init_runtime (context, GXR_APP_OVERLAY))
     {
       g_printerr ("Could not init OpenVR.\n");
       return false;
     }
 
+  if (!gxr_context_init_gulkan (context, client))
+    {
+      g_printerr ("Unable to initialize Vulkan!\n");
+      return false;
+    }
+
+  if (!gxr_context_init_session (context, client))
+    {
+      g_printerr ("Could not init OpenVR session.\n");
+      return false;
+    }
+
   return true;
 }
+
 
 int
 main (int argc, char *argv[])
@@ -188,16 +200,12 @@ main (int argc, char *argv[])
 
   gtk_widget_show_all (window);
 
-  /* init openvr */
-  if (!_init_openvr ())
-    return -1;
+  GxrContext *context = gxr_context_get_instance ();
+  GulkanClient *uploader = gulkan_client_new ();
 
-  uploader = openvr_compositor_gulkan_client_new ();
-  if (!uploader)
-  {
-    g_printerr ("Unable to initialize Vulkan!\n");
-    return false;
-  }
+  /* init openvr */
+  if (!_init_openvr (context, uploader))
+    return -1;
 
   OpenVROverlay *overlay = openvr_overlay_new ();
   openvr_overlay_create_width (overlay, "openvr.example.gtk", "GTK+", 1.0);
@@ -230,7 +238,6 @@ main (int argc, char *argv[])
   g_object_unref (texture);
   g_object_unref (uploader);
 
-  GxrContext *context = gxr_context_get_instance ();
   g_object_unref (context);
 
   return 0;

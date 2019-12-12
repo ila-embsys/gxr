@@ -233,12 +233,30 @@ gxr_context_is_valid (GxrContext *self)
 }
 
 gboolean
+gxr_context_init_runtime (GxrContext *self, GxrAppType type)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->init_runtime == NULL)
+    return FALSE;
+  return klass->init_runtime (self, type);
+}
+
+gboolean
 gxr_context_init_gulkan (GxrContext *self, GulkanClient *gc)
 {
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->init_gulkan == NULL)
       return FALSE;
   return klass->init_gulkan (self, gc);
+}
+
+gboolean
+gxr_context_init_session (GxrContext *self, GulkanClient *gc)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->init_session == NULL)
+    return FALSE;
+  return klass->init_session (self, gc);
 }
 
 void

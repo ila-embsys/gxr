@@ -135,12 +135,23 @@ _destroy_cb (OpenVROverlay *overlay,
 }
 
 static bool
-_init_openvr ()
+_init_openvr (GxrContext *context, GulkanClient *client)
 {
-  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
-  if (!openvr_context_initialize (context, GXR_APP_OVERLAY))
+  if (!gxr_context_init_runtime (context, GXR_APP_OVERLAY))
     {
       g_printerr ("Could not init OpenVR.\n");
+      return false;
+    }
+
+  if (!gxr_context_init_gulkan (context, client))
+    {
+      g_printerr ("Unable to initialize Vulkan!\n");
+      return false;
+    }
+
+  if (!gxr_context_init_session (context, client))
+    {
+      g_printerr ("Could not init OpenVR session.\n");
       return false;
     }
 
@@ -153,17 +164,12 @@ int main () {
     .tex_count = 0
   };
 
-  /* init openvr */
-  if (!_init_openvr ())
-    return -1;
+  GxrContext *context = gxr_context_get_instance ();
+  ex.uploader = gulkan_client_new ();
 
-  /* Upload vulkan texture */
-  ex.uploader = openvr_compositor_gulkan_client_new ();
-  if (!ex.uploader)
-  {
-    g_printerr ("Unable to initialize Vulkan!\n");
-    return false;
-  }
+  /* init openvr */
+  if (!_init_openvr (context, ex.uploader))
+    return -1;
 
   ExampleOverlayNum nums[OVERLAY_NUM];
   for (int i = 0; i < OVERLAY_NUM; i++)
@@ -218,7 +224,6 @@ int main () {
 
   g_object_unref (ex.uploader);
 
-  GxrContext *context = gxr_context_get_instance ();
   g_object_unref (context);
 
   return 0;

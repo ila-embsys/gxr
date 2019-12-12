@@ -35,14 +35,6 @@ G_DECLARE_FINAL_TYPE (OpenXRContext, openxr_context,
 
 OpenXRContext *openxr_context_new (void);
 
-bool
-openxr_context_initialize(OpenXRContext *self,
-                          VkInstance instance,
-                          VkPhysicalDevice physical_device,
-                          VkDevice device,
-                          uint32_t queue_family_index,
-                          uint32_t queue_index);
-
 void
 openxr_context_cleanup(OpenXRContext *self);
 

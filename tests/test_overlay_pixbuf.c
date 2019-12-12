@@ -60,18 +60,19 @@ test_overlay_pixbuf ()
   g_assert_nonnull (pixbuf);
 
   g_assert (openvr_context_is_installed ());
-  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
+  GxrContext *context = gxr_context_get_instance ();
   g_assert_nonnull (context);
-  g_assert (openvr_context_initialize (context, GXR_APP_OVERLAY));
+
+  GulkanClient *uploader = gulkan_client_new ();
+
+  g_assert (gxr_context_init_runtime (context, GXR_APP_OVERLAY));
+  g_assert (gxr_context_init_gulkan (context, uploader));
+  g_assert (gxr_context_init_session (context, uploader));
   g_assert (gxr_context_is_valid (GXR_CONTEXT (context)));
 
-  GulkanClient *uploader = openvr_compositor_gulkan_client_new ();
-  g_assert_nonnull (uploader);
-
-  GulkanClient *client = GULKAN_CLIENT (uploader);
 
   GulkanTexture *texture =
-    gulkan_client_texture_new_from_pixbuf (client, pixbuf,
+    gulkan_client_texture_new_from_pixbuf (uploader, pixbuf,
                                            VK_FORMAT_R8G8B8A8_UNORM,
                                            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                                            false);

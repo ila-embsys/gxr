@@ -104,8 +104,8 @@ _cleanup (Example *self)
 int
 main ()
 {
-  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
-  if (!openvr_context_initialize (context, GXR_APP_OVERLAY))
+  GxrContext *context = gxr_context_get_instance ();
+  if (!gxr_context_init_runtime (context, GXR_APP_OVERLAY))
     {
       g_printerr ("Could not init OpenVR.\n");
       return false;

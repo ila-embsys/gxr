@@ -47,14 +47,21 @@ struct _GxrContextClass
   gboolean
   (*is_valid) (GxrContext *self);
 
-  gboolean
- (*init_gulkan) (GxrContext *self, GulkanClient *gc);
 
  void
  (*poll_event) (GxrContext *self);
 
  void
  (*show_keyboard) (GxrContext *self);
+
+ gboolean
+ (*init_runtime) (GxrContext *self, GxrAppType type);
+
+ gboolean
+ (*init_gulkan) (GxrContext *self, GulkanClient *gc);
+
+ gboolean
+ (*init_session) (GxrContext *self, GulkanClient *gc);
 };
 
 GxrContext *gxr_context_get_instance (void);
@@ -81,14 +88,19 @@ gboolean
 gxr_context_is_valid (GxrContext *self);
 
 gboolean
+gxr_context_init_runtime (GxrContext *self, GxrAppType type);
+
+gboolean
 gxr_context_init_gulkan (GxrContext *self, GulkanClient *gc);
+
+gboolean
+gxr_context_init_session (GxrContext *self, GulkanClient *gc);
 
 void
 gxr_context_poll_event (GxrContext *self);
 
 void
 gxr_context_show_keyboard (GxrContext *self);
-
 
 void
 gxr_context_emit_keyboard_press (GxrContext *self, gpointer event);

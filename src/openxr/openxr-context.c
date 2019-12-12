@@ -831,78 +831,6 @@ openxr_context_finalize (GObject *gobject)
   G_OBJECT_CLASS (openxr_context_parent_class)->finalize (gobject);
 }
 
-bool
-openxr_context_initialize(OpenXRContext* self,
-                          VkInstance instance,
-                          VkPhysicalDevice physical_device,
-                          VkDevice device,
-                          uint32_t queue_family_index,
-                          uint32_t queue_index)
-{
-  if (!_check_vk_extension())
-    return false;
-
-  if (!_enumerate_api_layers())
-    return false;
-
-  if (!_create_instance(self))
-    return false;
-
-  if (!_create_system(self))
-    return false;
-
-  if (!_set_up_views(self))
-    return false;
-
-  if (!_check_graphics_api_support(self))
-    return false;
-
-  self->graphics_binding = (XrGraphicsBindingVulkanKHR){
-    .type = XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR,
-    .instance = instance,
-    .physicalDevice = physical_device,
-    .device = device,
-    .queueFamilyIndex = queue_family_index,
-    .queueIndex = queue_index,
-  };
-
-  if (!_create_session(self))
-    return false;
-
-  if (!_check_supported_spaces(self))
-    return false;
-
-  if (!_begin_session(self))
-    return false;
-
-  if (!_create_swapchains(self))
-    return false;
-
-  g_print("Created swapchains.\n");
-
-  _create_projection_views(self);
-
-  if (!_create_actions(self))
-    return false;
-
-  g_debug("Created wm actions\n");
-
-  self->is_visible = true;
-  self->is_runnting = true;
-
-  self->projection_layer = (XrCompositionLayerProjection){
-    .type = XR_TYPE_COMPOSITION_LAYER_PROJECTION,
-    .layerFlags = 0,
-    .space = self->local_space,
-    .viewCount = self->view_count,
-    .views = self->projection_views,
-  };
-
-  self->is_initialized = true;
-
-  return true;
-}
-
 XrSwapchainImageVulkanKHR**
 openxr_context_get_images(OpenXRContext *self)
 {
@@ -1200,33 +1128,109 @@ _is_valid (GxrContext *context)
 }
 
 static gboolean
+_init_runtime (GxrContext *context,
+               GxrAppType type)
+{
+  OpenXRContext *self = OPENXR_CONTEXT (context);
+
+  switch (type)
+  {
+    case GXR_APP_SCENE:
+      break;
+    case GXR_APP_OVERLAY:
+      g_error ("OpenXR backend does not support Overlay app type!\n");
+      return FALSE;
+    case GXR_APP_BACKGROUND:
+      g_error ("OpenXR backend does not support background app type");
+      return FALSE;
+    default:
+      g_warning ("Unknown app type %d\n", type);
+      return TRUE;
+  }
+
+  if (!_check_vk_extension())
+    return false;
+
+  if (!_enumerate_api_layers())
+    return false;
+
+  if (!_create_instance(self))
+    return false;
+
+  if (!_create_system(self))
+    return false;
+
+  if (!_set_up_views(self))
+    return false;
+
+  if (!_check_graphics_api_support(self))
+    return false;
+
+  return true;
+}
+
+static gboolean
 _init_gulkan (GxrContext   *context,
               GulkanClient *gc)
 {
-  gulkan_client_init_vulkan (gc, NULL, NULL);
+  (void) context;
+  return gulkan_client_init_vulkan (gc, NULL, NULL);
+}
 
-  GulkanInstance *gk_instance = gulkan_client_get_instance (gc);
-  VkInstance vk_instance = gulkan_instance_get_handle (gk_instance);
+static gboolean
+_init_session (GxrContext   *context,
+               GulkanClient *gc)
+{
+  OpenXRContext *self = OPENXR_CONTEXT (context);
 
   GulkanDevice *gk_device = gulkan_client_get_device (gc);
-  VkDevice vk_device = gulkan_device_get_handle (gk_device);
+  int queue_family_index = gulkan_device_get_queue_family_index (gk_device);
 
-  VkPhysicalDevice physical_device =
-    gulkan_device_get_physical_handle (gk_device);
+  self->graphics_binding = (XrGraphicsBindingVulkanKHR){
+    .type = XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR,
+    .instance = gulkan_client_get_instance_handle (gc),
+    .physicalDevice = gulkan_device_get_physical_handle (gk_device),
+    .device = gulkan_device_get_handle (gk_device),
+    .queueFamilyIndex = queue_family_index,
+    .queueIndex = 0,
+  };
 
-  uint32_t queue_family_index = gulkan_device_get_queue_family_index (gk_device);
 
-  uint32_t queue_index = 0;
+  if (!_create_session(self))
+    return false;
 
-  if (!openxr_context_initialize (OPENXR_CONTEXT (context),
-                                  vk_instance,
-                                  physical_device,
-                                  vk_device,
-                                  queue_family_index,
-                                  queue_index))
-    return FALSE;
+  if (!_check_supported_spaces(self))
+    return false;
 
-  return TRUE;
+  if (!_begin_session(self))
+    return false;
+
+  if (!_create_swapchains(self))
+    return false;
+
+  g_print("Created swapchains.\n");
+
+  _create_projection_views(self);
+
+  if (!_create_actions(self))
+    return false;
+
+  g_debug("Created wm actions\n");
+
+  self->is_visible = true;
+  self->is_runnting = true;
+
+  self->projection_layer = (XrCompositionLayerProjection){
+    .type = XR_TYPE_COMPOSITION_LAYER_PROJECTION,
+    .layerFlags = 0,
+    .space = self->local_space,
+    .viewCount = self->view_count,
+    .views = self->projection_views,
+  };
+
+  self->is_initialized = true;
+
+  return true;
 }
 
 static void
@@ -1326,7 +1330,9 @@ openxr_context_class_init (OpenXRContextClass *klass)
   gxr_context_class->get_frustum_angles = _get_frustum_angles;
   gxr_context_class->get_head_pose = _get_head_pose;
   gxr_context_class->is_valid = _is_valid;
+  gxr_context_class->init_runtime = _init_runtime;
   gxr_context_class->init_gulkan = _init_gulkan;
+  gxr_context_class->init_session = _init_session;
   gxr_context_class->poll_event = _poll_event;
   gxr_context_class->show_keyboard = _show_keyboard;
 

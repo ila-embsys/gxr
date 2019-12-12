@@ -129,45 +129,6 @@ _is_valid (GxrContext *context)
 }
 
 gboolean
-openvr_context_initialize (OpenVRContext *self, GxrAppType type)
-{
-  if (!openvr_context_is_installed ())
-    {
-      g_printerr ("VR Runtime not installed.\n");
-      return FALSE;
-    }
-
-  EVRApplicationType app_type;
-
-  switch (type)
-    {
-      case GXR_APP_SCENE:
-        app_type = EVRApplicationType_VRApplication_Scene;
-        break;
-      case GXR_APP_OVERLAY:
-        app_type = EVRApplicationType_VRApplication_Overlay;
-        break;
-      case GXR_APP_BACKGROUND:
-        app_type = EVRApplicationType_VRApplication_Background;
-        break;
-      default:
-        app_type = EVRApplicationType_VRApplication_Scene;
-        g_warning ("Unknown app type %d\n", type);
-    }
-
-  if (!_vr_init (self, app_type))
-    return FALSE;
-
-  if (!_is_valid (GXR_CONTEXT (self)))
-    {
-      g_printerr ("Could not load OpenVR function pointers.\n");
-      return FALSE;
-    }
-
-  return TRUE;
-}
-
-gboolean
 openvr_context_is_installed (void)
 {
   return VR_IsRuntimeInstalled ();
@@ -377,11 +338,14 @@ openvr_context_acknowledge_quit (OpenVRContext *self)
   self->f.system->AcknowledgeQuit_Exiting ();
 }
 
+static gboolean
+_init_runtime (GxrContext *context, GxrAppType type);
+
 gboolean
 openvr_context_is_another_scene_running (void)
 {
   OpenVRContext *ctx = openvr_context_new ();
-  openvr_context_initialize (ctx, GXR_APP_BACKGROUND);
+  _init_runtime (GXR_CONTEXT (ctx), GXR_APP_BACKGROUND);
 
   /* if applications fntable is not loaded, SteamVR is probably not running. */
   if (ctx->f.applications == NULL)
@@ -431,11 +395,61 @@ _get_head_pose (graphene_matrix_t *pose)
 }
 
 static gboolean
+_init_runtime (GxrContext *context, GxrAppType type)
+{
+  OpenVRContext *self = OPENVR_CONTEXT (context);
+  if (!openvr_context_is_installed ())
+  {
+    g_printerr ("VR Runtime not installed.\n");
+    return FALSE;
+  }
+
+  EVRApplicationType app_type;
+
+  switch (type)
+  {
+    case GXR_APP_SCENE:
+      app_type = EVRApplicationType_VRApplication_Scene;
+      break;
+    case GXR_APP_OVERLAY:
+      app_type = EVRApplicationType_VRApplication_Overlay;
+      break;
+    case GXR_APP_BACKGROUND:
+      app_type = EVRApplicationType_VRApplication_Background;
+      break;
+    default:
+      app_type = EVRApplicationType_VRApplication_Scene;
+      g_warning ("Unknown app type %d\n", type);
+  }
+
+  if (!_vr_init (self, app_type))
+    return FALSE;
+
+  if (!_is_valid (GXR_CONTEXT (self)))
+  {
+    g_printerr ("Could not load OpenVR function pointers.\n");
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+static gboolean
 _init_gulkan (GxrContext   *context,
               GulkanClient *gc)
 {
   (void) context;
   return openvr_compositor_gulkan_client_init (gc);
+}
+
+static gboolean
+_init_session (GxrContext   *context,
+               GulkanClient *gc)
+{
+  (void) context;
+  (void) gc;
+  // openvr does not need any session setup
+  return true;
 }
 
 static void
@@ -450,7 +464,9 @@ openvr_context_class_init (OpenVRContextClass *klass)
   gxr_context_class->get_frustum_angles = _get_frustum_angles;
   gxr_context_class->get_head_pose = _get_head_pose;
   gxr_context_class->is_valid = _is_valid;
+  gxr_context_class->init_runtime = _init_runtime;
   gxr_context_class->init_gulkan = _init_gulkan;
+  gxr_context_class->init_session = _init_session;
   gxr_context_class->poll_event = _poll_event;
   gxr_context_class->show_keyboard = _show_system_keyboard;
 }

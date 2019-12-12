@@ -53,10 +53,9 @@ timeout_callback (gpointer data)
 }
 
 static bool
-_init_openvr ()
+_init_openvr (GxrContext *context)
 {
-  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
-  if (!openvr_context_initialize (context, GXR_APP_OVERLAY))
+  if (!gxr_context_init_runtime (context, GXR_APP_OVERLAY))
     {
       g_printerr ("Could not init OpenVR.\n");
       return false;
@@ -357,11 +356,12 @@ main (int argc, char *argv[])
     }
 */
 
+  GxrContext *context = gxr_context_get_instance ();
+
   /* init openvr */
-  if (!_init_openvr ())
+  if (!_init_openvr (context))
     return -1;
 
-  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
   gxr_context_show_keyboard (GXR_CONTEXT (context));
 
   graphene_point3d_t position = {
@@ -370,7 +370,8 @@ main (int argc, char *argv[])
     .z = -1.5
   };
   graphene_matrix_init_translate (&keyboard_position, &position);
-  openvr_context_set_system_keyboard_transform (context, &keyboard_position);
+  openvr_context_set_system_keyboard_transform (OPENVR_CONTEXT (context),
+                                                &keyboard_position);
 
   g_signal_connect (context, "keyboard-press-event",
                     (GCallback) _keyboard_input, keysym_table);

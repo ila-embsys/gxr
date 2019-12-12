@@ -179,12 +179,23 @@ timeout_callback ()
 }
 
 static bool
-_init_openvr ()
+_init_openvr (GxrContext *context, GulkanClient *client)
 {
-  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
-  if (!openvr_context_initialize (context, GXR_APP_OVERLAY))
+  if (!gxr_context_init_runtime (context, GXR_APP_OVERLAY))
     {
       g_printerr ("Could not init OpenVR.\n");
+      return false;
+    }
+
+  if (!gxr_context_init_gulkan (context, client))
+    {
+      g_printerr ("Unable to initialize Vulkan!\n");
+      return false;
+    }
+
+  if (!gxr_context_init_session (context, client))
+    {
+      g_printerr ("Could not init OpenVR session.\n");
       return false;
     }
 
@@ -214,16 +225,12 @@ main ()
 {
   GMainLoop *loop = g_main_loop_new (NULL, FALSE);
 
-  /* init openvr */
-  if (!_init_openvr ())
-    return -1;
+  GxrContext *context = gxr_context_get_instance ();
+  GulkanClient *uploader = gulkan_client_new ();
 
-  uploader = openvr_compositor_gulkan_client_new ();
-  if (!uploader)
-  {
-    g_printerr ("Unable to initialize Vulkan!\n");
-    return false;
-  }
+  /* init openvr */
+  if (!_init_openvr (context, uploader))
+    return -1;
 
   pixbuf = load_gdk_pixbuf ();
   if (pixbuf == NULL)
@@ -271,7 +278,6 @@ main ()
 
   glDeleteTextures (1, &gl_texture);
 
-  GxrContext *context = gxr_context_get_instance ();
   g_object_unref (context);
 
   return 0;

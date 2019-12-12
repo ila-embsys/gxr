@@ -28,26 +28,11 @@ static void
 _init_openxr (OpenXRContext *context)
 {
   GulkanClient *gc = gulkan_client_new ();
-  g_assert (gulkan_client_init_vulkan (gc, NULL, NULL));
 
-  GulkanInstance *gk_instance = gulkan_client_get_instance (gc);
-  VkInstance vk_instance = gulkan_instance_get_handle (gk_instance);
-
-  GulkanDevice *gk_device = gulkan_client_get_device (gc);
-  VkDevice vk_device = gulkan_device_get_handle (gk_device);
-
-  VkPhysicalDevice physical_device =
-    gulkan_device_get_physical_handle (gk_device);
-
-  uint32_t queue_family_index = gulkan_device_get_queue_family_index (gk_device);
-
-  uint32_t queue_index = 0;
-
-  g_assert (openxr_context_initialize (context, vk_instance,
-                                       physical_device,
-                                       vk_device,
-                                       queue_family_index,
-                                       queue_index));
+  g_assert (gxr_context_init_runtime (GXR_CONTEXT (context), GXR_APP_SCENE));
+  g_assert (gxr_context_init_gulkan (GXR_CONTEXT (context), gc));
+  g_assert (gxr_context_init_session (GXR_CONTEXT (context), gc));
+  g_assert (gxr_context_is_valid (GXR_CONTEXT (context)));
 }
 #endif
 
@@ -55,9 +40,12 @@ _init_openxr (OpenXRContext *context)
 static void
 _init_openvr (OpenVRContext *context)
 {
-  g_assert (openvr_context_initialize (context, GXR_APP_OVERLAY));
+  GulkanClient *gc = gulkan_client_new ();
+
+  g_assert (gxr_context_init_runtime (GXR_CONTEXT (context), GXR_APP_OVERLAY));
+  g_assert (gxr_context_init_gulkan (GXR_CONTEXT (context), gc));
+  g_assert (gxr_context_init_session (GXR_CONTEXT (context), gc));
   g_assert (gxr_context_is_valid (GXR_CONTEXT (context)));
-  g_object_unref (context);
 }
 #endif
 

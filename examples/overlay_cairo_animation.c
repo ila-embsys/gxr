@@ -146,6 +146,30 @@ _destroy_cb (OpenVROverlay *overlay,
   g_main_loop_quit (loop);
 }
 
+static bool
+_init_openvr (GxrContext *context, GulkanClient *client)
+{
+  if (!gxr_context_init_runtime (context, GXR_APP_OVERLAY))
+    {
+      g_printerr ("Could not init OpenVR.\n");
+      return false;
+    }
+
+  if (!gxr_context_init_gulkan (context, client))
+    {
+      g_printerr ("Unable to initialize Vulkan!\n");
+      return false;
+    }
+
+  if (!gxr_context_init_session (context, client))
+    {
+      g_printerr ("Could not init OpenVR session.\n");
+      return false;
+    }
+
+  return true;
+}
+
 static int
 test_overlay ()
 {
@@ -157,19 +181,12 @@ test_overlay ()
 
   render_context.texture = NULL;
 
-  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
-  if (!openvr_context_initialize (context, GXR_APP_OVERLAY))
-    {
-      g_printerr ("Could not init OpenVR.\n");
-      return false;
-    }
+  GxrContext *context = gxr_context_get_instance ();
+  GulkanClient *uploader = gulkan_client_new ();
 
-  GulkanClient *uploader = openvr_compositor_gulkan_client_new ();
-  if (!uploader)
-  {
-    g_printerr ("Unable to initialize Vulkan uploader!\n");
+  /* init openvr */
+  if (!_init_openvr (context, uploader))
     return -1;
-  }
 
   /* create cairo overlay */
   OpenVROverlay *overlay = openvr_overlay_new ();

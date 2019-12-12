@@ -46,9 +46,6 @@ void
 openvr_context_acknowledge_quit (OpenVRContext *self);
 
 gboolean
-openvr_context_initialize (OpenVRContext *self, GxrAppType type);
-
-gboolean
 openvr_context_is_another_scene_running (void);
 
 G_END_DECLS
