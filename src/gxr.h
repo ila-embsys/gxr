@@ -36,6 +36,8 @@
 
 #ifdef GXR_HAS_OPENXR
   #include "openxr-context.h"
+  #include "openxr-action-set.h"
+  #include "openxr-action.h"
 #endif
 
 #undef GXR_INSIDE

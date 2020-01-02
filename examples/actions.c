@@ -133,8 +133,9 @@ main ()
     openvr_action_set_new_from_url ("/actions/mouse_synth");
 
   self.haptic = (GxrAction*)
-    openvr_action_new_from_url (self.action_sets[WM_ACTIONSET],
-                                "/actions/wm/out/haptic");
+    openvr_action_new_from_type_url (self.action_sets[WM_ACTIONSET],
+                                     GXR_ACTION_HAPTIC,
+                                     "/actions/wm/out/haptic");
 
   gxr_action_set_connect (self.action_sets[WM_ACTIONSET], GXR_ACTION_POSE,
                           "/actions/wm/in/hand_pose",

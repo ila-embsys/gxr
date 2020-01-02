@@ -82,7 +82,8 @@ typedef enum {
 typedef enum {
   GXR_ACTION_DIGITAL,
   GXR_ACTION_ANALOG,
-  GXR_ACTION_POSE
+  GXR_ACTION_POSE,
+  GXR_ACTION_HAPTIC
 } GxrActionType;
 
 #endif /* GXR_ENUMS_H_ */

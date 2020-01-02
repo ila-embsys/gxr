@@ -117,3 +117,12 @@ gxr_action_set_get_actions (GxrActionSet *self)
   GxrActionSetPrivate *priv = gxr_action_set_get_instance_private (self);
   return priv->actions;
 }
+
+gboolean
+gxr_action_set_attach_bindings (GxrActionSet *self)
+{
+  GxrActionSetClass *klass = GXR_ACTION_SET_GET_CLASS (self);
+  if (klass->attach_bindings == NULL)
+    return TRUE; /* noop succeeds when no implementation  */
+  return klass->attach_bindings (self);
+}

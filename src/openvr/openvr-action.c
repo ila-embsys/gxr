@@ -134,22 +134,6 @@ openvr_action_new (void)
 }
 
 OpenVRAction *
-openvr_action_new_from_url (GxrActionSet *action_set, char *url)
-{
-  OpenVRAction *self = openvr_action_new ();
-  gxr_action_set_url (GXR_ACTION (self), g_strdup (url));
-  gxr_action_set_action_set(GXR_ACTION (self), action_set);
-
-  if (!openvr_action_load_handle (self, url))
-    {
-      g_object_unref (self);
-      self = NULL;
-    }
-
-  return self;
-}
-
-OpenVRAction *
 openvr_action_new_from_type_url (GxrActionSet *action_set,
                                  GxrActionType type, char *url)
 {

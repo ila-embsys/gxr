@@ -57,23 +57,11 @@ struct _OpenXRContext
 
   int64_t swapchain_format;
 
-  XrActionSet wm_actionset;
-  XrAction grabAction;
-  XrAction poseAction;
   XrPath handPaths[NUM_CONTROLLERS];
   XrSpace handSpaces[NUM_CONTROLLERS];
 };
 
 G_DEFINE_TYPE (OpenXRContext, openxr_context, GXR_TYPE_CONTEXT)
-
-enum {
-  DIGITAL_EVENT,
-  ANALOG_EVENT,
-  POSE_EVENT,
-  LAST_SIGNAL
-};
-
-static guint action_signals[LAST_SIGNAL] = { 0 };
 
 static void
 openxr_context_finalize (GObject *gobject);
@@ -571,125 +559,6 @@ _create_projection_views(OpenXRContext* self)
     };
 }
 
-static bool
-_create_actions(OpenXRContext *self)
-{
-  XrResult result;
-
-  XrActionSetCreateInfo wm_actionset_info = {
-    .type = XR_TYPE_ACTION_SET_CREATE_INFO,
-    .next = NULL,
-    .priority = 0
-  };
-  strcpy(wm_actionset_info.actionSetName, "wm");
-  strcpy(wm_actionset_info.localizedActionSetName, "Window Management Action Set");
-
-  result = xrCreateActionSet(self->instance, &wm_actionset_info, &self->wm_actionset);
-  if (!xr_result(result, "failed to create wm actionset"))
-    return false;
-
-  xrStringToPath(self->instance, "/user/hand/left", &self->handPaths[0]);
-  xrStringToPath(self->instance, "/user/hand/right", &self->handPaths[1]);
-
-  XrActionCreateInfo actionInfo = {
-    .type = XR_TYPE_ACTION_CREATE_INFO,
-    .next = NULL,
-    .actionType = XR_ACTION_TYPE_FLOAT_INPUT,
-    .countSubactionPaths = NUM_CONTROLLERS,
-    .subactionPaths = self->handPaths
-  };
-  // assuming every controller has some form of main "trigger" button
-  strcpy(actionInfo.actionName, "triggergrab");
-  strcpy(actionInfo.localizedActionName, "Grab Window with Trigger Button");
-
-  result = xrCreateAction(self->wm_actionset, &actionInfo, &self->grabAction);
-  if (!xr_result(result, "failed to create grab action"))
-    return false;
-
-  actionInfo.actionType = XR_ACTION_TYPE_POSE_INPUT;
-  strcpy(actionInfo.actionName, "handpose");
-  strcpy(actionInfo.localizedActionName, "Hand Pose");
-  actionInfo.countSubactionPaths = NUM_CONTROLLERS;
-  actionInfo.subactionPaths = self->handPaths;
-
-  result = xrCreateAction(self->wm_actionset, &actionInfo, &self->poseAction);
-  if (!xr_result(result, "failed to create pose action"))
-    return false;
-
-  XrPath grabInputPath[NUM_CONTROLLERS];
-  xrStringToPath(self->instance, "/user/hand/left/input/select/click", &grabInputPath[0]);
-  xrStringToPath(self->instance, "/user/hand/right/input/select/click", &grabInputPath[1]);
-
-  XrPath poseInputPath[NUM_CONTROLLERS];
-  xrStringToPath(self->instance, "/user/hand/left/input/grip/pose", &poseInputPath[0]);
-  xrStringToPath(self->instance, "/user/hand/right/input/grip/pose", &poseInputPath[1]);
-
-  XrPath khrSimpleInteractionProfilePath;
-  result = xrStringToPath(self->instance, "/interaction_profiles/khr/simple_controller", &khrSimpleInteractionProfilePath);
-  if (!xr_result(result, "failed to get interaction profile"))
-    return false;
-
-  const XrActionSuggestedBinding bindings[4] = {
-    {
-      .action = self->poseAction,
-      .binding = poseInputPath[0]
-    },
-    {
-      .action = self->poseAction,
-      .binding = poseInputPath[1]
-    },
-    {
-      .action = self->grabAction,
-      .binding = grabInputPath[0]
-    },
-    {
-      .action = self->grabAction,
-      .binding = grabInputPath[1]
-    }
-  };
-
-  const XrInteractionProfileSuggestedBinding suggestedBindings = {
-    .type = XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING,
-    .next = NULL,
-    .interactionProfile = khrSimpleInteractionProfilePath,
-    .countSuggestedBindings = 4,
-    .suggestedBindings = bindings
-  };
-
-  xrSuggestInteractionProfileBindings(self->instance, &suggestedBindings);
-  if (!xr_result(result, "failed to suggest bindings"))
-    return false;
-
-  XrActionSpaceCreateInfo actionSpaceInfo = {
-    .type = XR_TYPE_ACTION_SPACE_CREATE_INFO,
-    .next = NULL,
-    .action = self->poseAction,
-    .poseInActionSpace.orientation.w = 1.f,
-    .subactionPath = self->handPaths[0]
-  };
-
-  result = xrCreateActionSpace(self->session, &actionSpaceInfo, &self->handSpaces[0]);
-  if (!xr_result(result, "failed to create left hand pose space"))
-    return false;
-
-  actionSpaceInfo.subactionPath = self->handPaths[1];
-  result = xrCreateActionSpace(self->session, &actionSpaceInfo, &self->handSpaces[1]);
-  if (!xr_result(result, "failed to create right hand pose space"))
-    return false;
-
-  XrSessionActionSetsAttachInfo attachInfo = {
-    .type = XR_TYPE_SESSION_ACTION_SETS_ATTACH_INFO,
-    .next = NULL,
-    .countActionSets = 1,
-    .actionSets = &self->wm_actionset
-  };
-  result = xrAttachSessionActionSets(self->session, &attachInfo);
-  if (!xr_result(result, "failed to attach action set"))
-    return false;
-
-  return true;
-}
-
 bool
 openxr_context_begin_frame(OpenXRContext* self)
 {
@@ -904,21 +773,6 @@ _get_view_matrix_from_pose (XrPosef *pose,
   graphene_matrix_inverse (&view, mat);
 }
 
-static void
-_get_model_matrix_from_pose (XrPosef *pose,
-                             graphene_matrix_t *mat)
-{
-  graphene_quaternion_t q;
-  graphene_quaternion_init (&q,
-                            pose->orientation.x, pose->orientation.y,
-                            pose->orientation.z, pose->orientation.w);
-
-  graphene_matrix_init_identity (mat);
-  graphene_matrix_rotate_quaternion (mat, &q);
-  graphene_point3d_t translation = { .x = pose->position.x, pose->position.y, pose->position.z };
-  graphene_matrix_translate(mat, &translation);
-}
-
 void
 openxr_context_get_projection (OpenXRContext *self,
                                uint32_t i,
@@ -994,100 +848,6 @@ _get_head_pose (graphene_matrix_t *pose)
   return TRUE;
 }
 
-void
-openxr_context_poll_controllers (OpenXRContext *self)
-{
-  XrResult result;
-
-  /* TODO: only sync once per frame */
-  const XrActiveActionSet activeActionSet = {
-    .actionSet = self->wm_actionset,
-    .subactionPath = XR_NULL_PATH
-  };
-
-  XrActionsSyncInfo syncInfo = {
-    .type = XR_TYPE_ACTIONS_SYNC_INFO,
-    .countActiveActionSets = 1,
-    .activeActionSets = &activeActionSet
-  };
-  result = xrSyncActions(self->session, &syncInfo);
-  xr_result(result, "failed to sync actions!");
-
-  for (int i = 0; i < NUM_CONTROLLERS; i++)
-    {
-      XrActionStateGetInfo getInfo = {
-        .type = XR_TYPE_ACTION_STATE_GET_INFO,
-        .next = NULL,
-        .action = self->grabAction,
-        .subactionPath = self->handPaths[i]
-      };
-
-      getInfo.action = self->poseAction;
-      XrActionStatePose poseState = {
-        .type = XR_TYPE_ACTION_STATE_POSE,
-        .next = NULL
-      };
-      result = xrGetActionStatePose(self->session, &getInfo, &poseState);
-      xr_result(result, "failed to get pose value!");
-
-      XrSpaceLocation spaceLocation;
-      bool spaceLocationValid;
-      spaceLocation.type = XR_TYPE_SPACE_LOCATION;
-      spaceLocation.next = NULL;
-
-      result = xrLocateSpace(self->handSpaces[i], self->local_space,
-                             self->frame_state.predictedDisplayTime,
-                             &spaceLocation);
-      xr_result(result, "failed to locate hand space %d!", i);
-      spaceLocationValid = _space_location_valid (&spaceLocation);
-
-      // TODO: merge with openvr action
-      if (spaceLocationValid && poseState.isActive)
-        {
-          GxrPoseEvent *event = g_malloc (sizeof (GxrPoseEvent));
-          event->active = poseState.isActive;
-          event->controller_handle = i;
-          _get_model_matrix_from_pose(&spaceLocation.pose, &event->pose);
-
-          graphene_vec3_init (&event->velocity, 0, 0, 0);
-          graphene_vec3_init (&event->angular_velocity, 0, 0, 0);
-
-          event->valid = spaceLocationValid;
-          event->device_connected = true;
-
-          g_debug ("Controller %i pose valid: %d, pos %f %f %f",
-                   i, event->valid, spaceLocation.pose.position.x,
-                   spaceLocation.pose.position.y,
-                   spaceLocation.pose.position.z);
-
-          g_signal_emit (self, action_signals[POSE_EVENT], 0, event);
-        }
-
-      getInfo.action = self->grabAction,
-      getInfo.subactionPath = self->handPaths[i];
-      XrActionStateFloat grabValue = {
-        .type = XR_TYPE_ACTION_STATE_FLOAT,
-        .next = NULL
-      };
-      result = xrGetActionStateFloat(self->session, &getInfo, &grabValue);
-      xr_result(result, "failed to get grab value!");
-      if (grabValue.isActive)
-        {
-          GxrDigitalEvent *event = g_malloc (sizeof (GxrDigitalEvent));
-          event->controller_handle = i;
-          event->active = grabValue.isActive;
-          event->state = grabValue.currentState > 0.5; /* TODO */
-          event->changed = grabValue.changedSinceLastSync;
-          event->time = 0;
-
-          g_debug ("Grabvalue (active %d): %f, changed: %d\n",
-                   grabValue.isActive, grabValue.currentState, event->changed);
-
-          g_signal_emit (self, action_signals[DIGITAL_EVENT], 0, event);
-        }
-    }
-}
-
 VkFormat
 openxr_context_get_swapchain_format (OpenXRContext *self)
 {
@@ -1123,7 +883,7 @@ static gboolean
 _is_valid (GxrContext *context)
 {
   (void) context;
-  g_warning ("_is_valid not implemented in OpenXR.\n");
+  g_debug ("_is_valid not implemented in OpenXR.\n");
   return TRUE;
 }
 
@@ -1212,11 +972,6 @@ _init_session (GxrContext   *context,
 
   _create_projection_views(self);
 
-  if (!_create_actions(self))
-    return false;
-
-  g_debug("Created wm actions\n");
-
   self->is_visible = true;
   self->is_runnting = true;
 
@@ -1291,7 +1046,7 @@ _poll_event (GxrContext *context)
           char buffer[XR_MAX_STRUCTURE_NAME_SIZE];
           xrStructureTypeToString (self->instance, runtimeEvent.type, buffer);
           g_print ("Event: Unhandled event type %s (%d)\n",
-                  buffer, runtimeEvent.type);
+                   buffer, runtimeEvent.type);
           break;
         }
       }
@@ -1318,6 +1073,24 @@ _show_keyboard (GxrContext *context)
   g_print ("Stub: show OpenXR keyboard\n");
 }
 
+XrInstance
+openxr_context_get_openxr_instance (OpenXRContext *self)
+{
+  return self->instance;
+}
+
+XrSession
+openxr_context_get_openxr_session (OpenXRContext *self)
+{
+  return self->session;
+}
+
+XrSpace
+openxr_context_get_tracked_space (OpenXRContext *self)
+{
+  return self->local_space;
+}
+
 static void
 openxr_context_class_init (OpenXRContextClass *klass)
 {
@@ -1335,25 +1108,4 @@ openxr_context_class_init (OpenXRContextClass *klass)
   gxr_context_class->init_session = _init_session;
   gxr_context_class->poll_event = _poll_event;
   gxr_context_class->show_keyboard = _show_keyboard;
-
-  action_signals[DIGITAL_EVENT] =
-  g_signal_new ("grab-event", /* TODO: binding, digital-event */
-                G_TYPE_FROM_CLASS (klass),
-                G_SIGNAL_RUN_LAST,
-                0, NULL, NULL, NULL, G_TYPE_NONE,
-                1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  action_signals[ANALOG_EVENT] =
-  g_signal_new ("analog-event",
-                G_TYPE_FROM_CLASS (klass),
-                G_SIGNAL_RUN_LAST,
-                0, NULL, NULL, NULL, G_TYPE_NONE,
-                1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  action_signals[POSE_EVENT] =
-  g_signal_new ("pose-event",
-                G_TYPE_FROM_CLASS (klass),
-                G_SIGNAL_RUN_FIRST,
-                0, NULL, NULL, NULL, G_TYPE_NONE,
-                1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
 }

@@ -68,9 +68,6 @@ openxr_context_get_position (OpenXRContext *self,
                              graphene_vec4_t *v);
 
 void
-openxr_context_poll_controllers (OpenXRContext *self);
-
-void
 openxr_context_get_projection (OpenXRContext *self,
                                uint32_t i,
                                float near,
@@ -84,6 +81,15 @@ openxr_context_get_view (OpenXRContext *self,
 
 VkFormat
 openxr_context_get_swapchain_format (OpenXRContext *self);
+
+XrInstance
+openxr_context_get_openxr_instance (OpenXRContext *self);
+
+XrSession
+openxr_context_get_openxr_session (OpenXRContext *self);
+
+XrSpace
+openxr_context_get_tracked_space (OpenXRContext *self);
 
 G_END_DECLS
 

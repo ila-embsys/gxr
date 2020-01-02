@@ -48,11 +48,15 @@ if openvr_dep.found()
 endif
 
 openxr_sources = [
-  'openxr/openxr-context.c'
+  'openxr/openxr-context.c',
+  'openxr/openxr-action.c',
+  'openxr/openxr-action-set.c'
 ]
 
 openxr_headers = [
-  'openxr/openxr-context.h'
+  'openxr/openxr-context.h',
+  'openxr/openxr-action.h',
+  'openxr/openxr-action-set.h'
 ]
 
 if openxr_dep.found()

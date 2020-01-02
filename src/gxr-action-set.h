@@ -33,6 +33,10 @@ struct _GxrActionSetClass
   GxrAction*
   (*create_action) (GxrActionSet *self,
                     GxrActionType type, char *url);
+
+  gboolean
+  (*attach_bindings) (GxrActionSet *self);
+
 };
 
 GxrActionSet *gxr_action_set_new (void);
@@ -49,6 +53,9 @@ gxr_action_set_connect (GxrActionSet *self,
 
 GSList *
 gxr_action_set_get_actions (GxrActionSet *self);
+
+gboolean
+gxr_action_set_attach_bindings (GxrActionSet *self);
 
 G_END_DECLS
 

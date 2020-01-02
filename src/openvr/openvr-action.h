@@ -29,10 +29,6 @@ openvr_action_load_manifest (char *path);
 OpenVRAction *openvr_action_new (void);
 
 OpenVRAction *
-openvr_action_new_from_url (GxrActionSet *action_set,
-                            char *url);
-
-OpenVRAction *
 openvr_action_new_from_type_url (GxrActionSet *action_set,
                                  GxrActionType type, char *url);
 

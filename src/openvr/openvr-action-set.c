@@ -175,7 +175,7 @@ openvr_input_error_string (EVRInputError err)
     }
 }
 
-GxrAction*
+static GxrAction*
 _create_action (GxrActionSet *self,
                 GxrActionType type, char *url)
 {
