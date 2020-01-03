@@ -387,3 +387,46 @@ gxr_context_get_model_uv_offset (GxrContext *self)
     return 0;
   return klass->get_model_uv_offset (self);
 }
+
+void
+gxr_context_get_projection (GxrContext *self,
+                            GxrEye eye,
+                            float near,
+                            float far,
+                            graphene_matrix_t *mat)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->get_projection == NULL)
+    return;
+  klass->get_projection (self, eye, near, far, mat);
+}
+
+void
+gxr_context_get_view (GxrContext *self,
+                      GxrEye eye,
+                      graphene_matrix_t *mat)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->get_view == NULL)
+    return;
+  klass->get_view (self, eye, mat);
+}
+
+gboolean
+gxr_context_begin_frame (GxrContext *self)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->begin_frame == NULL)
+    return FALSE;
+  return klass->begin_frame (self);
+}
+
+gboolean
+gxr_context_end_frame (GxrContext *self,
+                       GxrPose *poses)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->end_frame == NULL)
+    return FALSE;
+  return klass->end_frame (self, poses);
+}

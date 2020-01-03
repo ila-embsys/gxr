@@ -67,18 +67,6 @@ openxr_context_get_position (OpenXRContext *self,
                              uint32_t i,
                              graphene_vec4_t *v);
 
-void
-openxr_context_get_projection (OpenXRContext *self,
-                               uint32_t i,
-                               float near,
-                               float far,
-                               graphene_matrix_t *mat);
-
-void
-openxr_context_get_view (OpenXRContext *self,
-                         uint32_t i,
-                         graphene_matrix_t *mat);
-
 VkFormat
 openxr_context_get_swapchain_format (OpenXRContext *self);
 

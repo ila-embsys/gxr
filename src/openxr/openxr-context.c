@@ -784,36 +784,6 @@ _get_view_matrix_from_pose (XrPosef *pose,
 }
 
 void
-openxr_context_get_projection (OpenXRContext *self,
-                               uint32_t i,
-                               float near,
-                               float far,
-                               graphene_matrix_t *mat)
-{
-  if (!self->is_initialized)
-    {
-      g_warning ("OpenXR not initialized yet!\n");
-      graphene_matrix_init_identity (mat);
-      return;
-    }
-  _get_projection_matrix_from_fov (self->views[i].fov, near, far, mat);
-}
-
-void
-openxr_context_get_view (OpenXRContext *self,
-                         uint32_t i,
-                         graphene_matrix_t *mat)
-{
-  if (!self->is_initialized)
-    {
-      g_warning ("OpenXR not initialized yet!\n");
-      graphene_matrix_init_identity (mat);
-      return;
-    }
-  _get_view_matrix_from_pose (&self->views[i].pose, mat);
-}
-
-void
 openxr_context_get_position (OpenXRContext *self,
                              uint32_t i,
                              graphene_vec4_t *v)
@@ -1176,6 +1146,80 @@ _get_model_uv_offset (GxrContext *self)
 }
 
 static void
+_get_projection (GxrContext *context,
+                 GxrEye eye,
+                 float near,
+                 float far,
+                 graphene_matrix_t *mat)
+{
+  OpenXRContext *self = OPENXR_CONTEXT (context);
+  if (!self->is_initialized)
+    {
+      g_warning ("OpenXR not initialized yet!\n");
+      graphene_matrix_init_identity (mat);
+      return;
+    }
+  _get_projection_matrix_from_fov (self->views[eye].fov, near, far, mat);
+}
+
+static void
+_get_view (GxrContext *context,
+           GxrEye eye,
+           graphene_matrix_t *mat)
+{
+  OpenXRContext *self = OPENXR_CONTEXT (context);
+  if (!self->is_initialized)
+    {
+      g_warning ("OpenXR not initialized yet!\n");
+      graphene_matrix_init_identity (mat);
+      return;
+    }
+  _get_view_matrix_from_pose (&self->views[eye].pose, mat);
+}
+
+static gboolean
+_begin_frame (GxrContext *context)
+{
+  OpenXRContext *self = OPENXR_CONTEXT (context);
+
+  if (!openxr_context_begin_frame(self)) {
+    g_printerr ("Could not begin XR frame.\n");
+    return FALSE;
+  }
+
+  for (uint32_t i = 0; i < 2; i++) {
+    uint32_t buffer_index;
+    if (!openxr_context_aquire_swapchain (self, i, &buffer_index))
+      {
+        g_printerr ("Could not aquire xr swapchain\n");
+        return FALSE;
+      }
+  }
+
+  return TRUE;
+}
+
+static gboolean
+_end_frame (GxrContext *context,
+            GxrPose *poses)
+{
+  (void) poses;
+
+  OpenXRContext *self = OPENXR_CONTEXT (context);
+  for (uint32_t i = 0; i < 2; i++)
+  if (!openxr_context_release_swapchain(self, i)) {
+      g_printerr("Could not release xr swapchain\n");
+      return FALSE;
+  }
+
+  if (!openxr_context_end_frame(self)) {
+    g_printerr ("Could not end xr frame\n");
+  }
+
+  return TRUE;
+}
+
+static void
 openxr_context_class_init (OpenXRContextClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
@@ -1197,4 +1241,8 @@ openxr_context_class_init (OpenXRContextClass *klass)
   gxr_context_class->get_model_normal_offset = _get_model_normal_offset;
   gxr_context_class->get_model_uv_offset = _get_model_uv_offset;
   gxr_context_class->submit_framebuffers = _submit_framebuffers;
+  gxr_context_class->get_projection = _get_projection;
+  gxr_context_class->get_view = _get_view;
+  gxr_context_class->begin_frame = _begin_frame;
+  gxr_context_class->end_frame = _end_frame;
 }

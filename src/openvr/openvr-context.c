@@ -21,12 +21,17 @@
 #include "openvr-compositor-private.h"
 #include "openvr-system-private.h"
 #include "openvr-model.h"
+#include "openvr-system.h"
+#include "openvr-compositor.h"
 
 typedef struct _OpenVRContext
 {
   GxrContext parent;
 
   OpenVRFunctions f;
+
+  graphene_matrix_t last_mat_head_pose;
+  graphene_matrix_t mat_eye_pos[2];
 
 } OpenVROverlayPrivate;
 
@@ -49,6 +54,8 @@ openvr_context_init (OpenVRContext *self)
   self->f.compositor = NULL;
   self->f.input = NULL;
   self->f.model = NULL;
+
+  graphene_matrix_init_identity (&self->last_mat_head_pose);
 }
 
 static void
@@ -433,6 +440,14 @@ _init_runtime (GxrContext *context, GxrAppType type)
     return FALSE;
   }
 
+  if (type != GXR_APP_BACKGROUND)
+    for (uint32_t eye = 0; eye < 2; eye++)
+      {
+        self->mat_eye_pos[eye] = openvr_system_get_eye_to_head_transform (eye);
+        graphene_matrix_inverse (&self->mat_eye_pos[eye],
+                                 &self->mat_eye_pos[eye]);
+      }
+
   return TRUE;
 }
 
@@ -521,6 +536,48 @@ _get_model_uv_offset (GxrContext *self)
 }
 
 static void
+_get_projection (GxrContext *context,
+                 GxrEye eye,
+                 float near,
+                 float far,
+                 graphene_matrix_t *mat)
+{
+  (void) context;
+  *mat = openvr_system_get_projection_matrix (eye, near, far);
+}
+
+static void
+_get_view (GxrContext *context,
+           GxrEye eye,
+           graphene_matrix_t *mat)
+{
+  OpenVRContext *self = OPENVR_CONTEXT (context);
+  graphene_matrix_multiply (&self->last_mat_head_pose,
+                            &self->mat_eye_pos[eye], mat);
+}
+
+static gboolean
+_begin_frame (GxrContext *context)
+{
+  (void) context;
+  return TRUE;
+}
+
+static gboolean
+_end_frame (GxrContext *context,
+            GxrPose *poses)
+{
+  OpenVRContext *self = OPENVR_CONTEXT (context);
+  openvr_compositor_wait_get_poses (poses, GXR_DEVICE_INDEX_MAX);
+
+  if (poses[OPENVR_DEVICE_INDEX_HMD].is_valid)
+    graphene_matrix_inverse (&poses[OPENVR_DEVICE_INDEX_HMD].transformation,
+                             &self->last_mat_head_pose);
+
+  return TRUE;
+}
+
+static void
 openvr_context_class_init (OpenVRContextClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
@@ -542,4 +599,8 @@ openvr_context_class_init (OpenVRContextClass *klass)
   gxr_context_class->get_model_normal_offset = _get_model_normal_offset;
   gxr_context_class->get_model_uv_offset = _get_model_uv_offset;
   gxr_context_class->submit_framebuffers = _submit_framebuffers;
+  gxr_context_class->get_projection = _get_projection;
+  gxr_context_class->get_view = _get_view;
+  gxr_context_class->begin_frame = _begin_frame;
+  gxr_context_class->end_frame = _end_frame;
 }

@@ -18,6 +18,7 @@
 #include <gulkan.h>
 
 #include "gxr-enums.h"
+#include "gxr-types.h"
 
 G_BEGIN_DECLS
 
@@ -86,6 +87,25 @@ struct _GxrContextClass
 
   uint32_t
   (*get_model_uv_offset) (GxrContext *self);
+
+  void
+  (*get_projection) (GxrContext *self,
+                     GxrEye eye,
+                     float near,
+                     float far,
+                     graphene_matrix_t *mat);
+
+  void
+  (*get_view) (GxrContext *self,
+               GxrEye eye,
+               graphene_matrix_t *mat);
+
+  gboolean
+  (*begin_frame) (GxrContext *self);
+
+  gboolean
+  (*end_frame) (GxrContext *self,
+                GxrPose *poses);
 };
 
 GxrContext *gxr_context_get_instance (void);
@@ -177,6 +197,25 @@ gxr_context_get_model_normal_offset (GxrContext *self);
 
 uint32_t
 gxr_context_get_model_uv_offset (GxrContext *self);
+
+void
+gxr_context_get_projection (GxrContext *self,
+                            GxrEye eye,
+                            float near,
+                            float far,
+                            graphene_matrix_t *mat);
+
+void
+gxr_context_get_view (GxrContext *self,
+                      GxrEye eye,
+                      graphene_matrix_t *mat);
+
+gboolean
+gxr_context_begin_frame (GxrContext *self);
+
+gboolean
+gxr_context_end_frame (GxrContext *self,
+                       GxrPose *poses);
 
 G_END_DECLS
 
