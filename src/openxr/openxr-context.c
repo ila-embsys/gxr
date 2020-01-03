@@ -49,7 +49,6 @@ struct _OpenXRContext
 
   bool is_visible;
   bool is_runnting;
-  bool is_initialized;
 
   XrCompositionLayerProjection projection_layer;
   XrFrameState frame_state;
@@ -69,7 +68,7 @@ openxr_context_finalize (GObject *gobject);
 static void
 openxr_context_init (OpenXRContext *self)
 {
-  self->is_initialized = false;
+  self->views = NULL;
 }
 
 OpenXRContext *
@@ -686,6 +685,7 @@ openxr_context_end_frame(OpenXRContext* self)
     return false;
 
   free(self->views);
+  self->views = NULL;
 
   return true;
 }
@@ -964,8 +964,6 @@ _init_session (GxrContext   *context,
     .views = self->projection_views,
   };
 
-  self->is_initialized = true;
-
   return true;
 }
 
@@ -1153,9 +1151,10 @@ _get_projection (GxrContext *context,
                  graphene_matrix_t *mat)
 {
   OpenXRContext *self = OPENXR_CONTEXT (context);
-  if (!self->is_initialized)
+  if (self->views == NULL)
     {
-      g_warning ("OpenXR not initialized yet!\n");
+      g_warning ("get_projection needs to be called "
+                 "between begin and end frame.\n");
       graphene_matrix_init_identity (mat);
       return;
     }
@@ -1168,9 +1167,9 @@ _get_view (GxrContext *context,
            graphene_matrix_t *mat)
 {
   OpenXRContext *self = OPENXR_CONTEXT (context);
-  if (!self->is_initialized)
+  if (self->views == NULL)
     {
-      g_warning ("OpenXR not initialized yet!\n");
+      g_warning ("get_view needs to be called between begin and end frame.\n");
       graphene_matrix_init_identity (mat);
       return;
     }
