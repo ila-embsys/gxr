@@ -71,6 +71,14 @@ struct _GxrContextClass
                         uint32_t              height,
                         VkSampleCountFlagBits msaa_sample_count);
 
+  gboolean
+  (*submit_framebuffers) (GxrContext           *self,
+                          GulkanFrameBuffer    *framebuffers[2],
+                          GulkanClient         *gc,
+                          uint32_t              width,
+                          uint32_t              height,
+                          VkSampleCountFlagBits msaa_sample_count);
+
   uint32_t
   (*get_model_vertex_stride) (GxrContext *self);
 
@@ -120,6 +128,14 @@ gxr_context_init_framebuffers (GxrContext           *self,
                                uint32_t              width,
                                uint32_t              height,
                                VkSampleCountFlagBits msaa_sample_count);
+
+gboolean
+gxr_context_submit_framebuffers (GxrContext           *self,
+                                 GulkanFrameBuffer    *framebuffers[2],
+                                 GulkanClient         *gc,
+                                 uint32_t              width,
+                                 uint32_t              height,
+                                 VkSampleCountFlagBits msaa_sample_count);
 
 void
 gxr_context_poll_event (GxrContext *self);

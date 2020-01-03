@@ -346,6 +346,21 @@ gxr_context_init_framebuffers (GxrContext           *self,
                                    width, height, msaa_sample_count);
 }
 
+gboolean
+gxr_context_submit_framebuffers (GxrContext           *self,
+                                 GulkanFrameBuffer    *framebuffers[2],
+                                 GulkanClient         *gc,
+                                 uint32_t              width,
+                                 uint32_t              height,
+                                 VkSampleCountFlagBits msaa_sample_count)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->submit_framebuffers == NULL)
+    return FALSE;
+  return klass->submit_framebuffers (self, framebuffers, gc,
+                                     width, height, msaa_sample_count);
+}
+
 uint32_t
 gxr_context_get_model_vertex_stride (GxrContext *self)
 {

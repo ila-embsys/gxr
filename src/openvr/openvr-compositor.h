@@ -31,15 +31,6 @@ openvr_compositor_get_device_extensions (VkPhysicalDevice  physical_device,
 GulkanClient*
 openvr_compositor_gulkan_client_new (void);
 
-bool
-openvr_compositor_submit (GulkanClient         *client,
-                          uint32_t              width,
-                          uint32_t              height,
-                          VkFormat              format,
-                          VkSampleCountFlagBits sample_count,
-                          VkImage               left,
-                          VkImage               right);
-
 void
 openvr_compositor_wait_get_poses (GxrPose *poses, uint32_t count);
 

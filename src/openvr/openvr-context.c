@@ -475,6 +475,29 @@ _init_framebuffers (GxrContext           *context,
   return true;
 }
 
+static gboolean
+_submit_framebuffers (GxrContext           *self,
+                      GulkanFrameBuffer    *framebuffers[2],
+                      GulkanClient         *gc,
+                      uint32_t              width,
+                      uint32_t              height,
+                      VkSampleCountFlagBits msaa_sample_count)
+{
+  (void) self;
+
+  VkImage left =
+    gulkan_frame_buffer_get_color_image (framebuffers[GXR_EYE_LEFT]);
+
+  VkImage right =
+    gulkan_frame_buffer_get_color_image (framebuffers[GXR_EYE_RIGHT]);
+
+  if (!openvr_compositor_submit (gc, width, height, VK_FORMAT_R8G8B8A8_UNORM,
+                                 msaa_sample_count, left, right))
+    return FALSE;
+
+  return TRUE;
+}
+
 static uint32_t
 _get_model_vertex_stride (GxrContext *self)
 {
@@ -517,4 +540,5 @@ openvr_context_class_init (OpenVRContextClass *klass)
   gxr_context_class->get_model_vertex_stride = _get_model_vertex_stride;
   gxr_context_class->get_model_normal_offset = _get_model_normal_offset;
   gxr_context_class->get_model_uv_offset = _get_model_uv_offset;
+  gxr_context_class->submit_framebuffers = _submit_framebuffers;
 }

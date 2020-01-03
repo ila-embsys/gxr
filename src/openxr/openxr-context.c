@@ -1121,6 +1121,24 @@ _init_framebuffers (GxrContext           *context,
   return true;
 }
 
+/* Not required in OpenXR */
+static gboolean
+_submit_framebuffers (GxrContext           *self,
+                      GulkanFrameBuffer    *framebuffers[2],
+                      GulkanClient         *gc,
+                      uint32_t              width,
+                      uint32_t              height,
+                      VkSampleCountFlagBits msaa_sample_count)
+{
+  (void) self;
+  (void) framebuffers;
+  (void) gc;
+  (void) width;
+  (void) height;
+  (void) msaa_sample_count;
+  return TRUE;
+}
+
 /*
  * Dummy values to make the pipeline initialize,
  * TODO: Add GLTF models for OpenXR backend.
@@ -1167,4 +1185,5 @@ openxr_context_class_init (OpenXRContextClass *klass)
   gxr_context_class->get_model_vertex_stride = _get_model_vertex_stride;
   gxr_context_class->get_model_normal_offset = _get_model_normal_offset;
   gxr_context_class->get_model_uv_offset = _get_model_uv_offset;
+  gxr_context_class->submit_framebuffers = _submit_framebuffers;
 }
