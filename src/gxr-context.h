@@ -47,21 +47,20 @@ struct _GxrContextClass
   gboolean
   (*is_valid) (GxrContext *self);
 
+  void
+  (*poll_event) (GxrContext *self);
 
- void
- (*poll_event) (GxrContext *self);
+  void
+  (*show_keyboard) (GxrContext *self);
 
- void
- (*show_keyboard) (GxrContext *self);
+  gboolean
+  (*init_runtime) (GxrContext *self, GxrAppType type);
 
- gboolean
- (*init_runtime) (GxrContext *self, GxrAppType type);
+  gboolean
+  (*init_gulkan) (GxrContext *self, GulkanClient *gc);
 
- gboolean
- (*init_gulkan) (GxrContext *self, GulkanClient *gc);
-
- gboolean
- (*init_session) (GxrContext *self, GulkanClient *gc);
+  gboolean
+  (*init_session) (GxrContext *self, GulkanClient *gc);
 
   gboolean
   (*init_framebuffers) (GxrContext           *self,
