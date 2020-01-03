@@ -1121,6 +1121,31 @@ _init_framebuffers (GxrContext           *context,
   return true;
 }
 
+/*
+ * Dummy values to make the pipeline initialize,
+ * TODO: Add GLTF models for OpenXR backend.
+ */
+static uint32_t
+_get_model_vertex_stride (GxrContext *self)
+{
+  (void) self;
+  return 1;
+}
+
+static uint32_t
+_get_model_normal_offset (GxrContext *self)
+{
+  (void) self;
+  return 1;
+}
+
+static uint32_t
+_get_model_uv_offset (GxrContext *self)
+{
+  (void) self;
+  return 2;
+}
+
 static void
 openxr_context_class_init (OpenXRContextClass *klass)
 {
@@ -1139,4 +1164,7 @@ openxr_context_class_init (OpenXRContextClass *klass)
   gxr_context_class->poll_event = _poll_event;
   gxr_context_class->show_keyboard = _show_keyboard;
   gxr_context_class->init_framebuffers = _init_framebuffers;
+  gxr_context_class->get_model_vertex_stride = _get_model_vertex_stride;
+  gxr_context_class->get_model_normal_offset = _get_model_normal_offset;
+  gxr_context_class->get_model_uv_offset = _get_model_uv_offset;
 }

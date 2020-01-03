@@ -70,6 +70,15 @@ struct _GxrContextClass
                         uint32_t              width,
                         uint32_t              height,
                         VkSampleCountFlagBits msaa_sample_count);
+
+  uint32_t
+  (*get_model_vertex_stride) (GxrContext *self);
+
+  uint32_t
+  (*get_model_normal_offset) (GxrContext *self);
+
+  uint32_t
+  (*get_model_uv_offset) (GxrContext *self);
 };
 
 GxrContext *gxr_context_get_instance (void);
@@ -144,6 +153,15 @@ gxr_context_emit_binding_loaded (GxrContext *self);
 
 void
 gxr_context_emit_actionset_update (GxrContext *self);
+
+uint32_t
+gxr_context_get_model_vertex_stride (GxrContext *self);
+
+uint32_t
+gxr_context_get_model_normal_offset (GxrContext *self);
+
+uint32_t
+gxr_context_get_model_uv_offset (GxrContext *self);
 
 G_END_DECLS
 

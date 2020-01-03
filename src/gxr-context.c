@@ -345,3 +345,30 @@ gxr_context_init_framebuffers (GxrContext           *self,
   return klass->init_framebuffers (self, framebuffers, gc,
                                    width, height, msaa_sample_count);
 }
+
+uint32_t
+gxr_context_get_model_vertex_stride (GxrContext *self)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->get_model_vertex_stride == NULL)
+    return 0;
+  return klass->get_model_vertex_stride (self);
+}
+
+uint32_t
+gxr_context_get_model_normal_offset (GxrContext *self)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->get_model_normal_offset == NULL)
+    return 0;
+  return klass->get_model_normal_offset (self);
+}
+
+uint32_t
+gxr_context_get_model_uv_offset (GxrContext *self)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->get_model_uv_offset == NULL)
+    return 0;
+  return klass->get_model_uv_offset (self);
+}

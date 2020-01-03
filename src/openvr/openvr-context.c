@@ -20,6 +20,7 @@
 #include "openvr-context-private.h"
 #include "openvr-compositor-private.h"
 #include "openvr-system-private.h"
+#include "openvr-model.h"
 
 typedef struct _OpenVRContext
 {
@@ -474,6 +475,27 @@ _init_framebuffers (GxrContext           *context,
   return true;
 }
 
+static uint32_t
+_get_model_vertex_stride (GxrContext *self)
+{
+  (void) self;
+  return openvr_model_get_vertex_stride ();
+}
+
+static uint32_t
+_get_model_normal_offset (GxrContext *self)
+{
+  (void) self;
+  return openvr_model_get_normal_offset ();
+}
+
+static uint32_t
+_get_model_uv_offset (GxrContext *self)
+{
+  (void) self;
+  return openvr_model_get_uv_offset ();
+}
+
 static void
 openvr_context_class_init (OpenVRContextClass *klass)
 {
@@ -492,4 +514,7 @@ openvr_context_class_init (OpenVRContextClass *klass)
   gxr_context_class->poll_event = _poll_event;
   gxr_context_class->show_keyboard = _show_system_keyboard;
   gxr_context_class->init_framebuffers = _init_framebuffers;
+  gxr_context_class->get_model_vertex_stride = _get_model_vertex_stride;
+  gxr_context_class->get_model_normal_offset = _get_model_normal_offset;
+  gxr_context_class->get_model_uv_offset = _get_model_uv_offset;
 }
