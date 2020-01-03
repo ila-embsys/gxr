@@ -53,8 +53,8 @@ typedef enum {
  *
  **/
 typedef enum {
-  GXR_EYE_LEFT,
-  GXR_EYE_RIGHT
+  GXR_EYE_LEFT = 0,
+  GXR_EYE_RIGHT = 1
 } GxrEye;
 
 /**
