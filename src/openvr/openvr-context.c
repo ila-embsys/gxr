@@ -452,6 +452,28 @@ _init_session (GxrContext   *context,
   return true;
 }
 
+static gboolean
+_init_framebuffers (GxrContext           *context,
+                    GulkanFrameBuffer    *framebuffers[2],
+                    GulkanClient         *gc,
+                    uint32_t              width,
+                    uint32_t              height,
+                    VkSampleCountFlagBits msaa_sample_count)
+{
+  (void) context;
+  GulkanDevice *device = gulkan_client_get_device (GULKAN_CLIENT (gc));
+
+  for (uint32_t eye = 0; eye < 2; eye++)
+    if (!gulkan_frame_buffer_initialize (framebuffers[eye],
+                                         device,
+                                         width,
+                                         height,
+                                         msaa_sample_count,
+                                         VK_FORMAT_R8G8B8A8_UNORM))
+    return false;
+  return true;
+}
+
 static void
 openvr_context_class_init (OpenVRContextClass *klass)
 {
@@ -469,4 +491,5 @@ openvr_context_class_init (OpenVRContextClass *klass)
   gxr_context_class->init_session = _init_session;
   gxr_context_class->poll_event = _poll_event;
   gxr_context_class->show_keyboard = _show_system_keyboard;
+  gxr_context_class->init_framebuffers = _init_framebuffers;
 }

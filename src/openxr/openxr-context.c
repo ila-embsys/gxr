@@ -1091,6 +1091,36 @@ openxr_context_get_tracked_space (OpenXRContext *self)
   return self->local_space;
 }
 
+static gboolean
+_init_framebuffers (GxrContext           *context,
+                    GulkanFrameBuffer    *framebuffers[2],
+                    GulkanClient         *gc,
+                    uint32_t              width,
+                    uint32_t              height,
+                    VkSampleCountFlagBits msaa_sample_count)
+{
+  OpenXRContext *self = OPENXR_CONTEXT (context);
+  XrSwapchainImageVulkanKHR** images = openxr_context_get_images(self);
+  VkFormat format = openxr_context_get_swapchain_format(self);
+
+  GulkanDevice *device = gulkan_client_get_device (GULKAN_CLIENT (gc));
+
+  for (uint32_t eye = 0; eye < 2; eye++) {
+    if (!gulkan_frame_buffer_initialize_from_image (framebuffers[eye],
+                                                    device,
+                                                    images[eye][0].image,
+                                                    width,
+                                                    height,
+                                                    msaa_sample_count,
+                                                    format))
+    {
+      g_printerr("Could not initialize frambuffer.");
+      return false;
+    }
+  }
+  return true;
+}
+
 static void
 openxr_context_class_init (OpenXRContextClass *klass)
 {
@@ -1108,4 +1138,5 @@ openxr_context_class_init (OpenXRContextClass *klass)
   gxr_context_class->init_session = _init_session;
   gxr_context_class->poll_event = _poll_event;
   gxr_context_class->show_keyboard = _show_keyboard;
+  gxr_context_class->init_framebuffers = _init_framebuffers;
 }

@@ -330,3 +330,18 @@ gxr_context_emit_actionset_update (GxrContext *self)
 {
   g_signal_emit (self, context_signals[ACTIONSET_UPDATE], 0);
 }
+
+gboolean
+gxr_context_init_framebuffers (GxrContext           *self,
+                               GulkanFrameBuffer    *framebuffers[2],
+                               GulkanClient         *gc,
+                               uint32_t              width,
+                               uint32_t              height,
+                               VkSampleCountFlagBits msaa_sample_count)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->init_framebuffers == NULL)
+    return FALSE;
+  return klass->init_framebuffers (self, framebuffers, gc,
+                                   width, height, msaa_sample_count);
+}

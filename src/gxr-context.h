@@ -62,6 +62,14 @@ struct _GxrContextClass
 
  gboolean
  (*init_session) (GxrContext *self, GulkanClient *gc);
+
+  gboolean
+  (*init_framebuffers) (GxrContext           *self,
+                        GulkanFrameBuffer    *framebuffers[2],
+                        GulkanClient         *gc,
+                        uint32_t              width,
+                        uint32_t              height,
+                        VkSampleCountFlagBits msaa_sample_count);
 };
 
 GxrContext *gxr_context_get_instance (void);
@@ -95,6 +103,14 @@ gxr_context_init_gulkan (GxrContext *self, GulkanClient *gc);
 
 gboolean
 gxr_context_init_session (GxrContext *self, GulkanClient *gc);
+
+gboolean
+gxr_context_init_framebuffers (GxrContext           *self,
+                               GulkanFrameBuffer    *framebuffers[2],
+                               GulkanClient         *gc,
+                               uint32_t              width,
+                               uint32_t              height,
+                               VkSampleCountFlagBits msaa_sample_count);
 
 void
 gxr_context_poll_event (GxrContext *self);
