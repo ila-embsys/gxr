@@ -10,7 +10,6 @@
 
 #include "openxr-action.h"
 
-// TODO: needed?
 #include "openxr-context.h"
 
 #include <openxr/openxr.h>
@@ -79,7 +78,7 @@ _url_to_name (char *url, char *name)
   if (g_strcmp0 (basename, ".") == 0)
     return false;
 
-  strncpy (name, basename, XR_MAX_ACTION_NAME_SIZE);
+  strncpy (name, basename, XR_MAX_ACTION_NAME_SIZE - 1);
   return true;
 }
 
@@ -205,9 +204,10 @@ _suggest_for_interaction_profile (OpenXRActionSet *self,
   g_debug ("Components: %d\n", total_components);
 
   XrActionSuggestedBinding *suggested_bindings =
-    g_malloc (sizeof (XrActionSuggestedBinding) * total_components);
+    g_malloc (sizeof (XrActionSuggestedBinding) *
+              (unsigned long)total_components);
 
-  int num_suggestion = 0;
+  uint32_t num_suggestion = 0;
   for (GSList *l = actions; l != NULL; l = l->next)
     {
       OpenXRAction *action = OPENXR_ACTION (l->data);
@@ -261,22 +261,21 @@ _suggest_for_interaction_profile (OpenXRActionSet *self,
   return true;
 }
 
-gboolean
+static gboolean
 _attach_bindings (GxrActionSet *set)
 {
   OpenXRActionSet *self = OPENXR_ACTION_SET (set);
 
-  char **interaction_profiles;
-  int num_interaction_profiles;
-  openxr_action_bindings_get_interaction_profiles(&interaction_profiles,
-                                                  &num_interaction_profiles);
+  char **profiles;
+  int num_profiles;
+  openxr_action_bindings_get_interaction_profiles(&profiles, &num_profiles);
 
   OpenXRBinding *bindings;
   int num_bindings;
   int actions_per_binding;
   openxr_action_binding_get (&bindings, &num_bindings, &actions_per_binding);
 
-  for (int i = 0; i < num_interaction_profiles; i++)
+  for (int i = 0; i < num_profiles; i++)
     {
       OpenXRBinding *binding = &bindings[i];
 

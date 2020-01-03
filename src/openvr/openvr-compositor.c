@@ -262,10 +262,3 @@ openvr_compositor_wait_get_poses (GxrPose *poses, uint32_t count)
 
   g_free (p);
 }
-
-enum ETrackingUniverseOrigin
-openvr_compositor_get_tracking_space ()
-{
-  OpenVRFunctions* f = openvr_get_functions ();
-  return f->compositor->GetTrackingSpace ();
-}

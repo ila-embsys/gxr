@@ -152,7 +152,7 @@ _poll_event (GxrContext *context)
    */
   gboolean shutdown_event = FALSE;
   gboolean scene_application_state_changed = FALSE;
-  GxrQuitReason quit_reason;
+  GxrQuitReason quit_reason = GXR_QUIT_SHUTDOWN;
 
   struct VREvent_t vr_event;
   while (self->f.system->PollNextEvent (&vr_event, sizeof (vr_event)))
@@ -328,7 +328,8 @@ openvr_context_set_system_keyboard_transform (OpenVRContext *self,
   HmdMatrix34_t openvr_transform;
   openvr_math_graphene_to_matrix34 (transform, &openvr_transform);
 
-  enum ETrackingUniverseOrigin origin = openvr_compositor_get_tracking_space ();
+  OpenVRFunctions *f = openvr_get_functions();
+  enum ETrackingUniverseOrigin origin = f->compositor->GetTrackingSpace ();
   self->f.overlay->SetKeyboardTransformAbsolute (origin,
                                                 &openvr_transform);
 }
@@ -375,21 +376,21 @@ _get_render_dimensions (GxrContext *context,
   openvr_system_get_render_target_size (width, height);
 }
 
-gboolean
+static gboolean
 _is_input_available ()
 {
   return openvr_system_is_input_available ();
 }
 
-void
+static void
 _get_frustum_angles (GxrEye eye,
                      float *left, float *right,
                      float *top, float *bottom)
 {
-  return openvr_system_get_frustum_angles (eye, left, right, top, bottom);
+  openvr_system_get_frustum_angles (eye, left, right, top, bottom);
 }
 
-gboolean
+static gboolean
 _get_head_pose (graphene_matrix_t *pose)
 {
   return openvr_system_get_hmd_pose (pose);

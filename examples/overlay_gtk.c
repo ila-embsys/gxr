@@ -201,7 +201,7 @@ main (int argc, char *argv[])
   gtk_widget_show_all (window);
 
   GxrContext *context = gxr_context_get_instance ();
-  GulkanClient *uploader = gulkan_client_new ();
+  uploader = gulkan_client_new ();
 
   /* init openvr */
   if (!_init_openvr (context, uploader))

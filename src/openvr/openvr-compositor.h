@@ -34,6 +34,9 @@ openvr_compositor_gulkan_client_new (void);
 void
 openvr_compositor_wait_get_poses (GxrPose *poses, uint32_t count);
 
+bool
+openvr_compositor_gulkan_client_init (GulkanClient *client);
+
 G_END_DECLS
 
 #endif /* GXR_COMPOSITOR_H_ */

@@ -92,7 +92,7 @@ openvr_system_get_hmd_pose (graphene_matrix_t *pose)
                                            &state, sizeof(state)))
     {
       /* k_unTrackedDeviceIndex_Hmd should be 0 => posearray[0] */
-      ETrackingUniverseOrigin origin = openvr_compositor_get_tracking_space ();
+      enum ETrackingUniverseOrigin origin = f->compositor->GetTrackingSpace ();
 
       TrackedDevicePose_t openvr_pose;
       f->system->GetDeviceToAbsoluteTrackingPose (origin, 0, &openvr_pose, 1);

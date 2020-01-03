@@ -14,7 +14,7 @@
 G_BEGIN_DECLS
 
 enum ETrackingUniverseOrigin
-openvr_compositor_get_tracking_space ();
+openvr_compositor_get_tracking_space (void);
 
 bool
 openvr_compositor_gulkan_client_init (GulkanClient *client);

@@ -488,7 +488,7 @@ openvr_overlay_set_transform_absolute (OpenVROverlay *self,
   HmdMatrix34_t translation34;
   openvr_math_graphene_to_matrix34 (mat, &translation34);
 
-  ETrackingUniverseOrigin origin = openvr_compositor_get_tracking_space ();
+  enum ETrackingUniverseOrigin origin = f->compositor->GetTrackingSpace ();
 
   err = f->overlay->SetOverlayTransformAbsolute (priv->overlay_handle,
                                                  origin, &translation34);
@@ -508,7 +508,7 @@ openvr_overlay_get_transform_absolute (OpenVROverlay *self,
 
   HmdMatrix34_t translation34;
 
-  ETrackingUniverseOrigin origin = openvr_compositor_get_tracking_space ();
+  enum ETrackingUniverseOrigin origin = f->compositor->GetTrackingSpace ();
 
   err = f->overlay->GetOverlayTransformAbsolute (priv->overlay_handle,
                                                 &origin,
@@ -873,6 +873,18 @@ openvr_overlay_print_info (OpenVROverlay *self)
       break;
     case VROverlayTransformType_VROverlayTransform_TrackedComponent:
       g_print ("VROverlayTransform_TrackedComponent\n");
+      break;
+    case VROverlayTransformType_VROverlayTransform_Invalid:
+      g_print ("VROverlayTransform_Invalid\n");
+      break;
+    case VROverlayTransformType_VROverlayTransform_Cursor:
+      g_print ("VROverlayTransform_Cursor\n");
+      break;
+    case VROverlayTransformType_VROverlayTransform_DashboardTab:
+      g_print ("VROverlayTransform_DashboardTab\n");
+      break;
+    case VROverlayTransformType_VROverlayTransform_DashboardThumb:
+      g_print ("VROverlayTransform_DashboardThumb\n");
       break;
     }
 

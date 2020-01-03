@@ -320,7 +320,7 @@ _action_poll_pose_secs_from_now (OpenVRAction *self,
 
       InputPoseActionData_t data;
 
-      ETrackingUniverseOrigin origin = openvr_compositor_get_tracking_space ();
+      enum ETrackingUniverseOrigin origin = f->compositor->GetTrackingSpace ();
 
       err = f->input->GetPoseActionDataRelativeToNow (self->handle,
                                                       origin,

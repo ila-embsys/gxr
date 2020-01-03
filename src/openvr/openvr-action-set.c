@@ -74,7 +74,7 @@ openvr_action_set_new (void)
   return (OpenVRActionSet*) g_object_new (OPENVR_TYPE_ACTION_SET, 0);
 }
 
-gboolean
+static gboolean
 _load_handle (OpenVRActionSet *self,
               gchar           *url)
 {

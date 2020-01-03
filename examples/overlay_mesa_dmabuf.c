@@ -220,7 +220,7 @@ main ()
   GMainLoop *loop = g_main_loop_new (NULL, FALSE);
 
   GxrContext *context = gxr_context_get_instance ();
-  GulkanClient *uploader = gulkan_client_new ();
+  uploader = gulkan_client_new ();
 
     /* init openvr */
   if (!_init_openvr (context, uploader))

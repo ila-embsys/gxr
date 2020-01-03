@@ -74,7 +74,7 @@ _url_to_name (char *url, char *name)
   if (g_strcmp0 (basename, ".") == 0)
     return false;
 
-  strncpy (name, basename, XR_MAX_ACTION_NAME_SIZE);
+  strncpy (name, basename, XR_MAX_ACTION_NAME_SIZE - 1);
   return true;
 }
 
@@ -190,10 +190,10 @@ _action_poll_digital (OpenXRAction *self)
         }
 
       GxrDigitalEvent *event = g_malloc (sizeof (GxrDigitalEvent));
-      event->controller_handle = i;
-      event->active = value.isActive;
-      event->state = value.currentState;
-      event->changed = value.changedSinceLastSync;
+      event->controller_handle = (guint64)i;
+      event->active = (gboolean)value.isActive;
+      event->state = (gboolean)value.currentState;
+      event->changed = (gboolean)value.changedSinceLastSync;
       event->time = value.lastChangeTime;
 
       gxr_action_emit_digital (GXR_ACTION (self), event);
@@ -229,8 +229,8 @@ _action_poll_analog (OpenXRAction *self)
         }
 
       GxrAnalogEvent *event = g_malloc (sizeof (GxrAnalogEvent));
-      event->controller_handle = i;
-      event->active = value.isActive;
+      event->controller_handle = (guint64)i;
+      event->active = (gboolean)value.isActive;
       graphene_vec3_init (&event->state, value.currentState.x, value.currentState.y, 0);
       graphene_vec3_init (&event->delta, 0, 0, 0); /* TODO */
       event->time = value.lastChangeTime;
@@ -309,8 +309,8 @@ _action_poll_pose_secs_from_now (OpenXRAction *self,
       spaceLocationValid = _space_location_valid (&space_location);
 
       GxrPoseEvent *event = g_malloc (sizeof (GxrPoseEvent));
-      event->active = value.isActive;
-      event->controller_handle = i;
+      event->active = (gboolean)value.isActive;
+      event->controller_handle = (guint64)i;
       _get_model_matrix_from_pose(&space_location.pose, &event->pose);
       graphene_vec3_init (&event->velocity, 0, 0, 0);
       graphene_vec3_init (&event->angular_velocity, 0, 0, 0);
