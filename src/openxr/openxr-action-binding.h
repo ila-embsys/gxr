@@ -16,7 +16,7 @@
 
 /* TODO: get bindings from file, allocate dynamically */
 #define NUM_INTERACTION_PROFILES 3
-#define NUM_ACTION_PATHS 12
+#define NUM_ACTION_PATHS 14
 /* currently 1 binding per hand hardcoded */
 #define NUM_COMPONENTS 2
 
@@ -77,24 +77,30 @@ static OpenXRBinding b[NUM_INTERACTION_PROFILES] = {
 
     .action_bindings[5] = {
       .name = "/actions/wm/in/hand_pose",
-      .component[0] = "/user/hand/left/input/aim/pose",
-      .component[1] = "/user/hand/right/input/aim/pose",
+      .component = {
+        "/user/hand/left/input/aim/pose",
+        "/user/hand/right/input/aim/pose"
+      },
       .num_components = NUM_COMPONENTS,
       .bound = true,
     },
 
     .action_bindings[6] = {
       .name = "/actions/wm/in/hand_pose_hand_grip",
-      .component[0] = "/user/hand/left/input/grip/pose",
-      .component[1] = "/user/hand/right/input/grip/pose",
+      .component = {
+        "/user/hand/left/input/grip/pose",
+        "/user/hand/right/input/grip/pose",
+      },
       .num_components = NUM_COMPONENTS,
       .bound = true,
     },
 
     .action_bindings[7] = {
       .name = "/actions/wm/out/haptic",
-      .component[0] = "/user/hand/left/output/haptic",
-      .component[1] = "/user/hand/right/output/haptic",
+      .component = {
+        "/user/hand/left/output/haptic",
+        "/user/hand/right/output/haptic",
+      },
       .num_components = NUM_COMPONENTS,
       .bound = true,
     },
@@ -117,6 +123,16 @@ static OpenXRBinding b[NUM_INTERACTION_PROFILES] = {
     },
 
     .action_bindings[11] = {
+      .name = "/actions/mouse_synth/in/scroll",
+      .bound = false,
+    },
+
+    .action_bindings[12] = {
+      .name = "/actions/mouse_synth/in/middle_click",
+      .bound = false,
+    },
+
+    .action_bindings[13] = {
       .name = "/actions/mouse_synth/in/scroll",
       .bound = false,
     },
@@ -127,8 +143,10 @@ static OpenXRBinding b[NUM_INTERACTION_PROFILES] = {
 
     .action_bindings[0] = {
       .name ="/actions/wm/in/grab_window",
-      .component[0] = "/user/hand/left/input/select/click",
-      .component[1] = "/user/hand/right/input/select/click",
+      .component = {
+        "/user/hand/left/input/select/click",
+        "/user/hand/right/input/select/click",
+      },
       .num_components = NUM_COMPONENTS,
       .bound = true,
     },
@@ -155,24 +173,30 @@ static OpenXRBinding b[NUM_INTERACTION_PROFILES] = {
 
     .action_bindings[5] = {
       .name = "/actions/wm/in/hand_pose",
-      .component[0] = "/user/hand/left/input/aim/pose",
-      .component[1] = "/user/hand/right/input/aim/pose",
+      .component = {
+        "/user/hand/left/input/aim/pose",
+        "/user/hand/right/input/aim/pose",
+      },
       .num_components = NUM_COMPONENTS,
       .bound = true,
     },
 
     .action_bindings[6] = {
       .name = "/actions/wm/in/hand_pose_hand_grip",
-      .component[0] = "/user/hand/left/input/grip/pose",
-      .component[1] = "/user/hand/right/input/grip/pose",
+      .component = {
+        "/user/hand/left/input/grip/pose",
+        "/user/hand/right/input/grip/pose",
+      },
       .num_components = NUM_COMPONENTS,
       .bound = true,
     },
 
     .action_bindings[7] = {
       .name = "/actions/wm/out/haptic",
-      .component[0] = "/user/hand/left/output/haptic",
-      .component[1] = "/user/hand/right/output/haptic",
+      .component = {
+        "/user/hand/left/output/haptic",
+        "/user/hand/right/output/haptic",
+      },
       .num_components = NUM_COMPONENTS,
       .bound = true,
     },
@@ -193,6 +217,16 @@ static OpenXRBinding b[NUM_INTERACTION_PROFILES] = {
     },
 
     .action_bindings[11] = {
+      .name = "/actions/mouse_synth/in/scroll",
+      .bound = false,
+    },
+
+    .action_bindings[12] = {
+      .name = "/actions/mouse_synth/in/middle_click",
+      .bound = false,
+    },
+
+    .action_bindings[13] = {
       .name = "/actions/mouse_synth/in/scroll",
       .bound = false,
     },
@@ -203,97 +237,145 @@ static OpenXRBinding b[NUM_INTERACTION_PROFILES] = {
 
     .action_bindings[0] = {
       .name = "/actions/wm/in/grab_window",
-      .component[0] = "/user/hand/left/input/trigger/value",
-      .component[1] = "/user/hand/right/input/trigger/value",
+      .component = {
+        "/user/hand/left/input/trigger/value",
+        "/user/hand/right/input/trigger/value",
+      },
       .num_components = NUM_COMPONENTS,
       .bound = true,
     },
 
     .action_bindings[1] = {
       .name = "/actions/wm/in/reset_orientation",
-      .component[0] = "/user/hand/left/input/trigger/click",
-      .component[1] = "/user/hand/right/input/trigger/click",
+      .component = {
+        "/user/hand/left/input/trigger/click",
+      "/user/hand/right/input/trigger/click",
+      },
       .num_components = NUM_COMPONENTS,
       .bound = true,
     },
 
     .action_bindings[2] = {
       .name = "/actions/wm/in/show_keyboard",
-      .component[0] = "/user/hand/left/input/thumbstick/click",
-      .component[1] = "/user/hand/right/input/thumbstick/click",
+      .component = {
+        "/user/hand/left/input/thumbstick/click",
+        "/user/hand/right/input/thumbstick/click",
+      },
       .num_components = NUM_COMPONENTS,
       .bound = true,
     },
 
     .action_bindings[3] = {
       .name = "/actions/wm/in/push_pull",
-      .component[0] = "/user/hand/left/input/trackpad/y",
-      .component[1] = "/user/hand/right/input/trackpad/y",
+      .component = {
+        "/user/hand/left/input/trackpad/y",
+        "/user/hand/right/input/trackpad/y",
+      },
       .num_components = NUM_COMPONENTS,
       .bound = true,
     },
 
     .action_bindings[4] = {
       .name = "/actions/wm/in/push_pull_scale",
-      .component[0] = "/user/hand/left/input/trackpad",
-      .component[1] = "/user/hand/right/input/trackpad",
+      .component = {
+        "/user/hand/left/input/trackpad",
+        "/user/hand/right/input/trackpad",
+      },
+      .num_components = NUM_COMPONENTS,
       .bound = true,
     },
 
     .action_bindings[5] = {
       .name = "/actions/wm/in/hand_pose",
-      .component[0] = "/user/hand/left/input/aim/pose",
-      .component[1] = "/user/hand/right/input/aim/pose",
+      .component = {
+        "/user/hand/left/input/aim/pose",
+        "/user/hand/right/input/aim/pose",
+      },
       .num_components = NUM_COMPONENTS,
       .bound = true,
     },
 
     .action_bindings[6] = {
       .name = "/actions/wm/in/hand_pose_hand_grip",
-      .component[0] = "/user/hand/left/input/grip/pose",
-      .component[1] = "/user/hand/right/input/grip/pose",
+      .component = {
+        "/user/hand/left/input/grip/pose",
+        "/user/hand/right/input/grip/pose",
+      },
       .num_components = NUM_COMPONENTS,
       .bound = true,
     },
 
     .action_bindings[7] = {
       .name = "/actions/wm/out/haptic",
-      .component[0] = "/user/hand/left/output/haptic",
-      .component[1] = "/user/hand/right/output/haptic",
+      .component = {
+        "/user/hand/left/output/haptic",
+        "/user/hand/right/output/haptic",
+      },
       .num_components = NUM_COMPONENTS,
       .bound = true,
     },
 
     .action_bindings[8] = {
       .name = "/actions/wm/in/menu",
-      .component[0] = "/user/hand/left/input/b/click",
-      .component[1] = "/user/hand/right/input/b/click",
+      .component = {
+        "/user/hand/left/input/b/click",
+        "/user/hand/right/input/b/click",
+      },
       .num_components = NUM_COMPONENTS,
       .bound = true,
     },
 
     .action_bindings[9] = {
       .name = "/actions/mouse_synth/in/left_click",
-      .component[0] = "/user/hand/left/input/a/click",
-      .component[1] = "/user/hand/right/input/a/click",
+      .component = {
+        "/user/hand/left/input/a/click",
+        "/user/hand/right/input/a/click",
+      },
       .num_components = NUM_COMPONENTS,
       .bound = true,
     },
 
     .action_bindings[10] = {
       .name = "/actions/mouse_synth/in/right_click",
-      .component[0] = "/user/hand/left/input/b/click",
-      .component[1] = "/user/hand/right/input/b/click",
+      .component = {
+        "/user/hand/left/input/b/click",
+        "/user/hand/right/input/b/click",
+      },
       .num_components = NUM_COMPONENTS,
       .bound = true,
     },
 
     .action_bindings[11] = {
       .name = "/actions/mouse_synth/in/scroll",
-      .component[0] = "/user/hand/left/input/trackpad",
-      .component[1] = "/user/hand/right/input/trackpad",
-      .bound = false,
+      .component = {
+        "/user/hand/left/input/trackpad",
+        "/user/hand/right/input/trackpad",
+      },
+      .num_components = NUM_COMPONENTS,
+      .bound = true,
     },
+
+    /* TODO: Should be trackpad press bool, but /force is float */
+    .action_bindings[12] = {
+      .name = "/actions/mouse_synth/in/middle_click",
+      .component = {
+        "/user/hand/left/input/trackpad/touch",
+        "/user/hand/right/input/trackpad/touch",
+      },
+      .num_components = NUM_COMPONENTS,
+      .bound = true,
+    },
+
+    .action_bindings[13] = {
+      .name = "/actions/mouse_synth/in/scroll",
+      .component = {
+        "/user/hand/left/input/trackpad/y",
+        "/user/hand/right/input/trackpad/y",
+      },
+      .num_components = NUM_COMPONENTS,
+      .bound = true,
+    },
+
   },
 };
 

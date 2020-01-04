@@ -308,6 +308,12 @@ _action_poll_pose_secs_from_now (OpenXRAction *self,
 
       spaceLocationValid = _space_location_valid (&space_location);
 
+      /*
+      g_print("Polled space %s %d, %f %f %f\n", self->url, spaceLocationValid,
+              space_location.pose.position.x, space_location.pose.position.y, space_location.pose.position.z
+      );
+      */
+
       GxrPoseEvent *event = g_malloc (sizeof (GxrPoseEvent));
       event->active = (gboolean)value.isActive;
       event->controller_handle = (guint64)i;

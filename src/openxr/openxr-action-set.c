@@ -173,9 +173,16 @@ _find_binding (OpenXRAction *action,
 
       if (g_strcmp0 (ab->name, url) == 0)
         {
+          if (!ab->bound)
+            return NULL;
+
           return ab;
         }
     }
+
+  char *url = openxr_action_get_url (action);
+  g_printerr ("Failed to find action %s in binding: %s\n",
+              url, binding->interaction_profile);
   return NULL;
 }
 
@@ -218,7 +225,7 @@ _suggest_for_interaction_profile (OpenXRActionSet *self,
       if (!ab)
         {
           char *url = openxr_action_get_url (action);
-          g_printerr ("Skipping not found action %s\n", url);
+          g_debug ("Skipping unbound action %s\n", url);
           continue;
         }
 
@@ -279,7 +286,8 @@ _attach_bindings (GxrActionSet *set)
     {
       OpenXRBinding *binding = &bindings[i];
 
-      g_debug ("Suggesting for %s\n", binding->interaction_profile);
+      g_debug ("%s: Suggesting for %s\n",
+               self->url, binding->interaction_profile);
       _suggest_for_interaction_profile (self, binding, actions_per_binding);
     }
 
