@@ -238,8 +238,8 @@ static OpenXRBinding b[NUM_INTERACTION_PROFILES] = {
     .action_bindings[0] = {
       .name = "/actions/wm/in/grab_window",
       .component = {
-        "/user/hand/left/input/trigger/value",
-        "/user/hand/right/input/trigger/value",
+        "/user/hand/left/input/trigger/click",
+        "/user/hand/right/input/trigger/click",
       },
       .num_components = NUM_COMPONENTS,
       .bound = true,
@@ -249,10 +249,10 @@ static OpenXRBinding b[NUM_INTERACTION_PROFILES] = {
       .name = "/actions/wm/in/reset_orientation",
       .component = {
         "/user/hand/left/input/trigger/click",
-      "/user/hand/right/input/trigger/click",
+        "/user/hand/right/input/trigger/click",
       },
       .num_components = NUM_COMPONENTS,
-      .bound = true,
+      .bound = false, // TODO
     },
 
     .action_bindings[2] = {

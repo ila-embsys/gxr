@@ -306,6 +306,7 @@ _attach_bindings (GxrActionSet *set)
       g_printerr ("ERROR: attaching action set: %s\n", buffer);
       return false;
     }
+  g_debug ("Attached action set %s\n", self->url);
   return true;
 }
 
