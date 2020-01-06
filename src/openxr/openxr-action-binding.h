@@ -268,8 +268,8 @@ static OpenXRBinding b[NUM_INTERACTION_PROFILES] = {
     .action_bindings[3] = {
       .name = "/actions/wm/in/push_pull",
       .component = {
-        "/user/hand/left/input/trackpad/y",
-        "/user/hand/right/input/trackpad/y",
+        "/user/hand/left/input/thumbstick",
+        "/user/hand/right/input/thumbstick",
       },
       .num_components = NUM_COMPONENTS,
       .bound = true,

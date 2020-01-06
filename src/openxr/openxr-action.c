@@ -91,7 +91,10 @@ openxr_action_new_from_type_url (GxrActionSet *action_set,
   XrActionType action_type;
   switch (type)
   {
-    case GXR_ACTION_ANALOG:
+    case GXR_ACTION_FLOAT:
+      action_type = XR_ACTION_TYPE_FLOAT_INPUT;
+      break;
+    case GXR_ACTION_VEC2F:
       action_type = XR_ACTION_TYPE_VECTOR2F_INPUT;
       break;
     case GXR_ACTION_DIGITAL:
@@ -207,6 +210,45 @@ _action_poll_analog (OpenXRAction *self)
 {
 
   for (int i = 0; i < NUM_HANDS; i++)
+  {
+    XrActionStateGetInfo get_info = {
+      .type = XR_TYPE_ACTION_STATE_GET_INFO,
+      .next = NULL,
+      .action = self->handle,
+      .subactionPath = self->hand_paths[i]
+    };
+
+    XrActionStateFloat value = {
+      .type = XR_TYPE_ACTION_STATE_FLOAT,
+      .next = NULL
+    };
+
+    XrResult result = xrGetActionStateFloat(self->session, &get_info, &value);
+
+    if (result != XR_SUCCESS)
+    {
+      g_debug ("Failed to poll float action\n");
+      continue;
+    }
+
+    GxrAnalogEvent *event = g_malloc (sizeof (GxrAnalogEvent));
+    event->controller_handle = (guint64)i;
+    event->active = (gboolean)value.isActive;
+    graphene_vec3_init (&event->state, value.currentState, 0, 0);
+    graphene_vec3_init (&event->delta, 0, 0, 0); /* TODO */
+    event->time = value.lastChangeTime;
+
+    gxr_action_emit_analog (GXR_ACTION (self), event);
+  }
+
+  return TRUE;
+}
+
+static gboolean
+_action_poll_vec2f (OpenXRAction *self)
+{
+
+  for (int i = 0; i < NUM_HANDS; i++)
     {
       XrActionStateGetInfo get_info = {
         .type = XR_TYPE_ACTION_STATE_GET_INFO,
@@ -224,7 +266,7 @@ _action_poll_analog (OpenXRAction *self)
 
       if (result != XR_SUCCESS)
         {
-          g_debug ("Failed to poll analog action\n");
+          g_debug ("Failed to poll vec2f action\n");
           continue;
         }
 
@@ -340,8 +382,10 @@ _poll (GxrAction *action)
     {
     case GXR_ACTION_DIGITAL:
       return _action_poll_digital (self);
-    case GXR_ACTION_ANALOG:
+    case GXR_ACTION_FLOAT:
       return _action_poll_analog (self);
+    case GXR_ACTION_VEC2F:
+      return _action_poll_vec2f (self);
     case GXR_ACTION_POSE:
       return _action_poll_pose_secs_from_now (self, 0);
     default:

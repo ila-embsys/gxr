@@ -73,7 +73,8 @@ typedef enum {
 /**
  * GxrActionType:
  * @GXR_ACTION_DIGITAL: A digital action.
- * @GXR_ACTION_ANALOG: An analog action.
+ * @GXR_ACTION_VEC2F: An analog action with floats x,y.
+ * @GXR_ACTION_FLOAT: An analog action.
  * @GXR_ACTION_POSE: A pose action.
  *
  * The type of the OpenVR action.
@@ -81,7 +82,8 @@ typedef enum {
  **/
 typedef enum {
   GXR_ACTION_DIGITAL,
-  GXR_ACTION_ANALOG,
+  GXR_ACTION_VEC2F,
+  GXR_ACTION_FLOAT,
   GXR_ACTION_POSE,
   GXR_ACTION_HAPTIC
 } GxrActionType;

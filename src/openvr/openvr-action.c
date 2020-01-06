@@ -351,7 +351,8 @@ _poll (GxrAction *action)
     {
     case GXR_ACTION_DIGITAL:
       return _action_poll_digital (self);
-    case GXR_ACTION_ANALOG:
+    case GXR_ACTION_FLOAT:
+    case GXR_ACTION_VEC2F:
       return _action_poll_analog (self);
     case GXR_ACTION_POSE:
       return _action_poll_pose_secs_from_now (self, 0);

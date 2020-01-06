@@ -96,7 +96,8 @@ gxr_action_set_connect (GxrActionSet *self,
     case GXR_ACTION_DIGITAL:
       g_signal_connect (action, "digital-event", callback, data);
       break;
-    case GXR_ACTION_ANALOG:
+    case GXR_ACTION_FLOAT:
+    case GXR_ACTION_VEC2F:
       g_signal_connect (action, "analog-event", callback, data);
       break;
     case GXR_ACTION_POSE:
