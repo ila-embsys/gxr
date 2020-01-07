@@ -914,7 +914,48 @@ _init_gulkan (GxrContext   *context,
               GulkanClient *gc)
 {
   (void) context;
-  return gulkan_client_init_vulkan (gc, NULL, NULL);
+
+  /* TODO: don't hardcode extensions */
+  const gchar *instance_extensions[] = {
+    VK_KHR_EXTERNAL_FENCE_CAPABILITIES_EXTENSION_NAME,
+    VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME,
+    VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME,
+    VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME
+  };
+
+  GSList *instance_ext_list = NULL;
+  for (uint64_t i = 0; i < G_N_ELEMENTS (instance_extensions); i++)
+    {
+      char *instance_ext = g_strdup (instance_extensions[i]);
+      instance_ext_list = g_slist_append (instance_ext_list, instance_ext);
+    }
+
+  const gchar *device_extensions[] = {
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+    VK_KHR_EXTERNAL_FENCE_EXTENSION_NAME,
+    VK_KHR_EXTERNAL_FENCE_FD_EXTENSION_NAME,
+    VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME,
+    VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME,
+    VK_KHR_EXTERNAL_SEMAPHORE_EXTENSION_NAME,
+    VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME,
+    VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME,
+    VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME
+  };
+
+  GSList *device_ext_list = NULL;
+  for (uint64_t i = 0; i < G_N_ELEMENTS (device_extensions); i++)
+    {
+      char *device_ext = g_strdup (device_extensions[i]);
+      device_ext_list = g_slist_append (device_ext_list, device_ext);
+    }
+
+  gboolean res =
+    gulkan_client_init_vulkan (gc, instance_ext_list, device_ext_list);
+
+  g_slist_free (instance_ext_list);
+  g_slist_free (device_ext_list);
+
+  return res;
 }
 
 static gboolean
