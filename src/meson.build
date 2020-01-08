@@ -23,51 +23,6 @@ gxr_headers = [
   'gxr-overlay.h'
 ]
 
-openvr_sources = [
-  'openvr/openvr-system.c',
-  'openvr/openvr-overlay.c',
-  'openvr/openvr-compositor.c',
-  'openvr/openvr-context.c',
-  'openvr/openvr-action.c',
-  'openvr/openvr-action-set.c',
-  'openvr/openvr-model.c',
-  'openvr/openvr-math.c'
-]
-
-openvr_headers = [
-  'openvr/openvr-system.h',
-  'openvr/openvr-overlay.h',
-  'openvr/openvr-compositor.h',
-  'openvr/openvr-context.h',
-  'openvr/openvr-action.h',
-  'openvr/openvr-action-set.h',
-  'openvr/openvr-model.h'
-]
-
-if openvr_dep.found()
-  gxr_sources += openvr_sources
-  gxr_headers += openvr_headers
-endif
-
-openxr_sources = [
-  'openxr/openxr-context.c',
-  'openxr/openxr-action.c',
-  'openxr/openxr-action-set.c',
-  'openxr/openxr-overlay.c'
-]
-
-openxr_headers = [
-  'openxr/openxr-context.h',
-  'openxr/openxr-action.h',
-  'openxr/openxr-action-set.h',
-  'openxr/openxr-overlay.h'
-]
-
-if openxr_dep.found()
-  gxr_sources += openxr_sources
-  gxr_headers += openxr_headers
-endif
-
 version_split = meson.project_version().split('.')
 MAJOR_VERSION = version_split[0]
 MINOR_VERSION = version_split[1]
@@ -94,10 +49,8 @@ configure_file(
 
 gxr_deps = [
   gulkan_dep,
-  openvr_dep,
   gdk_dep,
   m_dep,
-  openxr_dep
 ]
 
 inc_dirs = ['.']
@@ -110,34 +63,25 @@ endif
 
 gxr_inc = include_directories(inc_dirs)
 
-if openvr_dep.found()
-  gxr_deps += [
-    stdcpp_dep,
-    dl_dep
-  ]
+gxr_backend_libs = []
 
-  gxr_lib = shared_library(api_path,
-    gxr_sources,
-    version: meson.project_version(),
-    soversion: so_version,
-    dependencies: gxr_deps,
-    include_directories: gxr_inc,
-    install: true,
-    c_args : ['-DGXR_COMPILATION'],
-    build_rpath : openvr_dep.get_pkgconfig_variable('libdir'),
-    install_rpath : openvr_dep.get_pkgconfig_variable('libdir')
-  )
-else
-  gxr_lib = shared_library(api_path,
-    gxr_sources,
-    version: meson.project_version(),
-    soversion: so_version,
-    dependencies: gxr_deps,
-    include_directories: gxr_inc,
-    install: true,
-    c_args : ['-DGXR_COMPILATION']
-  )
+if openvr_dep.found()
+  subdir('openvr')
 endif
+if openxr_dep.found()
+  subdir('openxr')
+endif
+
+gxr_lib = shared_library(api_path,
+  gxr_sources,
+  version: meson.project_version(),
+  soversion: so_version,
+  dependencies: gxr_deps,
+  include_directories: gxr_inc,
+  install: true,
+  link_whole: gxr_backend_libs,
+  c_args : ['-DGXR_COMPILATION']
+)
 
 gxr_dep = declare_dependency(
   sources: [],
