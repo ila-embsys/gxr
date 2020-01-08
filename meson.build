@@ -71,7 +71,6 @@ if openvr_dep.found()
   config_h.set('OPENVR_VERSION_MICRO', openvr_version_str_list[2].to_int())
 
   config_h.set('GXR_HAS_OPENVR', 1)
-  config_h.set('GXR_HAS_OVERLAYS', 1)
   # For a statically linked libopenvr_api we also need to link to the
   # Standard C++ library and the implementation of dlopen()
   stdcpp_dep = c.find_library('stdc++')
