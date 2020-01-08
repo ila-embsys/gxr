@@ -5,8 +5,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-#ifndef GXR_OVERLAY_H_
-#define GXR_OVERLAY_H_
+#ifndef GXR_OPENVR_OVERLAY_H_
+#define GXR_OPENVR_OVERLAY_H_
 
 #if !defined (GXR_INSIDE) && !defined (GXR_COMPILATION)
 #error "Only <gxr.h> can be included directly."
@@ -163,4 +163,4 @@ openvr_overlay_print_info (OpenVROverlay *self);
 
 G_END_DECLS
 
-#endif /* GXR_OVERLAY_H_ */
+#endif /* GXR_OPENVR_OVERLAY_H_ */
