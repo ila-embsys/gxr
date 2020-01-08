@@ -14,6 +14,7 @@
 
 #define GXR_DEVICE_INDEX_MAX 64
 #define GXR_DEVICE_INDEX_HMD 0
+#define GXR_MODEL_NAME_MAX 32768
 
 /**
  * GxrAppType:

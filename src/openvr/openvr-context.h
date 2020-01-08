@@ -26,8 +26,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (OpenVRContext, openvr_context,
                       OPENVR, CONTEXT, GxrContext)
 
-#define OPENVR_PROPERTY_STRING_MAX 32768
-
 OpenVRContext *
 openvr_context_new (void);
 
