@@ -33,17 +33,17 @@ load_gdk_pixbuf ()
 }
 
 static void
-test_color (OpenVROverlay *overlay)
+test_color (GxrOverlay *overlay)
 {
   graphene_vec3_t *color = graphene_vec3_alloc ();
-  g_assert (openvr_overlay_get_color (overlay, color));
+  g_assert (gxr_overlay_get_color (overlay, color));
 
   graphene_vec3_init (color, 1.0f, 0.5f, 0.5f);
 
-  g_assert (openvr_overlay_set_color (overlay, color));
+  g_assert (gxr_overlay_set_color (overlay, color));
 
   graphene_vec3_t *color_ret = graphene_vec3_alloc ();
-  g_assert (openvr_overlay_get_color (overlay, color_ret));
+  g_assert (gxr_overlay_get_color (overlay, color_ret));
 
   g_assert (graphene_vec3_equal (color, color_ret));
 
@@ -78,20 +78,20 @@ test_overlay_pixbuf ()
                                            false);
   g_assert_nonnull (texture);
 
-  OpenVROverlay *overlay = openvr_overlay_new ();
+  GxrOverlay *overlay = gxr_overlay_new ();
   g_assert_nonnull (overlay);
 
-  openvr_overlay_create (overlay, "test.pixbuf", "GDK pixbuf");
+  gxr_overlay_create (overlay, "test.pixbuf", "GDK pixbuf");
 
-  g_assert (openvr_overlay_is_valid (overlay));
+  g_assert (gxr_overlay_is_valid (overlay));
 
-  openvr_overlay_set_mouse_scale (overlay,
+  gxr_overlay_set_mouse_scale (overlay,
                                   gdk_pixbuf_get_width (pixbuf),
                                   gdk_pixbuf_get_height (pixbuf));
 
   test_color (overlay);
 
-  openvr_overlay_submit_texture (overlay, uploader, texture);
+  gxr_overlay_submit_texture (overlay, uploader, texture);
 
   g_object_unref (pixbuf);
 }

@@ -30,105 +30,26 @@
     } \
 }
 
-typedef struct _OpenVROverlayPrivate
+struct _OpenVROverlay
 {
-  GObjectClass parent_class;
-
+  GxrOverlayClass parent;
   VROverlayHandle_t overlay_handle;
   VROverlayHandle_t thumbnail_handle;
-  gboolean      flip_y;
-
-} OpenVROverlayPrivate;
+};
 
 static struct VRTextureBounds_t defaultBounds = { 0., 0., 1., 1. };
 static struct VRTextureBounds_t flippedBounds = { 0., 1., 1., 0. };
 
-G_DEFINE_TYPE_WITH_PRIVATE (OpenVROverlay, openvr_overlay, G_TYPE_OBJECT)
-
-enum {
-  MOTION_NOTIFY_EVENT,
-  BUTTON_PRESS_EVENT,
-  BUTTON_RELEASE_EVENT,
-  SHOW,
-  HIDE,
-  DESTROY,
-  KEYBOARD_PRESS_EVENT,
-  KEYBOARD_CLOSE_EVENT,
-  LAST_SIGNAL
-};
-
-static guint overlay_signals[LAST_SIGNAL] = { 0 };
+G_DEFINE_TYPE (OpenVROverlay, openvr_overlay, GXR_TYPE_OVERLAY)
 
 static void
 openvr_overlay_finalize (GObject *gobject);
 
 static void
-openvr_overlay_class_init (OpenVROverlayClass *klass)
-{
-  GObjectClass *object_class = G_OBJECT_CLASS (klass);
-  object_class->finalize = openvr_overlay_finalize;
-  overlay_signals[MOTION_NOTIFY_EVENT] =
-    g_signal_new ("motion-notify-event",
-                   G_TYPE_FROM_CLASS (klass),
-                   G_SIGNAL_RUN_LAST,
-                   0, NULL, NULL, NULL, G_TYPE_NONE,
-                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  overlay_signals[BUTTON_PRESS_EVENT] =
-    g_signal_new ("button-press-event",
-                   G_TYPE_FROM_CLASS (klass),
-                   G_SIGNAL_RUN_LAST,
-                   0, NULL, NULL, NULL, G_TYPE_NONE,
-                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  overlay_signals[BUTTON_RELEASE_EVENT] =
-    g_signal_new ("button-release-event",
-                   G_TYPE_FROM_CLASS (klass),
-                   G_SIGNAL_RUN_LAST,
-                   0, NULL, NULL, NULL, G_TYPE_NONE,
-                   1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  overlay_signals[SHOW] =
-    g_signal_new ("show",
-                   G_TYPE_FROM_CLASS (klass),
-                   G_SIGNAL_RUN_FIRST,
-                   0, NULL, NULL, NULL, G_TYPE_NONE, 0);
-
-  overlay_signals[HIDE] =
-    g_signal_new ("hide",
-                   G_TYPE_FROM_CLASS (klass),
-                   G_SIGNAL_RUN_FIRST,
-                   0, NULL, NULL, NULL, G_TYPE_NONE, 0);
-
-  overlay_signals[DESTROY] =
-    g_signal_new ("destroy",
-                   G_TYPE_FROM_CLASS (klass),
-                  (GSignalFlags)
-                     (G_SIGNAL_RUN_CLEANUP |
-                      G_SIGNAL_NO_RECURSE |
-                      G_SIGNAL_NO_HOOKS),
-                   0, NULL, NULL, NULL, G_TYPE_NONE, 0);
-
-  overlay_signals[KEYBOARD_PRESS_EVENT] =
-    g_signal_new ("keyboard-press-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_LAST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE,
-                  1, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  overlay_signals[KEYBOARD_CLOSE_EVENT] =
-    g_signal_new ("keyboard-close-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_FIRST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE, 0);
-}
-
-static void
 openvr_overlay_init (OpenVROverlay *self)
 {
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
-  priv->overlay_handle = 0;
-  priv->thumbnail_handle = 0;
+  self->overlay_handle = 0;
+  self->thumbnail_handle = 0;
 }
 
 OpenVROverlay *
@@ -137,10 +58,16 @@ openvr_overlay_new (void)
   return (OpenVROverlay*) g_object_new (OPENVR_TYPE_OVERLAY, 0);
 }
 
-gboolean
-openvr_overlay_create (OpenVROverlay *self, gchar* key, gchar* name)
+static void
+openvr_overlay_finalize (GObject *gobject)
 {
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
+  G_OBJECT_CLASS (openvr_overlay_parent_class)->finalize (gobject);
+}
+
+static gboolean
+_create (GxrOverlay *overlay, gchar* key, gchar* name)
+{
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
 
   OpenVRFunctions *f = openvr_get_functions ();
   EVROverlayError err;
@@ -153,9 +80,8 @@ openvr_overlay_create (OpenVROverlay *self, gchar* key, gchar* name)
       return FALSE;
     }
 
-
   char *name_trimmed = strndup(name, k_unVROverlayMaxNameLength - 1);
-  err = f->overlay->CreateOverlay (key, name_trimmed, &priv->overlay_handle);
+  err = f->overlay->CreateOverlay (key, name_trimmed, &self->overlay_handle);
 
   free (name_trimmed);
 
@@ -164,108 +90,80 @@ openvr_overlay_create (OpenVROverlay *self, gchar* key, gchar* name)
   return TRUE;
 }
 
-gboolean
-openvr_overlay_create_width (OpenVROverlay *self,
-                             gchar* key,
-                             gchar* name,
-                             float meters)
+static gboolean
+_create_for_dashboard (GxrOverlay *overlay,
+                       gchar* key,
+                       gchar* name)
 {
-  if (!openvr_overlay_create (self, key, name))
-    return FALSE;
-
-  if (!openvr_overlay_set_width_meters (self, meters))
-    return FALSE;
-
-  return TRUE;
-}
-
-gboolean
-openvr_overlay_create_for_dashboard (OpenVROverlay *self,
-                                     gchar* key,
-                                     gchar* name)
-{
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
-
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
   OpenVRFunctions *f = openvr_get_functions ();
   EVROverlayError err;
 
-  err = f->overlay->CreateDashboardOverlay (key, name, &priv->overlay_handle,
-                                           &priv->thumbnail_handle);
+  err = f->overlay->CreateDashboardOverlay (key, name, &self->overlay_handle,
+                                           &self->thumbnail_handle);
 
   OVERLAY_CHECK_ERROR ("CreateDashboardOverlay", err)
 
   return TRUE;
 }
 
-gboolean
-openvr_overlay_is_valid (OpenVROverlay *self)
+static gboolean
+_is_valid (GxrOverlay *overlay)
 {
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
-  return priv->overlay_handle != k_ulOverlayHandleInvalid;
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
+  return self->overlay_handle != k_ulOverlayHandleInvalid;
 }
 
-gboolean
-openvr_overlay_show (OpenVROverlay *self)
+static gboolean
+_show (GxrOverlay *overlay)
 {
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
-
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
   OpenVRFunctions *f = openvr_get_functions ();
   EVROverlayError err;
 
-  err = f->overlay->ShowOverlay (priv->overlay_handle);
+  err = f->overlay->ShowOverlay (self->overlay_handle);
 
   OVERLAY_CHECK_ERROR ("ShowOverlay", err)
   return TRUE;
 }
 
-gboolean
-openvr_overlay_hide (OpenVROverlay *self)
+static gboolean
+_hide (GxrOverlay *overlay)
 {
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
-
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
   OpenVRFunctions *f = openvr_get_functions ();
   EVROverlayError err;
 
-  err = f->overlay->HideOverlay (priv->overlay_handle);
+  err = f->overlay->HideOverlay (self->overlay_handle);
 
   OVERLAY_CHECK_ERROR ("HideOverlay", err)
   return TRUE;
 }
 
-gboolean
-openvr_overlay_set_visibility (OpenVROverlay *self, gboolean visibility)
+static gboolean
+_is_visible (GxrOverlay *overlay)
 {
-  if (visibility)
-    return openvr_overlay_show (self);
-  else
-    return openvr_overlay_hide (self);
-}
-
-gboolean
-openvr_overlay_is_visible (OpenVROverlay *self)
-{
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
   OpenVRFunctions *f = openvr_get_functions ();
-  return f->overlay->IsOverlayVisible (priv->overlay_handle);
+  return f->overlay->IsOverlayVisible (self->overlay_handle);
 }
 
-gboolean
-openvr_overlay_thumbnail_is_visible (OpenVROverlay *self)
+static gboolean
+_thumbnail_is_visible (GxrOverlay *overlay)
 {
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
   OpenVRFunctions *f = openvr_get_functions ();
-  return f->overlay->IsOverlayVisible (priv->thumbnail_handle);
+  return f->overlay->IsOverlayVisible (self->thumbnail_handle);
 }
 
-gboolean
-openvr_overlay_set_sort_order (OpenVROverlay *self, uint32_t sort_order)
+static gboolean
+_set_sort_order (GxrOverlay *overlay, uint32_t sort_order)
 {
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
-
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
   OpenVRFunctions *f = openvr_get_functions ();
   EVROverlayError err;
 
-  err = f->overlay->SetOverlaySortOrder (priv->overlay_handle, sort_order);
+  err = f->overlay->SetOverlaySortOrder (self->overlay_handle, sort_order);
 
   OVERLAY_CHECK_ERROR ("SetOverlaySortOrder", err)
   return TRUE;
@@ -287,15 +185,14 @@ _vr_to_gdk_mouse_button (uint32_t btn)
   }
 }
 
-gboolean
-openvr_overlay_enable_mouse_input (OpenVROverlay *self)
+static gboolean
+_enable_mouse_input (GxrOverlay *overlay)
 {
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
-
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
   OpenVRFunctions *f = openvr_get_functions ();
   EVROverlayError err;
 
-  err = f->overlay->SetOverlayInputMethod (priv->overlay_handle,
+  err = f->overlay->SetOverlayInputMethod (self->overlay_handle,
                                            VROverlayInputMethod_Mouse);
 
   OVERLAY_CHECK_ERROR ("SetOverlayInputMethod", err)
@@ -303,16 +200,16 @@ openvr_overlay_enable_mouse_input (OpenVROverlay *self)
   return TRUE;
 }
 
-void
-openvr_overlay_poll_event (OpenVROverlay *self)
+static void
+_poll_event (GxrOverlay *overlay)
 {
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
 
   struct VREvent_t vr_event;
 
   OpenVRFunctions *f = openvr_get_functions ();
 
-  while (f->overlay->PollNextOverlayEvent (priv->overlay_handle, &vr_event,
+  while (f->overlay->PollNextOverlayEvent (self->overlay_handle, &vr_event,
                                            sizeof (vr_event)))
   {
     switch (vr_event.eventType)
@@ -324,7 +221,7 @@ openvr_overlay_poll_event (OpenVROverlay *self)
         event->motion.y = vr_event.data.mouse.y;
         event->motion.time =
           gxr_time_age_secs_to_monotonic_msecs (vr_event.eventAgeSeconds);
-        g_signal_emit (self, overlay_signals[MOTION_NOTIFY_EVENT], 0, event);
+        gxr_overlay_emit_motion_notify (overlay, event);
       } break;
 
       case EVREventType_VREvent_MouseButtonDown:
@@ -336,7 +233,7 @@ openvr_overlay_poll_event (OpenVROverlay *self)
           gxr_time_age_secs_to_monotonic_msecs (vr_event.eventAgeSeconds);
         event->button.button =
           _vr_to_gdk_mouse_button (vr_event.data.mouse.button);
-        g_signal_emit (self, overlay_signals[BUTTON_PRESS_EVENT], 0, event);
+        gxr_overlay_emit_button_press (overlay, event);
       } break;
 
       case EVREventType_VREvent_MouseButtonUp:
@@ -348,17 +245,17 @@ openvr_overlay_poll_event (OpenVROverlay *self)
           gxr_time_age_secs_to_monotonic_msecs (vr_event.eventAgeSeconds);
         event->button.button =
           _vr_to_gdk_mouse_button (vr_event.data.mouse.button);
-        g_signal_emit (self, overlay_signals[BUTTON_RELEASE_EVENT], 0, event);
+        gxr_overlay_emit_button_release (overlay, event);
       } break;
 
       case EVREventType_VREvent_OverlayShown:
-        g_signal_emit (self, overlay_signals[SHOW], 0);
+        gxr_overlay_emit_show (overlay);
         break;
       case EVREventType_VREvent_OverlayHidden:
-        g_signal_emit (self, overlay_signals[HIDE], 0);
+        gxr_overlay_emit_hide (overlay);
         break;
       case EVREventType_VREvent_Quit:
-        g_signal_emit (self, overlay_signals[DESTROY], 0);
+        gxr_overlay_emit_destroy (overlay);
         break;
 
       // TODO: code duplication with system keyboard in OpenVRContext
@@ -374,56 +271,56 @@ openvr_overlay_poll_event (OpenVROverlay *self)
         event->key.state = TRUE;
         event->key.string = new_input;
         event->key.length = len;
-        g_signal_emit (self, overlay_signals[KEYBOARD_PRESS_EVENT], 0, event);
+        gxr_overlay_emit_keyboard_press (overlay, event);
       } break;
 
       case EVREventType_VREvent_KeyboardClosed:
       {
-        g_signal_emit (self, overlay_signals[KEYBOARD_CLOSE_EVENT], 0);
+        gxr_overlay_emit_keyboard_close (overlay);
       } break;
     }
   }
 }
 
-gboolean
-openvr_overlay_set_mouse_scale (OpenVROverlay *self, float width, float height)
+static gboolean
+_set_mouse_scale (GxrOverlay *overlay, float width, float height)
 {
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
 
   OpenVRFunctions *f = openvr_get_functions ();
   EVROverlayError err;
 
   struct HmdVector2_t mouse_scale = {{ width, height }};
-  err = f->overlay->SetOverlayMouseScale (priv->overlay_handle, &mouse_scale);
+  err = f->overlay->SetOverlayMouseScale (self->overlay_handle, &mouse_scale);
 
   OVERLAY_CHECK_ERROR ("SetOverlayMouseScale", err)
   return TRUE;
 }
 
-gboolean
-openvr_overlay_clear_texture (OpenVROverlay *self)
+static gboolean
+_clear_texture (GxrOverlay *overlay)
 {
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
 
   OpenVRFunctions *f = openvr_get_functions ();
   EVROverlayError err;
 
-  err = f->overlay->ClearOverlayTexture (priv->overlay_handle);
+  err = f->overlay->ClearOverlayTexture (self->overlay_handle);
 
   OVERLAY_CHECK_ERROR ("ClearOverlayTexture", err)
   return TRUE;
 }
 
-gboolean
-openvr_overlay_get_color (OpenVROverlay *self, graphene_vec3_t *color)
+static gboolean
+_get_color (GxrOverlay *overlay, graphene_vec3_t *color)
 {
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
 
   OpenVRFunctions *f = openvr_get_functions ();
   EVROverlayError err;
 
   float r, g, b;
-  err = f->overlay->GetOverlayColor (priv->overlay_handle, &r, &g, &b);
+  err = f->overlay->GetOverlayColor (self->overlay_handle, &r, &g, &b);
 
   OVERLAY_CHECK_ERROR ("GetOverlayColor", err)
 
@@ -432,15 +329,15 @@ openvr_overlay_get_color (OpenVROverlay *self, graphene_vec3_t *color)
   return TRUE;
 }
 
-gboolean
-openvr_overlay_set_color (OpenVROverlay *self, const graphene_vec3_t *color)
+static gboolean
+_set_color (GxrOverlay *overlay, const graphene_vec3_t *color)
 {
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
 
   OpenVRFunctions *f = openvr_get_functions ();
   EVROverlayError err;
 
-  err = f->overlay->SetOverlayColor (priv->overlay_handle,
+  err = f->overlay->SetOverlayColor (self->overlay_handle,
                                      graphene_vec3_get_x (color),
                                      graphene_vec3_get_y (color),
                                      graphene_vec3_get_z (color));
@@ -449,39 +346,39 @@ openvr_overlay_set_color (OpenVROverlay *self, const graphene_vec3_t *color)
   return TRUE;
 }
 
-gboolean
-openvr_overlay_set_alpha (OpenVROverlay *self, float alpha)
+static gboolean
+_set_alpha (GxrOverlay *overlay, float alpha)
 {
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
 
   OpenVRFunctions *f = openvr_get_functions ();
   EVROverlayError err;
 
-  err = f->overlay->SetOverlayAlpha (priv->overlay_handle, alpha);
+  err = f->overlay->SetOverlayAlpha (self->overlay_handle, alpha);
 
   OVERLAY_CHECK_ERROR ("SetOverlayAlpha", err)
   return TRUE;
 }
 
-gboolean
-openvr_overlay_set_width_meters (OpenVROverlay *self, float meters)
+static gboolean
+_set_width_meters (GxrOverlay *overlay, float meters)
 {
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
 
   OpenVRFunctions *f = openvr_get_functions ();
   EVROverlayError err;
 
-  err = f->overlay->SetOverlayWidthInMeters (priv->overlay_handle, meters);
+  err = f->overlay->SetOverlayWidthInMeters (self->overlay_handle, meters);
 
   OVERLAY_CHECK_ERROR ("SetOverlayWidthInMeters", err)
   return TRUE;
 }
 
-gboolean
-openvr_overlay_set_transform_absolute (OpenVROverlay *self,
-                                       graphene_matrix_t *mat)
+static gboolean
+_set_transform_absolute (GxrOverlay *overlay,
+                         graphene_matrix_t *mat)
 {
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
 
   OpenVRFunctions *f = openvr_get_functions ();
   EVROverlayError err;
@@ -491,18 +388,18 @@ openvr_overlay_set_transform_absolute (OpenVROverlay *self,
 
   enum ETrackingUniverseOrigin origin = f->compositor->GetTrackingSpace ();
 
-  err = f->overlay->SetOverlayTransformAbsolute (priv->overlay_handle,
+  err = f->overlay->SetOverlayTransformAbsolute (self->overlay_handle,
                                                  origin, &translation34);
 
   OVERLAY_CHECK_ERROR ("SetOverlayTransformAbsolute", err)
   return TRUE;
 }
 
-gboolean
-openvr_overlay_get_transform_absolute (OpenVROverlay *self,
-                                       graphene_matrix_t *mat)
+static gboolean
+_get_transform_absolute (GxrOverlay *overlay,
+                         graphene_matrix_t *mat)
 {
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
 
   OpenVRFunctions *f = openvr_get_functions ();
   EVROverlayError err;
@@ -511,7 +408,7 @@ openvr_overlay_get_transform_absolute (OpenVROverlay *self,
 
   enum ETrackingUniverseOrigin origin = f->compositor->GetTrackingSpace ();
 
-  err = f->overlay->GetOverlayTransformAbsolute (priv->overlay_handle,
+  err = f->overlay->GetOverlayTransformAbsolute (self->overlay_handle,
                                                 &origin,
                                                 &translation34);
 
@@ -521,90 +418,31 @@ openvr_overlay_get_transform_absolute (OpenVROverlay *self,
   return TRUE;
 }
 
-gboolean
-openvr_overlay_set_gdk_pixbuf_raw (OpenVROverlay *self, GdkPixbuf * pixbuf)
+static gboolean
+_set_raw (GxrOverlay *overlay, guchar *pixels,
+          uint32_t width, uint32_t height, uint32_t depth)
 {
-  guint width = (guint)gdk_pixbuf_get_width (pixbuf);
-  guint height = (guint)gdk_pixbuf_get_height (pixbuf);
-  guchar *pixels = gdk_pixbuf_get_pixels (pixbuf);
-
-  uint32_t depth = 3;
-  switch (gdk_pixbuf_get_n_channels (pixbuf))
-  {
-    case 3:
-      depth = 3;
-      break;
-    case 4:
-      depth = 4;
-      break;
-    default:
-      depth = 3;
-  }
-
-  return openvr_overlay_set_raw (self, pixels, width, height, depth);
-}
-
-gboolean
-openvr_overlay_set_cairo_surface_raw (OpenVROverlay   *self,
-                                      cairo_surface_t *surface)
-{
-  guchar *pixels = cairo_image_surface_get_data (surface);
-
-  guint width = (guint)cairo_image_surface_get_width (surface);
-  guint height = (guint)cairo_image_surface_get_height (surface);
-
-  uint32_t depth;
-  cairo_format_t cr_format = cairo_image_surface_get_format (surface);
-  switch (cr_format)
-    {
-    case CAIRO_FORMAT_ARGB32:
-      depth = 4;
-      break;
-    case CAIRO_FORMAT_RGB24:
-      depth = 3;
-      break;
-    case CAIRO_FORMAT_A8:
-    case CAIRO_FORMAT_A1:
-    case CAIRO_FORMAT_RGB16_565:
-    case CAIRO_FORMAT_RGB30:
-      g_printerr ("Unsupported Cairo format\n");
-      return FALSE;
-    case CAIRO_FORMAT_INVALID:
-      g_printerr ("Invalid Cairo format\n");
-      return FALSE;
-    default:
-      g_printerr ("Unknown Cairo format\n");
-      return FALSE;
-    }
-
-  return openvr_overlay_set_raw (self, pixels, width, height, depth);
-}
-
-gboolean
-openvr_overlay_set_raw (OpenVROverlay *self, guchar *pixels,
-                        uint32_t width, uint32_t height, uint32_t depth)
-{
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
 
   OpenVRFunctions *f = openvr_get_functions ();
   EVROverlayError err;
 
-  err = f->overlay->SetOverlayRaw (priv->overlay_handle,
+  err = f->overlay->SetOverlayRaw (self->overlay_handle,
                                    (void*) pixels, width, height, depth);
 
   OVERLAY_CHECK_ERROR ("SetOverlayRaw", err)
   return TRUE;
 }
 
-gboolean
-openvr_overlay_get_size_pixels (OpenVROverlay *self, GxrPixelSize *size)
+static gboolean
+_get_size_pixels (GxrOverlay *overlay, GxrPixelSize *size)
 {
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
 
   OpenVRFunctions *f = openvr_get_functions ();
   EVROverlayError err;
 
-  err =  f->overlay->GetOverlayTextureSize (priv->overlay_handle,
+  err =  f->overlay->GetOverlayTextureSize (self->overlay_handle,
                                            &size->width, &size->height);
 
   OVERLAY_CHECK_ERROR ("GetOverlayTextureSize", err)
@@ -612,56 +450,30 @@ openvr_overlay_get_size_pixels (OpenVROverlay *self, GxrPixelSize *size)
   return TRUE;
 }
 
-gboolean
-openvr_overlay_get_width_meters (OpenVROverlay *self, float *width)
+static gboolean
+_get_width_meters (GxrOverlay *overlay, float *width)
 {
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
 
   OpenVRFunctions *f = openvr_get_functions ();
   EVROverlayError err;
 
-  err = f->overlay->GetOverlayWidthInMeters (priv->overlay_handle, width);
+  err = f->overlay->GetOverlayWidthInMeters (self->overlay_handle, width);
 
   OVERLAY_CHECK_ERROR ("GetOverlayWidthInMeters", err)
 
   return TRUE;
 }
 
-/*
- * There is no function to get the height or aspect ratio of an overlay,
- * so we need to calculate it from width + texture size
- * the texture aspect ratio should be preserved.
- */
-
-gboolean
-openvr_overlay_get_size_meters (OpenVROverlay *self, graphene_vec2_t *size)
+static gboolean
+_show_keyboard (GxrOverlay *overlay)
 {
-  gfloat width_meters;
-  if (!openvr_overlay_get_width_meters (self, &width_meters))
-    return FALSE;
-
-  GxrPixelSize size_pixels = {};
-  if (!openvr_overlay_get_size_pixels (self, &size_pixels))
-    return FALSE;
-
-  gfloat aspect = (gfloat) size_pixels.width / (gfloat) size_pixels.height;
-  gfloat height_meters = width_meters / aspect;
-
-  graphene_vec2_init (size, width_meters, height_meters);
-
-  return TRUE;
-}
-
-gboolean
-openvr_overlay_show_keyboard (OpenVROverlay *self)
-{
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
-
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
   OpenVRFunctions *f = openvr_get_functions ();
   EVROverlayError err;
 
   err = f->overlay->ShowKeyboardForOverlay (
-    priv->overlay_handle,
+    self->overlay_handle,
     EGamepadTextInputMode_k_EGamepadTextInputModeNormal,
     EGamepadTextInputLineMode_k_EGamepadTextInputLineModeSingleLine,
     "OpenVR Overlay Keyboard", 1, "", TRUE, 0);
@@ -671,13 +483,12 @@ openvr_overlay_show_keyboard (OpenVROverlay *self)
   return TRUE;
 }
 
-void
-openvr_overlay_set_keyboard_position (OpenVROverlay   *self,
-                                      graphene_vec2_t *top_left,
-                                      graphene_vec2_t *bottom_right)
+static void
+_set_keyboard_position (GxrOverlay      *overlay,
+                        graphene_vec2_t *top_left,
+                        graphene_vec2_t *bottom_right)
 {
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
-
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
   OpenVRFunctions *f = openvr_get_functions ();
 
   HmdRect2_t rect = {
@@ -690,48 +501,30 @@ openvr_overlay_set_keyboard_position (OpenVROverlay   *self,
       .v[1] = graphene_vec2_get_y (bottom_right)
     }
   };
-  f->overlay->SetKeyboardPositionForOverlay (priv->overlay_handle, rect);
+  f->overlay->SetKeyboardPositionForOverlay (self->overlay_handle, rect);
 }
 
-gboolean
-openvr_overlay_set_translation (OpenVROverlay      *self,
-                                graphene_point3d_t *translation)
+static gboolean
+_destroy (GxrOverlay *overlay)
 {
-  graphene_matrix_t transform;
-  graphene_matrix_init_translate (&transform, translation);
-  return openvr_overlay_set_transform_absolute (self, &transform);
-}
-
-gboolean
-openvr_overlay_destroy (OpenVROverlay *self)
-{
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
 
   OpenVRFunctions *f = openvr_get_functions ();
   EVROverlayError err;
 
-  err = f->overlay->DestroyOverlay (priv->overlay_handle);
+  err = f->overlay->DestroyOverlay (self->overlay_handle);
 
   OVERLAY_CHECK_ERROR ("DestroyOverlay", err)
 
   return TRUE;
 }
 
-static void
-openvr_overlay_finalize (GObject *gobject)
+static gboolean
+_set_model (GxrOverlay *overlay,
+            gchar *name,
+            graphene_vec4_t *color)
 {
-  OpenVROverlay *self = OPENVR_OVERLAY (gobject);
-  openvr_overlay_destroy (self);
-  G_OBJECT_CLASS (openvr_overlay_parent_class)->finalize (gobject);
-}
-
-gboolean
-openvr_overlay_set_model (OpenVROverlay *self,
-                          gchar *name,
-                          graphene_vec4_t *color)
-{
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
-
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
   OpenVRFunctions *f = openvr_get_functions ();
   EVROverlayError err;
 
@@ -742,24 +535,23 @@ openvr_overlay_set_model (OpenVROverlay *self,
     .a = graphene_vec4_get_w (color)
   };
 
-  err = f->overlay->SetOverlayRenderModel (priv->overlay_handle,
+  err = f->overlay->SetOverlayRenderModel (self->overlay_handle,
                                            name, &hmd_color);
 
   OVERLAY_CHECK_ERROR ("SetOverlayRenderModel", err)
   return TRUE;
 }
 
-gboolean
-openvr_overlay_get_model (OpenVROverlay *self, gchar *name,
-                          graphene_vec4_t *color, uint32_t *id)
+static gboolean
+_get_model (GxrOverlay *overlay, gchar *name,
+            graphene_vec4_t *color, uint32_t *id)
 {
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
-
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
   OpenVRFunctions *f = openvr_get_functions ();
   EVROverlayError err;
 
   struct HmdColor_t hmd_color;
-  *id = f->overlay->GetOverlayRenderModel (priv->overlay_handle,
+  *id = f->overlay->GetOverlayRenderModel (self->overlay_handle,
                                            name, k_unMaxPropertyStringSize,
                                           &hmd_color, &err);
 
@@ -770,30 +562,27 @@ openvr_overlay_get_model (OpenVROverlay *self, gchar *name,
   return TRUE;
 }
 
-void
-openvr_overlay_set_flip_y (OpenVROverlay *self,
-                           gboolean flip_y)
+static void
+_set_flip_y (GxrOverlay *overlay,
+             gboolean flip_y)
 {
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
-
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
   OpenVRFunctions *f = openvr_get_functions ();
 
-  if (flip_y != priv->flip_y)
+  if (flip_y != gxr_overlay_get_flip_y (overlay))
     {
       VRTextureBounds_t *bounds = flip_y ? &flippedBounds : &defaultBounds;
-      f->overlay->SetOverlayTextureBounds (priv->overlay_handle, bounds);
-      priv->flip_y = flip_y;
+      f->overlay->SetOverlayTextureBounds (self->overlay_handle, bounds);
     }
 }
 
 /* Submit frame to OpenVR runtime */
-bool
-openvr_overlay_submit_texture (OpenVROverlay *self,
-                               GulkanClient  *client,
-                               GulkanTexture *texture)
+static bool
+_submit_texture (GxrOverlay    *overlay,
+                 GulkanClient  *client,
+                 GulkanTexture *texture)
 {
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
-
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
   OpenVRFunctions *f = openvr_get_functions ();
   EVROverlayError err;
 
@@ -821,17 +610,16 @@ openvr_overlay_submit_texture (OpenVROverlay *self,
       .eColorSpace = EColorSpace_ColorSpace_Auto
     };
 
-  err = f->overlay->SetOverlayTexture (priv->overlay_handle, &vr_texture);
+  err = f->overlay->SetOverlayTexture (self->overlay_handle, &vr_texture);
 
   OVERLAY_CHECK_ERROR ("SetOverlayTexture", err)
   return TRUE;
 }
 
-gboolean
-openvr_overlay_print_info (OpenVROverlay *self)
+static gboolean
+_print_info (GxrOverlay *overlay)
 {
-  OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
-
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
   struct HmdVector2_t center;
   float radius;
   EDualAnalogWhich which = EDualAnalogWhich_k_EDualAnalog_Left;
@@ -839,7 +627,7 @@ openvr_overlay_print_info (OpenVROverlay *self)
   OpenVRFunctions *f = openvr_get_functions ();
   EVROverlayError err;
 
-  err = f->overlay->GetOverlayDualAnalogTransform (priv->overlay_handle, which,
+  err = f->overlay->GetOverlayDualAnalogTransform (self->overlay_handle, which,
                                                   &center, &radius);
 
   if (err != EVROverlayError_VROverlayError_None)
@@ -852,7 +640,7 @@ openvr_overlay_print_info (OpenVROverlay *self)
   g_print ("Center [%f, %f] Radius %f\n", center.v[0], center.v[1], radius);
 
   VROverlayTransformType transform_type;
-  err = f->overlay->GetOverlayTransformType (priv->overlay_handle,
+  err = f->overlay->GetOverlayTransformType (self->overlay_handle,
                                             &transform_type);
   if (err != EVROverlayError_VROverlayError_None)
     {
@@ -895,7 +683,7 @@ openvr_overlay_print_info (OpenVROverlay *self)
   HmdMatrix34_t transform;
 
   err = f->overlay->GetOverlayTransformAbsolute (
-    priv->overlay_handle,
+    self->overlay_handle,
     &tracking_origin,
     &transform);
   if (err != EVROverlayError_VROverlayError_None)
@@ -921,4 +709,42 @@ openvr_overlay_print_info (OpenVROverlay *self)
   openvr_math_print_matrix34 (transform);
 
   return TRUE;
+}
+
+static void
+openvr_overlay_class_init (OpenVROverlayClass *klass)
+{
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+  object_class->finalize = openvr_overlay_finalize;
+
+  GxrOverlayClass *parent_class = GXR_OVERLAY_CLASS (klass);
+  parent_class->create = _create;
+  parent_class->create_for_dashboard = _create_for_dashboard;
+  parent_class->poll_event = _poll_event;
+  parent_class->set_mouse_scale = _set_mouse_scale;
+  parent_class->is_valid = _is_valid;
+  parent_class->is_visible = _is_visible;
+  parent_class->thumbnail_is_visible = _thumbnail_is_visible;
+  parent_class->show = _show;
+  parent_class->hide = _hide;
+  parent_class->set_sort_order = _set_sort_order;
+  parent_class->clear_texture = _clear_texture;
+  parent_class->get_color = _get_color;
+  parent_class->set_color = _set_color;
+  parent_class->set_alpha = _set_alpha;
+  parent_class->set_width_meters = _set_width_meters;
+  parent_class->set_transform_absolute = _set_transform_absolute;
+  parent_class->set_raw = _set_raw;
+  parent_class->get_size_pixels = _get_size_pixels;
+  parent_class->get_width_meters = _get_width_meters;
+  parent_class->enable_mouse_input = _enable_mouse_input;
+  parent_class->get_transform_absolute = _get_transform_absolute;
+  parent_class->show_keyboard = _show_keyboard;
+  parent_class->set_keyboard_position = _set_keyboard_position;
+  parent_class->destroy = _destroy;
+  parent_class->set_model = _set_model;
+  parent_class->get_model = _get_model;
+  parent_class->submit_texture = _submit_texture;
+  parent_class->print_info = _print_info;
+  parent_class->set_flip_y = _set_flip_y;
 }

@@ -17,8 +17,8 @@ static GulkanTexture *texture;
 static gboolean
 timeout_callback (gpointer data)
 {
-  OpenVROverlay *overlay = (OpenVROverlay*) data;
-  openvr_overlay_poll_event (overlay);
+  GxrOverlay *overlay = (GxrOverlay*) data;
+  gxr_overlay_poll_event (overlay);
   return TRUE;
 }
 
@@ -67,7 +67,7 @@ load_gdk_pixbuf ()
 }
 
 static void
-_press_cb (OpenVROverlay  *overlay,
+_press_cb (GxrOverlay  *overlay,
            GdkEventButton *event,
            gpointer        data)
 {
@@ -79,24 +79,24 @@ _press_cb (OpenVROverlay  *overlay,
 }
 
 static void
-_show_cb (OpenVROverlay *overlay,
+_show_cb (GxrOverlay *overlay,
           gpointer      _client)
 {
   g_print ("show\n");
 
   /* skip rendering if the overlay isn't available or visible */
-  gboolean is_invisible = !openvr_overlay_is_visible (overlay) &&
-                          !openvr_overlay_thumbnail_is_visible (overlay);
+  gboolean is_invisible = !gxr_overlay_is_visible (overlay) &&
+                          !gxr_overlay_thumbnail_is_visible (overlay);
 
-  if (!openvr_overlay_is_valid (overlay) || is_invisible)
+  if (!gxr_overlay_is_valid (overlay) || is_invisible)
     return;
 
   GulkanClient *client = (GulkanClient*) _client;
-  openvr_overlay_submit_texture (overlay, client, texture);
+  gxr_overlay_submit_texture (overlay, client, texture);
 }
 
 static void
-_destroy_cb (OpenVROverlay *overlay,
+_destroy_cb (GxrOverlay *overlay,
              gpointer       data)
 {
   (void) overlay;
@@ -153,35 +153,35 @@ test_cat_overlay ()
                                                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                                                    true);
 
-  OpenVROverlay *overlay = openvr_overlay_new ();
-  openvr_overlay_create (overlay, "vulkan.cat", "Vulkan Cat");
+  GxrOverlay *overlay = gxr_overlay_new ();
+  gxr_overlay_create (overlay, "vulkan.cat", "Vulkan Cat");
 
-  if (!openvr_overlay_is_valid (overlay))
+  if (!gxr_overlay_is_valid (overlay))
   {
     g_printerr ("Overlay 1 handle invalid.\n");
     return -1;
   }
 
-  OpenVROverlay *overlay2 = openvr_overlay_new ();
-  openvr_overlay_create (overlay2, "vulkan.cat2", "Another Vulkan Cat");
+  GxrOverlay *overlay2 = gxr_overlay_new ();
+  gxr_overlay_create (overlay2, "vulkan.cat2", "Another Vulkan Cat");
 
-  if (!openvr_overlay_is_valid (overlay2))
+  if (!gxr_overlay_is_valid (overlay2))
   {
     g_printerr ("Overlay 2 handle invalid.\n");
     return -1;
   }
 
-  openvr_overlay_set_mouse_scale (overlay,
+  gxr_overlay_set_mouse_scale (overlay,
                                   gdk_pixbuf_get_width (pixbuf),
                                   gdk_pixbuf_get_height (pixbuf));
 
-  if (!openvr_overlay_show (overlay))
+  if (!gxr_overlay_show (overlay))
     return -1;
 
-  if (!openvr_overlay_show (overlay2))
+  if (!gxr_overlay_show (overlay2))
     return -1;
 
-  openvr_overlay_print_info (overlay);
+  gxr_overlay_print_info (overlay);
 
   graphene_point3d_t translation_vec;
   graphene_point3d_init (&translation_vec, 1.1f, 0.5f, 0.1f);
@@ -192,10 +192,10 @@ test_cat_overlay ()
 
   graphene_matrix_print (&translation);
 
-  openvr_overlay_get_transform_absolute (overlay, &translation);
+  gxr_overlay_get_transform_absolute (overlay, &translation);
 
-  openvr_overlay_submit_texture (overlay, client, texture);
-  openvr_overlay_submit_texture (overlay2, client, texture);
+  gxr_overlay_submit_texture (overlay, client, texture);
+  gxr_overlay_submit_texture (overlay2, client, texture);
 
   /* connect glib callbacks */
   g_signal_connect (overlay, "button-press-event", (GCallback) _press_cb, loop);

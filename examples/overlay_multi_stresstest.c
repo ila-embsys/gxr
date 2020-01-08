@@ -25,7 +25,7 @@ typedef struct Example
 {
   GMainLoop *loop;
   GulkanClient *uploader;
-  OpenVROverlay *overlays[OVERLAY_NUM];
+  GxrOverlay *overlays[OVERLAY_NUM];
   GulkanTexture *textures[OVERLAY_NUM];
   int tex_count;
 } Example;
@@ -79,7 +79,7 @@ timeout_callback (gpointer data)
 {
   ExampleOverlayNum *en = (ExampleOverlayNum*) data;
   Example *self = en->example;
-  OpenVROverlay *overlay = self->overlays[en->i];
+  GxrOverlay *overlay = self->overlays[en->i];
 
   char key[16];
   snprintf (key, 16, "texture-%d", self->tex_count++);
@@ -96,7 +96,7 @@ timeout_callback (gpointer data)
                                                   surface,
                                                   VK_FORMAT_R8G8B8A8_UNORM,
                                                   VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-  openvr_overlay_submit_texture (overlay, self->uploader, n);
+  gxr_overlay_submit_texture (overlay, self->uploader, n);
 
   if (self->textures[en->i] != NULL)
     {
@@ -107,12 +107,12 @@ timeout_callback (gpointer data)
 
   cairo_surface_destroy (surface);
 
-  openvr_overlay_poll_event (overlay);
+  gxr_overlay_poll_event (overlay);
   return TRUE;
 }
 
 static void
-_press_cb (OpenVROverlay  *overlay,
+_press_cb (GxrOverlay  *overlay,
            GdkEventButton *event,
            gpointer        data)
 {
@@ -125,7 +125,7 @@ _press_cb (OpenVROverlay  *overlay,
 }
 
 static void
-_destroy_cb (OpenVROverlay *overlay,
+_destroy_cb (GxrOverlay *overlay,
              gpointer       data)
 {
   (void) overlay;
@@ -183,12 +183,12 @@ int main () {
   for (int i = 0; i < OVERLAY_NUM; i++)
     {
       ex.textures[i] = NULL;
-      ex.overlays[i] = openvr_overlay_new ();
+      ex.overlays[i] = gxr_overlay_new ();
       char key[16];
       snprintf (key, 16, "test-%d", i);
-      openvr_overlay_create (ex.overlays[i], key, "Gradient");
+      gxr_overlay_create (ex.overlays[i], key, "Gradient");
 
-      if (!openvr_overlay_is_valid (ex.overlays[i]))
+      if (!gxr_overlay_is_valid (ex.overlays[i]))
       {
         fprintf (stderr, "Overlay unavailable.\n");
         return -1;
@@ -196,15 +196,15 @@ int main () {
 
       float diff = 0;
       if (i > 0)
-         openvr_overlay_get_width_meters (ex.overlays[i-1], &diff);
+         gxr_overlay_get_width_meters (ex.overlays[i-1], &diff);
       x_offset += diff;
 
       g_print ("Offset %f\n", x_offset);
 
       graphene_point3d_t p = { .x = -2 + x_offset, .y = 0.5, .z = -2 };
-      openvr_overlay_set_translation (ex.overlays[i], &p);
+      gxr_overlay_set_translation (ex.overlays[i], &p);
 
-      if (!openvr_overlay_show (ex.overlays[i]))
+      if (!gxr_overlay_show (ex.overlays[i]))
         return -1;
 
       g_signal_connect (ex.overlays[i], "button-press-event", (GCallback) _press_cb, &ex);

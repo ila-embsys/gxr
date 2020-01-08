@@ -17,8 +17,8 @@ static GulkanTexture *texture;
 static gboolean
 _poll_cb (gpointer data)
 {
-  OpenVROverlay *overlay = (OpenVROverlay*) data;
-  openvr_overlay_poll_event (overlay);
+  GxrOverlay *overlay = (GxrOverlay*) data;
+  gxr_overlay_poll_event (overlay);
   return TRUE;
 }
 
@@ -75,7 +75,7 @@ load_gdk_pixbuf ()
 }
 
 static void
-_move_cb (OpenVROverlay  *overlay,
+_move_cb (GxrOverlay  *overlay,
           GdkEventMotion *event,
           gpointer        data)
 {
@@ -85,7 +85,7 @@ _move_cb (OpenVROverlay  *overlay,
 }
 
 static void
-_press_cb (OpenVROverlay  *overlay,
+_press_cb (GxrOverlay  *overlay,
            GdkEventButton *event,
            gpointer        data)
 {
@@ -97,7 +97,7 @@ _press_cb (OpenVROverlay  *overlay,
 }
 
 static void
-_release_cb (OpenVROverlay  *overlay,
+_release_cb (GxrOverlay  *overlay,
              GdkEventButton *event,
              gpointer        data)
 {
@@ -108,7 +108,7 @@ _release_cb (OpenVROverlay  *overlay,
 }
 
 static void
-_destroy_cb (OpenVROverlay *overlay,
+_destroy_cb (GxrOverlay *overlay,
              gpointer       data)
 {
   (void) overlay;
@@ -166,20 +166,20 @@ test_cat_overlay ()
                                                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                                                    true);
 
-  OpenVROverlay *overlay = openvr_overlay_new ();
-  openvr_overlay_create_width (overlay, "vulkan.cat", "Vulkan Cat", 2.0f);
+  GxrOverlay *overlay = gxr_overlay_new ();
+  gxr_overlay_create_width (overlay, "vulkan.cat", "Vulkan Cat", 2.0f);
 
-  if (!openvr_overlay_is_valid (overlay))
+  if (!gxr_overlay_is_valid (overlay))
   {
     fprintf (stderr, "Overlay unavailable.\n");
     return -1;
   }
 
-  openvr_overlay_set_mouse_scale (overlay,
+  gxr_overlay_set_mouse_scale (overlay,
                                   gdk_pixbuf_get_width (pixbuf),
                                   gdk_pixbuf_get_height (pixbuf));
 
-  openvr_overlay_submit_texture (overlay, client, texture);
+  gxr_overlay_submit_texture (overlay, client, texture);
 
   graphene_matrix_t transform;
   graphene_point3d_t pos =
@@ -189,9 +189,9 @@ test_cat_overlay ()
     .z = -2
   };
   graphene_matrix_init_translate (&transform, &pos);
-  openvr_overlay_set_transform_absolute (overlay, &transform);
+  gxr_overlay_set_transform_absolute (overlay, &transform);
 
-  openvr_overlay_show (overlay);
+  gxr_overlay_show (overlay);
 
   g_signal_connect (overlay, "motion-notify-event", (GCallback) _move_cb, NULL);
   g_signal_connect (overlay, "button-press-event", (GCallback) _press_cb, loop);

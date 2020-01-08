@@ -29,7 +29,7 @@ typedef struct Example
   char input_text[300];
   GulkanTexture *texture;
   GulkanClient *uploader;
-  OpenVROverlay *overlay;
+  GxrOverlay *overlay;
 
   GxrActionSet *action_set;
 
@@ -68,8 +68,8 @@ _damage_cb (GtkWidget      *widget,
       gulkan_client_upload_pixbuf (client, self->texture, pixbuf,
                                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
-    openvr_overlay_submit_texture (self->overlay, self->uploader,
-                                   self->texture);
+    gxr_overlay_submit_texture (self->overlay, self->uploader,
+                                self->texture);
 
     g_object_unref (pixbuf);
   } else {
@@ -80,7 +80,7 @@ _damage_cb (GtkWidget      *widget,
 }
 
 static void
-_destroy_cb (OpenVROverlay *overlay,
+_destroy_cb (GxrOverlay *overlay,
              gpointer      _self)
 {
   (void) overlay;
@@ -117,7 +117,7 @@ _system_keyboard_press_cb (OpenVRContext *context,
 }
 
 static void
-_overlay_keyboard_press_cb (OpenVROverlay *overlay,
+_overlay_keyboard_press_cb (GxrOverlay *overlay,
                             GdkEventKey   *event,
                             gpointer      _self)
 {
@@ -135,7 +135,7 @@ _system_keyboard_close_cb (OpenVRContext  *context,
 }
 
 static void
-_overlay_keyboard_close_cb (OpenVROverlay  *overlay,
+_overlay_keyboard_close_cb (GxrOverlay  *overlay,
                             gpointer       _self)
 {
   (void) overlay;
@@ -149,7 +149,7 @@ _poll_events_cb (gpointer _self)
   Example *self = (Example*) _self;
 
   gxr_action_sets_poll (&self->action_set, 1);
-  openvr_overlay_poll_event (self->overlay);
+  gxr_overlay_poll_event (self->overlay);
 
   OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
   gxr_context_poll_event (GXR_CONTEXT (context));
@@ -173,7 +173,7 @@ _show_keyboard_cb (OpenVRAction    *action,
         }
       else
         {
-          openvr_overlay_show_keyboard (self->overlay);
+          gxr_overlay_show_keyboard (self->overlay);
         }
     }
 }
@@ -226,18 +226,18 @@ _init_gtk (Example *self)
 static gboolean
 _create_overlay (Example *self)
 {
-  self->overlay = openvr_overlay_new ();
-  openvr_overlay_create_width (self->overlay,
-                               "openvr.example.keyboard",
-                               "Keyboard Test", 5.0);
+  self->overlay = gxr_overlay_new ();
+  gxr_overlay_create_width (self->overlay,
+                            "gxr.example.keyboard",
+                            "Keyboard Test", 5.0);
 
-  if (!openvr_overlay_is_valid (self->overlay))
+  if (!gxr_overlay_is_valid (self->overlay))
   {
     g_printerr ("Overlay unavailable.\n");
     return FALSE;
   }
 
-  if (!openvr_overlay_show (self->overlay))
+  if (!gxr_overlay_show (self->overlay))
     return FALSE;
 
   graphene_point3d_t initial_position = {
@@ -247,7 +247,7 @@ _create_overlay (Example *self)
   };
   graphene_matrix_t transform;
   graphene_matrix_init_translate (&transform, &initial_position);
-  openvr_overlay_set_transform_absolute (self->overlay, &transform);
+  gxr_overlay_set_transform_absolute (self->overlay, &transform);
 
   g_signal_connect (self->overlay, "destroy", (GCallback) _destroy_cb, self);
 

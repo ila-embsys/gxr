@@ -26,15 +26,15 @@ static GulkanClient *uploader;
 static gboolean
 timeout_callback (gpointer data)
 {
-  OpenVROverlay *overlay = (OpenVROverlay*) data;
-  openvr_overlay_poll_event (overlay);
+  GxrOverlay *overlay = (GxrOverlay*) data;
+  gxr_overlay_poll_event (overlay);
   return TRUE;
 }
 
 typedef struct
 {
   ClutterActor *stage;
-  OpenVROverlay *overlay;
+  GxrOverlay *overlay;
 } Data;
 
 #if 0
@@ -64,7 +64,7 @@ print_pixbuf_info (GdkPixbuf * pixbuf)
 #endif
 
 static void
-_press_cb (OpenVROverlay  *overlay,
+_press_cb (GxrOverlay  *overlay,
            GdkEventButton *event,
            gpointer        data)
 {
@@ -76,7 +76,7 @@ _press_cb (OpenVROverlay  *overlay,
 }
 
 static void
-_destroy_cb (OpenVROverlay *overlay,
+_destroy_cb (GxrOverlay *overlay,
              gpointer       data)
 {
   (void) overlay;
@@ -93,10 +93,10 @@ repaint_cb (gpointer user_data)
   Data *data = (Data*) user_data;
 
   /* skip rendering if the overlay isn't available or visible */
-  gboolean is_invisible = !openvr_overlay_is_visible (data->overlay) &&
-                          !openvr_overlay_thumbnail_is_visible (data->overlay);
+  gboolean is_invisible = !gxr_overlay_is_visible (data->overlay) &&
+                          !gxr_overlay_thumbnail_is_visible (data->overlay);
 
-  if (!openvr_overlay_is_valid (data->overlay) || is_invisible)
+  if (!gxr_overlay_is_valid (data->overlay) || is_invisible)
     return FALSE;
 
   uint32_t width = 500;
@@ -118,7 +118,7 @@ repaint_cb (gpointer user_data)
   gulkan_client_upload_pixels (client, texture, pixels,size,
                                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
-  openvr_overlay_submit_texture (data->overlay, uploader, texture);
+  gxr_overlay_submit_texture (data->overlay, uploader, texture);
 
   return TRUE;
 }
@@ -167,20 +167,20 @@ test_cat_overlay (int argc, char *argv[])
   if (!_init_openvr (context, uploader))
     return -1;
 
-  OpenVROverlay *overlay = openvr_overlay_new ();
-  openvr_overlay_create_width (overlay, "example.clutter", "Clutter", 2.0);
+  GxrOverlay *overlay = gxr_overlay_new ();
+  gxr_overlay_create_width (overlay, "example.clutter", "Clutter", 2.0);
 
-  if (!openvr_overlay_is_valid (overlay))
+  if (!gxr_overlay_is_valid (overlay))
     {
       fprintf (stderr, "Overlay unavailable.\n");
       return -1;
     }
 
   graphene_point3d_t pos = { .x = 0, .y = 1, .z = -2 };
-  openvr_overlay_set_translation (overlay, &pos);
-  openvr_overlay_show (overlay);
+  gxr_overlay_set_translation (overlay, &pos);
+  gxr_overlay_show (overlay);
 
-  openvr_overlay_set_mouse_scale (overlay, 500.0f, 500.0f);
+  gxr_overlay_set_mouse_scale (overlay, 500.0f, 500.0f);
 
   g_signal_connect (overlay, "button-press-event", (GCallback) _press_cb, loop);
   g_signal_connect (overlay, "destroy", (GCallback) _destroy_cb, loop);

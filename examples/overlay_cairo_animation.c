@@ -80,15 +80,15 @@ create_cairo_surface (unsigned char *image)
 static gboolean
 input_callback (gpointer data)
 {
-  OpenVROverlay *overlay = (OpenVROverlay*) data;
-  openvr_overlay_poll_event (overlay);
+  GxrOverlay *overlay = (GxrOverlay*) data;
+  gxr_overlay_poll_event (overlay);
   return TRUE;
 }
 
 struct RenderContext
 {
   GulkanClient *uploader;
-  OpenVROverlay *overlay;
+  GxrOverlay *overlay;
   GulkanTexture *texture;
 };
 
@@ -118,14 +118,14 @@ render_callback (gpointer data)
                                         VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
   cairo_surface_destroy (surface);
-  openvr_overlay_submit_texture (context->overlay, context->uploader,
+  gxr_overlay_submit_texture (context->overlay, context->uploader,
                                  context->texture);
 
   return TRUE;
 }
 
 static void
-_press_cb (OpenVROverlay  *overlay,
+_press_cb (GxrOverlay  *overlay,
            GdkEventButton *event,
            gpointer        data)
 {
@@ -137,7 +137,7 @@ _press_cb (OpenVROverlay  *overlay,
 }
 
 static void
-_destroy_cb (OpenVROverlay *overlay,
+_destroy_cb (GxrOverlay *overlay,
              gpointer       data)
 {
   (void) overlay;
@@ -189,18 +189,18 @@ test_overlay ()
     return -1;
 
   /* create cairo overlay */
-  OpenVROverlay *overlay = openvr_overlay_new ();
-  openvr_overlay_create (overlay, "examples.cairo", "Cairo Animation");
+  GxrOverlay *overlay = gxr_overlay_new ();
+  gxr_overlay_create (overlay, "examples.cairo", "Cairo Animation");
 
-  if (!openvr_overlay_is_valid (overlay))
+  if (!gxr_overlay_is_valid (overlay))
   {
     g_printerr ("Overlay unavailable.\n");
     return -1;
   }
 
-  openvr_overlay_set_mouse_scale (overlay, (float) WIDTH, (float) HEIGHT);
+  gxr_overlay_set_mouse_scale (overlay, (float) WIDTH, (float) HEIGHT);
 
-  if (!openvr_overlay_show (overlay))
+  if (!gxr_overlay_show (overlay))
     return -1;
 
   g_signal_connect (overlay, "button-press-event", (GCallback) _press_cb, loop);

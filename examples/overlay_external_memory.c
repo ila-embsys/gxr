@@ -25,7 +25,7 @@ static GdkPixbuf *pixbuf;
 static GulkanClient *uploader;
 
 static GulkanTexture *gk_texture;
-static OpenVROverlay *overlay;
+static GxrOverlay *overlay;
 static GLuint gl_texture;
 
 static void
@@ -94,10 +94,10 @@ create_overlay ()
     }
 
 
-  overlay = openvr_overlay_new ();
-  openvr_overlay_create_width (overlay, "vulkan.dmabuf", "Vulkan DMABUF", 2.0);
+  overlay = gxr_overlay_new ();
+  gxr_overlay_create_width (overlay, "vulkan.dmabuf", "Vulkan DMABUF", 2.0);
 
-  if (!openvr_overlay_is_valid (overlay))
+  if (!gxr_overlay_is_valid (overlay))
     {
       g_printerr ("Overlay unavailable.\n");
       return;
@@ -111,15 +111,15 @@ create_overlay ()
     .z = -2
   };
   graphene_matrix_init_translate (&transform, &pos);
-  openvr_overlay_set_transform_absolute (overlay, &transform);
+  gxr_overlay_set_transform_absolute (overlay, &transform);
 
   gint64 start = g_get_monotonic_time ();
-  openvr_overlay_submit_texture (overlay, uploader, gk_texture);
+  gxr_overlay_submit_texture (overlay, uploader, gk_texture);
   gint64 end = g_get_monotonic_time ();
   g_print ("Submit frame took %f ms\n",
            (end - start) / (1000.));
 
-  openvr_overlay_show (overlay);
+  gxr_overlay_show (overlay);
 }
 
 static void
@@ -149,7 +149,7 @@ change_callback ()
   glTexSubImage2D (GL_TEXTURE_2D, 0 ,0, 0, (GLsizei)width, (GLsizei)height,
                    GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)rgb);
 
-  openvr_overlay_submit_texture (overlay, uploader, gk_texture);
+  gxr_overlay_submit_texture (overlay, uploader, gk_texture);
 
   return TRUE;
 }

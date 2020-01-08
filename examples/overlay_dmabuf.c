@@ -22,8 +22,8 @@ static GulkanTexture *texture;
 static gboolean
 timeout_callback (gpointer data)
 {
-  OpenVROverlay *overlay = (OpenVROverlay*) data;
-  openvr_overlay_poll_event (overlay);
+  GxrOverlay *overlay = (GxrOverlay*) data;
+  gxr_overlay_poll_event (overlay);
   return TRUE;
 }
 
@@ -89,7 +89,7 @@ allocate_dmabuf_amd (gsize size, int *fd)
 }
 
 static void
-_press_cb (OpenVROverlay  *overlay,
+_press_cb (GxrOverlay  *overlay,
            GdkEventButton *event,
            gpointer        data)
 {
@@ -101,25 +101,25 @@ _press_cb (OpenVROverlay  *overlay,
 }
 
 static void
-_show_cb (OpenVROverlay *overlay,
+_show_cb (GxrOverlay *overlay,
           gpointer       data)
 {
   g_print ("show\n");
 
   /* skip rendering if the overlay isn't available or visible */
-  gboolean is_invisible = !openvr_overlay_is_visible (overlay) &&
-                          !openvr_overlay_thumbnail_is_visible (overlay);
+  gboolean is_invisible = !gxr_overlay_is_visible (overlay) &&
+                          !gxr_overlay_thumbnail_is_visible (overlay);
 
-  if (!openvr_overlay_is_valid (overlay) || is_invisible)
+  if (!gxr_overlay_is_valid (overlay) || is_invisible)
     return;
 
   GulkanClient *uploader = (GulkanClient*) data;
 
-  openvr_overlay_submit_texture (overlay, uploader, texture);
+  gxr_overlay_submit_texture (overlay, uploader, texture);
 }
 
 static void
-_destroy_cb (OpenVROverlay *overlay,
+_destroy_cb (GxrOverlay *overlay,
              gpointer       data)
 {
   (void) overlay;
@@ -197,12 +197,12 @@ main ()
       g_printerr ("Unable to transfer layout.\n");
     }
 
-  OpenVROverlay *overlay = openvr_overlay_new ();
-  openvr_overlay_create_for_dashboard (overlay,
+  GxrOverlay *overlay = gxr_overlay_new ();
+  gxr_overlay_create_for_dashboard (overlay,
                                        "vulkan.dmabuf",
                                        "Vulkan DMABUF");
 
-  if (!openvr_overlay_is_valid (overlay))
+  if (!gxr_overlay_is_valid (overlay))
     {
       g_printerr ("Overlay unavailable.\n");
       return -1;

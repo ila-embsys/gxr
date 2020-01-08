@@ -18,7 +18,7 @@ static GulkanTexture *texture = NULL;
 static GulkanClient *uploader;
 
 static gboolean
-_damage_cb (GtkWidget *widget, GdkEventExpose *event, OpenVROverlay *overlay)
+_damage_cb (GtkWidget *widget, GdkEventExpose *event, GxrOverlay *overlay)
 {
   (void) event;
   GdkPixbuf * offscreen_pixbuf =
@@ -27,10 +27,10 @@ _damage_cb (GtkWidget *widget, GdkEventExpose *event, OpenVROverlay *overlay)
   if (offscreen_pixbuf != NULL)
   {
     /* skip rendering if the overlay isn't available or visible */
-    gboolean is_invisible = !openvr_overlay_is_visible (overlay) &&
-                            !openvr_overlay_thumbnail_is_visible (overlay);
+    gboolean is_invisible = !gxr_overlay_is_visible (overlay) &&
+                            !gxr_overlay_thumbnail_is_visible (overlay);
 
-    if (!openvr_overlay_is_valid (overlay) || is_invisible)
+    if (!gxr_overlay_is_valid (overlay) || is_invisible)
       {
         g_object_unref (offscreen_pixbuf);
         return TRUE;
@@ -47,7 +47,7 @@ _damage_cb (GtkWidget *widget, GdkEventExpose *event, OpenVROverlay *overlay)
                                                        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                                                        true);
 
-    openvr_overlay_submit_texture (overlay, uploader, texture);
+    gxr_overlay_submit_texture (overlay, uploader, texture);
 
     g_object_unref (pixbuf);
   } else {
@@ -113,13 +113,13 @@ _draw_cb (GtkWidget *widget, cairo_t *cr, struct Labels* labels)
 static gboolean
 timeout_callback (gpointer data)
 {
-  OpenVROverlay *overlay = (OpenVROverlay*) data;
-  openvr_overlay_poll_event (overlay);
+  GxrOverlay *overlay = (GxrOverlay*) data;
+  gxr_overlay_poll_event (overlay);
   return TRUE;
 }
 
 static void
-_press_cb (OpenVROverlay  *overlay,
+_press_cb (GxrOverlay  *overlay,
            GdkEventButton *event,
            gpointer        data)
 {
@@ -131,7 +131,7 @@ _press_cb (OpenVROverlay  *overlay,
 }
 
 static void
-_destroy_cb (OpenVROverlay *overlay,
+_destroy_cb (GxrOverlay *overlay,
              gpointer       data)
 {
   (void) overlay;
@@ -207,19 +207,19 @@ main (int argc, char *argv[])
   if (!_init_openvr (context, uploader))
     return -1;
 
-  OpenVROverlay *overlay = openvr_overlay_new ();
-  openvr_overlay_create_width (overlay, "openvr.example.gtk", "GTK+", 1.0);
-  openvr_overlay_show (overlay);
+  GxrOverlay *overlay = gxr_overlay_new ();
+  gxr_overlay_create_width (overlay, "openvr.example.gtk", "GTK+", 1.0);
+  gxr_overlay_show (overlay);
   graphene_point3d_t position = { .x = 0.f, .y = 1.2f, .z = -1.f };
-  openvr_overlay_set_translation (overlay, &position);
+  gxr_overlay_set_translation (overlay, &position);
 
-  if (!openvr_overlay_is_valid (overlay))
+  if (!gxr_overlay_is_valid (overlay))
   {
     fprintf (stderr, "Overlay unavailable.\n");
     return -1;
   }
 
-  openvr_overlay_set_mouse_scale (overlay, 300.0f, 200.0f);
+  gxr_overlay_set_mouse_scale (overlay, 300.0f, 200.0f);
 
   g_signal_connect (overlay, "button-press-event", (GCallback) _press_cb, loop);
   g_signal_connect (overlay, "destroy", (GCallback) _destroy_cb, loop);
