@@ -165,6 +165,11 @@ gboolean
 gxr_context_init_session (GxrContext *self, GulkanClient *gc);
 
 gboolean
+gxr_context_inititalize (GxrContext   *self,
+                         GulkanClient *gc,
+                         GxrAppType    type);
+
+gboolean
 gxr_context_init_framebuffers (GxrContext           *self,
                                GulkanFrameBuffer    *framebuffers[2],
                                GulkanClient         *gc,

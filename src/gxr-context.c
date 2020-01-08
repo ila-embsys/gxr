@@ -552,3 +552,29 @@ gxr_context_is_another_scene_running (GxrContext *self)
     return FALSE;
   return klass->is_another_scene_running  (self);
 }
+
+gboolean
+gxr_context_inititalize (GxrContext   *self,
+                         GulkanClient *gc,
+                         GxrAppType    type)
+{
+  if (!gxr_context_init_runtime (self, type))
+    {
+      g_printerr ("Could not init VR runtime.\n");
+      return FALSE;
+    }
+
+  if (!gxr_context_init_gulkan (self, gc))
+    {
+      g_printerr ("Could not initialize Gulkan!\n");
+      return FALSE;
+    }
+
+  if (!gxr_context_init_session (self, gc))
+    {
+      g_printerr ("Could not init VR session.\n");
+      return FALSE;
+    }
+
+  return TRUE;
+}
