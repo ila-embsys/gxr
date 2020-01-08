@@ -502,3 +502,30 @@ gxr_context_acknowledge_quit (GxrContext *self)
     return;
   klass->acknowledge_quit (self);
 }
+
+gboolean
+gxr_context_is_tracked_device_connected (GxrContext *self, uint32_t i)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->is_tracked_device_connected == NULL)
+    return FALSE;
+  return klass->is_tracked_device_connected (self, i);
+}
+
+gboolean
+gxr_context_device_is_controller (GxrContext *self, uint32_t i)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->device_is_controller == NULL)
+    return FALSE;
+  return klass->device_is_controller (self, i);
+}
+
+gchar*
+gxr_context_get_device_model_name (GxrContext *self, uint32_t i)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->get_device_model_name == NULL)
+    return (gchar*) g_malloc (1);
+  return klass->get_device_model_name (self, i);
+}

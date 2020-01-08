@@ -1266,6 +1266,33 @@ _acknowledge_quit (GxrContext *context)
   (void) context;
 }
 
+static gboolean
+_is_tracked_device_connected (GxrContext *context, uint32_t i)
+{
+  /* TODO: Implement in OpenXR */
+  (void) context;
+  (void) i;
+  return FALSE;
+}
+
+static gboolean
+_device_is_controller (GxrContext *context, uint32_t i)
+{
+  /* TODO: Implement in OpenXR */
+  (void) context;
+  (void) i;
+  return FALSE;
+}
+
+static gchar*
+_get_device_model_name (GxrContext *context, uint32_t i)
+{
+  /* TODO: Implement in OpenXR */
+  (void) context;
+  (void) i;
+  return (gchar*) g_malloc (1);
+}
+
 static void
 openxr_context_class_init (OpenXRContextClass *klass)
 {
@@ -1293,4 +1320,7 @@ openxr_context_class_init (OpenXRContextClass *klass)
   gxr_context_class->begin_frame = _begin_frame;
   gxr_context_class->end_frame = _end_frame;
   gxr_context_class->acknowledge_quit = _acknowledge_quit;
+  gxr_context_class->is_tracked_device_connected = _is_tracked_device_connected;
+  gxr_context_class->device_is_controller = _device_is_controller;
+  gxr_context_class->get_device_model_name = _get_device_model_name;
 }

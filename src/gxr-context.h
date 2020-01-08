@@ -110,6 +110,15 @@ struct _GxrContextClass
 
   void
   (*acknowledge_quit) (GxrContext *self);
+
+  gboolean
+  (*is_tracked_device_connected) (GxrContext *self, uint32_t i);
+
+  gboolean
+  (*device_is_controller) (GxrContext *self, uint32_t i);
+
+  gchar*
+  (*get_device_model_name) (GxrContext *self, uint32_t i);
 };
 
 GxrContext *gxr_context_get_instance (void);
@@ -234,6 +243,15 @@ gxr_context_load_action_manifest (GxrContext *self,
 
 void
 gxr_context_acknowledge_quit (GxrContext *self);
+
+gboolean
+gxr_context_is_tracked_device_connected (GxrContext *self, uint32_t i);
+
+gboolean
+gxr_context_device_is_controller (GxrContext *self, uint32_t i);
+
+gchar*
+gxr_context_get_device_model_name (GxrContext *self, uint32_t i);
 
 G_END_DECLS
 

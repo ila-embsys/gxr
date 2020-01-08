@@ -580,6 +580,27 @@ _end_frame (GxrContext *context,
   return TRUE;
 }
 
+static gboolean
+_is_tracked_device_connected (GxrContext *context, uint32_t i)
+{
+  (void) context;
+  return openvr_system_is_tracked_device_connected (i);
+}
+
+static gboolean
+_device_is_controller (GxrContext *context, uint32_t i)
+{
+  (void) context;
+  return openvr_system_device_is_controller (i);
+}
+
+static gchar*
+_get_device_model_name (GxrContext *context, uint32_t i)
+{
+  (void) context;
+  return openvr_system_get_device_model_name (i);
+}
+
 static void
 openvr_context_class_init (OpenVRContextClass *klass)
 {
@@ -607,4 +628,7 @@ openvr_context_class_init (OpenVRContextClass *klass)
   gxr_context_class->begin_frame = _begin_frame;
   gxr_context_class->end_frame = _end_frame;
   gxr_context_class->acknowledge_quit = _acknowledge_quit;
+  gxr_context_class->is_tracked_device_connected = _is_tracked_device_connected;
+  gxr_context_class->device_is_controller = _device_is_controller;
+  gxr_context_class->get_device_model_name = _get_device_model_name;
 }

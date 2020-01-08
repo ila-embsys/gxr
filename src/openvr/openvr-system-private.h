@@ -42,4 +42,13 @@ openvr_system_get_hmd_pose (graphene_matrix_t *pose);
 gboolean
 openvr_system_is_input_available (void);
 
+gboolean
+openvr_system_is_tracked_device_connected (uint32_t i);
+
+gboolean
+openvr_system_device_is_controller (uint32_t i);
+
+gchar*
+openvr_system_get_device_model_name (uint32_t i);
+
 #endif /* GXR_SYSTEM_PRIVATE_H_ */
