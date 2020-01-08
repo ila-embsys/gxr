@@ -329,10 +329,11 @@ _show_system_keyboard (GxrContext *context)
     "OpenVR System Keyboard", 1, "", TRUE, 0);
 }
 
-void
-openvr_context_set_system_keyboard_transform (OpenVRContext *self,
-                                              graphene_matrix_t *transform)
+static void
+_set_keyboard_transform (GxrContext        *context,
+                         graphene_matrix_t *transform)
 {
+  OpenVRContext *self = OPENVR_CONTEXT (context);
   HmdMatrix34_t openvr_transform;
   openvr_math_graphene_to_matrix34 (transform, &openvr_transform);
 
@@ -645,4 +646,5 @@ openvr_context_class_init (OpenVRContextClass *klass)
   gxr_context_class->get_device_model_name = _get_device_model_name;
   gxr_context_class->load_model = _load_model;
   gxr_context_class->is_another_scene_running = _is_another_scene_running;
+  gxr_context_class->set_keyboard_transform = _set_keyboard_transform;
 }

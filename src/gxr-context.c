@@ -550,7 +550,7 @@ gxr_context_is_another_scene_running (GxrContext *self)
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->is_another_scene_running  == NULL)
     return FALSE;
-  return klass->is_another_scene_running  (self);
+  return klass->is_another_scene_running (self);
 }
 
 gboolean
@@ -577,4 +577,14 @@ gxr_context_inititalize (GxrContext   *self,
     }
 
   return TRUE;
+}
+
+void
+gxr_context_set_keyboard_transform (GxrContext        *self,
+                                    graphene_matrix_t *transform)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->set_keyboard_transform  == NULL)
+    return;
+  klass->set_keyboard_transform (self, transform);
 }

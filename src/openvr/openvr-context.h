@@ -35,10 +35,6 @@ openvr_context_is_installed (void);
 gboolean
 openvr_context_is_hmd_present (void);
 
-void
-openvr_context_set_system_keyboard_transform (OpenVRContext *self,
-                                              graphene_matrix_t *transform);
-
 G_END_DECLS
 
 #endif /* GXR_OPENVR_CONTEXT_H_ */

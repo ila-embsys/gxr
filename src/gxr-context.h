@@ -130,6 +130,10 @@ struct _GxrContextClass
 
   gboolean
   (*is_another_scene_running) (GxrContext *self);
+
+  void
+  (*set_keyboard_transform) (GxrContext        *self,
+                             graphene_matrix_t *transform);
 };
 
 GxrContext *gxr_context_get_instance (void);
@@ -279,6 +283,10 @@ gxr_context_load_model (GxrContext         *self,
 
 gboolean
 gxr_context_is_another_scene_running (GxrContext *self);
+
+void
+gxr_context_set_keyboard_transform (GxrContext        *self,
+                                    graphene_matrix_t *transform);
 
 G_END_DECLS
 

@@ -1320,6 +1320,15 @@ _is_another_scene_running (GxrContext *context)
 }
 
 static void
+_set_keyboard_transform (GxrContext        *context,
+                         graphene_matrix_t *transform)
+{
+  /* TODO: Implement in OpenXR */
+  (void) context;
+  (void) transform;
+}
+
+static void
 openxr_context_class_init (OpenXRContextClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
@@ -1351,4 +1360,5 @@ openxr_context_class_init (OpenXRContextClass *klass)
   gxr_context_class->get_device_model_name = _get_device_model_name;
   gxr_context_class->load_model = _load_model;
   gxr_context_class->is_another_scene_running = _is_another_scene_running;
+  gxr_context_class->set_keyboard_transform = _set_keyboard_transform;
 }

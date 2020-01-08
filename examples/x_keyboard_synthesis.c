@@ -73,7 +73,7 @@ _keyboard_closed (OpenVRContext  *context,
   (void) data;
   g_print ("Closed keyboard... Let's open it again!\n");
   gxr_context_show_keyboard (GXR_CONTEXT (context));
-  openvr_context_set_system_keyboard_transform (context, &keyboard_position);
+  gxr_context_set_keyboard_transform (GXR_CONTEXT (context), &keyboard_position);
 }
 
 ModifierKeyCodes
@@ -370,8 +370,7 @@ main (int argc, char *argv[])
     .z = -1.5
   };
   graphene_matrix_init_translate (&keyboard_position, &position);
-  openvr_context_set_system_keyboard_transform (OPENVR_CONTEXT (context),
-                                                &keyboard_position);
+  gxr_context_set_keyboard_transform (context, &keyboard_position);
 
   g_signal_connect (context, "keyboard-press-event",
                     (GCallback) _keyboard_input, keysym_table);
