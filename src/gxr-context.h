@@ -19,6 +19,7 @@
 
 #include "gxr-enums.h"
 #include "gxr-types.h"
+#include "gxr-action-set.h"
 
 G_BEGIN_DECLS
 
@@ -216,6 +217,9 @@ gxr_context_begin_frame (GxrContext *self);
 gboolean
 gxr_context_end_frame (GxrContext *self,
                        GxrPose *poses);
+
+GxrActionSet *
+gxr_context_new_action_set_from_url (GxrContext *self, gchar *url);
 
 G_END_DECLS
 

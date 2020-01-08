@@ -10,10 +10,12 @@
 
 #ifdef GXR_HAS_OPENXR
 #include "openxr-context.h"
+#include "openxr-action-set.h"
 #endif
 
 #ifdef GXR_HAS_OPENVR
 #include "openvr-context.h"
+#include "openvr-action-set.h"
 #endif
 
 typedef struct _GxrContextPrivate
@@ -429,4 +431,24 @@ gxr_context_end_frame (GxrContext *self,
   if (klass->end_frame == NULL)
     return FALSE;
   return klass->end_frame (self, poses);
+}
+
+GxrActionSet *
+gxr_context_new_action_set_from_url (GxrContext *self, gchar *url)
+{
+  GxrApi api = gxr_context_get_api (self);
+  switch (api)
+    {
+#ifdef GXR_HAS_OPENVR
+      case GXR_API_OPENVR:
+        return (GxrActionSet*) openvr_action_set_new_from_url (url);
+#endif
+#ifdef GXR_HAS_OPENXR
+      case GXR_API_OPENXR:
+        return (GxrActionSet*) openxr_action_set_new_from_url (url);
+#endif
+      default:
+        g_printerr ("ERROR: Could not init action set: API not supported.\n");
+        return NULL;
+    }
 }
