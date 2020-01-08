@@ -15,6 +15,7 @@
 #include "openvr-context-private.h"
 
 #include "gxr-time.h"
+#include "gxr-config.h"
 #include "openvr-math-private.h"
 
 #include "openvr-compositor-private.h"
@@ -874,6 +875,7 @@ openvr_overlay_print_info (OpenVROverlay *self)
     case VROverlayTransformType_VROverlayTransform_TrackedComponent:
       g_print ("VROverlayTransform_TrackedComponent\n");
       break;
+#if (OPENVR_VERSION_MINOR >= 9)
     case VROverlayTransformType_VROverlayTransform_Invalid:
       g_print ("VROverlayTransform_Invalid\n");
       break;
@@ -886,6 +888,7 @@ openvr_overlay_print_info (OpenVROverlay *self)
     case VROverlayTransformType_VROverlayTransform_DashboardThumb:
       g_print ("VROverlayTransform_DashboardThumb\n");
       break;
+#endif
     }
 
   TrackingUniverseOrigin tracking_origin;
