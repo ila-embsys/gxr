@@ -35,7 +35,7 @@ struct _GxrActionSetClass
                     GxrActionType type, char *url);
 
   gboolean
-  (*attach_bindings) (GxrActionSet *self);
+  (*attach_bindings) (GxrActionSet **sets, uint32_t count);
 
 };
 
@@ -55,7 +55,7 @@ GSList *
 gxr_action_set_get_actions (GxrActionSet *self);
 
 gboolean
-gxr_action_set_attach_bindings (GxrActionSet *self);
+gxr_action_sets_attach_bindings (GxrActionSet **sets, uint32_t count);
 
 G_END_DECLS
 

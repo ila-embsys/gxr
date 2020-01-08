@@ -17,8 +17,6 @@
 #include "openxr-action-binding.h"
 
 
-#define HANDS 2
-
 struct _OpenXRActionSet
 {
   GxrActionSet parent;
@@ -29,7 +27,6 @@ struct _OpenXRActionSet
   char *url;
 
   XrActionSet handle;
-  XrPath handPaths[HANDS];
 };
 
 G_DEFINE_TYPE (OpenXRActionSet, openxr_action_set, GXR_TYPE_ACTION_SET)
@@ -147,7 +144,7 @@ _update (GxrActionSet **sets, uint32_t count)
   /* All actionsets must be attached to the same session */
   OpenXRActionSet *self = OPENXR_ACTION_SET (sets[0]);
 
-  XrResult result = xrSyncActions(self->session, &syncInfo);
+  XrResult result = xrSyncActions (self->session, &syncInfo);
 
   g_free (active_action_sets);
 
@@ -187,54 +184,39 @@ _find_binding (OpenXRAction *action,
 }
 
 static gboolean
-_suggest_for_interaction_profile (OpenXRActionSet *self,
+_suggest_for_interaction_profile (XrInstance instance,
+                                  GSList *actions,
                                   OpenXRBinding *binding,
                                   int actions_per_binding)
 {
-  GSList *actions = gxr_action_set_get_actions (GXR_ACTION_SET (self));
-
-  /* count the component paths for only the actions in this actionset */
-  int total_components = 0;
-  for (GSList *l = actions; l != NULL; l = l->next)
-    {
-      OpenXRAction *action = OPENXR_ACTION (l->data);
-      OpenXRActionBinding *ab =
-        _find_binding (action, binding, actions_per_binding);
-      if (ab)
-        total_components += ab->num_components;
-
-      char *url = openxr_action_get_url (action);
-      g_debug ("Action %s %d components\n",
-                url, ab == NULL ? -1 : ab->num_components);
-    }
-
-  g_debug ("Components: %d\n", total_components);
-
   XrActionSuggestedBinding *suggested_bindings =
     g_malloc (sizeof (XrActionSuggestedBinding) *
-              (unsigned long)total_components);
+              (unsigned long) ((int)sizeof(actions) * actions_per_binding));
 
   uint32_t num_suggestion = 0;
   for (GSList *l = actions; l != NULL; l = l->next)
     {
       OpenXRAction *action = OPENXR_ACTION (l->data);
+      XrAction handle = openxr_action_get_handle (action);
+      char *url = openxr_action_get_url (action);
 
       OpenXRActionBinding *ab =
         _find_binding (action, binding, actions_per_binding);
 
       if (!ab)
         {
-          char *url = openxr_action_get_url (action);
-          g_debug ("Skipping unbound action %s\n", url);
+          // g_debug ("Skipping unbound action %s\n", url);
           continue;
         }
 
-      XrAction handle = openxr_action_get_handle (action);
+      g_debug ("Action %s %d components: %s %s\n",
+               url, ab->num_components,
+               ab->component[0], ab->component[1]);
 
       for (int i = 0; i < ab->num_components; i++)
         {
           XrPath component_path;
-          xrStringToPath(self->instance, ab->component[i], &component_path);
+          xrStringToPath(instance, ab->component[i], &component_path);
 
           suggested_bindings[num_suggestion].action = handle;
           suggested_bindings[num_suggestion].binding = component_path;
@@ -243,8 +225,9 @@ _suggest_for_interaction_profile (OpenXRActionSet *self,
         }
     }
 
+  g_debug ("Suggesting %d component bindings\n", num_suggestion);
   XrPath profile_path;
-  xrStringToPath(self->instance, binding->interaction_profile, &profile_path);
+  xrStringToPath(instance, binding->interaction_profile, &profile_path);
 
   const XrInteractionProfileSuggestedBinding suggestion_info = {
     .type = XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING,
@@ -255,11 +238,12 @@ _suggest_for_interaction_profile (OpenXRActionSet *self,
   };
 
   XrResult result =
-    xrSuggestInteractionProfileBindings (self->instance, &suggestion_info);
+    xrSuggestInteractionProfileBindings (instance, &suggestion_info);
+  g_free (suggested_bindings);
   if (result != XR_SUCCESS)
     {
       char buffer[XR_MAX_RESULT_STRING_SIZE];
-      xrResultToString(self->instance, result, buffer);
+      xrResultToString(instance, result, buffer);
       g_printerr ("ERROR: Suggesting actions for profile %s: %s\n",
                   binding->interaction_profile, buffer);
       return false;
@@ -269,13 +253,34 @@ _suggest_for_interaction_profile (OpenXRActionSet *self,
 }
 
 static gboolean
-_attach_bindings (GxrActionSet *set)
+_attach_bindings (GxrActionSet **sets, uint32_t count)
 {
-  OpenXRActionSet *self = OPENXR_ACTION_SET (set);
+  XrActionSet *handles = g_malloc (sizeof (XrActionSet) * count);
+
+  /* for each input profile we have to suggest bindings for all actions from
+     all action sets at once, so collect them first. */
+  GSList *all_actions = NULL;
+
+  for (uint32_t i = 0; i < count; i++)
+    {
+      OpenXRActionSet *self = OPENXR_ACTION_SET (sets[i]);
+
+      g_debug ("Collecting actions from action set %s: \n", self->url);
+
+      handles[i] = self->handle;
+
+      GSList *actions = gxr_action_set_get_actions (GXR_ACTION_SET (self));
+      for (GSList *l = actions; l != NULL; l = l->next)
+        {
+          OpenXRAction *action = OPENXR_ACTION (l->data);
+          all_actions = g_slist_append (all_actions, action);
+        }
+    }
+
 
   char **profiles;
   int num_profiles;
-  openxr_action_bindings_get_interaction_profiles(&profiles, &num_profiles);
+  openxr_action_bindings_get_interaction_profiles (&profiles, &num_profiles);
 
   OpenXRBinding *bindings;
   int num_bindings;
@@ -284,21 +289,27 @@ _attach_bindings (GxrActionSet *set)
 
   for (int i = 0; i < num_profiles; i++)
     {
-      OpenXRBinding *binding = &bindings[i];
+      XrInstance instance = OPENXR_ACTION_SET (sets[0])->instance;
 
-      g_debug ("%s: Suggesting for %s\n",
-               self->url, binding->interaction_profile);
-      _suggest_for_interaction_profile (self, binding, actions_per_binding);
+      OpenXRBinding *binding = &bindings[i];
+      g_debug ("Suggesting for profile %s\n", binding->interaction_profile);
+      _suggest_for_interaction_profile (instance, all_actions,
+                                        binding, actions_per_binding);
     }
+
+  g_slist_free (all_actions);
 
   XrSessionActionSetsAttachInfo attachInfo = {
     .type = XR_TYPE_SESSION_ACTION_SETS_ATTACH_INFO,
     .next = NULL,
-    .countActionSets = 1,
-    .actionSets = &self->handle
+    .countActionSets = count,
+    .actionSets = handles
   };
 
+  OpenXRActionSet *self = OPENXR_ACTION_SET (sets[0]);
+
   XrResult result = xrAttachSessionActionSets(self->session, &attachInfo);
+  g_free (handles);
   if (result != XR_SUCCESS)
     {
       char buffer[XR_MAX_RESULT_STRING_SIZE];
@@ -306,7 +317,8 @@ _attach_bindings (GxrActionSet *set)
       g_printerr ("ERROR: attaching action set: %s\n", buffer);
       return false;
     }
-  g_debug ("Attached action set %s\n", self->url);
+
+  g_debug ("Attached %d action sets\n", count);
   return true;
 }
 

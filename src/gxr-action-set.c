@@ -120,10 +120,10 @@ gxr_action_set_get_actions (GxrActionSet *self)
 }
 
 gboolean
-gxr_action_set_attach_bindings (GxrActionSet *self)
+gxr_action_sets_attach_bindings (GxrActionSet **sets, uint32_t count)
 {
-  GxrActionSetClass *klass = GXR_ACTION_SET_GET_CLASS (self);
+  GxrActionSetClass *klass = GXR_ACTION_SET_GET_CLASS (sets[0]);
   if (klass->attach_bindings == NULL)
     return TRUE; /* noop succeeds when no implementation  */
-  return klass->attach_bindings (self);
+  return klass->attach_bindings (sets, count);
 }
