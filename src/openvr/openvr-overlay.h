@@ -19,6 +19,8 @@
 
 #include "openvr-action.h"
 
+#include "gxr-types.h"
+
 #include <graphene.h>
 #include <gulkan.h>
 
@@ -31,18 +33,6 @@ struct _OpenVROverlayClass
 {
   GObjectClass parent_class;
 };
-
-/**
- * OpenVRPixelSize:
- * @width: Width
- * @height: Height
- *
- * Size in pixels.
- **/
-typedef struct {
-  uint32_t width;
-  uint32_t height;
-} OpenVRPixelSize;
 
 OpenVROverlay *openvr_overlay_new (void);
 
@@ -120,7 +110,7 @@ gboolean
 openvr_overlay_set_gdk_pixbuf_raw (OpenVROverlay *self, GdkPixbuf * pixbuf);
 
 gboolean
-openvr_overlay_get_size_pixels (OpenVROverlay *self, OpenVRPixelSize *size);
+openvr_overlay_get_size_pixels (OpenVROverlay *self, GxrPixelSize *size);
 
 gboolean
 openvr_overlay_get_width_meters (OpenVROverlay *self, float *width);

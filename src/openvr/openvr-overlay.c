@@ -597,7 +597,7 @@ openvr_overlay_set_raw (OpenVROverlay *self, guchar *pixels,
 }
 
 gboolean
-openvr_overlay_get_size_pixels (OpenVROverlay *self, OpenVRPixelSize *size)
+openvr_overlay_get_size_pixels (OpenVROverlay *self, GxrPixelSize *size)
 {
   OpenVROverlayPrivate *priv = openvr_overlay_get_instance_private (self);
 
@@ -640,7 +640,7 @@ openvr_overlay_get_size_meters (OpenVROverlay *self, graphene_vec2_t *size)
   if (!openvr_overlay_get_width_meters (self, &width_meters))
     return FALSE;
 
-  OpenVRPixelSize size_pixels = {};
+  GxrPixelSize size_pixels = {};
   if (!openvr_overlay_get_size_pixels (self, &size_pixels))
     return FALSE;
 

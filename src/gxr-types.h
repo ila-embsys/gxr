@@ -12,6 +12,8 @@
 #error "Only <gxr.h> can be included directly."
 #endif
 
+#include <stdint.h>
+
 #include <glib.h>
 #include <graphene.h>
 
@@ -107,5 +109,18 @@ typedef struct {
   graphene_matrix_t transformation;
   gboolean is_valid;
 } GxrPose;
+
+/**
+ * GxrPixelSize:
+ * @width: Width
+ * @height: Height
+ *
+ * Size in pixels.
+ **/
+typedef struct {
+  uint32_t width;
+  uint32_t height;
+} GxrPixelSize;
+
 
 #endif /* GXR_TYPES_H_ */
