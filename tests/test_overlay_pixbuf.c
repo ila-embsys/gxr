@@ -59,7 +59,6 @@ test_overlay_pixbuf ()
   g_assert (error == NULL);
   g_assert_nonnull (pixbuf);
 
-  g_assert (openvr_context_is_installed ());
   GxrContext *context = gxr_context_get_instance ();
   g_assert_nonnull (context);
 

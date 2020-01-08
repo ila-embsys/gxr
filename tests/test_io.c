@@ -24,13 +24,13 @@ _cache_bindings (GString *actions_path)
     }
 
   if (!gxr_io_write_resource_to_file (RES_BASE_PATH, cache_path->str,
-                                         "actions.json", actions_path))
+                                      "actions.json", actions_path))
     return FALSE;
 
   GString *bindings_path = g_string_new ("");
   if (!gxr_io_write_resource_to_file (RES_BASE_PATH, cache_path->str,
-                                         "bindings_vive_controller.json",
-                                         bindings_path))
+                                      "bindings_vive_controller.json",
+                                      bindings_path))
     return FALSE;
 
   g_string_free (bindings_path, TRUE);

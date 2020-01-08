@@ -11,14 +11,14 @@
 static void
 _test_minimal ()
 {
-  g_assert (openvr_context_is_installed ());
   GxrContext *context = gxr_context_get_instance ();
   g_assert_nonnull (context);
   g_assert (gxr_context_init_runtime (context, GXR_APP_OVERLAY));
   g_assert (gxr_context_is_valid (context));
 
-  GulkanClient *uploader = openvr_compositor_gulkan_client_new ();
+  GulkanClient *uploader = gulkan_client_new ();
   g_assert_nonnull (uploader);
+  g_assert (gxr_context_init_gulkan (context, uploader));
   g_object_unref (uploader);
 }
 
