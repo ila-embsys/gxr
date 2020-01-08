@@ -601,6 +601,18 @@ _get_device_model_name (GxrContext *context, uint32_t i)
   return openvr_system_get_device_model_name (i);
 }
 
+static gboolean
+_load_model (GxrContext         *context,
+             GulkanClient       *gc,
+             GulkanVertexBuffer *vbo,
+             GulkanTexture     **texture,
+             VkSampler          *sampler,
+             const char         *model_name)
+{
+  (void) context;
+  return openvr_model_load (gc, vbo, texture, sampler, model_name);
+}
+
 static void
 openvr_context_class_init (OpenVRContextClass *klass)
 {
@@ -631,4 +643,5 @@ openvr_context_class_init (OpenVRContextClass *klass)
   gxr_context_class->is_tracked_device_connected = _is_tracked_device_connected;
   gxr_context_class->device_is_controller = _device_is_controller;
   gxr_context_class->get_device_model_name = _get_device_model_name;
+  gxr_context_class->load_model = _load_model;
 }

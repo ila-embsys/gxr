@@ -119,6 +119,14 @@ struct _GxrContextClass
 
   gchar*
   (*get_device_model_name) (GxrContext *self, uint32_t i);
+
+  gboolean
+  (*load_model) (GxrContext         *self,
+                 GulkanClient       *gc,
+                 GulkanVertexBuffer *vbo,
+                 GulkanTexture     **texture,
+                 VkSampler          *sampler,
+                 const char         *model_name);
 };
 
 GxrContext *gxr_context_get_instance (void);
@@ -252,6 +260,14 @@ gxr_context_device_is_controller (GxrContext *self, uint32_t i);
 
 gchar*
 gxr_context_get_device_model_name (GxrContext *self, uint32_t i);
+
+gboolean
+gxr_context_load_model (GxrContext         *self,
+                        GulkanClient       *gc,
+                        GulkanVertexBuffer *vbo,
+                        GulkanTexture     **texture,
+                        VkSampler          *sampler,
+                        const char         *model_name);
 
 G_END_DECLS
 

@@ -529,3 +529,17 @@ gxr_context_get_device_model_name (GxrContext *self, uint32_t i)
     return (gchar*) g_malloc (1);
   return klass->get_device_model_name (self, i);
 }
+
+gboolean
+gxr_context_load_model (GxrContext         *self,
+                        GulkanClient       *gc,
+                        GulkanVertexBuffer *vbo,
+                        GulkanTexture     **texture,
+                        VkSampler          *sampler,
+                        const char         *model_name)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->load_model == NULL)
+    return FALSE;
+  return klass->load_model (self, gc, vbo, texture, sampler, model_name);
+}
