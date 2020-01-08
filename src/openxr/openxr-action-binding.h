@@ -268,8 +268,8 @@ static OpenXRBinding b[NUM_INTERACTION_PROFILES] = {
     .action_bindings[3] = {
       .name = "/actions/wm/in/push_pull",
       .component = {
-        "/user/hand/left/input/thumbstick",
-        "/user/hand/right/input/thumbstick",
+        "/user/hand/left/input/trackpad",
+        "/user/hand/right/input/trackpad",
       },
       .num_components = NUM_COMPONENTS,
       .bound = true,
@@ -278,8 +278,8 @@ static OpenXRBinding b[NUM_INTERACTION_PROFILES] = {
     .action_bindings[4] = {
       .name = "/actions/wm/in/push_pull_scale",
       .component = {
-        "/user/hand/left/input/trackpad",
-        "/user/hand/right/input/trackpad",
+        "/user/hand/left/input/thumbstick",
+        "/user/hand/right/input/thumbstick",
       },
       .num_components = NUM_COMPONENTS,
       .bound = true,
@@ -363,7 +363,7 @@ static OpenXRBinding b[NUM_INTERACTION_PROFILES] = {
         "/user/hand/right/input/trackpad/touch",
       },
       .num_components = NUM_COMPONENTS,
-      .bound = true,
+      .bound = false, /* TODO: touch is too annoying */
     },
 
     .action_bindings[13] = {

@@ -270,6 +270,10 @@ _action_poll_vec2f (OpenXRAction *self)
           continue;
         }
 
+      /* TODO: Do we want event->changed like digital events? */
+      if (!value.changedSinceLastSync)
+        continue;
+
       GxrAnalogEvent *event = g_malloc (sizeof (GxrAnalogEvent));
       event->controller_handle = (guint64)i;
       event->active = (gboolean)value.isActive;
