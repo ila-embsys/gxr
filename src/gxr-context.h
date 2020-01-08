@@ -288,6 +288,12 @@ void
 gxr_context_set_keyboard_transform (GxrContext        *self,
                                     graphene_matrix_t *transform);
 
+GxrAction *
+gxr_context_new_action_from_type_url (GxrContext   *self,
+                                      GxrActionSet *action_set,
+                                      GxrActionType type,
+                                      char          *url);
+
 G_END_DECLS
 
 #endif /* GXR_CONTEXT_H_ */

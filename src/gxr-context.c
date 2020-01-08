@@ -10,6 +10,7 @@
 
 #ifdef GXR_HAS_OPENXR
 #include "openxr-context.h"
+#include "openxr-action.h"
 #include "openxr-action-set.h"
 #endif
 
@@ -587,4 +588,29 @@ gxr_context_set_keyboard_transform (GxrContext        *self,
   if (klass->set_keyboard_transform  == NULL)
     return;
   klass->set_keyboard_transform (self, transform);
+}
+
+GxrAction *
+gxr_context_new_action_from_type_url (GxrContext   *self,
+                                      GxrActionSet *action_set,
+                                      GxrActionType type,
+                                      char          *url)
+{
+  GxrApi api = gxr_context_get_api (self);
+  switch (api)
+    {
+#ifdef GXR_HAS_OPENVR
+      case GXR_API_OPENVR:
+        return GXR_ACTION (openvr_action_new_from_type_url (action_set,
+                                                            type, url));
+#endif
+#ifdef GXR_HAS_OPENXR
+      case GXR_API_OPENXR:
+        return GXR_ACTION (openxr_action_new_from_type_url (action_set,
+                                                            type, url));
+#endif
+      default:
+        g_printerr ("Error creating action. Gxr API not supported.\n");
+        return NULL;
+    }
 }

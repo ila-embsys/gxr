@@ -13,6 +13,13 @@
 #include "gxr-context.h"
 #include "gxr-action-set.h"
 
+#ifdef GXR_HAS_OPENVR
+  #include "openvr-action.h"
+#endif
+#ifdef GXR_HAS_OPENXR
+  #include "openxr-action.h"
+#endif
+
 typedef struct _GxrActionPrivate
 {
   GObject parent;
