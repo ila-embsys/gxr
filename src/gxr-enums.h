@@ -13,6 +13,7 @@
 #endif
 
 #define GXR_DEVICE_INDEX_MAX 64
+#define GXR_DEVICE_INDEX_HMD 0
 
 /**
  * GxrAppType:

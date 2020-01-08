@@ -573,8 +573,8 @@ _end_frame (GxrContext *context,
   OpenVRContext *self = OPENVR_CONTEXT (context);
   openvr_compositor_wait_get_poses (poses, GXR_DEVICE_INDEX_MAX);
 
-  if (poses[OPENVR_DEVICE_INDEX_HMD].is_valid)
-    graphene_matrix_inverse (&poses[OPENVR_DEVICE_INDEX_HMD].transformation,
+  if (poses[GXR_DEVICE_INDEX_HMD].is_valid)
+    graphene_matrix_inverse (&poses[GXR_DEVICE_INDEX_HMD].transformation,
                              &self->last_mat_head_pose);
 
   return TRUE;
