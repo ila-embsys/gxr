@@ -52,13 +52,15 @@ endif
 openxr_sources = [
   'openxr/openxr-context.c',
   'openxr/openxr-action.c',
-  'openxr/openxr-action-set.c'
+  'openxr/openxr-action-set.c',
+  'openxr/openxr-overlay.c'
 ]
 
 openxr_headers = [
   'openxr/openxr-context.h',
   'openxr/openxr-action.h',
-  'openxr/openxr-action-set.h'
+  'openxr/openxr-action-set.h',
+  'openxr/openxr-overlay.h'
 ]
 
 if openxr_dep.found()
