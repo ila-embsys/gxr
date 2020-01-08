@@ -25,7 +25,7 @@
 #include "openvr-system.h"
 #include "openvr-compositor.h"
 
-typedef struct _OpenVRContext
+struct _OpenVRContext
 {
   GxrContext parent;
 
@@ -33,8 +33,7 @@ typedef struct _OpenVRContext
 
   graphene_matrix_t last_mat_head_pose;
   graphene_matrix_t mat_eye_pos[2];
-
-} OpenVROverlayPrivate;
+};
 
 G_DEFINE_TYPE (OpenVRContext, openvr_context, GXR_TYPE_CONTEXT)
 
