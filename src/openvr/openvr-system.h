@@ -19,9 +19,6 @@
 
 #include "gxr-enums.h"
 
-void
-openvr_system_print_device_info (void);
-
 graphene_matrix_t
 openvr_system_get_projection_matrix (GxrEye eye, float near, float far);
 

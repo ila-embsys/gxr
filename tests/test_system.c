@@ -15,8 +15,6 @@ _test_minimal ()
   g_assert_nonnull (context);
   g_assert (gxr_context_init_runtime (GXR_CONTEXT (context), GXR_APP_OVERLAY));
   g_assert (gxr_context_is_valid (GXR_CONTEXT (context)));
-
-  openvr_system_print_device_info ();
   g_object_unref (context);
 }
 

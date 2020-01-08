@@ -37,22 +37,6 @@ openvr_system_get_device_string (TrackedDeviceIndex_t device_index,
   return string;
 }
 
-void
-openvr_system_print_device_info ()
-{
-  gchar* tracking_system_name =
-    openvr_system_get_device_string (k_unTrackedDeviceIndex_Hmd,
-      ETrackedDeviceProperty_Prop_TrackingSystemName_String);
-  g_print ("TrackingSystemName: %s\n", tracking_system_name);
-  g_free (tracking_system_name);
-
-  gchar* serial_number =
-    openvr_system_get_device_string (k_unTrackedDeviceIndex_Hmd,
-      ETrackedDeviceProperty_Prop_SerialNumber_String);
-  g_print ("SerialNumber: %s\n", serial_number);
-  g_free (serial_number);
-}
-
 graphene_matrix_t
 openvr_system_get_projection_matrix (GxrEye eye, float near, float far)
 {
