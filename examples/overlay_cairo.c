@@ -138,7 +138,12 @@ test_cat_overlay ()
   loop = g_main_loop_new (NULL, FALSE);
 
   GxrContext *context = gxr_context_get_instance ();
-  GulkanClient *uploader = openvr_compositor_gulkan_client_new ();
+  GulkanClient *uploader = gulkan_client_new ();
+  if (!gxr_context_init_gulkan (context, uploader))
+    {
+      g_printerr ("Could not initialize Gulkan!\n");
+      return FALSE;
+    }
 
   /* init openvr */
   if (!_init_openvr (context, uploader))

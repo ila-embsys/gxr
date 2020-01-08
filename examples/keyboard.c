@@ -108,26 +108,26 @@ _process_key_event (Example *self, GdkEventKey *event)
 }
 
 static void
-_system_keyboard_press_cb (OpenVRContext *context,
-                           GdkEventKey   *event,
-                           gpointer      _self)
+_system_keyboard_press_cb (GxrContext  *context,
+                           GdkEventKey *event,
+                           gpointer    _self)
 {
   (void) context;
   _process_key_event ((Example*) _self, event);
 }
 
 static void
-_overlay_keyboard_press_cb (GxrOverlay *overlay,
-                            GdkEventKey   *event,
-                            gpointer      _self)
+_overlay_keyboard_press_cb (GxrOverlay  *overlay,
+                            GdkEventKey *event,
+                            gpointer    _self)
 {
   (void) overlay;
   _process_key_event ((Example*) _self, event);
 }
 
 static void
-_system_keyboard_close_cb (OpenVRContext  *context,
-                           gpointer       _self)
+_system_keyboard_close_cb (GxrContext *context,
+                           gpointer   _self)
 {
   (void) context;
   (void) _self;
@@ -135,8 +135,8 @@ _system_keyboard_close_cb (OpenVRContext  *context,
 }
 
 static void
-_overlay_keyboard_close_cb (GxrOverlay  *overlay,
-                            gpointer       _self)
+_overlay_keyboard_close_cb (GxrOverlay *overlay,
+                            gpointer   _self)
 {
   (void) overlay;
   (void) _self;
@@ -151,14 +151,14 @@ _poll_events_cb (gpointer _self)
   gxr_action_sets_poll (&self->action_set, 1);
   gxr_overlay_poll_event (self->overlay);
 
-  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
-  gxr_context_poll_event (GXR_CONTEXT (context));
+  GxrContext *context = gxr_context_get_instance ();
+  gxr_context_poll_event (context);
 
   return TRUE;
 }
 
 static void
-_show_keyboard_cb (OpenVRAction    *action,
+_show_keyboard_cb (GxrAction       *action,
                    GxrDigitalEvent *event,
                    gpointer        _self)
 {
@@ -297,9 +297,15 @@ main (int argc, char *argv[])
     .size_y = 600,
     .text_cursor = 0,
     .texture = NULL,
-    .uploader = openvr_compositor_gulkan_client_new (),
-    .action_set = (GxrActionSet*) openvr_action_set_new_from_url ("/actions/wm")
+    .uploader = gulkan_client_new (),
+    .action_set = gxr_context_new_action_set_from_url (context, "/actions/wm")
   };
+
+  if (!gxr_context_init_gulkan (context, self.uploader))
+    {
+      g_printerr ("Could not initialize Gulkan!\n");
+      return FALSE;
+    }
 
   if (!_init_gtk (&self))
     return FALSE;

@@ -128,10 +128,10 @@ main ()
     .loop = g_main_loop_new (NULL, FALSE),
   };
 
-  self.action_sets[WM_ACTIONSET] = (GxrActionSet*)
-    openvr_action_set_new_from_url ("/actions/wm");
-  self.action_sets[SYNTH_ACTIONSET] = (GxrActionSet*)
-    openvr_action_set_new_from_url ("/actions/mouse_synth");
+  self.action_sets[WM_ACTIONSET] =
+    gxr_context_new_action_set_from_url (context, "/actions/wm");
+  self.action_sets[SYNTH_ACTIONSET] =
+    gxr_context_new_action_set_from_url (context, "/actions/mouse_synth");
 
   self.haptic =
     gxr_context_new_action_from_type_url (context,

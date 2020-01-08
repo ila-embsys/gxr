@@ -47,8 +47,7 @@ typedef struct ModifierKeyCodes {
 static gboolean
 timeout_callback (gpointer data)
 {
-  OpenVRContext *context = data;
-  gxr_context_poll_event (GXR_CONTEXT (context));
+  gxr_context_poll_event (GXR_CONTEXT (data));
   return TRUE;
 }
 
@@ -65,24 +64,24 @@ _init_openvr (GxrContext *context)
 }
 
 static void
-_keyboard_closed (OpenVRContext  *context,
-                 GdkEventKey    *event,
-                 gpointer        data)
+_keyboard_closed (GxrContext  *context,
+                  GdkEventKey *event,
+                  gpointer     data)
 {
   (void) event;
   (void) data;
   g_print ("Closed keyboard... Let's open it again!\n");
-  gxr_context_show_keyboard (GXR_CONTEXT (context));
-  gxr_context_set_keyboard_transform (GXR_CONTEXT (context), &keyboard_position);
+  gxr_context_show_keyboard (context);
+  gxr_context_set_keyboard_transform (context, &keyboard_position);
 }
 
 ModifierKeyCodes
 _modifier_keycode_for (KeySym sym, KeySymTable *keysym_table);
 
 static void
-_keyboard_input (OpenVRContext  *context,
-                 GdkEventKey    *event,
-                 KeySymTable    *keysym_table)
+_keyboard_input (GxrContext  *context,
+                 GdkEventKey *event,
+                 KeySymTable *keysym_table)
 {
   (void) context;
   for (int char_index = 0; char_index < event->length; char_index++)
