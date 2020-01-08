@@ -14,6 +14,7 @@
 #include <gdk/gdk.h>
 
 #include "gxr-types.h"
+#include "gxr-config.h"
 
 #include "openvr-math-private.h"
 
@@ -188,7 +189,7 @@ _poll_event (GxrContext *context)
         g_debug ("Event: sending KEYBOARD_CLOSE_EVENT signal\n");
         gxr_context_emit_keyboard_close (context);
       } break;
-
+#if (OPENVR_VERSION_MINOR >= 8)
       case EVREventType_VREvent_SceneApplicationStateChanged:
       {
         EVRSceneApplicationState app_state =
@@ -198,7 +199,7 @@ _poll_event (GxrContext *context)
             scene_application_state_changed = TRUE;
           }
       } break;
-
+#endif
       case EVREventType_VREvent_ProcessQuit:
       {
         scene_application_state_changed = TRUE;
@@ -208,6 +209,7 @@ _poll_event (GxrContext *context)
       case EVREventType_VREvent_Quit:
       {
         g_debug ("Event: got quit event, finding out reason...");
+#if (OPENVR_VERSION_MINOR >= 8)
         EVRSceneApplicationState app_state =
           self->f.applications->GetSceneApplicationState ();
         if (app_state == EVRSceneApplicationState_Quitting)
@@ -220,7 +222,7 @@ _poll_event (GxrContext *context)
           {
             g_debug ("Event: SteamVR is quitting");
           }
-
+#endif
         shutdown_event = TRUE;
       } break;
 
