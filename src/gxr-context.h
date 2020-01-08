@@ -127,6 +127,9 @@ struct _GxrContextClass
                  GulkanTexture     **texture,
                  VkSampler          *sampler,
                  const char         *model_name);
+
+  gboolean
+  (*is_another_scene_running) (GxrContext *self);
 };
 
 GxrContext *gxr_context_get_instance (void);
@@ -268,6 +271,9 @@ gxr_context_load_model (GxrContext         *self,
                         GulkanTexture     **texture,
                         VkSampler          *sampler,
                         const char         *model_name);
+
+gboolean
+gxr_context_is_another_scene_running (GxrContext *self);
 
 G_END_DECLS
 

@@ -543,3 +543,12 @@ gxr_context_load_model (GxrContext         *self,
     return FALSE;
   return klass->load_model (self, gc, vbo, texture, sampler, model_name);
 }
+
+gboolean
+gxr_context_is_another_scene_running (GxrContext *self)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->is_another_scene_running  == NULL)
+    return FALSE;
+  return klass->is_another_scene_running  (self);
+}

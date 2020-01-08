@@ -352,9 +352,10 @@ _acknowledge_quit (GxrContext *context)
 static gboolean
 _init_runtime (GxrContext *context, GxrAppType type);
 
-gboolean
-openvr_context_is_another_scene_running (void)
+static gboolean
+_is_another_scene_running (GxrContext *context)
 {
+  (void) context;
   OpenVRContext *ctx = openvr_context_new ();
   _init_runtime (GXR_CONTEXT (ctx), GXR_APP_BACKGROUND);
 
@@ -643,4 +644,5 @@ openvr_context_class_init (OpenVRContextClass *klass)
   gxr_context_class->device_is_controller = _device_is_controller;
   gxr_context_class->get_device_model_name = _get_device_model_name;
   gxr_context_class->load_model = _load_model;
+  gxr_context_class->is_another_scene_running = _is_another_scene_running;
 }

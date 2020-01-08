@@ -1311,6 +1311,14 @@ _load_model (GxrContext         *context,
   return FALSE;
 }
 
+static gboolean
+_is_another_scene_running (GxrContext *context)
+{
+  /* TODO: Implement in OpenXR */
+  (void) context;
+  return FALSE;
+}
+
 static void
 openxr_context_class_init (OpenXRContextClass *klass)
 {
@@ -1342,4 +1350,5 @@ openxr_context_class_init (OpenXRContextClass *klass)
   gxr_context_class->device_is_controller = _device_is_controller;
   gxr_context_class->get_device_model_name = _get_device_model_name;
   gxr_context_class->load_model = _load_model;
+  gxr_context_class->is_another_scene_running = _is_another_scene_running;
 }
