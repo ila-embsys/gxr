@@ -15,6 +15,7 @@
 
 #ifdef GXR_HAS_OPENVR
 #include "openvr-context.h"
+#include "openvr-action.h"
 #include "openvr-action-set.h"
 #endif
 
@@ -450,5 +451,45 @@ gxr_context_new_action_set_from_url (GxrContext *self, gchar *url)
       default:
         g_printerr ("ERROR: Could not init action set: API not supported.\n");
         return NULL;
+    }
+}
+
+gboolean
+gxr_context_load_action_manifest (GxrContext *self,
+                                  const char *cache_name,
+                                  const char *resource_path,
+                                  const char *manifest_name,
+                                  const char *first_binding,
+                                  ...)
+{
+  GxrApi api = gxr_context_get_api (self);
+  switch (api)
+    {
+#ifdef GXR_HAS_OPENVR
+      case GXR_API_OPENVR:
+        {
+          va_list args;
+          va_start (args, first_binding);
+          gboolean ret = openvr_action_load_manifest (cache_name,
+                                                      resource_path,
+                                                      manifest_name,
+                                                      first_binding,
+                                                      args);
+          va_end (args);
+          return ret;
+        }
+#endif
+#ifdef GXR_HAS_OPENXR
+      case GXR_API_OPENXR:
+        (void) cache_name;
+        (void) resource_path;
+        (void) manifest_name;
+        (void) first_binding;
+        /* TODO: Implement action manifest in OpenXR */
+        return TRUE;
+#endif
+      default:
+        g_printerr ("ERROR: Could not load manifest: API not supported.\n");
+        return FALSE;
     }
 }

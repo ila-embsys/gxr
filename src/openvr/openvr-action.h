@@ -23,9 +23,6 @@ G_BEGIN_DECLS
 #define OPENVR_TYPE_ACTION openvr_action_get_type()
 G_DECLARE_FINAL_TYPE (OpenVRAction, openvr_action, OPENVR, ACTION, GxrAction)
 
-gboolean
-openvr_action_load_manifest (char *path);
-
 OpenVRAction *openvr_action_new (void);
 
 OpenVRAction *
@@ -36,11 +33,11 @@ void
 openvr_action_update_input_handles (OpenVRAction *self);
 
 gboolean
-openvr_action_load_cached_manifest (const char* cache_name,
-                                    const char* resource_path,
-                                    const char* manifest_name,
-                                    const char* first_binding,
-                                    ...);
+openvr_action_load_manifest (const char* cache_name,
+                             const char* resource_path,
+                             const char* manifest_name,
+                             const char* first_binding,
+                             va_list     args);
 
 G_END_DECLS
 

@@ -29,8 +29,8 @@ struct _OpenVRAction
 
 G_DEFINE_TYPE (OpenVRAction, openvr_action, GXR_TYPE_ACTION)
 
-gboolean
-openvr_action_load_manifest (char *path)
+static gboolean
+_load_manifest (char *path)
 {
   OpenVRFunctions *f = openvr_get_functions ();
 
@@ -413,11 +413,11 @@ openvr_action_class_init (OpenVRActionClass *klass)
 }
 
 gboolean
-openvr_action_load_cached_manifest (const char* cache_name,
-                                    const char* resource_path,
-                                    const char* manifest_name,
-                                    const char* first_binding,
-                                    ...)
+openvr_action_load_manifest (const char* cache_name,
+                             const char* resource_path,
+                             const char* manifest_name,
+                             const char* first_binding,
+                             va_list     args)
 {
   /* Create cache directory if needed */
   GString* cache_path = gxr_io_get_cache_path (cache_name);
@@ -436,12 +436,7 @@ openvr_action_load_cached_manifest (const char* cache_name,
                                       actions_path))
     return FALSE;
 
-  va_list args;
-
   const char* current = first_binding;
-
-  va_start (args, first_binding);
-
   while (current != NULL)
     {
       GString *bindings_path = g_string_new ("");
@@ -456,11 +451,9 @@ openvr_action_load_cached_manifest (const char* cache_name,
       current = va_arg (args, const char*);
     }
 
-  va_end (args);
-
   g_string_free (cache_path, TRUE);
 
-  if (!openvr_action_load_manifest (actions_path->str))
+  if (!_load_manifest (actions_path->str))
     return FALSE;
 
   g_string_free (actions_path, TRUE);

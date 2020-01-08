@@ -281,7 +281,8 @@ main (int argc, char *argv[])
       return -1;
     }
 
-  if (!openvr_action_load_cached_manifest (
+  if (!gxr_context_load_action_manifest (
+      context,
       "gxr",
       "/res/bindings",
       "actions.json",
