@@ -341,9 +341,10 @@ openvr_context_set_system_keyboard_transform (OpenVRContext *self,
                                                 &openvr_transform);
 }
 
-void
-openvr_context_acknowledge_quit (OpenVRContext *self)
+static void
+_acknowledge_quit (GxrContext *context)
 {
+  OpenVRContext *self = OPENVR_CONTEXT (context);
   self->f.system->AcknowledgeQuit_Exiting ();
 }
 
@@ -603,4 +604,5 @@ openvr_context_class_init (OpenVRContextClass *klass)
   gxr_context_class->get_view = _get_view;
   gxr_context_class->begin_frame = _begin_frame;
   gxr_context_class->end_frame = _end_frame;
+  gxr_context_class->acknowledge_quit = _acknowledge_quit;
 }

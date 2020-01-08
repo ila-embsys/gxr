@@ -42,9 +42,6 @@ void
 openvr_context_set_system_keyboard_transform (OpenVRContext *self,
                                               graphene_matrix_t *transform);
 
-void
-openvr_context_acknowledge_quit (OpenVRContext *self);
-
 gboolean
 openvr_context_is_another_scene_running (void);
 

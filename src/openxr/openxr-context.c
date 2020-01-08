@@ -1260,6 +1260,13 @@ _end_frame (GxrContext *context,
 }
 
 static void
+_acknowledge_quit (GxrContext *context)
+{
+  /* TODO: Implement in OpenXR */
+  (void) context;
+}
+
+static void
 openxr_context_class_init (OpenXRContextClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
@@ -1285,4 +1292,5 @@ openxr_context_class_init (OpenXRContextClass *klass)
   gxr_context_class->get_view = _get_view;
   gxr_context_class->begin_frame = _begin_frame;
   gxr_context_class->end_frame = _end_frame;
+  gxr_context_class->acknowledge_quit = _acknowledge_quit;
 }

@@ -493,3 +493,12 @@ gxr_context_load_action_manifest (GxrContext *self,
         return FALSE;
     }
 }
+
+void
+gxr_context_acknowledge_quit (GxrContext *self)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->acknowledge_quit == NULL)
+    return;
+  klass->acknowledge_quit (self);
+}
