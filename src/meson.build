@@ -7,7 +7,8 @@ gxr_sources = [
   'gxr-context.c',
   'gxr-action.c',
   'gxr-action-set.c',
-  'gxr-io.c'
+  'gxr-io.c',
+  'gxr-overlay.c'
 ]
 
 gxr_headers = [
@@ -18,7 +19,8 @@ gxr_headers = [
   'gxr-context.h',
   'gxr-action.h',
   'gxr-action-set.h',
-  'gxr-io.h'
+  'gxr-io.h',
+  'gxr-overlay.h'
 ]
 
 openvr_sources = [
