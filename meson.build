@@ -63,7 +63,13 @@ if openxr_dep.found()
 endif
 
 openvr_dep = dependency('openvr', required: false)
+
 if openvr_dep.found()
+  openvr_version_str_list = openvr_dep.version().split('.')
+  config_h.set('OPENVR_VERSION_MAJOR', openvr_version_str_list[0].to_int())
+  config_h.set('OPENVR_VERSION_MINOR', openvr_version_str_list[1].to_int())
+  config_h.set('OPENVR_VERSION_MICRO', openvr_version_str_list[2].to_int())
+
   config_h.set('GXR_HAS_OPENVR', 1)
   config_h.set('GXR_HAS_OVERLAYS', 1)
   # For a statically linked libopenvr_api we also need to link to the
