@@ -14,7 +14,7 @@
 #include "gxr-time.h"
 #include "gxr-config.h"
 
-#include "gxr-context.h"
+#include "gxr-context-private.h"
 
 typedef struct _GxrOverlayPrivate
 {

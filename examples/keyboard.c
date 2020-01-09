@@ -281,7 +281,7 @@ main (int argc, char *argv[])
       return -1;
     }
 
-  if (!gxr_context_load_action_manifest (
+  if (!gxr_action_load_manifest (
       context,
       "gxr",
       "/res/bindings",
@@ -298,7 +298,7 @@ main (int argc, char *argv[])
     .text_cursor = 0,
     .texture = NULL,
     .uploader = gulkan_client_new (),
-    .action_set = gxr_context_new_action_set_from_url (context, "/actions/wm")
+    .action_set = gxr_action_set_new_from_url (context, "/actions/wm")
   };
 
   if (!gxr_context_init_gulkan (context, self.uploader))

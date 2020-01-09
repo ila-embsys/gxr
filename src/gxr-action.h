@@ -20,6 +20,8 @@
 
 G_BEGIN_DECLS
 
+typedef struct _GxrContext GxrContext;
+
 #define GXR_TYPE_ACTION gxr_action_get_type()
 G_DECLARE_DERIVABLE_TYPE (GxrAction, gxr_action, GXR, ACTION, GObject)
 
@@ -42,6 +44,20 @@ struct _GxrActionClass
 };
 
 GxrAction *gxr_action_new (void);
+
+GxrAction *
+gxr_action_new_from_type_url (GxrContext   *context,
+                              GxrActionSet *action_set,
+                              GxrActionType type,
+                              char          *url);
+
+gboolean
+gxr_action_load_manifest (GxrContext *context,
+                          const char *cache_name,
+                          const char *resource_path,
+                          const char *manifest_name,
+                          const char *first_binding,
+                          ...);
 
 gboolean
 gxr_action_poll (GxrAction *self);

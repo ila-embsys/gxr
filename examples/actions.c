@@ -111,7 +111,7 @@ main ()
       return false;
     }
 
-  if (!gxr_context_load_action_manifest (
+  if (!gxr_action_load_manifest (
         context,
         "gxr",
         "/res/bindings",
@@ -129,12 +129,12 @@ main ()
   };
 
   self.action_sets[WM_ACTIONSET] =
-    gxr_context_new_action_set_from_url (context, "/actions/wm");
+    gxr_action_set_new_from_url (context, "/actions/wm");
   self.action_sets[SYNTH_ACTIONSET] =
-    gxr_context_new_action_set_from_url (context, "/actions/mouse_synth");
+    gxr_action_set_new_from_url (context, "/actions/mouse_synth");
 
   self.haptic =
-    gxr_context_new_action_from_type_url (context,
+    gxr_action_new_from_type_url (context,
                                           self.action_sets[WM_ACTIONSET],
                                           GXR_ACTION_HAPTIC,
                                           "/actions/wm/out/haptic");

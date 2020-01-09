@@ -219,33 +219,6 @@ gxr_context_poll_event (GxrContext *self);
 void
 gxr_context_show_keyboard (GxrContext *self);
 
-void
-gxr_context_emit_keyboard_press (GxrContext *self, gpointer event);
-
-void
-gxr_context_emit_keyboard_close (GxrContext *self);
-
-void
-gxr_context_emit_quit (GxrContext *self, gpointer event);
-
-void
-gxr_context_emit_device_activate (GxrContext *self, gpointer event);
-
-void
-gxr_context_emit_device_deactivate (GxrContext *self, gpointer event);
-
-void
-gxr_context_emit_device_update (GxrContext *self, gpointer event);
-
-void
-gxr_context_emit_bindings_update (GxrContext *self);
-
-void
-gxr_context_emit_binding_loaded (GxrContext *self);
-
-void
-gxr_context_emit_actionset_update (GxrContext *self);
-
 uint32_t
 gxr_context_get_model_vertex_stride (GxrContext *self);
 
@@ -274,17 +247,6 @@ gboolean
 gxr_context_end_frame (GxrContext *self,
                        GxrPose *poses);
 
-GxrActionSet *
-gxr_context_new_action_set_from_url (GxrContext *self, gchar *url);
-
-gboolean
-gxr_context_load_action_manifest (GxrContext *self,
-                                  const char *cache_name,
-                                  const char *resource_path,
-                                  const char *manifest_name,
-                                  const char *first_binding,
-                                  ...);
-
 void
 gxr_context_acknowledge_quit (GxrContext *self);
 
@@ -312,17 +274,8 @@ void
 gxr_context_set_keyboard_transform (GxrContext        *self,
                                     graphene_matrix_t *transform);
 
-GxrAction *
-gxr_context_new_action_from_type_url (GxrContext   *self,
-                                      GxrActionSet *action_set,
-                                      GxrActionType type,
-                                      char          *url);
-
 GSList *
 gxr_context_get_model_list (GxrContext *self);
-
-GxrOverlay *
-gxr_context_new_overlay (GxrContext *self);
 
 G_END_DECLS
 

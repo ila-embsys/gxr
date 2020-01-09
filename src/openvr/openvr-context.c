@@ -15,6 +15,7 @@
 
 #include "gxr-types.h"
 #include "gxr-config.h"
+#include "gxr-context-private.h"
 
 #include "openvr-math.h"
 #include "openvr-overlay.h"

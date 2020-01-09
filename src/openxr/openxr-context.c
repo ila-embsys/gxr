@@ -23,6 +23,7 @@
 #include <openxr/openxr_reflection.h>
 
 #include "gxr-types.h"
+#include "gxr-context-private.h"
 
 #include "openxr-overlay.h"
 #include "openxr-action.h"

@@ -202,7 +202,7 @@ main ()
       return false;
     }
 
-  if (!gxr_context_load_action_manifest (
+  if (!gxr_action_load_manifest (
         context,
         "gxr",
         "/res/bindings",
@@ -215,7 +215,7 @@ main ()
     .loop = g_main_loop_new (NULL, FALSE),
     .current_model_list_index = 0,
     .models = NULL,
-    .action_set = gxr_context_new_action_set_from_url (context, "/actions/model")
+    .action_set = gxr_action_set_new_from_url (context, "/actions/model")
   };
 
   gxr_action_set_connect (self.action_set, GXR_ACTION_DIGITAL,
