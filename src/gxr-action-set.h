@@ -39,8 +39,6 @@ struct _GxrActionSetClass
 
 };
 
-GxrActionSet *gxr_action_set_new (void);
-
 GxrActionSet *
 gxr_action_set_new_from_url (GxrContext *context, gchar *url);
 

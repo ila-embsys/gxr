@@ -43,8 +43,6 @@ struct _GxrActionClass
                      guint64 controller_handle);
 };
 
-GxrAction *gxr_action_new (void);
-
 GxrAction *
 gxr_action_new_from_type_url (GxrContext   *context,
                               GxrActionSet *action_set,

@@ -80,12 +80,6 @@ gxr_action_init (GxrAction *self)
 }
 
 GxrAction *
-gxr_action_new (void)
-{
-  return (GxrAction*) g_object_new (GXR_TYPE_ACTION, 0);
-}
-
-GxrAction *
 gxr_action_new_from_type_url (GxrContext   *context,
                               GxrActionSet *action_set,
                               GxrActionType type,

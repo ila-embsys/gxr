@@ -37,12 +37,6 @@ gxr_action_set_init (GxrActionSet *self)
 }
 
 GxrActionSet *
-gxr_action_set_new (void)
-{
-  return (GxrActionSet*) g_object_new (GXR_TYPE_ACTION_SET, 0);
-}
-
-GxrActionSet *
 gxr_action_set_new_from_url (GxrContext *context, gchar *url)
 {
   return gxr_context_new_action_set_from_url (context, url);
