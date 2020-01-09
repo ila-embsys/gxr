@@ -16,11 +16,11 @@
 #include "gxr-types.h"
 #include "gxr-config.h"
 
-#include "openvr-math-private.h"
+#include "openvr-math.h"
 
-#include "openvr-context-private.h"
-#include "openvr-compositor-private.h"
-#include "openvr-system-private.h"
+#include "openvr-context.h"
+#include "openvr-compositor.h"
+#include "openvr-system.h"
 #include "openvr-model.h"
 #include "openvr-system.h"
 #include "openvr-compositor.h"

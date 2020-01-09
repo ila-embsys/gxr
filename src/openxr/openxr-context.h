@@ -27,11 +27,9 @@
 
 #include "gxr-context.h"
 
-G_BEGIN_DECLS
+#include "openxr-interface.h"
 
-#define OPENXR_TYPE_CONTEXT openxr_context_get_type()
-G_DECLARE_FINAL_TYPE (OpenXRContext, openxr_context,
-                      OPENXR, CONTEXT, GxrContext)
+G_BEGIN_DECLS
 
 void
 openxr_context_cleanup(OpenXRContext *self);

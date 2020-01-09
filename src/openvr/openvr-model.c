@@ -8,7 +8,7 @@
 #include "openvr-model.h"
 
 #include <unistd.h>
-#include "openvr-context-private.h"
+#include "openvr-context.h"
 
 void
 openvr_model_print_list (void)

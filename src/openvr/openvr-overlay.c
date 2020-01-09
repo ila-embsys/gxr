@@ -7,18 +7,16 @@
 
 #include <time.h>
 #include <glib/gprintf.h>
-
 #include <gdk/gdk.h>
-
-#include "openvr-context.h"
-#include "openvr-overlay.h"
-#include "openvr-context-private.h"
 
 #include "gxr-time.h"
 #include "gxr-config.h"
-#include "openvr-math-private.h"
 
-#include "openvr-compositor-private.h"
+#include "openvr-interface.h"
+#include "openvr-context.h"
+#include "openvr-context.h"
+#include "openvr-math.h"
+#include "openvr-compositor.h"
 
 #define OVERLAY_CHECK_ERROR(fun, res) \
 { \

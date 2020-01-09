@@ -5,19 +5,13 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "openxr-interface.h"
-
-#include "openxr-action-set.h"
-#include "openxr-action-set-private.h"
-
-#include "openxr-action.h"
-
-#include "openxr-context.h"
-
 #include <openxr/openxr.h>
 
+#include "openxr-interface.h"
+#include "openxr-action-set.h"
+#include "openxr-action.h"
+#include "openxr-context.h"
 #include "openxr-action-binding.h"
-
 
 struct _OpenXRActionSet
 {

@@ -13,8 +13,8 @@
 
 #include "openvr-compositor.h"
 #include "openvr-context.h"
-#include "openvr-context-private.h"
-#include "openvr-math-private.h"
+#include "openvr-context.h"
+#include "openvr-math.h"
 
 static void
 _split (gchar *str, GSList **out_list)

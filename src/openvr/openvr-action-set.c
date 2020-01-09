@@ -7,9 +7,9 @@
 
 #include "openvr-interface.h"
 #include "openvr-action-set.h"
-#include "openvr-action-set-private.h"
+#include "openvr-action-set.h"
 
-#include "openvr-context-private.h"
+#include "openvr-context.h"
 #include "openvr-action.h"
 
 struct _OpenVRActionSet

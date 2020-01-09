@@ -14,20 +14,24 @@
 
 #include <glib-object.h>
 #include <stdint.h>
+#include <glib-object.h>
 
 #include "gxr-action-set.h"
 #include "gxr-enums.h"
 
-G_BEGIN_DECLS
+#include "openvr-action-set.h"
+#include "openvr-wrapper.h"
+#include "openvr-interface.h"
 
-#define OPENVR_TYPE_ACTION_SET openvr_action_set_get_type()
-G_DECLARE_FINAL_TYPE (OpenVRActionSet, openvr_action_set,
-                      OPENVR, ACTION_SET, GxrActionSet)
+G_BEGIN_DECLS
 
 OpenVRActionSet *openvr_action_set_new (void);
 
-OpenVRActionSet *
-openvr_action_set_new_from_url (gchar *url);
+VRActionSetHandle_t
+openvr_action_set_get_handle (OpenVRActionSet *self);
+
+const gchar*
+openvr_input_error_string (EVRInputError err);
 
 G_END_DECLS
 

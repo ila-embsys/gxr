@@ -19,6 +19,9 @@
 
 #include "gxr-types.h"
 
+#include "openvr-wrapper.h"
+#include "openvr-context.h"
+
 G_BEGIN_DECLS
 
 bool
@@ -36,6 +39,22 @@ openvr_compositor_wait_get_poses (GxrPose *poses, uint32_t count);
 
 bool
 openvr_compositor_gulkan_client_init (GulkanClient *client);
+
+enum ETrackingUniverseOrigin
+openvr_compositor_get_tracking_space (void);
+
+bool
+openvr_compositor_gulkan_client_init (GulkanClient *client);
+
+bool
+openvr_compositor_submit (GulkanClient         *client,
+                          uint32_t              width,
+                          uint32_t              height,
+                          VkFormat              format,
+                          VkSampleCountFlagBits sample_count,
+                          VkImage               left,
+                          VkImage               right);
+
 
 G_END_DECLS
 

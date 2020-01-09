@@ -12,7 +12,6 @@ openvr_sources = [
 openvr_headers = [
   'openvr-interface.h',
   'openvr-system.h',
-  'openvr-overlay.h',
   'openvr-compositor.h',
   'openvr-context.h',
   'openvr-action.h',

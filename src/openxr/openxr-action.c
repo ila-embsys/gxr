@@ -13,7 +13,6 @@
 #include "openxr-action.h"
 #include "openxr-context.h"
 #include "openxr-action-set.h"
-#include "openxr-action-set-private.h"
 #include "openxr-action-binding.h"
 
 #define NUM_HANDS 2

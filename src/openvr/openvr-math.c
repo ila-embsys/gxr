@@ -1,6 +1,6 @@
 #include <glib.h>
 
-#include "openvr-math-private.h"
+#include "openvr-math.h"
 
 void
 openvr_math_print_matrix34 (HmdMatrix34_t mat)

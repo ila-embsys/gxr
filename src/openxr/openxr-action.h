@@ -14,15 +14,13 @@
 
 #include <glib-object.h>
 #include <graphene.h>
-
-#include "gxr-action.h"
-#include "openxr-action-set.h"
 #include <openxr/openxr.h>
 
-G_BEGIN_DECLS
+#include "gxr-action.h"
+#include "openxr-interface.h"
+#include "openxr-action-set.h"
 
-#define OPENXR_TYPE_ACTION openxr_action_get_type()
-G_DECLARE_FINAL_TYPE (OpenXRAction, openxr_action, OPENXR, ACTION, GxrAction)
+G_BEGIN_DECLS
 
 gboolean
 openxr_action_load_manifest (char *path);

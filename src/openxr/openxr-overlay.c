@@ -7,13 +7,12 @@
 
 #include <time.h>
 #include <glib/gprintf.h>
-
 #include <gdk/gdk.h>
-
-#include "openxr-overlay.h"
 
 #include "gxr-time.h"
 #include "gxr-config.h"
+
+#include "openxr-interface.h"
 
 struct _OpenXROverlay
 {

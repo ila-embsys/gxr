@@ -12,7 +12,6 @@ openxr_headers = [
   'openxr-context.h',
   'openxr-action.h',
   'openxr-action-set.h',
-  'openxr-overlay.h'
 ]
 
 openxr_lib = static_library(openxr_api_path,

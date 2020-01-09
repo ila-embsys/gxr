@@ -10,14 +10,13 @@
 #include "gxr-types.h"
 #include "gxr-io.h"
 
+#include "openvr-interface.h"
 #include "openvr-wrapper.h"
-#include "openvr-math-private.h"
+#include "openvr-math.h"
 #include "openvr-action.h"
-#include "openvr-context.h"
 #include "openvr-action-set.h"
-#include "openvr-action-set-private.h"
-#include "openvr-context-private.h"
-#include "openvr-compositor-private.h"
+#include "openvr-context.h"
+#include "openvr-compositor.h"
 
 struct _OpenVRAction
 {
