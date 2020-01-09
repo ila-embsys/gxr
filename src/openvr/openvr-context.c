@@ -614,6 +614,13 @@ _load_model (GxrContext         *context,
   return openvr_model_load (gc, vbo, texture, sampler, model_name);
 }
 
+static GSList *
+_get_model_list (GxrContext *self)
+{
+  (void) self;
+  return openvr_model_get_list ();
+}
+
 static void
 openvr_context_class_init (OpenVRContextClass *klass)
 {
@@ -647,4 +654,5 @@ openvr_context_class_init (OpenVRContextClass *klass)
   gxr_context_class->load_model = _load_model;
   gxr_context_class->is_another_scene_running = _is_another_scene_running;
   gxr_context_class->set_keyboard_transform = _set_keyboard_transform;
+  gxr_context_class->get_model_list = _get_model_list;
 }

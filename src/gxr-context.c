@@ -614,3 +614,12 @@ gxr_context_new_action_from_type_url (GxrContext   *self,
         return NULL;
     }
 }
+
+GSList *
+gxr_context_get_model_list (GxrContext *self)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->get_model_list == NULL)
+    return FALSE;
+  return klass->get_model_list (self);
+}

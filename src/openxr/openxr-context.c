@@ -1328,6 +1328,14 @@ _set_keyboard_transform (GxrContext        *context,
   (void) transform;
 }
 
+static GSList *
+_get_model_list (GxrContext *self)
+{
+  /* TODO: Implement in OpenXR */
+  (void) self;
+  return NULL;
+}
+
 static void
 openxr_context_class_init (OpenXRContextClass *klass)
 {
@@ -1361,4 +1369,5 @@ openxr_context_class_init (OpenXRContextClass *klass)
   gxr_context_class->load_model = _load_model;
   gxr_context_class->is_another_scene_running = _is_another_scene_running;
   gxr_context_class->set_keyboard_transform = _set_keyboard_transform;
+  gxr_context_class->get_model_list = _get_model_list;
 }

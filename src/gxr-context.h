@@ -134,6 +134,9 @@ struct _GxrContextClass
   void
   (*set_keyboard_transform) (GxrContext        *self,
                              graphene_matrix_t *transform);
+
+  GSList *
+  (*get_model_list) (GxrContext *self);
 };
 
 GxrContext *gxr_context_get_instance (void);
@@ -293,6 +296,9 @@ gxr_context_new_action_from_type_url (GxrContext   *self,
                                       GxrActionSet *action_set,
                                       GxrActionType type,
                                       char          *url);
+
+GSList *
+gxr_context_get_model_list (GxrContext *self);
 
 G_END_DECLS
 
