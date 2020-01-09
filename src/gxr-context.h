@@ -20,6 +20,7 @@
 #include "gxr-enums.h"
 #include "gxr-types.h"
 #include "gxr-action-set.h"
+#include "gxr-overlay.h"
 
 G_BEGIN_DECLS
 
@@ -137,6 +138,26 @@ struct _GxrContextClass
 
   GSList *
   (*get_model_list) (GxrContext *self);
+
+  GxrActionSet *
+  (*new_action_set_from_url) (GxrContext *self, gchar *url);
+
+  gboolean
+  (*load_action_manifest) (GxrContext *self,
+                           const char *cache_name,
+                           const char *resource_path,
+                           const char *manifest_name,
+                           const char *first_binding,
+                           va_list     args);
+
+  GxrAction *
+  (*new_action_from_type_url) (GxrContext   *self,
+                               GxrActionSet *action_set,
+                               GxrActionType type,
+                               char          *url);
+
+  GxrOverlay *
+  (*new_overlay) (GxrContext *self);
 };
 
 GxrContext *gxr_context_get_instance (void);
@@ -299,6 +320,9 @@ gxr_context_new_action_from_type_url (GxrContext   *self,
 
 GSList *
 gxr_context_get_model_list (GxrContext *self);
+
+GxrOverlay *
+gxr_context_new_overlay (GxrContext *self);
 
 G_END_DECLS
 

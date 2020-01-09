@@ -23,6 +23,12 @@
 
 G_BEGIN_DECLS
 
+#define OPENXR_TYPE_ACTION_SET openxr_action_set_get_type()
+G_DECLARE_FINAL_TYPE (OpenXRActionSet, openxr_action_set,
+                      OPENXR, ACTION_SET, GxrActionSet)
+OpenXRActionSet *
+openxr_action_set_new_from_url (gchar *url);
+
 OpenXRActionSet *openxr_action_set_new (void);
 
 XrActionSet

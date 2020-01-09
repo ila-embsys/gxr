@@ -12,8 +12,7 @@
 #include "gxr-time.h"
 #include "gxr-config.h"
 
-#include "openvr-interface.h"
-#include "openvr-context.h"
+#include "openvr-overlay.h"
 #include "openvr-context.h"
 #include "openvr-math.h"
 #include "openvr-compositor.h"

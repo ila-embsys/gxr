@@ -135,7 +135,8 @@ struct _GxrOverlayClass
                  gboolean flip_y);
 };
 
-GxrOverlay *gxr_overlay_new (void);
+GxrOverlay *
+gxr_overlay_new (void);
 
 gboolean
 gxr_overlay_create_width (GxrOverlay *self,

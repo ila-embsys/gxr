@@ -22,6 +22,12 @@
 
 G_BEGIN_DECLS
 
+#define OPENXR_TYPE_ACTION openxr_action_get_type()
+G_DECLARE_FINAL_TYPE (OpenXRAction, openxr_action, OPENXR, ACTION, GxrAction)
+OpenXRAction *
+openxr_action_new_from_type_url (GxrActionSet *action_set,
+                                 GxrActionType type, char *url);
+
 gboolean
 openxr_action_load_manifest (char *path);
 

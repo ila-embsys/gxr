@@ -433,21 +433,10 @@ gxr_context_end_frame (GxrContext *self,
 GxrActionSet *
 gxr_context_new_action_set_from_url (GxrContext *self, gchar *url)
 {
-  GxrApi api = gxr_context_get_api (self);
-  switch (api)
-    {
-#ifdef GXR_HAS_OPENVR
-      case GXR_API_OPENVR:
-        return (GxrActionSet*) openvr_action_set_new_from_url (url);
-#endif
-#ifdef GXR_HAS_OPENXR
-      case GXR_API_OPENXR:
-        return (GxrActionSet*) openxr_action_set_new_from_url (url);
-#endif
-      default:
-        g_printerr ("ERROR: Could not init action set: API not supported.\n");
-        return NULL;
-    }
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->new_action_set_from_url == NULL)
+    return FALSE;
+  return klass->new_action_set_from_url (self, url);
 }
 
 gboolean
@@ -458,36 +447,20 @@ gxr_context_load_action_manifest (GxrContext *self,
                                   const char *first_binding,
                                   ...)
 {
-  GxrApi api = gxr_context_get_api (self);
-  switch (api)
-    {
-#ifdef GXR_HAS_OPENVR
-      case GXR_API_OPENVR:
-        {
-          va_list args;
-          va_start (args, first_binding);
-          gboolean ret = openvr_action_load_manifest (cache_name,
-                                                      resource_path,
-                                                      manifest_name,
-                                                      first_binding,
-                                                      args);
-          va_end (args);
-          return ret;
-        }
-#endif
-#ifdef GXR_HAS_OPENXR
-      case GXR_API_OPENXR:
-        (void) cache_name;
-        (void) resource_path;
-        (void) manifest_name;
-        (void) first_binding;
-        /* TODO: Implement action manifest in OpenXR */
-        return TRUE;
-#endif
-      default:
-        g_printerr ("ERROR: Could not load manifest: API not supported.\n");
-        return FALSE;
-    }
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->load_action_manifest == NULL)
+    return FALSE;
+
+  va_list args;
+  va_start (args, first_binding);
+  gboolean ret = klass->load_action_manifest (self,
+                                              cache_name,
+                                              resource_path,
+                                              manifest_name,
+                                              first_binding,
+                                              args);
+  va_end (args);
+  return ret;
 }
 
 void
@@ -591,23 +564,19 @@ gxr_context_new_action_from_type_url (GxrContext   *self,
                                       GxrActionType type,
                                       char          *url)
 {
-  GxrApi api = gxr_context_get_api (self);
-  switch (api)
-    {
-#ifdef GXR_HAS_OPENVR
-      case GXR_API_OPENVR:
-        return GXR_ACTION (openvr_action_new_from_type_url (action_set,
-                                                            type, url));
-#endif
-#ifdef GXR_HAS_OPENXR
-      case GXR_API_OPENXR:
-        return GXR_ACTION (openxr_action_new_from_type_url (action_set,
-                                                            type, url));
-#endif
-      default:
-        g_printerr ("Error creating action. Gxr API not supported.\n");
-        return NULL;
-    }
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->new_action_from_type_url == NULL)
+    return FALSE;
+  return klass->new_action_from_type_url (self, action_set, type, url);
+}
+
+GxrOverlay *
+gxr_context_new_overlay (GxrContext *self)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->new_overlay == NULL)
+    return FALSE;
+  return klass->new_overlay (self);
 }
 
 GSList *

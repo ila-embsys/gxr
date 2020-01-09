@@ -17,13 +17,13 @@
 #include "gxr-config.h"
 
 #include "openvr-math.h"
-
-#include "openvr-context.h"
+#include "openvr-overlay.h"
 #include "openvr-compositor.h"
 #include "openvr-system.h"
 #include "openvr-model.h"
 #include "openvr-system.h"
 #include "openvr-compositor.h"
+#include "openvr-action.h"
 
 struct _OpenVRContext
 {
@@ -621,6 +621,46 @@ _get_model_list (GxrContext *self)
   return openvr_model_get_list ();
 }
 
+static GxrActionSet *
+_new_action_set_from_url (GxrContext *context, gchar *url)
+{
+  (void) context;
+  return (GxrActionSet*) openvr_action_set_new_from_url (url);
+}
+
+static gboolean
+_load_action_manifest (GxrContext *self,
+                       const char *cache_name,
+                       const char *resource_path,
+                       const char *manifest_name,
+                       const char *first_binding,
+                       va_list     args)
+{
+  (void) self;
+  return openvr_action_load_manifest (cache_name,
+                                      resource_path,
+                                      manifest_name,
+                                      first_binding,
+                                      args);
+}
+
+static GxrAction *
+_new_action_from_type_url (GxrContext   *self,
+                           GxrActionSet *action_set,
+                           GxrActionType type,
+                           char          *url)
+{
+  (void) self;
+  return GXR_ACTION (openvr_action_new_from_type_url (action_set, type, url));
+}
+
+static GxrOverlay *
+_new_overlay (GxrContext *self)
+{
+  (void) self;
+  return GXR_OVERLAY (openvr_overlay_new ());
+}
+
 static void
 openvr_context_class_init (OpenVRContextClass *klass)
 {
@@ -655,4 +695,8 @@ openvr_context_class_init (OpenVRContextClass *klass)
   gxr_context_class->is_another_scene_running = _is_another_scene_running;
   gxr_context_class->set_keyboard_transform = _set_keyboard_transform;
   gxr_context_class->get_model_list = _get_model_list;
+  gxr_context_class->new_action_set_from_url = _new_action_set_from_url;
+  gxr_context_class->load_action_manifest = _load_action_manifest;
+  gxr_context_class->new_action_from_type_url = _new_action_from_type_url;
+  gxr_context_class->new_overlay = _new_overlay;
 }

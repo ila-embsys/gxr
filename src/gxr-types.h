@@ -122,5 +122,4 @@ typedef struct {
   uint32_t height;
 } GxrPixelSize;
 
-
 #endif /* GXR_TYPES_H_ */

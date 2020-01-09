@@ -24,6 +24,9 @@
 
 #include "gxr-types.h"
 
+#include "openxr-overlay.h"
+#include "openxr-action.h"
+
 #define NUM_CONTROLLERS 2
 
 struct _OpenXRContext
@@ -1336,6 +1339,48 @@ _get_model_list (GxrContext *self)
   return NULL;
 }
 
+static GxrActionSet *
+_new_action_set_from_url (GxrContext *context, gchar *url)
+{
+  (void) context;
+  return (GxrActionSet*) openxr_action_set_new_from_url (url);
+}
+
+static gboolean
+_load_action_manifest (GxrContext *self,
+                       const char *cache_name,
+                       const char *resource_path,
+                       const char *manifest_name,
+                       const char *first_binding,
+                       va_list     args)
+{
+  (void) self;
+  (void) cache_name;
+  (void) resource_path;
+  (void) manifest_name;
+  (void) first_binding;
+  (void) args;
+  /* TODO: Implement action manifest in OpenXR */
+  return TRUE;
+}
+
+static GxrAction *
+_new_action_from_type_url (GxrContext   *self,
+                           GxrActionSet *action_set,
+                           GxrActionType type,
+                           char          *url)
+{
+  (void) self;
+  return GXR_ACTION (openxr_action_new_from_type_url (action_set, type, url));
+}
+
+static GxrOverlay *
+_new_overlay (GxrContext *self)
+{
+  (void) self;
+  return GXR_OVERLAY (openxr_overlay_new ());
+}
+
 static void
 openxr_context_class_init (OpenXRContextClass *klass)
 {
@@ -1370,4 +1415,8 @@ openxr_context_class_init (OpenXRContextClass *klass)
   gxr_context_class->is_another_scene_running = _is_another_scene_running;
   gxr_context_class->set_keyboard_transform = _set_keyboard_transform;
   gxr_context_class->get_model_list = _get_model_list;
+  gxr_context_class->new_action_set_from_url = _new_action_set_from_url;
+  gxr_context_class->load_action_manifest = _load_action_manifest;
+  gxr_context_class->new_action_from_type_url = _new_action_from_type_url;
+  gxr_context_class->new_overlay = _new_overlay;
 }

@@ -12,7 +12,7 @@
 #include "gxr-time.h"
 #include "gxr-config.h"
 
-#include "openxr-interface.h"
+#include "openxr-overlay.h"
 
 struct _OpenXROverlay
 {

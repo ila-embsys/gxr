@@ -16,13 +16,6 @@
 
 #include "gxr-context.h"
 
-#ifdef GXR_HAS_OPENVR
-  #include "openvr/openvr-interface.h"
-#endif
-#ifdef GXR_HAS_OPENXR
-  #include "openxr/openxr-interface.h"
-#endif
-
 typedef struct _GxrOverlayPrivate
 {
   GObjectClass parent_class;
@@ -117,25 +110,10 @@ gxr_overlay_init (GxrOverlay *self)
 }
 
 GxrOverlay *
-gxr_overlay_new (void)
+gxr_overlay_new ()
 {
   GxrContext *context = gxr_context_get_instance ();
-  GxrApi api = gxr_context_get_api (context);
-  switch (api)
-    {
-#ifdef GXR_HAS_OPENVR
-      case GXR_API_OPENVR:
-        return GXR_OVERLAY (openvr_overlay_new ());
-#endif
-#ifdef GXR_HAS_OPENXR
-      case GXR_API_OPENXR:
-        return GXR_OVERLAY (openxr_overlay_new ());
-#endif
-      default:
-        g_printerr ("GXR API not supported.\n");
-    }
-
-  return NULL;
+  return gxr_context_new_overlay (context);
 }
 
 static void
