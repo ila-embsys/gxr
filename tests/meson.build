@@ -6,14 +6,6 @@ test_overlay_pixbuf = executable(
   install: false)
 test('test_overlay_pixbuf', test_overlay_pixbuf, suite: ['xr'])
 
-test_vulkan_uploader = executable(
-  'test_vulkan_uploader', ['test_vulkan_uploader.c', test_resources],
-  dependencies: gxr_deps,
-  link_with: gxr_lib,
-  include_directories: gxr_inc,
-  install: false)
-test('test_vulkan_uploader', test_vulkan_uploader, suite: ['xr'])
-
 test_io = executable(
   'test_io', ['test_io.c', test_resources],
   dependencies: gxr_deps,
