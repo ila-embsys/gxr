@@ -11,6 +11,7 @@
 
 #include "gxr-time.h"
 #include "gxr-config.h"
+#include "gxr-overlay-private.h"
 
 #include "openvr-overlay.h"
 #include "openvr-context.h"

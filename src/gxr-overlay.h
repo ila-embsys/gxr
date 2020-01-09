@@ -267,31 +267,6 @@ gxr_overlay_submit_texture (GxrOverlay *self,
 gboolean
 gxr_overlay_print_info (GxrOverlay *self);
 
-/* Signal emission */
-void
-gxr_overlay_emit_motion_notify (GxrOverlay *self, GdkEvent *event);
-
-void
-gxr_overlay_emit_button_press (GxrOverlay *self, GdkEvent *event);
-
-void
-gxr_overlay_emit_button_release (GxrOverlay *self, GdkEvent *event);
-
-void
-gxr_overlay_emit_show (GxrOverlay *self);
-
-void
-gxr_overlay_emit_hide (GxrOverlay *self);
-
-void
-gxr_overlay_emit_destroy (GxrOverlay *self);
-
-void
-gxr_overlay_emit_keyboard_press (GxrOverlay *self, GdkEvent *event);
-
-void
-gxr_overlay_emit_keyboard_close (GxrOverlay *self);
-
 G_END_DECLS
 
 #endif /* GXR_OVERLAY_H_ */
