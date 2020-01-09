@@ -17,10 +17,10 @@
 #include "gxr-context.h"
 
 #ifdef GXR_HAS_OPENVR
-  #include "openvr-overlay.h"
+  #include "openvr/openvr-interface.h"
 #endif
 #ifdef GXR_HAS_OPENXR
-  #include "openxr-overlay.h"
+  #include "openxr/openxr-interface.h"
 #endif
 
 typedef struct _GxrOverlayPrivate

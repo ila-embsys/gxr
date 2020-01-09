@@ -5,6 +5,8 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include "openxr-interface.h"
+
 #include "openxr-action-set.h"
 #include "openxr-action-set-private.h"
 

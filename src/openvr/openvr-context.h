@@ -26,9 +26,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (OpenVRContext, openvr_context,
                       OPENVR, CONTEXT, GxrContext)
 
-OpenVRContext *
-openvr_context_new (void);
-
 gboolean
 openvr_context_is_installed (void);
 

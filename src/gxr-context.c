@@ -8,16 +8,11 @@
 #include "gxr-context.h"
 #include "gxr-config.h"
 
-#ifdef GXR_HAS_OPENXR
-#include "openxr-context.h"
-#include "openxr-action.h"
-#include "openxr-action-set.h"
-#endif
-
 #ifdef GXR_HAS_OPENVR
-#include "openvr-context.h"
-#include "openvr-action.h"
-#include "openvr-action-set.h"
+  #include "openvr/openvr-interface.h"
+#endif
+#ifdef GXR_HAS_OPENXR
+  #include "openxr/openxr-interface.h"
 #endif
 
 typedef struct _GxrContextPrivate

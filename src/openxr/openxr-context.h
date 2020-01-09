@@ -33,8 +33,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (OpenXRContext, openxr_context,
                       OPENXR, CONTEXT, GxrContext)
 
-OpenXRContext *openxr_context_new (void);
-
 void
 openxr_context_cleanup(OpenXRContext *self);
 

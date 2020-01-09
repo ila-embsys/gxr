@@ -25,10 +25,6 @@ G_DECLARE_FINAL_TYPE (OpenVRAction, openvr_action, OPENVR, ACTION, GxrAction)
 
 OpenVRAction *openvr_action_new (void);
 
-OpenVRAction *
-openvr_action_new_from_type_url (GxrActionSet *action_set,
-                                 GxrActionType type, char *url);
-
 void
 openvr_action_update_input_handles (OpenVRAction *self);
 

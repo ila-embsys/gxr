@@ -8,6 +8,7 @@ openxr_sources = [
 ]
 
 openxr_headers = [
+  'openxr-interface.h',
   'openxr-context.h',
   'openxr-action.h',
   'openxr-action-set.h',

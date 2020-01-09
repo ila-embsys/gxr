@@ -29,11 +29,6 @@ openxr_action_load_manifest (char *path);
 
 OpenXRAction *openxr_action_new (void);
 
-
-OpenXRAction *
-openxr_action_new_from_type_url (GxrActionSet *action_set,
-                                 GxrActionType type, char *url);
-
 void
 openxr_action_update_input_handles (OpenXRAction *self);
 

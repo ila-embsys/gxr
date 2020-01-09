@@ -19,7 +19,7 @@ G_BEGIN_DECLS
 #define OPENVR_TYPE_OVERLAY openvr_overlay_get_type()
 G_DECLARE_FINAL_TYPE (OpenVROverlay, openvr_overlay, OPENVR, OVERLAY, GxrOverlay)
 
-OpenVROverlay *openvr_overlay_new (void);
+
 
 G_END_DECLS
 

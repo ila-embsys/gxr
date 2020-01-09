@@ -55,15 +55,7 @@ gxr_deps = [
   m_dep,
 ]
 
-inc_dirs = ['.']
-if openvr_dep.found()
-  inc_dirs += ['openvr']
-endif
-if openxr_dep.found()
-  inc_dirs += ['openxr']
-endif
-
-gxr_inc = include_directories(inc_dirs)
+gxr_inc = include_directories('.')
 
 gxr_backend_libs = []
 
