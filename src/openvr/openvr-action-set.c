@@ -63,16 +63,15 @@ static void
 openvr_action_set_init (OpenVRActionSet *self)
 {
   self->handle = k_ulInvalidActionSetHandle;
-
-  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
-  g_signal_connect (context, "binding-loaded-event",
-                    (GCallback) _binding_loaded_cb, self);
 }
 
 OpenVRActionSet *
-openvr_action_set_new (void)
+openvr_action_set_new (OpenVRContext *context)
 {
-  return (OpenVRActionSet*) g_object_new (OPENVR_TYPE_ACTION_SET, 0);
+  OpenVRActionSet *self = (OpenVRActionSet*) g_object_new (OPENVR_TYPE_ACTION_SET, 0);
+  g_signal_connect (context, "binding-loaded-event",
+                    (GCallback) _binding_loaded_cb, self);
+  return self;
 }
 
 static gboolean
@@ -96,9 +95,9 @@ _load_handle (OpenVRActionSet *self,
 }
 
 OpenVRActionSet *
-openvr_action_set_new_from_url (gchar *url)
+openvr_action_set_new_from_url (OpenVRContext *context, gchar *url)
 {
-  OpenVRActionSet *self = openvr_action_set_new ();
+  OpenVRActionSet *self = openvr_action_set_new (context);
   if (!_load_handle (self, url))
     {
       g_object_unref (self);
@@ -177,9 +176,10 @@ openvr_input_error_string (EVRInputError err)
 }
 
 static GxrAction*
-_create_action (GxrActionSet *self,
+_create_action (GxrActionSet *self, GxrContext *context,
                 GxrActionType type, char *url)
 {
+  (void) context;
   return (GxrAction*) openvr_action_new_from_type_url (self, type, url);
 }
 

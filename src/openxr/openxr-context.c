@@ -814,14 +814,15 @@ _space_location_valid (XrSpaceLocation *sl)
 }
 
 static gboolean
-_get_head_pose (graphene_matrix_t *pose)
+_get_head_pose (GxrContext *context, graphene_matrix_t *pose)
 {
+  OpenXRContext *self = OPENXR_CONTEXT (context);
+
   XrSpaceLocation space_location = {
     .type = XR_TYPE_SPACE_LOCATION,
     .next = NULL
   };
 
-  OpenXRContext *self = OPENXR_CONTEXT (gxr_context_get_instance ());
   XrResult result = xrLocateSpace (self->view_space, self->local_space,
                                    self->frame_state.predictedDisplayTime,
                                   &space_location);
@@ -861,10 +862,11 @@ _is_input_available ()
 }
 
 static void
-_get_frustum_angles (GxrEye eye,
+_get_frustum_angles (GxrContext *context, GxrEye eye,
                      float *left, float *right,
                      float *top, float *bottom)
 {
+  (void) context;
   (void) eye;
   *left = 1; *right = 1; *top = 1; *bottom = 1;
   g_warning ("_get_frustum_angles not implemented in OpenXR.\n");
@@ -1355,8 +1357,8 @@ _get_model_list (GxrContext *self)
 static GxrActionSet *
 _new_action_set_from_url (GxrContext *context, gchar *url)
 {
-  (void) context;
-  return (GxrActionSet*) openxr_action_set_new_from_url (url);
+  return (GxrActionSet*)
+    openxr_action_set_new_from_url (OPENXR_CONTEXT (context), url);
 }
 
 static gboolean
@@ -1426,8 +1428,8 @@ _new_action_from_type_url (GxrContext   *self,
                            GxrActionType type,
                            char          *url)
 {
-  (void) self;
-  return GXR_ACTION (openxr_action_new_from_type_url (action_set, type, url));
+  return GXR_ACTION (openxr_action_new_from_type_url (OPENXR_CONTEXT (self),
+                                                      action_set, type, url));
 }
 
 static GxrOverlay *

@@ -19,6 +19,7 @@ typedef struct Example
 {
   GMainLoop *loop;
   GxrAction *haptic;
+  GxrContext *context;
 
   /* array of action sets */
   GxrActionSet *action_sets[LAST_ACTIONSET];
@@ -92,9 +93,7 @@ _cleanup (Example *self)
   g_print ("bye\n");
 
   g_main_loop_unref (self->loop);
-
-  GxrContext *context = gxr_context_get_instance ();
-  g_object_unref (context);
+  g_object_unref (self->context);
 
   for (int i = 0; i < 2; i++)
     g_object_unref (self->action_sets[i]);
@@ -104,15 +103,19 @@ _cleanup (Example *self)
 int
 main ()
 {
-  GxrContext *context = gxr_context_get_instance ();
-  if (!gxr_context_init_runtime (context, GXR_APP_OVERLAY))
+  Example self = {
+    .loop = g_main_loop_new (NULL, FALSE),
+    .context = gxr_context_new ()
+  };
+
+  if (!gxr_context_init_runtime (self.context, GXR_APP_OVERLAY))
     {
       g_printerr ("Could not init OpenVR.\n");
       return false;
     }
 
   if (!gxr_context_load_action_manifest (
-        context,
+        self.context,
         "gxr",
         "/res/bindings",
         "actions.json",
@@ -124,26 +127,23 @@ main ()
       return 1;
     }
 
-  Example self = {
-    .loop = g_main_loop_new (NULL, FALSE),
-  };
-
   self.action_sets[WM_ACTIONSET] =
-    gxr_action_set_new_from_url (context, "/actions/wm");
+    gxr_action_set_new_from_url (self.context, "/actions/wm");
   self.action_sets[SYNTH_ACTIONSET] =
-    gxr_action_set_new_from_url (context, "/actions/mouse_synth");
+    gxr_action_set_new_from_url (self.context, "/actions/mouse_synth");
 
   self.haptic =
-    gxr_action_new_from_type_url (context,
-                                          self.action_sets[WM_ACTIONSET],
-                                          GXR_ACTION_HAPTIC,
-                                          "/actions/wm/out/haptic");
+    gxr_action_new_from_type_url (self.context,
+                                  self.action_sets[WM_ACTIONSET],
+                                  GXR_ACTION_HAPTIC,
+                                  "/actions/wm/out/haptic");
 
-  gxr_action_set_connect (self.action_sets[WM_ACTIONSET], GXR_ACTION_POSE,
+  gxr_action_set_connect (self.action_sets[WM_ACTIONSET], self.context,
+                          GXR_ACTION_POSE,
                           "/actions/wm/in/hand_pose",
                           (GCallback) _hand_pose_cb, &self);
 
-  gxr_action_set_connect (self.action_sets[SYNTH_ACTIONSET],
+  gxr_action_set_connect (self.action_sets[SYNTH_ACTIONSET], self.context,
                           GXR_ACTION_DIGITAL,
                           "/actions/mouse_synth/in/left_click",
                           (GCallback) _digital_cb, &self);

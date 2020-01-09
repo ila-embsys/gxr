@@ -40,21 +40,22 @@ openxr_action_init (OpenXRAction *self)
   self->handle = XR_NULL_HANDLE;
   for (int i = 0; i < NUM_HANDS; i++)
     self->hand_spaces[i] = XR_NULL_HANDLE;
+}
+
+OpenXRAction *
+openxr_action_new (OpenXRContext *context)
+{
+  OpenXRAction* self = (OpenXRAction*) g_object_new (OPENXR_TYPE_ACTION, 0);
 
   /* TODO: Handle this more nicely */
-  OpenXRContext *context = OPENXR_CONTEXT (gxr_context_get_instance ());
   self->instance = openxr_context_get_openxr_instance (context);
   self->session = openxr_context_get_openxr_session (context);
   self->tracked_space = openxr_context_get_tracked_space (context);
 
   xrStringToPath(self->instance, "/user/hand/left", &self->hand_paths[0]);
   xrStringToPath(self->instance, "/user/hand/right", &self->hand_paths[1]);
-}
 
-OpenXRAction *
-openxr_action_new (void)
-{
-  return (OpenXRAction*) g_object_new (OPENXR_TYPE_ACTION, 0);
+  return self;
 }
 
 static gboolean
@@ -69,10 +70,11 @@ _url_to_name (char *url, char *name)
 }
 
 OpenXRAction *
-openxr_action_new_from_type_url (GxrActionSet *action_set,
+openxr_action_new_from_type_url (OpenXRContext *context,
+                                 GxrActionSet *action_set,
                                  GxrActionType type, char *url)
 {
-  OpenXRAction *self = openxr_action_new ();
+  OpenXRAction *self = openxr_action_new (context);
   gxr_action_set_action_type (GXR_ACTION (self), type);
   gxr_action_set_url (GXR_ACTION (self), g_strdup (url));
   gxr_action_set_action_set(GXR_ACTION (self), action_set);

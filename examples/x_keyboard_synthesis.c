@@ -355,7 +355,7 @@ main (int argc, char *argv[])
     }
 */
 
-  GxrContext *context = gxr_context_get_instance ();
+  GxrContext *context = gxr_context_new ();
 
   /* init openvr */
   if (!_init_openvr (context))

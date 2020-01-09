@@ -30,6 +30,7 @@ typedef struct Example
   GulkanTexture *texture;
   GulkanClient *uploader;
   GxrOverlay *overlay;
+  GxrContext *context;
 
   GxrActionSet *action_set;
 
@@ -150,9 +151,7 @@ _poll_events_cb (gpointer _self)
 
   gxr_action_sets_poll (&self->action_set, 1);
   gxr_overlay_poll_event (self->overlay);
-
-  GxrContext *context = gxr_context_get_instance ();
-  gxr_context_poll_event (context);
+  gxr_context_poll_event (self->context);
 
   return TRUE;
 }
@@ -169,7 +168,7 @@ _show_keyboard_cb (GxrAction       *action,
     {
       if (use_system_keyboard)
         {
-          gxr_context_show_keyboard (gxr_context_get_instance ());
+          gxr_context_show_keyboard (self->context);
         }
       else
         {
@@ -226,7 +225,7 @@ _init_gtk (Example *self)
 static gboolean
 _create_overlay (Example *self)
 {
-  self->overlay = gxr_overlay_new ();
+  self->overlay = gxr_overlay_new (self->context);
   gxr_overlay_create_width (self->overlay,
                             "gxr.example.keyboard",
                             "Keyboard Test", 5.0);
@@ -261,9 +260,7 @@ _cleanup (Example *self)
   g_object_unref (self->overlay);
   g_object_unref (self->texture);
   g_object_unref (self->uploader);
-
-  GxrContext *context = gxr_context_get_instance ();
-  g_object_unref (context);
+  g_object_unref (self->context);
 }
 
 int
@@ -274,15 +271,24 @@ main (int argc, char *argv[])
 
   gtk_init (&argc, &argv);
 
-  GxrContext *context = gxr_context_get_instance ();
-  if (!gxr_context_init_runtime (context, GXR_APP_OVERLAY))
+  Example self = {
+    .loop = g_main_loop_new (NULL, FALSE),
+    .size_x = 800,
+    .size_y = 600,
+    .text_cursor = 0,
+    .texture = NULL,
+    .uploader = gulkan_client_new (),
+    .context = gxr_context_new ()
+  };
+
+  if (!gxr_context_init_runtime (self.context, GXR_APP_OVERLAY))
     {
       g_printerr ("Could not init OpenVR.\n");
       return -1;
     }
 
   if (!gxr_context_load_action_manifest (
-      context,
+      self.context,
       "gxr",
       "/res/bindings",
       "actions.json",
@@ -291,17 +297,9 @@ main (int argc, char *argv[])
       NULL))
     return -1;
 
-  Example self = {
-    .loop = g_main_loop_new (NULL, FALSE),
-    .size_x = 800,
-    .size_y = 600,
-    .text_cursor = 0,
-    .texture = NULL,
-    .uploader = gulkan_client_new (),
-    .action_set = gxr_action_set_new_from_url (context, "/actions/wm")
-  };
+  self.action_set = gxr_action_set_new_from_url (self.context, "/actions/wm");
 
-  if (!gxr_context_init_gulkan (context, self.uploader))
+  if (!gxr_context_init_gulkan (self.context, self.uploader))
     {
       g_printerr ("Could not initialize Gulkan!\n");
       return FALSE;
@@ -319,15 +317,15 @@ main (int argc, char *argv[])
   if (!_create_overlay (&self))
     return -1;
 
-  gxr_action_set_connect (self.action_set, GXR_ACTION_DIGITAL,
+  gxr_action_set_connect (self.action_set, self.context, GXR_ACTION_DIGITAL,
                           "/actions/wm/in/show_keyboard",
                           (GCallback) _show_keyboard_cb, &self);
 
   if (use_system_keyboard)
     {
-      g_signal_connect (context, "keyboard-press-event",
+      g_signal_connect (self.context, "keyboard-press-event",
                         (GCallback) _system_keyboard_press_cb, &self);
-      g_signal_connect (context, "keyboard-close-event",
+      g_signal_connect (self.context, "keyboard-close-event",
                         (GCallback) _system_keyboard_close_cb, &self);
     }
   else

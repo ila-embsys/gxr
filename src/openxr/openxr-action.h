@@ -24,10 +24,11 @@ G_BEGIN_DECLS
 #define OPENXR_TYPE_ACTION openxr_action_get_type()
 G_DECLARE_FINAL_TYPE (OpenXRAction, openxr_action, OPENXR, ACTION, GxrAction)
 OpenXRAction *
-openxr_action_new_from_type_url (GxrActionSet *action_set,
+openxr_action_new_from_type_url (OpenXRContext *context,
+                                 GxrActionSet *action_set,
                                  GxrActionType type, char *url);
 
-OpenXRAction *openxr_action_new (void);
+OpenXRAction *openxr_action_new (OpenXRContext *context);
 
 void
 openxr_action_update_input_handles (OpenXRAction *self);

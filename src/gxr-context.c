@@ -29,9 +29,6 @@ typedef struct _GxrContextPrivate
 
 G_DEFINE_TYPE_WITH_PRIVATE (GxrContext, gxr_context, G_TYPE_OBJECT)
 
-// singleton variable that can be set to NULL again when finalizing the context
-static GxrContext *singleton = NULL;
-
 enum {
   KEYBOARD_PRESS_EVENT,
   KEYBOARD_CLOSE_EVENT,
@@ -156,20 +153,14 @@ gxr_context_init (GxrContext *self)
 }
 
 GxrContext *
-gxr_context_get_instance ()
+gxr_context_new ()
 {
-  if (singleton == NULL)
-    singleton = _new_context_from_env ();
-
-  return singleton;
+  return _new_context_from_env ();
 }
 
 static void
 gxr_context_finalize (GObject *gobject)
 {
-  GxrContext *self = GXR_CONTEXT (gobject);
-  (void) self;
-  singleton = NULL;
   G_OBJECT_CLASS (gxr_context_parent_class)->finalize (gobject);
 }
 
@@ -181,42 +172,39 @@ gxr_context_get_api (GxrContext *self)
 }
 
 gboolean
-gxr_context_get_head_pose (graphene_matrix_t *pose)
+gxr_context_get_head_pose (GxrContext *self, graphene_matrix_t *pose)
 {
-  GxrContext *self = gxr_context_get_instance ();
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->get_head_pose == NULL)
     return FALSE;
-  return klass->get_head_pose (pose);
+  return klass->get_head_pose (self, pose);
 }
 
 void
-gxr_context_get_frustum_angles (GxrEye eye,
+gxr_context_get_frustum_angles (GxrContext *self, GxrEye eye,
                                 float *left, float *right,
                                 float *top, float *bottom)
 {
-  GxrContext *self = gxr_context_get_instance ();
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->get_frustum_angles == NULL)
     return;
-  klass->get_frustum_angles (eye, left, right, top, bottom);
+  klass->get_frustum_angles (self, eye, left, right, top, bottom);
 }
 
 gboolean
-gxr_context_is_input_available (void)
+gxr_context_is_input_available (GxrContext *self)
 {
-  GxrContext *self = gxr_context_get_instance ();
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->is_input_available == NULL)
     return FALSE;
-  return klass->is_input_available ();
+  return klass->is_input_available (self);
 }
 
 void
-gxr_context_get_render_dimensions (uint32_t *width,
+gxr_context_get_render_dimensions (GxrContext *self,
+                                   uint32_t *width,
                                    uint32_t *height)
 {
-  GxrContext *self = gxr_context_get_instance ();
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->get_render_dimensions == NULL)
       return;

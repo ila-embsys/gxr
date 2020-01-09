@@ -25,6 +25,8 @@
 
 G_BEGIN_DECLS
 
+typedef struct _GxrContext GxrContext;
+
 #define GXR_TYPE_OVERLAY gxr_overlay_get_type()
 G_DECLARE_DERIVABLE_TYPE (GxrOverlay, gxr_overlay, GXR, OVERLAY, GObject)
 
@@ -136,7 +138,7 @@ struct _GxrOverlayClass
 };
 
 GxrOverlay *
-gxr_overlay_new (void);
+gxr_overlay_new (GxrContext *context);
 
 gboolean
 gxr_overlay_create_width (GxrOverlay *self,

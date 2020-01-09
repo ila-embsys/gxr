@@ -77,6 +77,7 @@ gxr_action_sets_poll (GxrActionSet **sets, uint32_t count)
 
 gboolean
 gxr_action_set_connect (GxrActionSet *self,
+                        GxrContext   *context,
                         GxrActionType type,
                         gchar        *url,
                         GCallback     callback,
@@ -87,7 +88,7 @@ gxr_action_set_connect (GxrActionSet *self,
   GxrActionSetClass *klass = GXR_ACTION_SET_GET_CLASS (self);
   if (klass->create_action == NULL)
       return FALSE;
-  GxrAction *action = klass->create_action (self, type, url);
+  GxrAction *action = klass->create_action (self, context, type, url);
 
   if (action != NULL)
     priv->actions = g_slist_append (priv->actions, action);
@@ -121,10 +122,12 @@ gxr_action_set_get_actions (GxrActionSet *self)
 }
 
 gboolean
-gxr_action_sets_attach_bindings (GxrActionSet **sets, uint32_t count)
+gxr_action_sets_attach_bindings (GxrActionSet **sets,
+                                 GxrContext *context,
+                                 uint32_t count)
 {
   GxrActionSetClass *klass = GXR_ACTION_SET_GET_CLASS (sets[0]);
   if (klass->attach_bindings == NULL)
     return TRUE; /* noop succeeds when no implementation  */
-  return klass->attach_bindings (sets, count);
+  return klass->attach_bindings (sets, context, count);
 }

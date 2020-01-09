@@ -140,7 +140,7 @@ int main () {
     .tex_count = 0
   };
 
-  GxrContext *context = gxr_context_get_instance ();
+  GxrContext *context = gxr_context_new ();
   ex.uploader = gulkan_client_new ();
 
   /* init openvr */
@@ -159,7 +159,7 @@ int main () {
   for (int i = 0; i < OVERLAY_NUM; i++)
     {
       ex.textures[i] = NULL;
-      ex.overlays[i] = gxr_overlay_new ();
+      ex.overlays[i] = gxr_overlay_new (context);
       char key[16];
       snprintf (key, 16, "test-%d", i);
       gxr_overlay_create (ex.overlays[i], key, "Gradient");

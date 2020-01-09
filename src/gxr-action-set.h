@@ -31,11 +31,13 @@ struct _GxrActionSetClass
   (*update) (GxrActionSet **sets, uint32_t count);
 
   GxrAction*
-  (*create_action) (GxrActionSet *self,
+  (*create_action) (GxrActionSet *self, GxrContext *context,
                     GxrActionType type, char *url);
 
   gboolean
-  (*attach_bindings) (GxrActionSet **sets, uint32_t count);
+  (*attach_bindings) (GxrActionSet **sets,
+                      GxrContext *context,
+                      uint32_t count);
 
 };
 
@@ -47,6 +49,7 @@ gxr_action_sets_poll (GxrActionSet **sets, uint32_t count);
 
 gboolean
 gxr_action_set_connect (GxrActionSet *self,
+                        GxrContext   *context,
                         GxrActionType type,
                         gchar        *url,
                         GCallback     callback,
@@ -56,7 +59,9 @@ GSList *
 gxr_action_set_get_actions (GxrActionSet *self);
 
 gboolean
-gxr_action_sets_attach_bindings (GxrActionSet **sets, uint32_t count);
+gxr_action_sets_attach_bindings (GxrActionSet **sets,
+                                 GxrContext *context,
+                                 uint32_t count);
 
 G_END_DECLS
 

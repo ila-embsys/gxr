@@ -32,15 +32,15 @@ struct _GxrContextClass
   GObjectClass parent;
 
   gboolean
-  (*get_head_pose) (graphene_matrix_t *pose);
+  (*get_head_pose) (GxrContext *self, graphene_matrix_t *pose);
 
   void
-  (*get_frustum_angles) (GxrEye eye,
+  (*get_frustum_angles) (GxrContext *self, GxrEye eye,
                          float *left, float *right,
                          float *top, float *bottom);
 
   gboolean
-  (*is_input_available) (void);
+  (*is_input_available) (GxrContext *self);
 
   void
   (*get_render_dimensions) (GxrContext *context,
@@ -163,24 +163,25 @@ struct _GxrContextClass
   (*request_quit) (GxrContext *self);
 };
 
-GxrContext *gxr_context_get_instance (void);
+GxrContext *gxr_context_new (void);
 
 GxrApi
 gxr_context_get_api (GxrContext *self);
 
 gboolean
-gxr_context_get_head_pose (graphene_matrix_t *pose);
+gxr_context_get_head_pose (GxrContext *self, graphene_matrix_t *pose);
 
 void
-gxr_context_get_frustum_angles (GxrEye eye,
+gxr_context_get_frustum_angles (GxrContext *self, GxrEye eye,
                                 float *left, float *right,
                                 float *top, float *bottom);
 
 gboolean
-gxr_context_is_input_available (void);
+gxr_context_is_input_available (GxrContext *self);
 
 void
-gxr_context_get_render_dimensions (uint32_t *width,
+gxr_context_get_render_dimensions (GxrContext *self,
+                                   uint32_t *width,
                                    uint32_t *height);
 
 gboolean

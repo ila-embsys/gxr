@@ -175,13 +175,13 @@ main (int argc, char *argv[])
 
   gtk_widget_show_all (window);
 
-  GxrContext *context = gxr_context_get_instance ();
+  GxrContext *context = gxr_context_new ();
   uploader = gulkan_client_new ();
 
   if (!gxr_context_inititalize (context, uploader, GXR_APP_OVERLAY))
     return -1;
 
-  GxrOverlay *overlay = gxr_overlay_new ();
+  GxrOverlay *overlay = gxr_overlay_new (context);
   gxr_overlay_create_width (overlay, "openvr.example.gtk", "GTK+", 1.0);
   gxr_overlay_show (overlay);
   graphene_point3d_t position = { .x = 0.f, .y = 1.2f, .z = -1.f };

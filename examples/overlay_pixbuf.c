@@ -130,7 +130,7 @@ test_cat_overlay ()
 
   loop = g_main_loop_new (NULL, FALSE);
 
-  GxrContext *context = gxr_context_get_instance ();
+  GxrContext *context = gxr_context_new ();
   GulkanClient *client = gulkan_client_new ();
 
   if (!gxr_context_inititalize (context, client, GXR_APP_OVERLAY))
@@ -141,7 +141,7 @@ test_cat_overlay ()
                                                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                                                    true);
 
-  GxrOverlay *overlay = gxr_overlay_new ();
+  GxrOverlay *overlay = gxr_overlay_new (context);
   gxr_overlay_create_width (overlay, "vulkan.cat", "Vulkan Cat", 2.0f);
 
   if (!gxr_overlay_is_valid (overlay))

@@ -110,9 +110,8 @@ gxr_overlay_init (GxrOverlay *self)
 }
 
 GxrOverlay *
-gxr_overlay_new ()
+gxr_overlay_new (GxrContext *context)
 {
-  GxrContext *context = gxr_context_get_instance ();
   return gxr_context_new_overlay (context);
 }
 

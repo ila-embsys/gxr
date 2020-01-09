@@ -18,6 +18,7 @@ typedef struct Example
   guint current_model_list_index;
   GSList *models;
   GxrActionSet *action_set;
+  GxrContext *context;
 } Example;
 
 static gboolean
@@ -142,7 +143,8 @@ _poll_events_cb (gpointer _self)
 static gboolean
 _init_model_overlay (Example *self)
 {
-  self->model_overlay = gxr_overlay_model_new ("model", "A 3D model overlay");
+  self->model_overlay = gxr_overlay_model_new (self->context,
+                                               "model", "A 3D model overlay");
 
   graphene_vec4_t color;
   graphene_vec4_init (&color, 1., 1., 1., 1.);
@@ -188,24 +190,28 @@ _cleanup (Example *self)
 
   g_object_unref (self->model_overlay);
   g_slist_free_full (self->models, g_free);
-
-  GxrContext *context = gxr_context_get_instance ();
-  g_object_unref (context);
+  g_object_unref (self->context);
 }
 
 int
 main ()
 {
-  GxrContext *context = gxr_context_get_instance ();
+  Example self = {
+    .loop = g_main_loop_new (NULL, FALSE),
+    .current_model_list_index = 0,
+    .models = NULL,
+    .context = gxr_context_new()
+  };
+
   // TODO: init gulkan for scene, OpenXR backend
-  if (!gxr_context_init_runtime (context, GXR_APP_OVERLAY))
+  if (!gxr_context_init_runtime (self.context, GXR_APP_OVERLAY))
     {
       g_printerr ("Could not init VR runtime.\n");
       return false;
     }
 
   if (!gxr_context_load_action_manifest (
-        context,
+        self.context,
         "gxr",
         "/res/bindings",
         "example_model_actions.json",
@@ -213,26 +219,22 @@ main ()
         NULL))
     return -1;
 
-  Example self = {
-    .loop = g_main_loop_new (NULL, FALSE),
-    .current_model_list_index = 0,
-    .models = NULL,
-    .action_set = gxr_action_set_new_from_url (context, "/actions/model")
-  };
 
-  gxr_action_set_connect (self.action_set, GXR_ACTION_DIGITAL,
+  self.action_set = gxr_action_set_new_from_url (self.context, "/actions/model");
+
+  gxr_action_set_connect (self.action_set, self.context, GXR_ACTION_DIGITAL,
                           "/actions/model/in/next",
                           (GCallback) _next_cb, &self);
 
-  gxr_action_set_connect (self.action_set, GXR_ACTION_DIGITAL,
+  gxr_action_set_connect (self.action_set, self.context, GXR_ACTION_DIGITAL,
                           "/actions/model/in/previous",
                           (GCallback) _previous_cb, &self);
 
-  gxr_action_set_connect (self.action_set, GXR_ACTION_POSE,
+  gxr_action_set_connect (self.action_set, self.context, GXR_ACTION_POSE,
                           "/actions/model/in/hand_primary",
                           (GCallback) _pose_cb, &self);
 
-  self.models = gxr_context_get_model_list (context);
+  self.models = gxr_context_get_model_list (self.context);
   g_slist_foreach (self.models, _print_model, NULL);
 
   if (!_init_model_overlay (&self))

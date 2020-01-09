@@ -29,9 +29,9 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (OpenVRActionSet, openvr_action_set,
                       OPENVR, ACTION_SET, GxrActionSet)
 OpenVRActionSet *
-openvr_action_set_new_from_url (gchar *url);
+openvr_action_set_new_from_url (OpenVRContext *context, gchar *url);
 
-OpenVRActionSet *openvr_action_set_new (void);
+OpenVRActionSet *openvr_action_set_new (OpenVRContext *context);
 
 VRActionSetHandle_t
 openvr_action_set_get_handle (OpenVRActionSet *self);

@@ -27,6 +27,7 @@ static GulkanClient *uploader;
 static GulkanTexture *gk_texture;
 static GxrOverlay *overlay;
 static GLuint gl_texture;
+static GxrContext *context;
 
 static void
 create_overlay ()
@@ -64,7 +65,6 @@ create_overlay ()
 
   glImportMemoryFdEXT (gl_mem_object, size, GL_HANDLE_TYPE_OPAQUE_FD_EXT, fd);
 
-
   glGenTextures (1, &gl_texture);
   glActiveTexture (GL_TEXTURE0);
   glBindTexture (GL_TEXTURE_2D, gl_texture);
@@ -94,7 +94,7 @@ create_overlay ()
     }
 
 
-  overlay = gxr_overlay_new ();
+  overlay = gxr_overlay_new (context);
   gxr_overlay_create_width (overlay, "vulkan.dmabuf", "Vulkan DMABUF", 2.0);
 
   if (!gxr_overlay_is_valid (overlay))
@@ -201,7 +201,7 @@ main ()
 {
   GMainLoop *loop = g_main_loop_new (NULL, FALSE);
 
-  GxrContext *context = gxr_context_get_instance ();
+  context = gxr_context_new ();
   uploader = gulkan_client_new ();
 
   if (!gxr_context_inititalize (context, uploader, GXR_APP_OVERLAY))

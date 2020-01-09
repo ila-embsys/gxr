@@ -43,17 +43,18 @@ static void
 openxr_action_set_init (OpenXRActionSet *self)
 {
   self->handle = XR_NULL_HANDLE;
-
-  /* TODO: Handle this more nicely */
-  OpenXRContext *context = OPENXR_CONTEXT (gxr_context_get_instance ());
-  self->instance = openxr_context_get_openxr_instance (context);
-  self->session = openxr_context_get_openxr_session (context);
 }
 
 OpenXRActionSet *
-openxr_action_set_new (void)
+openxr_action_set_new (OpenXRContext *context)
 {
-  return (OpenXRActionSet*) g_object_new (OPENXR_TYPE_ACTION_SET, 0);
+  OpenXRActionSet *self =
+    (OpenXRActionSet*) g_object_new (OPENXR_TYPE_ACTION_SET, 0);
+
+  self->instance = openxr_context_get_openxr_instance (context);
+  self->session = openxr_context_get_openxr_session (context);
+
+  return self;
 }
 
 static void
@@ -76,9 +77,9 @@ _url_to_name (char *url, char *name)
 }
 
 OpenXRActionSet *
-openxr_action_set_new_from_url (gchar *url)
+openxr_action_set_new_from_url (OpenXRContext *context, gchar *url)
 {
-  OpenXRActionSet *self = openxr_action_set_new ();
+  OpenXRActionSet *self = openxr_action_set_new (context);
   self->url = g_strdup (url);
 
   XrActionSetCreateInfo set_info = {
@@ -280,10 +281,9 @@ _suggest_for_interaction_profile (GxrActionSet **sets, uint32_t count,
 }
 
 static gboolean
-_attach_bindings (GxrActionSet **sets, uint32_t count)
+_attach_bindings (GxrActionSet **sets, GxrContext *context, uint32_t count)
 {
-  OpenXRContext *octx = OPENXR_CONTEXT (gxr_context_get_instance ());
-  GSList *manifests = openxr_context_get_manifests (octx);
+  GSList *manifests = openxr_context_get_manifests (OPENXR_CONTEXT (context));
   if (g_slist_length (manifests) == 0)
     {
       g_printerr ("Attaching Action Sets, but no manifests are loaded\n");
@@ -333,10 +333,11 @@ _attach_bindings (GxrActionSet **sets, uint32_t count)
 }
 
 static GxrAction*
-_create_action (GxrActionSet *self,
+_create_action (GxrActionSet *self, GxrContext *context,
                 GxrActionType type, char *url)
 {
-  return (GxrAction*) openxr_action_new_from_type_url (self, type, url);
+  return (GxrAction*) openxr_action_new_from_type_url (OPENXR_CONTEXT (context),
+                                                       self, type, url);
 }
 
 static void

@@ -27,9 +27,9 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (OpenXRActionSet, openxr_action_set,
                       OPENXR, ACTION_SET, GxrActionSet)
 OpenXRActionSet *
-openxr_action_set_new_from_url (gchar *url);
+openxr_action_set_new_from_url (OpenXRContext *context, gchar *url);
 
-OpenXRActionSet *openxr_action_set_new (void);
+OpenXRActionSet *openxr_action_set_new (OpenXRContext *context);
 
 XrActionSet
 openxr_action_set_get_handle (OpenXRActionSet *self);

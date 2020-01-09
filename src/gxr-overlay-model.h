@@ -32,7 +32,8 @@ struct _GxrOverlayModelClass
   GObjectClass parent;
 };
 
-GxrOverlayModel *gxr_overlay_model_new (gchar* key, gchar* name);
+GxrOverlayModel *gxr_overlay_model_new (GxrContext *context,
+                                        gchar* key, gchar* name);
 
 gboolean
 gxr_overlay_model_set_model (GxrOverlayModel *self, gchar *name,

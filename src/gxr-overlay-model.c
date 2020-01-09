@@ -29,8 +29,7 @@ gxr_overlay_model_class_init (GxrOverlayModelClass *klass)
 static void
 gxr_overlay_model_init (GxrOverlayModel *self)
 {
-  GxrOverlayModelPrivate *priv = gxr_overlay_model_get_instance_private (self);
-  priv->overlay = gxr_overlay_new ();
+  (void) self;
 }
 
 static void
@@ -54,9 +53,13 @@ _create_empty_pixbuf (uint32_t width, uint32_t height)
 }
 
 GxrOverlayModel *
-gxr_overlay_model_new (gchar* key, gchar* name)
+gxr_overlay_model_new (GxrContext *context, gchar* key, gchar* name)
 {
-  GxrOverlayModel *self = (GxrOverlayModel*) g_object_new (GXR_TYPE_OVERLAY_MODEL, 0);
+  GxrOverlayModel *self =
+    (GxrOverlayModel*) g_object_new (GXR_TYPE_OVERLAY_MODEL, 0);
+
+  GxrOverlayModelPrivate *priv = gxr_overlay_model_get_instance_private (self);
+  priv->overlay = gxr_overlay_new (context);
 
   if (!gxr_overlay_model_initialize (self, key, name))
     return NULL;

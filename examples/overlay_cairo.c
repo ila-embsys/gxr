@@ -113,7 +113,7 @@ test_cat_overlay ()
 
   loop = g_main_loop_new (NULL, FALSE);
 
-  GxrContext *context = gxr_context_get_instance ();
+  GxrContext *context = gxr_context_new ();
   GulkanClient *uploader = gulkan_client_new ();
   if (!gxr_context_init_gulkan (context, uploader))
     {
@@ -129,7 +129,7 @@ test_cat_overlay ()
                                                           VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
   /* create openvr overlay */
-  GxrOverlay *overlay = gxr_overlay_new ();
+  GxrOverlay *overlay = gxr_overlay_new (context);
   gxr_overlay_create (overlay, "examples.cairo", "Gradient");
 
   if (!gxr_overlay_is_valid (overlay))

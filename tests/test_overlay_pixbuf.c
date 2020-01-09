@@ -59,7 +59,7 @@ test_overlay_pixbuf ()
   g_assert (error == NULL);
   g_assert_nonnull (pixbuf);
 
-  GxrContext *context = gxr_context_get_instance ();
+  GxrContext *context = gxr_context_new ();
   g_assert_nonnull (context);
 
   GulkanClient *uploader = gulkan_client_new ();
@@ -77,7 +77,7 @@ test_overlay_pixbuf ()
                                            false);
   g_assert_nonnull (texture);
 
-  GxrOverlay *overlay = gxr_overlay_new ();
+  GxrOverlay *overlay = gxr_overlay_new (context);
   g_assert_nonnull (overlay);
 
   gxr_overlay_create (overlay, "test.pixbuf", "GDK pixbuf");

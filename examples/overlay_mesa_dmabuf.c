@@ -26,6 +26,7 @@ static GulkanClient *uploader;
 static GulkanTexture *texture;
 static GxrOverlay *overlay;
 static GLuint gl_texture;
+static GxrContext *context;
 
 static void
 create_overlay ()
@@ -92,7 +93,7 @@ create_overlay ()
       g_printerr ("Unable to transfer layout.\n");
     }
 
-  overlay = gxr_overlay_new ();
+  overlay = gxr_overlay_new (context);
   gxr_overlay_create_width (overlay,
                                "vulkan.dmabuf",
                                "Vulkan DMABUF",
@@ -195,7 +196,7 @@ main ()
 
   GMainLoop *loop = g_main_loop_new (NULL, FALSE);
 
-  GxrContext *context = gxr_context_get_instance ();
+  context = gxr_context_new ();
   uploader = gulkan_client_new ();
 
   if (!gxr_context_inititalize (context, uploader, GXR_APP_OVERLAY))

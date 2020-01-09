@@ -33,13 +33,6 @@ _split (gchar *str, GSList **out_list)
 bool
 openvr_compositor_get_instance_extensions (GSList **out_list)
 {
-  GxrContext *context = gxr_context_get_instance ();
-  if (!gxr_context_is_valid (context))
-    {
-      g_printerr ("OpenVR context was not initialized.\n");
-      return FALSE;
-    }
-
   OpenVRFunctions *f = openvr_get_functions ();
 
   uint32_t size =
@@ -63,13 +56,6 @@ openvr_compositor_get_device_extensions (VkPhysicalDevice  physical_device,
                                          GSList          **out_list)
 {
   OpenVRFunctions *f = openvr_get_functions ();
-  GxrContext *context = gxr_context_get_instance ();
-  if (!gxr_context_is_valid (context))
-    {
-      g_printerr ("OpenVR context was not initialized.\n");
-      return FALSE;
-    }
-
   uint32_t size = f->compositor->
     GetVulkanDeviceExtensionsRequired (physical_device, NULL, 0);
 

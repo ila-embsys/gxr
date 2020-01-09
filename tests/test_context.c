@@ -39,7 +39,7 @@ _system_quit_cb (GxrContext   *context,
 static void
 _init_context (GxrAppType type)
 {
-  GxrContext *context = gxr_context_get_instance ();
+  GxrContext *context = gxr_context_new ();
   g_assert_nonnull (context);
 
 

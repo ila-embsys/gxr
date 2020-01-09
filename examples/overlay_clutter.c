@@ -136,13 +136,13 @@ test_cat_overlay (int argc, char *argv[])
       return EXIT_FAILURE;
     }
 
-  GxrContext *context = gxr_context_get_instance ();
+  GxrContext *context = gxr_context_new ();
   uploader = gulkan_client_new ();
 
   if (!gxr_context_inititalize (context, uploader, GXR_APP_OVERLAY))
     return -1;
 
-  GxrOverlay *overlay = gxr_overlay_new ();
+  GxrOverlay *overlay = gxr_overlay_new (context);
   gxr_overlay_create_width (overlay, "example.clutter", "Clutter", 2.0);
 
   if (!gxr_overlay_is_valid (overlay))

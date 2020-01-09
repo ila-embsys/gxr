@@ -157,14 +157,14 @@ test_overlay ()
 
   render_context.texture = NULL;
 
-  GxrContext *context = gxr_context_get_instance ();
+  GxrContext *context = gxr_context_new ();
   GulkanClient *uploader = gulkan_client_new ();
 
   if (!gxr_context_inititalize (context, uploader, GXR_APP_OVERLAY))
     return -1;
 
   /* create cairo overlay */
-  GxrOverlay *overlay = gxr_overlay_new ();
+  GxrOverlay *overlay = gxr_overlay_new (context);
   gxr_overlay_create (overlay, "examples.cairo", "Cairo Animation");
 
   if (!gxr_overlay_is_valid (overlay))

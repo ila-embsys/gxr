@@ -31,13 +31,14 @@ struct _OpenVRContext
 {
   GxrContext parent;
 
-  OpenVRFunctions f;
-
   graphene_matrix_t last_mat_head_pose;
   graphene_matrix_t mat_eye_pos[2];
 };
 
 G_DEFINE_TYPE (OpenVRContext, openvr_context, GXR_TYPE_CONTEXT)
+
+/* Functions singleton */
+static OpenVRFunctions *functions = NULL;
 
 #define INIT_FN_TABLE(target, type) \
 { \
@@ -51,12 +52,6 @@ G_DEFINE_TYPE (OpenVRContext, openvr_context, GXR_TYPE_CONTEXT)
 static void
 openvr_context_init (OpenVRContext *self)
 {
-  self->f.system = NULL;
-  self->f.overlay = NULL;
-  self->f.compositor = NULL;
-  self->f.input = NULL;
-  self->f.model = NULL;
-
   graphene_matrix_init_identity (&self->last_mat_head_pose);
 }
 
@@ -64,6 +59,8 @@ static void
 openvr_context_finalize (GObject *gobject)
 {
   VR_ShutdownInternal();
+  g_free (functions);
+  functions = NULL;
   G_OBJECT_CLASS (openvr_context_parent_class)->finalize (gobject);
 }
 
@@ -94,19 +91,42 @@ _init_fn_table (const char *type, intptr_t *ret)
 }
 
 static bool
-_init_function_tables (OpenVRContext *self)
+_init_function_tables ()
 {
-  INIT_FN_TABLE (self->f.system, System)
-  INIT_FN_TABLE (self->f.overlay, Overlay)
-  INIT_FN_TABLE (self->f.compositor, Compositor)
-  INIT_FN_TABLE (self->f.input, Input)
-  INIT_FN_TABLE (self->f.model, RenderModels)
-  INIT_FN_TABLE (self->f.applications, Applications)
+  INIT_FN_TABLE (functions->system, System)
+  INIT_FN_TABLE (functions->overlay, Overlay)
+  INIT_FN_TABLE (functions->compositor, Compositor)
+  INIT_FN_TABLE (functions->input, Input)
+  INIT_FN_TABLE (functions->model, RenderModels)
+  INIT_FN_TABLE (functions->applications, Applications)
   return true;
 }
 
+OpenVRFunctions*
+openvr_get_functions (void)
+{
+  if (functions == NULL)
+    {
+      functions = g_malloc (sizeof (OpenVRFunctions));
+      functions->system = NULL;
+      functions->overlay = NULL;
+      functions->compositor = NULL;
+      functions->input = NULL;
+      functions->model = NULL;
+      functions->applications = NULL;
+      if (!_init_function_tables())
+        {
+          g_printerr ("ERROR: Could not init OpenVR function tables.\n");
+          g_free (functions);
+          functions = NULL;
+          return NULL;
+        }
+    }
+  return functions;
+}
+
 static gboolean
-_vr_init (OpenVRContext *self, EVRApplicationType app_type)
+_vr_init (EVRApplicationType app_type)
 {
   EVRInitError error;
   VR_InitInternal (&error, app_type);
@@ -118,11 +138,7 @@ _vr_init (OpenVRContext *self, EVRApplicationType app_type)
     return FALSE;
   }
 
-  if (!_init_function_tables (self))
-    {
-      g_printerr ("Functions failed to load.\n");
-      return FALSE;
-    }
+  openvr_get_functions ();
 
   return TRUE;
 }
@@ -130,12 +146,13 @@ _vr_init (OpenVRContext *self, EVRApplicationType app_type)
 static gboolean
 _is_valid (GxrContext *context)
 {
-  OpenVRContext * self = OPENVR_CONTEXT (context);
-  return self->f.system != NULL
-    && self->f.overlay != NULL
-    && self->f.compositor != NULL
-    && self->f.input != NULL
-    && self->f.model != NULL;
+  (void) context;
+  return functions->system != NULL
+    && functions->overlay != NULL
+    && functions->compositor != NULL
+    && functions->input != NULL
+    && functions->model != NULL
+    && functions->applications != NULL;
 }
 
 gboolean
@@ -153,8 +170,6 @@ openvr_context_is_hmd_present (void)
 static void
 _poll_event (GxrContext *context)
 {
-  OpenVRContext * self = OPENVR_CONTEXT (context);
-
   /* When a(nother) scene app is started, OpenVR sends a
    * SceneApplicationStateChanged event and a quit event, in this case we
    * ignore the quit event and only send an app state changed event.
@@ -162,9 +177,10 @@ _poll_event (GxrContext *context)
   gboolean shutdown_event = FALSE;
   gboolean scene_application_state_changed = FALSE;
   GxrQuitReason quit_reason = GXR_QUIT_SHUTDOWN;
+  OpenVRFunctions* f = openvr_get_functions ();
 
   struct VREvent_t vr_event;
-  while (self->f.system->PollNextEvent (&vr_event, sizeof (vr_event)))
+  while (f->system->PollNextEvent (&vr_event, sizeof (vr_event)))
   {
     switch (vr_event.eventType)
     {
@@ -194,7 +210,7 @@ _poll_event (GxrContext *context)
       case EVREventType_VREvent_SceneApplicationStateChanged:
       {
         EVRSceneApplicationState app_state =
-          self->f.applications->GetSceneApplicationState ();
+          f->applications->GetSceneApplicationState ();
         if (app_state == EVRSceneApplicationState_Starting)
           {
             scene_application_state_changed = TRUE;
@@ -212,7 +228,7 @@ _poll_event (GxrContext *context)
         g_debug ("Event: got quit event, finding out reason...");
 #if (OPENVR_VERSION_MINOR >= 8)
         EVRSceneApplicationState app_state =
-          self->f.applications->GetSceneApplicationState ();
+          f->applications->GetSceneApplicationState ();
         if (app_state == EVRSceneApplicationState_Quitting)
           {
             g_debug ("Event: Another Scene app is starting");
@@ -288,7 +304,7 @@ _poll_event (GxrContext *context)
         if (vr_event.data.property.prop ==
                 ETrackedDeviceProperty_Prop_SecondsFromVsyncToPhotons_Float)
         {
-          float latency = self->f.system->GetFloatTrackedDeviceProperty (
+          float latency = f->system->GetFloatTrackedDeviceProperty (
             0, vr_event.data.property.prop, NULL);
           g_debug ("Vsync To Photon Latency Prop: %f ms\n", latency * 1000.f);
         }
@@ -296,7 +312,7 @@ _poll_event (GxrContext *context)
 
     default:
       g_debug ("Context: Unhandled OpenVR system event: %s\n",
-               self->f.system->GetEventTypeNameFromEnum (vr_event.eventType));
+               f->system->GetEventTypeNameFromEnum (vr_event.eventType));
       break;
     }
   }
@@ -324,8 +340,9 @@ _poll_event (GxrContext *context)
 static void
 _show_system_keyboard (GxrContext *context)
 {
-  OpenVRContext * self = OPENVR_CONTEXT (context);
-  self->f.overlay->ShowKeyboard (
+  (void) context;
+  OpenVRFunctions* f = openvr_get_functions ();
+  f->overlay->ShowKeyboard (
     EGamepadTextInputMode_k_EGamepadTextInputModeNormal,
     EGamepadTextInputLineMode_k_EGamepadTextInputLineModeSingleLine,
     "OpenVR System Keyboard", 1, "", TRUE, 0);
@@ -335,21 +352,22 @@ static void
 _set_keyboard_transform (GxrContext        *context,
                          graphene_matrix_t *transform)
 {
-  OpenVRContext *self = OPENVR_CONTEXT (context);
+  (void) context;
   HmdMatrix34_t openvr_transform;
   openvr_math_graphene_to_matrix34 (transform, &openvr_transform);
 
   OpenVRFunctions *f = openvr_get_functions();
   enum ETrackingUniverseOrigin origin = f->compositor->GetTrackingSpace ();
-  self->f.overlay->SetKeyboardTransformAbsolute (origin,
-                                                &openvr_transform);
+  f->overlay->SetKeyboardTransformAbsolute (origin,
+                                            &openvr_transform);
 }
 
 static void
 _acknowledge_quit (GxrContext *context)
 {
-  OpenVRContext *self = OPENVR_CONTEXT (context);
-  self->f.system->AcknowledgeQuit_Exiting ();
+  (void) context;
+  OpenVRFunctions *f = openvr_get_functions();
+  f->system->AcknowledgeQuit_Exiting ();
 }
 
 static gboolean
@@ -360,24 +378,19 @@ _is_another_scene_running (GxrContext *context)
 {
   (void) context;
   OpenVRContext *ctx = openvr_context_new ();
+  OpenVRFunctions *f = openvr_get_functions();
+
   _init_runtime (GXR_CONTEXT (ctx), GXR_APP_BACKGROUND);
 
   /* if applications fntable is not loaded, SteamVR is probably not running. */
-  if (ctx->f.applications == NULL)
+  if (f->applications == NULL)
     return FALSE;
 
-  uint32_t pid = ctx->f.applications->GetCurrentSceneProcessId ();
+  uint32_t pid = f->applications->GetCurrentSceneProcessId ();
 
   g_object_unref (ctx);
 
   return pid != 0;
-}
-
-OpenVRFunctions*
-openvr_get_functions (void)
-{
-  OpenVRContext *context = OPENVR_CONTEXT (gxr_context_get_instance ());
-  return &context->f;
 }
 
 static void
@@ -396,16 +409,18 @@ _is_input_available ()
 }
 
 static void
-_get_frustum_angles (GxrEye eye,
+_get_frustum_angles (GxrContext *context, GxrEye eye,
                      float *left, float *right,
                      float *top, float *bottom)
 {
+  (void) context;
   openvr_system_get_frustum_angles (eye, left, right, top, bottom);
 }
 
 static gboolean
-_get_head_pose (graphene_matrix_t *pose)
+_get_head_pose (GxrContext *context, graphene_matrix_t *pose)
 {
+  (void) context;
   return openvr_system_get_hmd_pose (pose);
 }
 
@@ -437,7 +452,7 @@ _init_runtime (GxrContext *context, GxrAppType type)
       g_warning ("Unknown app type %d\n", type);
   }
 
-  if (!_vr_init (self, app_type))
+  if (!_vr_init (app_type))
     return FALSE;
 
   if (!_is_valid (GXR_CONTEXT (self)))
@@ -626,8 +641,7 @@ _get_model_list (GxrContext *self)
 static GxrActionSet *
 _new_action_set_from_url (GxrContext *context, gchar *url)
 {
-  (void) context;
-  return (GxrActionSet*) openvr_action_set_new_from_url (url);
+  return (GxrActionSet*) openvr_action_set_new_from_url (OPENVR_CONTEXT(context), url);
 }
 
 static gboolean
