@@ -24,6 +24,7 @@
 #include "gxr-action-set.h"
 #include "gxr-io.h"
 #include "gxr-overlay.h"
+#include "gxr-overlay-model.h"
 
 #ifdef GXR_HAS_OPENVR
   #include "openvr-action.h"

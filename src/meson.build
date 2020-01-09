@@ -8,7 +8,8 @@ gxr_sources = [
   'gxr-action.c',
   'gxr-action-set.c',
   'gxr-io.c',
-  'gxr-overlay.c'
+  'gxr-overlay.c',
+  'gxr-overlay-model.c'
 ]
 
 gxr_headers = [
@@ -20,7 +21,8 @@ gxr_headers = [
   'gxr-action.h',
   'gxr-action-set.h',
   'gxr-io.h',
-  'gxr-overlay.h'
+  'gxr-overlay.h',
+  'gxr-overlay-model.h'
 ]
 
 version_split = meson.project_version().split('.')
