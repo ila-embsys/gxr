@@ -9,16 +9,6 @@ openvr_sources = [
   'openvr-math.c'
 ]
 
-openvr_headers = [
-  'openvr-interface.h',
-  'openvr-system.h',
-  'openvr-compositor.h',
-  'openvr-context.h',
-  'openvr-action.h',
-  'openvr-action-set.h',
-  'openvr-model.h'
-]
-
 openvr_lib = static_library('gxr-openvr-' + api_version,
   openvr_sources,
   dependencies: gxr_deps + [
@@ -31,7 +21,5 @@ openvr_lib = static_library('gxr-openvr-' + api_version,
   build_rpath : openvr_dep.get_pkgconfig_variable('libdir'),
   install_rpath : openvr_dep.get_pkgconfig_variable('libdir')
 )
-
-install_headers(openvr_headers, subdir: api_path)
 
 gxr_backend_libs += [openvr_lib]
