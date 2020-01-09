@@ -169,30 +169,6 @@ timeout_callback ()
   return TRUE;
 }
 
-static bool
-_init_openvr (GxrContext *context, GulkanClient *client)
-{
-  if (!gxr_context_init_runtime (context, GXR_APP_OVERLAY))
-    {
-      g_printerr ("Could not init OpenVR.\n");
-      return false;
-    }
-
-  if (!gxr_context_init_gulkan (context, client))
-    {
-      g_printerr ("Unable to initialize Vulkan!\n");
-      return false;
-    }
-
-  if (!gxr_context_init_session (context, client))
-    {
-      g_printerr ("Could not init OpenVR session.\n");
-      return false;
-    }
-
-  return true;
-}
-
 static GdkPixbuf *
 load_gdk_pixbuf ()
 {
@@ -222,8 +198,7 @@ main ()
   GxrContext *context = gxr_context_get_instance ();
   uploader = gulkan_client_new ();
 
-    /* init openvr */
-  if (!_init_openvr (context, uploader))
+  if (!gxr_context_inititalize (context, uploader, GXR_APP_OVERLAY))
     return -1;
 
   pixbuf = load_gdk_pixbuf ();

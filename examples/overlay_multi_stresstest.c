@@ -134,30 +134,6 @@ _destroy_cb (GxrOverlay *overlay,
   g_main_loop_quit (self->loop);
 }
 
-static bool
-_init_openvr (GxrContext *context, GulkanClient *client)
-{
-  if (!gxr_context_init_runtime (context, GXR_APP_OVERLAY))
-    {
-      g_printerr ("Could not init OpenVR.\n");
-      return false;
-    }
-
-  if (!gxr_context_init_gulkan (context, client))
-    {
-      g_printerr ("Unable to initialize Vulkan!\n");
-      return false;
-    }
-
-  if (!gxr_context_init_session (context, client))
-    {
-      g_printerr ("Could not init OpenVR session.\n");
-      return false;
-    }
-
-  return true;
-}
-
 int main () {
   Example ex = {
     .loop = g_main_loop_new (NULL, FALSE),
@@ -168,7 +144,7 @@ int main () {
   ex.uploader = gulkan_client_new ();
 
   /* init openvr */
-  if (!_init_openvr (context, ex.uploader))
+  if (!gxr_context_inititalize (context, ex.uploader, GXR_APP_OVERLAY))
     return -1;
 
   ExampleOverlayNum nums[OVERLAY_NUM];

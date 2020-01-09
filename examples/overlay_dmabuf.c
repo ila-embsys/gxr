@@ -128,30 +128,6 @@ _destroy_cb (GxrOverlay *overlay,
   g_main_loop_quit (loop);
 }
 
-static bool
-_init_openvr (GxrContext *context, GulkanClient *client)
-{
-  if (!gxr_context_init_runtime (context, GXR_APP_OVERLAY))
-    {
-      g_printerr ("Could not init OpenVR.\n");
-      return false;
-    }
-
-  if (!gxr_context_init_gulkan (context, client))
-    {
-      g_printerr ("Unable to initialize Vulkan!\n");
-      return false;
-    }
-
-  if (!gxr_context_init_session (context, client))
-    {
-      g_printerr ("Could not init OpenVR session.\n");
-      return false;
-    }
-
-  return true;
-}
-
 #define ALIGN(_v, _d) (((_v) + ((_d) - 1)) & ~((_d) - 1))
 
 int
@@ -173,8 +149,7 @@ main ()
   GxrContext *context = gxr_context_get_instance ();
   GulkanClient *uploader = gulkan_client_new ();
 
-  /* init openvr */
-  if (!_init_openvr (context, uploader))
+  if (!gxr_context_inititalize (context, uploader, GXR_APP_OVERLAY))
     return -1;
 
   GulkanClient *client = GULKAN_CLIENT (uploader);

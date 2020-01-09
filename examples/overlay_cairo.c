@@ -98,30 +98,6 @@ _destroy_cb (GxrOverlay *overlay,
   g_main_loop_quit (loop);
 }
 
-static bool
-_init_openvr (GxrContext *context, GulkanClient *client)
-{
-  if (!gxr_context_init_runtime (context, GXR_APP_OVERLAY))
-    {
-      g_printerr ("Could not init OpenVR.\n");
-      return false;
-    }
-
-  if (!gxr_context_init_gulkan (context, client))
-    {
-      g_printerr ("Unable to initialize Vulkan!\n");
-      return false;
-    }
-
-  if (!gxr_context_init_session (context, client))
-    {
-      g_printerr ("Could not init OpenVR session.\n");
-      return false;
-    }
-
-  return true;
-}
-
 static int
 test_cat_overlay ()
 {
@@ -145,8 +121,7 @@ test_cat_overlay ()
       return FALSE;
     }
 
-  /* init openvr */
-  if (!_init_openvr (context, uploader))
+  if (!gxr_context_inititalize (context, uploader, GXR_APP_OVERLAY))
     return -1;
 
   texture = gulkan_client_texture_new_from_cairo_surface (uploader, surface,
