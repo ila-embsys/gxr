@@ -7,13 +7,7 @@
 
 #include "gxr-context.h"
 #include "gxr-config.h"
-
-#ifdef GXR_HAS_OPENVR
-  #include "openvr/openvr-interface.h"
-#endif
-#ifdef GXR_HAS_OPENXR
-  #include "openxr/openxr-interface.h"
-#endif
+#include "gxr-backend.h"
 
 typedef struct _GxrContextPrivate
 {
@@ -119,24 +113,16 @@ _get_api_from_env ()
     return GXR_DEFAULT_API;
 }
 
+GxrContext *
+gxr_context_new_from_api (GxrApi api)
+{
+  return gxr_backend_new_context (gxr_backend_get_instance (api));
+}
+
 static GxrContext*
 _new_context_from_env ()
 {
-  GxrApi api = _get_api_from_env ();
-  switch (api)
-    {
-#ifdef GXR_HAS_OPENVR
-      case GXR_API_OPENVR:
-        return GXR_CONTEXT (openvr_context_new ());
-#endif
-#ifdef GXR_HAS_OPENXR
-      case GXR_API_OPENXR:
-        return GXR_CONTEXT (openxr_context_new ());
-#endif
-      default:
-        g_printerr ("ERROR: Could not init context: GXR API not supported.\n");
-        return NULL;
-    }
+  return gxr_context_new_from_api (_get_api_from_env ());
 }
 
 static void

@@ -165,6 +165,9 @@ struct _GxrContextClass
 
 GxrContext *gxr_context_new (void);
 
+GxrContext *
+gxr_context_new_from_api (GxrApi backend);
+
 GxrApi
 gxr_context_get_api (GxrContext *self);
 

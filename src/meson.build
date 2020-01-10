@@ -10,7 +10,8 @@ gxr_sources = [
   'gxr-io.c',
   'gxr-overlay.c',
   'gxr-overlay-model.c',
-  'gxr-manifest.c'
+  'gxr-manifest.c',
+  'gxr-backend.c'
 ]
 
 gxr_headers = [
@@ -24,7 +25,8 @@ gxr_headers = [
   'gxr-io.h',
   'gxr-overlay.h',
   'gxr-overlay-model.h',
-  'gxr-manifest.h'
+  'gxr-manifest.h',
+  'gxr-backend.h'
 ]
 
 version_split = meson.project_version().split('.')
@@ -37,6 +39,14 @@ version_conf.set('VERSION', meson.project_version())
 version_conf.set('MAJOR_VERSION', MAJOR_VERSION)
 version_conf.set('MINOR_VERSION', MINOR_VERSION)
 version_conf.set('MICRO_VERSION', MICRO_VERSION)
+
+backend_install_dir = join_paths(get_option('libdir'),
+                                 'gxr-' + api_version,
+                                 'backends')
+
+backend_config_dir = join_paths(get_option('prefix'), backend_install_dir)
+
+config_h.set('BACKEND_DIR', '"@0@"'.format(backend_config_dir))
 
 configure_file(
   output: 'gxr-config.h',
@@ -55,20 +65,11 @@ gxr_deps = [
   gulkan_dep,
   gdk_dep,
   m_dep,
-  m_dep,
-  json_glib_dep
+  json_glib_dep,
+  gmodule_dep
 ]
 
 gxr_inc = include_directories('.')
-
-gxr_backend_libs = []
-
-if openvr_dep.found()
-  subdir('openvr')
-endif
-if openxr_dep.found()
-  subdir('openxr')
-endif
 
 gxr_lib = shared_library(api_path,
   gxr_sources,
@@ -77,9 +78,54 @@ gxr_lib = shared_library(api_path,
   dependencies: gxr_deps,
   include_directories: gxr_inc,
   install: true,
-  link_whole: gxr_backend_libs,
   c_args : ['-DGXR_COMPILATION']
 )
+
+
+
+if openvr_dep.found()
+  openvr_lib = shared_module('gxr-openvr',
+    [
+      'openvr/openvr-system.c',
+      'openvr/openvr-overlay.c',
+      'openvr/openvr-compositor.c',
+      'openvr/openvr-context.c',
+      'openvr/openvr-action.c',
+      'openvr/openvr-action-set.c',
+      'openvr/openvr-model.c',
+      'openvr/openvr-math.c'
+    ],
+    dependencies: gxr_deps + [
+      openvr_dep,
+      stdcpp_dep,
+      dl_dep
+    ],
+    include_directories: gxr_inc,
+    c_args : ['-DGXR_COMPILATION'],
+    output: '../',
+    link_with: gxr_lib,
+    install_dir: backend_install_dir,
+    install: true,
+    build_rpath : openvr_dep.get_pkgconfig_variable('libdir'),
+    install_rpath : openvr_dep.get_pkgconfig_variable('libdir')
+  )
+endif
+if openxr_dep.found()
+  openxr_lib = shared_module('gxr-openxr',
+    [
+      'openxr/openxr-context.c',
+      'openxr/openxr-action.c',
+      'openxr/openxr-action-set.c',
+      'openxr/openxr-overlay.c'
+    ],
+    dependencies: gxr_deps + [openxr_dep],
+    include_directories: gxr_inc,
+    c_args : ['-DGXR_COMPILATION'],
+    link_with: gxr_lib,
+    install_dir: backend_install_dir,
+    install: true,
+  )
+endif
 
 gxr_dep = declare_dependency(
   sources: [],

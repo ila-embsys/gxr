@@ -76,5 +76,6 @@ main ()
 {
   _init_context (GXR_APP_SCENE);
   _init_context (GXR_APP_OVERLAY);
+  gxr_backend_shutdown ();
   return 0;
 }
