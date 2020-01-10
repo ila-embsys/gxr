@@ -80,6 +80,12 @@ if openvr_dep.found()
   dl_dep = c.find_library('dl')
 endif
 
+if openvr_dep.found()
+  config_h.set('GXR_DEFAULT_API', 'GXR_API_OPENVR')
+else
+  config_h.set('GXR_DEFAULT_API', 'GXR_API_OPENXR')
+endif
+
 gtk3_dep = dependency('gtk+-3.0', version: '>= 3.22', required : false)
 x11_dep = dependency('x11', required : false)
 xtst_dep = dependency('xtst', required : false)

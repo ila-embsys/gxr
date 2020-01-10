@@ -21,12 +21,6 @@ typedef struct _GxrContextPrivate
   GxrApi api;
 } GxrContextPrivate;
 
-#ifdef GXR_HAS_OPENVR
-  #define GXR_DEFAULT_API GXR_API_OPENVR
-#else
-  #define GXR_DEFAULT_API GXR_API_OPENXR
-#endif
-
 G_DEFINE_TYPE_WITH_PRIVATE (GxrContext, gxr_context, G_TYPE_OBJECT)
 
 enum {
