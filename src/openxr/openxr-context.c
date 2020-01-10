@@ -885,20 +885,18 @@ _init_runtime (GxrContext *context,
                GxrAppType type)
 {
   OpenXRContext *self = OPENXR_CONTEXT (context);
-
   switch (type)
   {
     case GXR_APP_SCENE:
       break;
     case GXR_APP_OVERLAY:
-      g_error ("OpenXR backend does not support Overlay app type!\n");
-      return FALSE;
+      g_warning ("Overlay app type is not implemented in OpenXR.\n");
+      break;
     case GXR_APP_BACKGROUND:
-      g_error ("OpenXR backend does not support background app type");
-      return FALSE;
+      g_warning ("Background app type is not implemented in OpenXR.\n");
+      break;
     default:
       g_warning ("Unknown app type %d\n", type);
-      return TRUE;
   }
 
   if (!_check_vk_extension())
