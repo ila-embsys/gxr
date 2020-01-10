@@ -82,6 +82,8 @@ _next_model (Example *self)
   else
     self->current_model_list_index++;
 
+  g_print ("Switching to model %d\n", self->current_model_list_index);
+
   if (!_update_model (self))
     return FALSE;
 
@@ -202,7 +204,7 @@ main ()
       return false;
     }
 
-  if (!gxr_action_load_manifest (
+  if (!gxr_context_load_action_manifest (
         context,
         "gxr",
         "/res/bindings",

@@ -277,6 +277,14 @@ gxr_context_set_keyboard_transform (GxrContext        *self,
 GSList *
 gxr_context_get_model_list (GxrContext *self);
 
+gboolean
+gxr_context_load_action_manifest (GxrContext *self,
+                                  const char *cache_name,
+                                  const char *resource_path,
+                                  const char *manifest_name,
+                                  const char *first_binding,
+                                  ...);
+
 G_END_DECLS
 
 #endif /* GXR_CONTEXT_H_ */

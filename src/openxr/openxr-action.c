@@ -8,7 +8,6 @@
 #include <gdk/gdk.h>
 
 #include "gxr-types.h"
-#include "gxr-io.h"
 
 #include "openxr-action.h"
 #include "openxr-context.h"

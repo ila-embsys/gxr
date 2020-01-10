@@ -281,7 +281,7 @@ main (int argc, char *argv[])
       return -1;
     }
 
-  if (!gxr_action_load_manifest (
+  if (!gxr_context_load_action_manifest (
       context,
       "gxr",
       "/res/bindings",

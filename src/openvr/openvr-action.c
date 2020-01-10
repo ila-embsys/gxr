@@ -28,23 +28,6 @@ struct _OpenVRAction
 
 G_DEFINE_TYPE (OpenVRAction, openvr_action, GXR_TYPE_ACTION)
 
-static gboolean
-_load_manifest (char *path)
-{
-  OpenVRFunctions *f = openvr_get_functions ();
-
-  EVRInputError err;
-  err = f->input->SetActionManifestPath (path);
-
-  if (err != EVRInputError_VRInputError_None)
-    {
-      g_printerr ("ERROR: SetActionManifestPath: %s\n",
-                  openvr_input_error_string (err));
-      return FALSE;
-    }
-  return TRUE;
-}
-
 gboolean
 openvr_action_load_handle (OpenVRAction *self,
                            char         *url);
@@ -409,53 +392,4 @@ openvr_action_class_init (OpenVRActionClass *klass)
   GxrActionClass *gxr_action_class = GXR_ACTION_CLASS (klass);
   gxr_action_class->poll = _poll;
   gxr_action_class->trigger_haptic = _trigger_haptic;
-}
-
-gboolean
-openvr_action_load_manifest (const char* cache_name,
-                             const char* resource_path,
-                             const char* manifest_name,
-                             const char* first_binding,
-                             va_list     args)
-{
-  /* Create cache directory if needed */
-  GString* cache_path = gxr_io_get_cache_path (cache_name);
-
-  if (g_mkdir_with_parents (cache_path->str, 0700) == -1)
-    {
-      g_printerr ("Unable to create directory %s\n", cache_path->str);
-      return FALSE;
-    }
-
-  /* Cache actions manifest */
-  GString *actions_path = g_string_new ("");
-  if (!gxr_io_write_resource_to_file (resource_path,
-                                      cache_path->str,
-                                      manifest_name,
-                                      actions_path))
-    return FALSE;
-
-  const char* current = first_binding;
-  while (current != NULL)
-    {
-      GString *bindings_path = g_string_new ("");
-      if (!gxr_io_write_resource_to_file (resource_path,
-                                          cache_path->str,
-                                          current,
-                                          bindings_path))
-        return FALSE;
-
-      g_string_free (bindings_path, TRUE);
-
-      current = va_arg (args, const char*);
-    }
-
-  g_string_free (cache_path, TRUE);
-
-  if (!_load_manifest (actions_path->str))
-    return FALSE;
-
-  g_string_free (actions_path, TRUE);
-
-  return TRUE;
 }

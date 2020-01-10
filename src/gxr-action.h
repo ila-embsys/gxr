@@ -50,14 +50,6 @@ gxr_action_new_from_type_url (GxrContext   *context,
                               char          *url);
 
 gboolean
-gxr_action_load_manifest (GxrContext *context,
-                          const char *cache_name,
-                          const char *resource_path,
-                          const char *manifest_name,
-                          const char *first_binding,
-                          ...);
-
-gboolean
 gxr_action_poll (GxrAction *self);
 
 gboolean

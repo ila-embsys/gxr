@@ -25,6 +25,7 @@
 #include "openvr-system.h"
 #include "openvr-compositor.h"
 #include "openvr-action.h"
+#include "gxr-io.h"
 
 struct _OpenVRContext
 {
@@ -630,6 +631,25 @@ _new_action_set_from_url (GxrContext *context, gchar *url)
 }
 
 static gboolean
+_load_manifest (char *path)
+{
+  OpenVRFunctions *f = openvr_get_functions ();
+
+  g_print ("Load manifest path %s\n", path);
+
+  EVRInputError err;
+  err = f->input->SetActionManifestPath (path);
+
+  if (err != EVRInputError_VRInputError_None)
+  {
+    g_printerr ("ERROR: SetActionManifestPath: %s\n",
+                openvr_input_error_string (err));
+    return FALSE;
+  }
+  return TRUE;
+}
+
+static gboolean
 _load_action_manifest (GxrContext *self,
                        const char *cache_name,
                        const char *resource_path,
@@ -638,11 +658,46 @@ _load_action_manifest (GxrContext *self,
                        va_list     args)
 {
   (void) self;
-  return openvr_action_load_manifest (cache_name,
-                                      resource_path,
-                                      manifest_name,
-                                      first_binding,
-                                      args);
+  /* Create cache directory if needed */
+  GString* cache_path = gxr_io_get_cache_path (cache_name);
+
+  if (g_mkdir_with_parents (cache_path->str, 0700) == -1)
+    {
+      g_printerr ("Unable to create directory %s\n", cache_path->str);
+      return FALSE;
+    }
+
+  /* Cache actions manifest */
+  GString *actions_path = g_string_new ("");
+  if (!gxr_io_write_resource_to_file (resource_path,
+    cache_path->str,
+    manifest_name,
+    actions_path))
+    return FALSE;
+
+  const char* current = first_binding;
+  while (current != NULL)
+    {
+      GString *bindings_path = g_string_new ("");
+      if (!gxr_io_write_resource_to_file (resource_path,
+                                          cache_path->str,
+                                          current,
+                                          bindings_path))
+        return FALSE;
+
+      g_string_free (bindings_path, TRUE);
+
+      current = va_arg (args, const char*);
+    }
+
+  g_string_free (cache_path, TRUE);
+
+  if (!_load_manifest (actions_path->str))
+    return FALSE;
+
+  g_string_free (actions_path, TRUE);
+
+  return TRUE;
 }
 
 static GxrAction *

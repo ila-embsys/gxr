@@ -25,14 +25,6 @@ gxr_context_new_action_from_type_url (GxrContext   *self,
 GxrActionSet *
 gxr_context_new_action_set_from_url (GxrContext *self, gchar *url);
 
-gboolean
-gxr_context_load_action_manifest (GxrContext *self,
-                                  const char *cache_name,
-                                  const char *resource_path,
-                                  const char *manifest_name,
-                                  const char *first_binding,
-                                  va_list     args);
-
 /* Signal emission */
 void
 gxr_context_emit_keyboard_press (GxrContext *self, gpointer event);

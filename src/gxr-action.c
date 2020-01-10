@@ -89,26 +89,6 @@ gxr_action_new_from_type_url (GxrContext   *context,
 }
 
 gboolean
-gxr_action_load_manifest (GxrContext *context,
-                          const char *cache_name,
-                          const char *resource_path,
-                          const char *manifest_name,
-                          const char *first_binding,
-                          ...)
-{
-  va_list args;
-  va_start (args, first_binding);
-  gboolean ret = gxr_context_load_action_manifest (context,
-                                                   cache_name,
-                                                   resource_path,
-                                                   manifest_name,
-                                                   first_binding,
-                                                   args);
-  va_end (args);
-  return ret;
-}
-
-gboolean
 gxr_action_poll (GxrAction *self)
 {
   GxrActionClass *klass = GXR_ACTION_GET_CLASS (self);
