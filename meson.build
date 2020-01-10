@@ -62,10 +62,6 @@ json_glib_dep = dependency('json-glib-1.0', required: true)
 
 ## Optional
 openxr_dep = dependency('openxr', required: false)
-if openxr_dep.found()
-  config_h.set('GXR_HAS_OPENXR', 1)
-endif
-
 openvr_dep = dependency('openvr', required: false)
 
 if openvr_dep.found()
@@ -74,7 +70,6 @@ if openvr_dep.found()
   config_h.set('OPENVR_VERSION_MINOR', openvr_version_str_list[1].to_int())
   config_h.set('OPENVR_VERSION_MICRO', openvr_version_str_list[2].to_int())
 
-  config_h.set('GXR_HAS_OPENVR', 1)
   # For a statically linked libopenvr_api we also need to link to the
   # Standard C++ library and the implementation of dlopen()
   stdcpp_dep = c.find_library('stdc++')
