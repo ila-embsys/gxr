@@ -16,7 +16,6 @@
 #include <graphene.h>
 #include <openxr/openxr.h>
 
-#include "gxr-action.h"
 #include "openxr-interface.h"
 #include "openxr-action-set.h"
 
@@ -28,20 +27,10 @@ OpenXRAction *
 openxr_action_new_from_type_url (GxrActionSet *action_set,
                                  GxrActionType type, char *url);
 
-gboolean
-openxr_action_load_manifest (char *path);
-
 OpenXRAction *openxr_action_new (void);
 
 void
 openxr_action_update_input_handles (OpenXRAction *self);
-
-gboolean
-openxr_action_load_cached_manifest (const char* cache_name,
-                                    const char* resource_path,
-                                    const char* manifest_name,
-                                    const char* first_binding,
-                                    ...);
 
 uint32_t
 openxr_action_get_num_bindings (OpenXRAction *self);

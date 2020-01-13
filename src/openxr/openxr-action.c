@@ -12,7 +12,6 @@
 #include "openxr-action.h"
 #include "openxr-context.h"
 #include "openxr-action-set.h"
-#include "openxr-action-binding.h"
 
 #define NUM_HANDS 2
 struct _OpenXRAction
@@ -34,13 +33,6 @@ struct _OpenXRAction
 };
 
 G_DEFINE_TYPE (OpenXRAction, openxr_action, GXR_TYPE_ACTION)
-
-gboolean
-openxr_action_load_manifest (char *path)
-{
-  (void) path;
-  return TRUE;
-}
 
 static void
 openxr_action_init (OpenXRAction *self)
@@ -446,60 +438,4 @@ openxr_action_class_init (OpenXRActionClass *klass)
   GxrActionClass *gxr_action_class = GXR_ACTION_CLASS (klass);
   gxr_action_class->poll = _poll;
   gxr_action_class->trigger_haptic = _trigger_haptic;
-}
-
-gboolean
-openxr_action_load_cached_manifest (const char* cache_name,
-                                    const char* resource_path,
-                                    const char* manifest_name,
-                                    const char* first_binding,
-                                    ...)
-{
-  /* Create cache directory if needed */
-  GString* cache_path = gxr_io_get_cache_path (cache_name);
-
-  if (g_mkdir_with_parents (cache_path->str, 0700) == -1)
-    {
-      g_printerr ("Unable to create directory %s\n", cache_path->str);
-      return FALSE;
-    }
-
-  /* Cache actions manifest */
-  GString *actions_path = g_string_new ("");
-  if (!gxr_io_write_resource_to_file (resource_path,
-                                      cache_path->str,
-                                      manifest_name,
-                                      actions_path))
-    return FALSE;
-
-  va_list args;
-
-  const char* current = first_binding;
-
-  va_start (args, first_binding);
-
-  while (current != NULL)
-    {
-      GString *bindings_path = g_string_new ("");
-      if (!gxr_io_write_resource_to_file (resource_path,
-                                          cache_path->str,
-                                          current,
-                                          bindings_path))
-        return FALSE;
-
-      g_string_free (bindings_path, TRUE);
-
-      current = va_arg (args, const char*);
-    }
-
-  va_end (args);
-
-  g_string_free (cache_path, TRUE);
-
-  if (!openxr_action_load_manifest (actions_path->str))
-    return FALSE;
-
-  g_string_free (actions_path, TRUE);
-
-  return TRUE;
 }

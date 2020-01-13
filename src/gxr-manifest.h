@@ -22,18 +22,34 @@ typedef enum
 
 typedef enum
 {
+  BINDING_MODE_NONE,
   BINDING_MODE_UNKNOWN,
   BINDING_MODE_BUTTON,
   BINDING_MODE_TRACKPAD,
-  BINDING_MODE_JOYSTICK
+  BINDING_MODE_JOYSTICK,
 } GxrManifestBindingMode;
 
 typedef enum
 {
+  BINDING_COMPONENT_NONE,
   BINDING_COMPONENT_UNKNOWN,
   BINDING_COMPONENT_CLICK,
-  BINDING_COMPONENT_POSITION
+  BINDING_COMPONENT_POSITION,
+  BINDING_COMPONENT_TOUCH
 } GxrManifestBindingComponent;
+
+typedef struct
+{
+  GxrManifestBindingComponent component;
+  gchar *path;
+} GxrBindingInputPath;
+
+typedef struct
+{
+  GxrManifestBindingType binding_type;
+  GList *input_paths;
+  GxrManifestBindingMode mode;
+} GxrBinding;
 
 G_BEGIN_DECLS
 
@@ -46,6 +62,15 @@ gboolean
 gxr_manifest_load (GxrManifest *self,
                    GInputStream *action_stream,
                    GInputStream *binding_stream);
+
+gchar *
+gxr_manifest_get_interaction_profile (GxrManifest *self);
+
+GHashTable *
+gxr_manifest_get_hash_table (GxrManifest *self);
+
+int
+gxr_manifest_get_num_inputs (GxrManifest *self);
 
 G_END_DECLS
 

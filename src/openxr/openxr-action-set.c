@@ -11,7 +11,7 @@
 #include "openxr-action-set.h"
 #include "openxr-action.h"
 #include "openxr-context.h"
-#include "openxr-action-binding.h"
+#include "gxr-manifest.h"
 
 struct _OpenXRActionSet
 {
@@ -154,76 +154,107 @@ _update (GxrActionSet **sets, uint32_t count)
   return TRUE;
 }
 
-static OpenXRActionBinding *
-_find_binding (OpenXRAction *action,
-               OpenXRBinding *binding,
-               int actions_per_binding)
+static gchar *
+_component_to_str (GxrManifestBindingComponent c)
 {
-  for (int i = 0; i < actions_per_binding; i++)
+  switch (c)
+  {
+    case BINDING_COMPONENT_CLICK:
+      return "click";
+    case BINDING_COMPONENT_POSITION:
+      /* use .../trackpad instead of .../trackpad/x etc. */
+      return NULL;
+    default:
+      return NULL;
+  }
+}
+
+static OpenXRAction *
+_find_openxr_action_from_url (GxrActionSet **sets, uint32_t count, gchar *url)
+{
+  for (uint32_t i = 0; i < count; i++)
     {
-      char *url = openxr_action_get_url (action);
-      OpenXRActionBinding *ab = &binding->action_bindings[i];
-
-      if (g_strcmp0 (ab->name, url) == 0)
+      GSList *actions = gxr_action_set_get_actions (GXR_ACTION_SET (sets[i]));
+      for (GSList *l = actions; l != NULL; l = l->next)
         {
-          if (!ab->bound)
-            return NULL;
-
-          return ab;
+          OpenXRAction *action = OPENXR_ACTION (l->data);
+          gchar *action_url = openxr_action_get_url (action);
+          if (g_strcmp0 (action_url, url) == 0)
+            return action;
         }
     }
-
-  char *url = openxr_action_get_url (action);
-  g_printerr ("Failed to find action %s in binding: %s\n",
-              url, binding->interaction_profile);
+  g_debug ("Did not find action %s\n", url);
   return NULL;
 }
 
 static gboolean
-_suggest_for_interaction_profile (XrInstance instance,
-                                  GSList *actions,
-                                  OpenXRBinding *binding,
-                                  int actions_per_binding)
+_suggest_for_interaction_profile (GxrActionSet **sets, uint32_t count,
+                                  XrInstance instance,
+                                  GxrManifest *manifest)
 {
+  GHashTable *actions = gxr_manifest_get_hash_table (manifest);
+
+  GList *action_list = g_hash_table_get_keys (actions);
+
+  uint32_t num_inputs = (uint32_t) gxr_manifest_get_num_inputs (manifest);
   XrActionSuggestedBinding *suggested_bindings =
-    g_malloc (sizeof (XrActionSuggestedBinding) *
-              (unsigned long) ((int)sizeof(actions) * actions_per_binding));
+    g_malloc (sizeof (XrActionSuggestedBinding) * (unsigned long) num_inputs);
 
   uint32_t num_suggestion = 0;
-  for (GSList *l = actions; l != NULL; l = l->next)
+  for (GList *l = action_list; l != NULL; l = l->next)
     {
-      OpenXRAction *action = OPENXR_ACTION (l->data);
+
+      OpenXRAction *action = _find_openxr_action_from_url (sets, count, l->data);
+      if (!action)
+        continue;
+
       XrAction handle = openxr_action_get_handle (action);
       char *url = openxr_action_get_url (action);
 
-      OpenXRActionBinding *ab =
-        _find_binding (action, binding, actions_per_binding);
+      GxrBinding *binding = g_hash_table_lookup (actions, l->data);
 
-      if (!ab)
+
+      g_debug ("Action %s %d inputs\n",
+               url, g_list_length (binding->input_paths));
+
+      for (GList *m = binding->input_paths; m; m = m->next)
         {
-          // g_debug ("Skipping unbound action %s\n", url);
-          continue;
-        }
 
-      g_debug ("Action %s %d components: %s %s\n",
-               url, ab->num_components,
-               ab->component[0], ab->component[1]);
+          /* shouldn't happen, but sanity test is good */
+          if (num_suggestion > num_inputs)
+            {
+              g_printerr ("Manifest parsed input count %d was too low!\n",
+                          num_inputs);
+              return FALSE;
+            }
 
-      for (int i = 0; i < ab->num_components; i++)
-        {
+          GxrBindingInputPath *input_path = m->data;
+
+          gchar *component_str = _component_to_str (input_path->component);
+
+          GString *full_path = g_string_new ("");
+          if (component_str)
+            g_string_printf (full_path, "%s/%s", input_path->path, component_str);
+          else
+            g_string_append (full_path, input_path->path);
+
           XrPath component_path;
-          xrStringToPath(instance, ab->component[i], &component_path);
+          xrStringToPath(instance, full_path->str, &component_path);
 
           suggested_bindings[num_suggestion].action = handle;
           suggested_bindings[num_suggestion].binding = component_path;
 
           num_suggestion++;
+
+          g_string_free (full_path, TRUE);
         }
     }
 
   g_debug ("Suggesting %d component bindings\n", num_suggestion);
   XrPath profile_path;
-  xrStringToPath(instance, binding->interaction_profile, &profile_path);
+  xrStringToPath (instance,
+                  gxr_manifest_get_interaction_profile (manifest),
+                  &profile_path);
 
   const XrInteractionProfileSuggestedBinding suggestion_info = {
     .type = XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING,
@@ -241,7 +272,7 @@ _suggest_for_interaction_profile (XrInstance instance,
       char buffer[XR_MAX_RESULT_STRING_SIZE];
       xrResultToString(instance, result, buffer);
       g_printerr ("ERROR: Suggesting actions for profile %s: %s\n",
-                  binding->interaction_profile, buffer);
+                  gxr_manifest_get_interaction_profile (manifest), buffer);
       return false;
     }
 
@@ -251,49 +282,32 @@ _suggest_for_interaction_profile (XrInstance instance,
 static gboolean
 _attach_bindings (GxrActionSet **sets, uint32_t count)
 {
+  OpenXRContext *octx = OPENXR_CONTEXT (gxr_context_get_instance ());
+  GSList *manifests = openxr_context_get_manifests (octx);
+  if (g_slist_length (manifests) == 0)
+    {
+      g_printerr ("Attaching Action Sets, but no manifests are loaded\n");
+      return FALSE;
+    }
+
+  for (GSList *l = manifests; l; l = l->next)
+    {
+      GxrManifest *manifest = GXR_MANIFEST (l->data);
+
+      XrInstance instance = OPENXR_ACTION_SET (sets[0])->instance;
+
+      g_debug ("Suggesting for profile %s\n",
+               gxr_manifest_get_interaction_profile (manifest));
+      _suggest_for_interaction_profile (sets, count, instance, manifest);
+    }
+
   XrActionSet *handles = g_malloc (sizeof (XrActionSet) * count);
-
-  /* for each input profile we have to suggest bindings for all actions from
-     all action sets at once, so collect them first. */
-  GSList *all_actions = NULL;
-
   for (uint32_t i = 0; i < count; i++)
     {
       OpenXRActionSet *self = OPENXR_ACTION_SET (sets[i]);
-
-      g_debug ("Collecting actions from action set %s: \n", self->url);
-
       handles[i] = self->handle;
-
-      GSList *actions = gxr_action_set_get_actions (GXR_ACTION_SET (self));
-      for (GSList *l = actions; l != NULL; l = l->next)
-        {
-          OpenXRAction *action = OPENXR_ACTION (l->data);
-          all_actions = g_slist_append (all_actions, action);
-        }
     }
 
-
-  char **profiles;
-  int num_profiles;
-  openxr_action_bindings_get_interaction_profiles (&profiles, &num_profiles);
-
-  OpenXRBinding *bindings;
-  int num_bindings;
-  int actions_per_binding;
-  openxr_action_binding_get (&bindings, &num_bindings, &actions_per_binding);
-
-  for (int i = 0; i < num_profiles; i++)
-    {
-      XrInstance instance = OPENXR_ACTION_SET (sets[0])->instance;
-
-      OpenXRBinding *binding = &bindings[i];
-      g_debug ("Suggesting for profile %s\n", binding->interaction_profile);
-      _suggest_for_interaction_profile (instance, all_actions,
-                                        binding, actions_per_binding);
-    }
-
-  g_slist_free (all_actions);
 
   XrSessionActionSetsAttachInfo attachInfo = {
     .type = XR_TYPE_SESSION_ACTION_SETS_ATTACH_INFO,
@@ -304,7 +318,7 @@ _attach_bindings (GxrActionSet **sets, uint32_t count)
 
   OpenXRActionSet *self = OPENXR_ACTION_SET (sets[0]);
 
-  XrResult result = xrAttachSessionActionSets(self->session, &attachInfo);
+  XrResult result = xrAttachSessionActionSets (self->session, &attachInfo);
   g_free (handles);
   if (result != XR_SUCCESS)
     {

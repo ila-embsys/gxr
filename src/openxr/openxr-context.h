@@ -75,6 +75,9 @@ openxr_context_get_openxr_session (OpenXRContext *self);
 XrSpace
 openxr_context_get_tracked_space (OpenXRContext *self);
 
+GSList *
+openxr_context_get_manifests (OpenXRContext *self);
+
 G_END_DECLS
 
 #endif /* GXR_OPENXR_CONTEXT_H_ */

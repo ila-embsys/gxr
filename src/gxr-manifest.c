@@ -13,9 +13,9 @@
  * actions are saved in a hashmap
  * (gchar)action name ->
  *  (struct){
- *    (OpenVRBindingType)type,
- *    (OpenVRBindingMode)mode
- *    (GList (OpenVRBindingInputPath))input path,
+ *    (GxrBindingType)type,
+ *    (GxrBindingMode)mode
+ *    (GList (GxrBindingInputPath))input_path,
  * }
  *
  * example:
@@ -32,23 +32,12 @@
  * }
  */
 
-typedef struct
-{
-  GxrManifestBindingComponent component;
-  gchar *input_path;
-} GxrBindingInputPath;
-
-typedef struct
-{
-  GxrManifestBindingType binding_type;
-  GList *input_paths;
-  GxrManifestBindingMode mode;
-} GxrBinding;
-
 struct _GxrManifest
 {
   GObject parent;
 
+  gchar *interaction_profile;
+  int num_inputs;
   GHashTable *actions;
 };
 
@@ -69,7 +58,7 @@ static void
 _free_input_path (gpointer data)
 {
   GxrBindingInputPath *path = data;
-  g_free (path->input_path);
+  g_free (path->path);
   g_free (path);
 }
 
@@ -85,6 +74,8 @@ static void
 gxr_manifest_init (GxrManifest *self)
 {
   self->actions = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, _free_binding);
+  self->interaction_profile = NULL;
+  self->num_inputs = 0;
 }
 
 static GxrManifestBindingType
@@ -106,6 +97,8 @@ _get_binding_type (const gchar *type_string)
 static GxrManifestBindingMode
 _get_binding_mode (const gchar *mode_string)
 {
+  if (mode_string == NULL)
+    return BINDING_MODE_NONE;
   if (g_str_equal (mode_string, "button"))
     return BINDING_MODE_BUTTON;
   if (g_str_equal (mode_string, "trackpad"))
@@ -124,6 +117,8 @@ _get_binding_component (const gchar *component_string)
     return BINDING_COMPONENT_CLICK;
   if (g_str_equal (component_string, "position"))
     return BINDING_COMPONENT_POSITION;
+  if (g_str_equal (component_string, "touch"))
+    return BINDING_COMPONENT_TOUCH;
 
   g_print ("Binding component %s is not known\n", component_string);
   return BINDING_COMPONENT_UNKNOWN;
@@ -194,6 +189,10 @@ _parse_bindings (GxrManifest *self, GInputStream *stream)
   JsonObject *joroot;
   joroot = json_node_get_object (jnroot);
 
+  if (json_object_has_member (joroot, "interaction_profile"))
+    self->interaction_profile = g_strdup (json_object_get_string_member (joroot, "interaction_profile"));
+
+
   JsonObject *jobinding = json_object_get_object_member (joroot, "bindings");
 
   GList *binding_list = json_object_get_members (jobinding);
@@ -205,13 +204,15 @@ _parse_bindings (GxrManifest *self, GInputStream *stream)
       JsonObject *joactionset = json_object_get_object_member (jobinding, actionset);
 
       JsonArray *jasources = json_object_get_array_member (joactionset, "sources");
-      int len = json_array_get_length (jasources);
-      for (int i = 0; i < len; i++)
+      guint sources_len = json_array_get_length (jasources);
+      for (guint i = 0; i < sources_len; i++)
         {
           JsonObject *josource = json_array_get_object_element (jasources, i);
 
           const gchar *path = json_object_get_string_member (josource, "path");
-          const gchar *mode = json_object_get_string_member (josource, "mode");
+          const gchar *mode = NULL;
+          if (json_object_has_member (josource, "mode"))
+            json_object_get_string_member (josource, "mode");
 
           g_debug ("Parsed path %s with mode %s\n", path, mode);
 
@@ -239,10 +240,47 @@ _parse_bindings (GxrManifest *self, GInputStream *stream)
               binding->mode = _get_binding_mode (mode);
               GxrBindingInputPath *input_path = g_malloc (sizeof (GxrBindingInputPath));
               input_path->component = _get_binding_component (component);
-              input_path->input_path = g_strdup (path);
+              input_path->path = g_strdup (path);
+              g_debug ("Parsed input path %s\n", input_path->path);
               binding->input_paths = g_list_append (binding->input_paths, input_path);
+
+              self->num_inputs++;
             }
           g_list_free (input_list);
+        }
+
+
+      /* TODO: haptics */
+
+      if (!json_object_has_member (joactionset, "pose"))
+        continue;
+
+      JsonArray *japose = json_object_get_array_member (joactionset, "pose");
+      guint pose_len = json_array_get_length (japose);
+      for (guint i = 0; i < pose_len; i++)
+        {
+          JsonObject *jopose = json_array_get_object_element (japose, i);
+
+          const gchar *path = json_object_get_string_member (jopose, "path");
+          const gchar *output = json_object_get_string_member (jopose, "output");
+
+          g_debug ("%s: Parsed output pose %s \n", path, output);
+
+          GxrBinding *binding = g_hash_table_lookup (self->actions, output);
+          if (!binding)
+            {
+              g_print ("Binding: Failed to find action %s in paresed actions\n", output);
+              continue;
+            }
+
+          binding->mode = BINDING_MODE_NONE;
+          GxrBindingInputPath *input_path = g_malloc (sizeof (GxrBindingInputPath));
+          input_path->component = BINDING_COMPONENT_NONE;
+          input_path->path = g_strdup (path);
+          g_debug ("Parsed input path %s\n", input_path->path);
+          binding->input_paths = g_list_append (binding->input_paths, input_path);
+
+          self->num_inputs++;
         }
     }
 
@@ -273,10 +311,31 @@ gxr_manifest_new (void)
   return (GxrManifest *) g_object_new (GXR_TYPE_MANIFEST, 0);
 }
 
+gchar *
+gxr_manifest_get_interaction_profile (GxrManifest *self)
+{
+  return self->interaction_profile;
+}
+
+/* TODO: might want to make a better API */
+GHashTable *
+gxr_manifest_get_hash_table (GxrManifest *self)
+{
+  return self->actions;
+}
+
+int
+gxr_manifest_get_num_inputs (GxrManifest *self)
+{
+  return self->num_inputs;
+}
+
 static void
 gxr_manifest_finalize (GObject *gobject)
 {
   GxrManifest *self = GXR_MANIFEST (gobject);
   g_hash_table_unref (self->actions);
+  if (self->interaction_profile)
+    g_free (self->interaction_profile);
   (void) self;
 }
