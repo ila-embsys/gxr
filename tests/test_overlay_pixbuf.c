@@ -33,25 +33,6 @@ load_gdk_pixbuf ()
 }
 
 static void
-test_color (GxrOverlay *overlay)
-{
-  graphene_vec3_t *color = graphene_vec3_alloc ();
-  g_assert (gxr_overlay_get_color (overlay, color));
-
-  graphene_vec3_init (color, 1.0f, 0.5f, 0.5f);
-
-  g_assert (gxr_overlay_set_color (overlay, color));
-
-  graphene_vec3_t *color_ret = graphene_vec3_alloc ();
-  g_assert (gxr_overlay_get_color (overlay, color_ret));
-
-  g_assert (graphene_vec3_equal (color, color_ret));
-
-  graphene_vec3_free (color);
-  graphene_vec3_free (color_ret);
-}
-
-static void
 test_overlay_pixbuf ()
 {
   GError *error = NULL;
@@ -85,10 +66,8 @@ test_overlay_pixbuf ()
   g_assert (gxr_overlay_is_valid (overlay));
 
   gxr_overlay_set_mouse_scale (overlay,
-                                  gdk_pixbuf_get_width (pixbuf),
-                                  gdk_pixbuf_get_height (pixbuf));
-
-  test_color (overlay);
+                               gdk_pixbuf_get_width (pixbuf),
+                               gdk_pixbuf_get_height (pixbuf));
 
   gxr_overlay_submit_texture (overlay, uploader, texture);
 
