@@ -53,6 +53,40 @@ _init_context (GxrAppType type)
   g_assert (gxr_context_init_session (context, gc));
   g_assert (gxr_context_is_valid (context));
 
+
+  if (gxr_context_get_api (context) == GXR_API_OPENVR)
+  {
+    if (!gxr_context_load_action_manifest (
+      context,
+      "xrdesktop.openvr",
+      "/res/bindings/openvr",
+      "actions.json",
+      "bindings_vive_controller.json",
+      "bindings_knuckles_controller.json",
+      NULL))
+    {
+      g_print ("Failed to load action bindings!\n");
+      return;
+    }
+  }
+  else
+  {
+    {
+      if (!gxr_context_load_action_manifest (
+        context,
+        "xrdesktop.openxr",
+        "/res/bindings/openxr",
+        "actions.json",
+        "bindings_khronos_simple_controller.json",
+        "bindings_valve_index_controller.json",
+        NULL))
+      {
+        g_print ("Failed to load action bindings!\n");
+        return;
+      }
+    }
+  }
+
   gboolean quit_completed = FALSE;
   g_signal_connect (context, "quit-event",
                     (GCallback) _system_quit_cb, &quit_completed);
