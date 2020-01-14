@@ -52,7 +52,8 @@ static void
 openvr_context_finalize (GObject *gobject)
 {
   VR_ShutdownInternal();
-  g_object_unref (functions);
+  if (functions)
+    g_object_unref (functions);
   G_OBJECT_CLASS (openvr_context_parent_class)->finalize (gobject);
 }
 
@@ -76,12 +77,15 @@ _vr_init (EVRApplicationType app_type)
   EVRInitError error;
   VR_InitInternal (&error, app_type);
 
-  if (error != EVRInitError_VRInitError_None) {
-    g_error ("Could not init OpenVR runtime: %s: %s\n",
-             VR_GetVRInitErrorAsSymbol (error),
-             VR_GetVRInitErrorAsEnglishDescription (error));
-    return FALSE;
-  }
+  if (error != EVRInitError_VRInitError_None)
+    {
+      if (error != EVRInitError_VRInitError_Init_NoServerForBackgroundApp)
+        g_error ("Could not init OpenVR runtime: %s: %s\n",
+                 VR_GetVRInitErrorAsSymbol (error),
+                 VR_GetVRInitErrorAsEnglishDescription (error));
+
+      return FALSE;
+    }
 
   if (functions == NULL || !G_IS_OBJECT (functions))
     {
@@ -337,7 +341,10 @@ _is_another_scene_running (GxrContext *context)
                " gxr_is_another_scene_running must be run before.");
       return FALSE;
     }
-  _init_runtime (context, GXR_APP_BACKGROUND);
+
+  /* runtime init will fail for background app when steamvr is not running. */
+  if (!_init_runtime (context, GXR_APP_BACKGROUND))
+    return FALSE;
 
   OpenVRFunctions *f = openvr_get_functions();
   /* if applications fntable is not loaded, SteamVR is probably not running. */
