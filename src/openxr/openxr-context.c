@@ -1360,12 +1360,6 @@ _new_action_set_from_url (GxrContext *context, gchar *url)
 }
 
 static gboolean
-_load_manifest (char *path)
-{
-  return TRUE;
-}
-
-static gboolean
 _load_action_manifest (GxrContext *self,
                        const char *cache_name,
                        const char *resource_path,
