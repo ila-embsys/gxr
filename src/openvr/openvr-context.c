@@ -8,7 +8,6 @@
 
 #include "openvr-context.h"
 
-#include <glib/gprintf.h>
 #include "openvr-wrapper.h"
 
 #include <gdk/gdk.h>
@@ -40,15 +39,6 @@ G_DEFINE_TYPE (OpenVRContext, openvr_context, GXR_TYPE_CONTEXT)
 /* Functions singleton */
 static OpenVRFunctions *functions = NULL;
 
-#define INIT_FN_TABLE(target, type) \
-{ \
-  intptr_t ptr = 0; \
-  gboolean ret = _init_fn_table (IVR##type##_Version, &ptr); \
-  if (!ret || ptr == 0) \
-    return false; \
-  target = (struct VR_IVR##type##_FnTable*) ptr; \
-}
-
 static void
 openvr_context_init (OpenVRContext *self)
 {
@@ -59,8 +49,7 @@ static void
 openvr_context_finalize (GObject *gobject)
 {
   VR_ShutdownInternal();
-  g_free (functions);
-  functions = NULL;
+  g_object_unref (functions);
   G_OBJECT_CLASS (openvr_context_parent_class)->finalize (gobject);
 }
 
@@ -70,58 +59,11 @@ openvr_context_new (void)
   return (OpenVRContext*) g_object_new (OPENVR_TYPE_CONTEXT, 0);
 }
 
-static gboolean
-_init_fn_table (const char *type, intptr_t *ret)
-{
-  EVRInitError error;
-  char fn_table_name[128];
-  g_sprintf (fn_table_name, "FnTable:%s", type);
-
-  *ret = VR_GetGenericInterface (fn_table_name, &error);
-
-  if (error != EVRInitError_VRInitError_None)
-    {
-      g_error ("VR_GetGenericInterface returned error %s: %s\n",
-               VR_GetVRInitErrorAsSymbol (error),
-               VR_GetVRInitErrorAsEnglishDescription (error));
-      return FALSE;
-    }
-
-  return TRUE;
-}
-
-static bool
-_init_function_tables ()
-{
-  INIT_FN_TABLE (functions->system, System)
-  INIT_FN_TABLE (functions->overlay, Overlay)
-  INIT_FN_TABLE (functions->compositor, Compositor)
-  INIT_FN_TABLE (functions->input, Input)
-  INIT_FN_TABLE (functions->model, RenderModels)
-  INIT_FN_TABLE (functions->applications, Applications)
-  return true;
-}
-
 OpenVRFunctions*
 openvr_get_functions (void)
 {
   if (functions == NULL)
-    {
-      functions = g_malloc (sizeof (OpenVRFunctions));
-      functions->system = NULL;
-      functions->overlay = NULL;
-      functions->compositor = NULL;
-      functions->input = NULL;
-      functions->model = NULL;
-      functions->applications = NULL;
-      if (!_init_function_tables())
-        {
-          g_error ("Could not init OpenVR function tables.\n");
-          g_free (functions);
-          functions = NULL;
-          return NULL;
-        }
-    }
+    g_error ("OpenVR function tables were not initialized correctly!\n");
   return functions;
 }
 
@@ -138,7 +80,21 @@ _vr_init (EVRApplicationType app_type)
     return FALSE;
   }
 
-  openvr_get_functions ();
+  if (functions == NULL || !G_IS_OBJECT (functions))
+    {
+      functions = openvr_functions_new ();
+      if (functions == NULL)
+        {
+          g_error ("Could not init OpenVR function tables.\n");
+          g_object_unref (functions);
+          functions = NULL;
+          return FALSE;
+        }
+    }
+  else
+    {
+      g_object_ref (functions);
+    }
 
   return TRUE;
 }
@@ -146,13 +102,8 @@ _vr_init (EVRApplicationType app_type)
 static gboolean
 _is_valid (GxrContext *context)
 {
-  (void) context;
-  return functions->system != NULL
-    && functions->overlay != NULL
-    && functions->compositor != NULL
-    && functions->input != NULL
-    && functions->model != NULL
-    && functions->applications != NULL;
+  OpenVRContext *self = OPENVR_CONTEXT (context);
+  return openvr_functions_is_valid (functions) && self->initialized;
 }
 
 gboolean
@@ -455,7 +406,7 @@ _init_runtime (GxrContext *context, GxrAppType type)
   if (!_vr_init (app_type))
     return FALSE;
 
-  if (!_is_valid (GXR_CONTEXT (self)))
+  if (!openvr_functions_is_valid (functions))
   {
     g_error ("Could not load OpenVR function pointers.\n");
     return FALSE;

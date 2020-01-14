@@ -17,6 +17,7 @@
 #include "openvr-context.h"
 #include "openvr-math.h"
 #include "openvr-compositor.h"
+#include "openvr-functions.h"
 
 #define OVERLAY_CHECK_ERROR(fun, res) \
 { \

@@ -27,7 +27,7 @@ gxr_headers = [
   'gxr-overlay-model.h',
   'gxr-manifest.h',
   'gxr-backend.h'
-]
+]#i
 
 version_split = meson.project_version().split('.')
 MAJOR_VERSION = version_split[0]
@@ -93,7 +93,8 @@ if openvr_dep.found()
       'openvr/openvr-action.c',
       'openvr/openvr-action-set.c',
       'openvr/openvr-model.c',
-      'openvr/openvr-math.c'
+      'openvr/openvr-math.c',
+      'openvr/openvr-functions.c'
     ],
     dependencies: gxr_deps + [
       openvr_dep,
