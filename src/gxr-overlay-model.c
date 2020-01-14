@@ -7,13 +7,13 @@
 
 #include "gxr-overlay-model.h"
 
-typedef struct  _GxrOverlayModelPrivate
+struct  _GxrOverlayModel
 {
   GObject parent;
   GxrOverlay *overlay;
-} GxrOverlayModelPrivate;
+};
 
-G_DEFINE_TYPE_WITH_PRIVATE (GxrOverlayModel, gxr_overlay_model, G_TYPE_OBJECT)
+G_DEFINE_TYPE (GxrOverlayModel, gxr_overlay_model, G_TYPE_OBJECT)
 
 static void
 gxr_overlay_model_finalize (GObject *gobject);
@@ -22,7 +22,6 @@ static void
 gxr_overlay_model_class_init (GxrOverlayModelClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
-
   object_class->finalize = gxr_overlay_model_finalize;
 }
 
@@ -58,8 +57,7 @@ gxr_overlay_model_new (GxrContext *context, gchar* key, gchar* name)
   GxrOverlayModel *self =
     (GxrOverlayModel*) g_object_new (GXR_TYPE_OVERLAY_MODEL, 0);
 
-  GxrOverlayModelPrivate *priv = gxr_overlay_model_get_instance_private (self);
-  priv->overlay = gxr_overlay_new (context);
+  self->overlay = gxr_overlay_new (context);
 
   if (!gxr_overlay_model_initialize (self, key, name))
     return NULL;
@@ -76,13 +74,10 @@ gxr_overlay_model_new (GxrContext *context, gchar* key, gchar* name)
 gboolean
 gxr_overlay_model_initialize (GxrOverlayModel *self, gchar* key, gchar* name)
 {
-  GxrOverlayModelPrivate *priv = gxr_overlay_model_get_instance_private (self);
-  GxrOverlay *overlay = priv->overlay;
-
-  if (!gxr_overlay_create (overlay, key, name))
+  if (!gxr_overlay_create (self->overlay, key, name))
     return FALSE;
 
-  if (!gxr_overlay_is_valid (overlay))
+  if (!gxr_overlay_is_valid (self->overlay))
     {
       g_printerr ("Model overlay %s %s unavailable.\n", key, name);
       return FALSE;
@@ -96,10 +91,10 @@ gxr_overlay_model_initialize (GxrOverlayModel *self, gchar* key, gchar* name)
    * Overlay needs a texture to be set to show model
    * See https://github.com/ValveSoftware/openvr/issues/496
    */
-  gxr_overlay_set_gdk_pixbuf_raw (overlay, pixbuf);
+  gxr_overlay_set_gdk_pixbuf_raw (self->overlay, pixbuf);
   g_object_unref (pixbuf);
 
-  if (!gxr_overlay_set_alpha (overlay, 0.0f))
+  if (!gxr_overlay_set_alpha (self->overlay, 0.0f))
     return FALSE;
 
   return TRUE;
@@ -109,8 +104,7 @@ static void
 gxr_overlay_model_finalize (GObject *gobject)
 {
   GxrOverlayModel *self = GXR_OVERLAY_MODEL (gobject);
-  GxrOverlayModelPrivate *priv = gxr_overlay_model_get_instance_private (self);
-  g_object_unref (priv->overlay);
+  g_object_unref (self->overlay);
   G_OBJECT_CLASS (gxr_overlay_model_parent_class)->finalize (gobject);
 }
 
@@ -122,22 +116,19 @@ gboolean
 gxr_overlay_model_set_model (GxrOverlayModel *self, gchar *name,
                              graphene_vec4_t *color)
 {
-  GxrOverlayModelPrivate *priv = gxr_overlay_model_get_instance_private (self);
-  return gxr_overlay_set_model (priv->overlay, name, color);
+  return gxr_overlay_set_model (self->overlay, name, color);
 }
 
 gboolean
 gxr_overlay_model_get_model (GxrOverlayModel *self, gchar *name,
                              graphene_vec4_t *color, uint32_t *id)
 {
-  GxrOverlayModelPrivate *priv = gxr_overlay_model_get_instance_private (self);
-  gxr_overlay_get_model (priv->overlay, name, color, id);
+  gxr_overlay_get_model (self->overlay, name, color, id);
   return TRUE;
 }
 
 GxrOverlay*
 gxr_overlay_model_get_overlay (GxrOverlayModel *self)
 {
-  GxrOverlayModelPrivate *priv = gxr_overlay_model_get_instance_private (self);
-  return priv->overlay;
+  return self->overlay;
 }

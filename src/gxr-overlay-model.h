@@ -17,20 +17,8 @@
 G_BEGIN_DECLS
 
 #define GXR_TYPE_OVERLAY_MODEL gxr_overlay_model_get_type()
-G_DECLARE_DERIVABLE_TYPE (GxrOverlayModel, gxr_overlay_model, GXR,
-                          OVERLAY_MODEL, GObject)
-
-/**
- * GxrOverlayModelClass:
- * @parent: The object class structure needs to be the first
- *   element in the widget class structure in order for the class mechanism
- *   to work correctly. This allows a GxrOverlayModelClass pointer to be cast to
- *   a GxrOverlayClass pointer.
- */
-struct _GxrOverlayModelClass
-{
-  GObjectClass parent;
-};
+G_DECLARE_FINAL_TYPE (GxrOverlayModel, gxr_overlay_model, GXR,
+                      OVERLAY_MODEL, GObject)
 
 GxrOverlayModel *gxr_overlay_model_new (GxrContext *context,
                                         gchar* key, gchar* name);
