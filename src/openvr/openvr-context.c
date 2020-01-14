@@ -32,6 +32,8 @@ struct _OpenVRContext
 
   graphene_matrix_t last_mat_head_pose;
   graphene_matrix_t mat_eye_pos[2];
+
+  gboolean initialized;
 };
 
 G_DEFINE_TYPE (OpenVRContext, openvr_context, GXR_TYPE_CONTEXT)
@@ -43,6 +45,7 @@ static void
 openvr_context_init (OpenVRContext *self)
 {
   graphene_matrix_init_identity (&self->last_mat_head_pose);
+  self->initialized = FALSE;
 }
 
 static void
@@ -327,20 +330,21 @@ _init_runtime (GxrContext *context, GxrAppType type);
 static gboolean
 _is_another_scene_running (GxrContext *context)
 {
-  (void) context;
-  OpenVRContext *ctx = openvr_context_new ();
+  OpenVRContext *self = OPENVR_CONTEXT (context);
+  if (self->initialized)
+    {
+      g_error ("OpenVR context was initialized before."
+               " gxr_is_another_scene_running must be run before.");
+      return FALSE;
+    }
+  _init_runtime (context, GXR_APP_BACKGROUND);
+
   OpenVRFunctions *f = openvr_get_functions();
-
-  _init_runtime (GXR_CONTEXT (ctx), GXR_APP_BACKGROUND);
-
   /* if applications fntable is not loaded, SteamVR is probably not running. */
   if (f->applications == NULL)
     return FALSE;
 
   uint32_t pid = f->applications->GetCurrentSceneProcessId ();
-
-  g_object_unref (ctx);
-
   return pid != 0;
 }
 
@@ -411,6 +415,8 @@ _init_runtime (GxrContext *context, GxrAppType type)
     g_error ("Could not load OpenVR function pointers.\n");
     return FALSE;
   }
+
+  self->initialized = TRUE;
 
   if (type != GXR_APP_BACKGROUND)
     for (uint32_t eye = 0; eye < 2; eye++)
