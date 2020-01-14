@@ -158,6 +158,9 @@ struct _GxrContextClass
 
   GxrOverlay *
   (*new_overlay) (GxrContext *self);
+
+  void
+  (*request_quit) (GxrContext *self);
 };
 
 GxrContext *gxr_context_get_instance (void);
@@ -284,6 +287,9 @@ gxr_context_load_action_manifest (GxrContext *self,
                                   const char *manifest_name,
                                   const char *first_binding,
                                   ...);
+
+void
+gxr_context_request_quit (GxrContext *self);
 
 G_END_DECLS
 

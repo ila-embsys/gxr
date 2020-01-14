@@ -1051,6 +1051,11 @@ _poll_event (GxrContext *context)
               quit_event->reason = GXR_QUIT_SHUTDOWN;
               g_debug ("Event: sending VR_QUIT_SHUTDOWN signal\n");
               gxr_context_emit_quit (context, quit_event);
+
+              xrEndSession (self->session);
+
+              /* don't poll further events, leave them to "next" session */
+              return;
             }
           break;
         }
@@ -1445,6 +1450,14 @@ openxr_context_get_manifests (OpenXRContext *self)
 }
 
 static void
+_request_quit (GxrContext *context)
+{
+  OpenXRContext *self = OPENXR_CONTEXT (context);
+  /* _poll_event will send quit event once session is in STOPPING state */
+  xrRequestExitSession (self->session);
+}
+
+static void
 openxr_context_class_init (OpenXRContextClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
@@ -1482,4 +1495,5 @@ openxr_context_class_init (OpenXRContextClass *klass)
   gxr_context_class->load_action_manifest = _load_action_manifest;
   gxr_context_class->new_action_from_type_url = _new_action_from_type_url;
   gxr_context_class->new_overlay = _new_overlay;
+  gxr_context_class->request_quit = _request_quit;
 }

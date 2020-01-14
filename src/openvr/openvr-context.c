@@ -718,6 +718,15 @@ _new_overlay (GxrContext *self)
 }
 
 static void
+_request_quit (GxrContext *context)
+{
+  GxrQuitEvent *event = g_malloc (sizeof (GxrQuitEvent));
+  event->reason = GXR_QUIT_SHUTDOWN;
+  g_debug ("Event: sending VR_QUIT_SHUTDOWN signal\n");
+  gxr_context_emit_quit (context, event);
+}
+
+static void
 openvr_context_class_init (OpenVRContextClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
@@ -755,4 +764,5 @@ openvr_context_class_init (OpenVRContextClass *klass)
   gxr_context_class->load_action_manifest = _load_action_manifest;
   gxr_context_class->new_action_from_type_url = _new_action_from_type_url;
   gxr_context_class->new_overlay = _new_overlay;
+  gxr_context_class->request_quit = _request_quit;
 }

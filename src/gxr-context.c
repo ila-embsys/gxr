@@ -551,6 +551,15 @@ gxr_context_inititalize (GxrContext   *self,
 }
 
 void
+gxr_context_request_quit (GxrContext *self)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->request_quit  == NULL)
+    return;
+  klass->request_quit (self);
+}
+
+void
 gxr_context_set_keyboard_transform (GxrContext        *self,
                                     graphene_matrix_t *transform)
 {
