@@ -5,7 +5,6 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "openvr-interface.h"
 #include "openvr-action-set.h"
 #include "openvr-action-set.h"
 

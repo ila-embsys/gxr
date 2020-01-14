@@ -10,7 +10,6 @@
 #include "gxr-types.h"
 #include "gxr-io.h"
 
-#include "openvr-interface.h"
 #include "openvr-wrapper.h"
 #include "openvr-math.h"
 #include "openvr-action.h"

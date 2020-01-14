@@ -16,7 +16,6 @@
 #include <graphene.h>
 
 #include "gxr-action.h"
-#include "openvr-interface.h"
 #include "openvr-action-set.h"
 
 G_BEGIN_DECLS

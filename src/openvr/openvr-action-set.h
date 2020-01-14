@@ -21,7 +21,7 @@
 
 #include "openvr-action-set.h"
 #include "openvr-wrapper.h"
-#include "openvr-interface.h"
+#include "openvr-context.h"
 
 G_BEGIN_DECLS
 

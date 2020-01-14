@@ -7,7 +7,6 @@
 
 #include <openxr/openxr.h>
 
-#include "openxr-interface.h"
 #include "openxr-action-set.h"
 #include "openxr-action.h"
 #include "openxr-context.h"

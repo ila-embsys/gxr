@@ -19,7 +19,7 @@
 #include "gxr-action-set.h"
 #include "gxr-enums.h"
 
-#include "openxr-interface.h"
+#include "openxr-context.h"
 
 G_BEGIN_DECLS
 

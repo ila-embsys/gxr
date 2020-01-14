@@ -16,7 +16,8 @@
 #include <graphene.h>
 #include <openxr/openxr.h>
 
-#include "openxr-interface.h"
+#include "gxr-action.h"
+#include "openxr-context.h"
 #include "openxr-action-set.h"
 
 G_BEGIN_DECLS

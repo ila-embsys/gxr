@@ -20,12 +20,15 @@
 #include "gxr-enums.h"
 #include "gxr-context.h"
 
-#include "openvr-interface.h"
-
 #include "openvr-wrapper.h"
 #include "openvr-functions.h"
 
 G_BEGIN_DECLS
+
+#define OPENVR_TYPE_CONTEXT openvr_context_get_type()
+G_DECLARE_FINAL_TYPE (OpenVRContext, openvr_context,
+                      OPENVR, CONTEXT, GxrContext)
+OpenVRContext *openvr_context_new (void);
 
 gboolean
 openvr_context_is_installed (void);
