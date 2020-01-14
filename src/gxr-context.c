@@ -169,6 +169,7 @@ gxr_context_finalize (GObject *gobject)
 {
   GxrContext *self = GXR_CONTEXT (gobject);
   (void) self;
+  singleton = NULL;
   G_OBJECT_CLASS (gxr_context_parent_class)->finalize (gobject);
 }
 
