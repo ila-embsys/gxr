@@ -9,10 +9,6 @@
 #ifndef GXR_OPENXR_CONTEXT_H_
 #define GXR_OPENXR_CONTEXT_H_
 
-#if !defined (GXR_INSIDE) && !defined (GXR_COMPILATION)
-#error "Only <gxr.h> can be included directly."
-#endif
-
 #include <glib.h>
 #include <stdbool.h>
 #include <glib-object.h>

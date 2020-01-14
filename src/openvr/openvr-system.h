@@ -8,10 +8,6 @@
 #ifndef GXR_SYSTEM_H_
 #define GXR_SYSTEM_H_
 
-#if !defined (GXR_INSIDE) && !defined (GXR_COMPILATION)
-#error "Only <gxr.h> can be included directly."
-#endif
-
 #include <stdint.h>
 
 #include <glib.h>

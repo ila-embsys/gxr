@@ -8,10 +8,6 @@
 #ifndef GXR_OPENVR_ACTION_H_
 #define GXR_OPENVR_ACTION_H_
 
-#if !defined (GXR_INSIDE) && !defined (GXR_COMPILATION)
-#error "Only <gxr.h> can be included directly."
-#endif
-
 #include <glib-object.h>
 #include <graphene.h>
 

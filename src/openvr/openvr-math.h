@@ -8,10 +8,6 @@
 #ifndef openvr_math_H_
 #define openvr_math_H_
 
-#if !defined (GXR_INSIDE) && !defined (GXR_COMPILATION)
-#error "Only <gxr.h> can be included directly."
-#endif
-
 #include "openvr-wrapper.h"
 #include <graphene.h>
 #include <glib.h>

@@ -8,10 +8,6 @@
 #ifndef GXR_OPENXR_ACTION_SET_H_
 #define GXR_OPENXR_ACTION_SET_H_
 
-#if !defined (GXR_INSIDE) && !defined (GXR_COMPILATION)
-#error "Only <gxr.h> can be included directly."
-#endif
-
 #include <glib-object.h>
 #include <stdint.h>
 #include <openxr/openxr.h>
