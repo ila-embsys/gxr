@@ -22,8 +22,8 @@
 { \
   if (res != EVROverlayError_VROverlayError_None) \
     { \
-      g_printerr ("ERROR: " fun ": failed with %s in %s:%d\n", \
-                  f->overlay->GetOverlayErrorNameFromEnum (res), __FILE__, __LINE__); \
+      g_error ("ERROR: " fun ": failed with %s in %s:%d\n", \
+               f->overlay->GetOverlayErrorNameFromEnum (res), __FILE__, __LINE__); \
       return FALSE; \
     } \
 }

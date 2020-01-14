@@ -81,9 +81,9 @@ _init_fn_table (const char *type, intptr_t *ret)
 
   if (error != EVRInitError_VRInitError_None)
     {
-      g_printerr ("VR_GetGenericInterface returned error %s: %s\n",
-                  VR_GetVRInitErrorAsSymbol (error),
-                  VR_GetVRInitErrorAsEnglishDescription (error));
+      g_error ("VR_GetGenericInterface returned error %s: %s\n",
+               VR_GetVRInitErrorAsSymbol (error),
+               VR_GetVRInitErrorAsEnglishDescription (error));
       return FALSE;
     }
 
@@ -116,7 +116,7 @@ openvr_get_functions (void)
       functions->applications = NULL;
       if (!_init_function_tables())
         {
-          g_printerr ("ERROR: Could not init OpenVR function tables.\n");
+          g_error ("Could not init OpenVR function tables.\n");
           g_free (functions);
           functions = NULL;
           return NULL;
@@ -132,9 +132,9 @@ _vr_init (EVRApplicationType app_type)
   VR_InitInternal (&error, app_type);
 
   if (error != EVRInitError_VRInitError_None) {
-    g_printerr ("Could not init OpenVR runtime: %s: %s\n",
-                VR_GetVRInitErrorAsSymbol (error),
-                VR_GetVRInitErrorAsEnglishDescription (error));
+    g_error ("Could not init OpenVR runtime: %s: %s\n",
+             VR_GetVRInitErrorAsSymbol (error),
+             VR_GetVRInitErrorAsEnglishDescription (error));
     return FALSE;
   }
 
@@ -430,7 +430,7 @@ _init_runtime (GxrContext *context, GxrAppType type)
   OpenVRContext *self = OPENVR_CONTEXT (context);
   if (!openvr_context_is_installed ())
   {
-    g_printerr ("VR Runtime not installed.\n");
+    g_error ("VR Runtime not installed.\n");
     return FALSE;
   }
 
@@ -457,7 +457,7 @@ _init_runtime (GxrContext *context, GxrAppType type)
 
   if (!_is_valid (GXR_CONTEXT (self)))
   {
-    g_printerr ("Could not load OpenVR function pointers.\n");
+    g_error ("Could not load OpenVR function pointers.\n");
     return FALSE;
   }
 
