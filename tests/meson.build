@@ -1,10 +1,10 @@
 test_overlay_pixbuf = executable(
-  'test_overlay_pixbuf', ['test_overlay_pixbuf.c', test_resources],
+  'test_overlay', ['test_overlay.c', test_resources],
   dependencies: gxr_deps,
   link_with: gxr_lib,
   include_directories: gxr_inc,
   install: false)
-test('test_overlay_pixbuf',
+test('test_overlay',
      test_overlay_pixbuf,
      suite: ['xr'],
      is_parallel : false)
