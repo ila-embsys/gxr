@@ -71,9 +71,20 @@ _init_context (GxrAppType type)
   g_print ("Exit completed\n");
 }
 
+static void
+_test_scene_available (void)
+{
+  GxrContext* gxr_context = gxr_context_new ();
+  gboolean scene_available =
+    !gxr_context_is_another_scene_running (gxr_context);
+  g_print ("Scene available: %d\n", scene_available);
+  g_object_unref (gxr_context);
+}
+
 int
 main ()
 {
+  _test_scene_available ();
   _init_context (GXR_APP_SCENE);
   _init_context (GXR_APP_OVERLAY);
   gxr_backend_shutdown ();
