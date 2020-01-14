@@ -717,7 +717,7 @@ openxr_context_finalize (GObject *gobject)
 {
   OpenXRContext *self = OPENXR_CONTEXT (gobject);
   openxr_context_cleanup (self);
-  g_slist_free_full (self->manifests, g_free);
+  g_slist_free_full (self->manifests, g_object_unref);
   G_OBJECT_CLASS (openxr_context_parent_class)->finalize (gobject);
 }
 
