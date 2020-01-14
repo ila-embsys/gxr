@@ -48,7 +48,7 @@ _create (GxrOverlay *overlay, gchar* key, gchar* name)
   (void) overlay;
   (void) key;
   (void) name;
-  g_warning ("OpenXR overlays are not implemented.\n");
+  g_print ("stub: OpenXR overlays are not implemented.\n");
   return TRUE;
 }
 
