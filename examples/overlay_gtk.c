@@ -47,7 +47,7 @@ _damage_cb (GtkWidget *widget, GdkEventExpose *event, GxrOverlay *overlay)
                                                        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                                                        true);
 
-    gxr_overlay_submit_texture (overlay, client, texture);
+    gxr_overlay_submit_texture (overlay, texture);
 
     g_object_unref (pixbuf);
   } else {

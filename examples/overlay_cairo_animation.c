@@ -118,8 +118,7 @@ render_callback (gpointer data)
                                         VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
   cairo_surface_destroy (surface);
-  gxr_overlay_submit_texture (context->overlay, context->uploader,
-                                 context->texture);
+  gxr_overlay_submit_texture (context->overlay, context->texture);
 
   return TRUE;
 }

@@ -110,7 +110,7 @@ create_overlay ()
   gxr_overlay_set_transform_absolute (overlay, &transform);
 
   gint64 start = g_get_monotonic_time ();
-  gxr_overlay_submit_texture (overlay, client, gk_texture);
+  gxr_overlay_submit_texture (overlay, gk_texture);
   gint64 end = g_get_monotonic_time ();
   g_print ("Submit frame took %f ms\n",
            (end - start) / (1000.));
@@ -145,8 +145,7 @@ change_callback ()
   glTexSubImage2D (GL_TEXTURE_2D, 0 ,0, 0, (GLsizei)width, (GLsizei)height,
                    GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)rgb);
 
-  GulkanClient* client = gxr_context_get_gulkan (context);
-  gxr_overlay_submit_texture (overlay, client, gk_texture);
+  gxr_overlay_submit_texture (overlay, gk_texture);
 
   return TRUE;
 }

@@ -64,7 +64,7 @@ test_overlay_pixbuf ()
                                gdk_pixbuf_get_width (pixbuf),
                                gdk_pixbuf_get_height (pixbuf));
 
-  gxr_overlay_submit_texture (overlay, gc, texture);
+  gxr_overlay_submit_texture (overlay, texture);
 
   g_object_unref (pixbuf);
 }

@@ -151,7 +151,7 @@ test_cat_overlay ()
                                   gdk_pixbuf_get_width (pixbuf),
                                   gdk_pixbuf_get_height (pixbuf));
 
-  gxr_overlay_submit_texture (overlay, gc, texture);
+  gxr_overlay_submit_texture (overlay, texture);
 
   graphene_matrix_t transform;
   graphene_point3d_t pos =

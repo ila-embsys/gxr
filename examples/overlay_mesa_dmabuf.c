@@ -110,7 +110,7 @@ create_overlay ()
   gxr_overlay_set_transform_absolute (overlay, &transform);
 
   gint64 start = g_get_monotonic_time ();
-  gxr_overlay_submit_texture (overlay, client, texture);
+  gxr_overlay_submit_texture (overlay, texture);
   gint64 end = g_get_monotonic_time ();
   g_print ("Submit frame took %f ms\n",
            (end - start) / (1000.));
@@ -133,8 +133,7 @@ overlay_change_callback ()
   if (!overlay)
     return FALSE;
 
-  GulkanClient* gc = gxr_context_get_gulkan (context);
-  gxr_overlay_submit_texture (overlay, gc, texture);
+  gxr_overlay_submit_texture (overlay, texture);
 
   return TRUE;
 }

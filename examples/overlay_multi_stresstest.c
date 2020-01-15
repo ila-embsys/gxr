@@ -98,7 +98,7 @@ timeout_callback (gpointer data)
                                                   surface,
                                                   VK_FORMAT_R8G8B8A8_UNORM,
                                                   VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-  gxr_overlay_submit_texture (overlay, gc, n);
+  gxr_overlay_submit_texture (overlay, n);
 
   if (self->textures[en->i] != NULL)
     {

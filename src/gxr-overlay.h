@@ -238,8 +238,7 @@ gxr_overlay_get_model (GxrOverlay *self, gchar *name,
                        graphene_vec4_t *color, uint32_t *id);
 
 bool
-gxr_overlay_submit_texture (GxrOverlay *self,
-                            GulkanClient  *client,
+gxr_overlay_submit_texture (GxrOverlay    *self,
                             GulkanTexture *texture);
 
 gboolean

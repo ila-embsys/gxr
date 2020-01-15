@@ -80,8 +80,9 @@ _press_cb (GxrOverlay  *overlay,
 
 static void
 _show_cb (GxrOverlay *overlay,
-          gpointer      _client)
+          gpointer    unused)
 {
+  (void) unused;
   g_print ("show\n");
 
   /* skip rendering if the overlay isn't available or visible */
@@ -91,8 +92,7 @@ _show_cb (GxrOverlay *overlay,
   if (!gxr_overlay_is_valid (overlay) || is_invisible)
     return;
 
-  GulkanClient *client = (GulkanClient*) _client;
-  gxr_overlay_submit_texture (overlay, client, texture);
+  gxr_overlay_submit_texture (overlay, texture);
 }
 
 static void
@@ -163,12 +163,12 @@ test_cat_overlay ()
 
   gxr_overlay_get_transform_absolute (overlay, &translation);
 
-  gxr_overlay_submit_texture (overlay, client, texture);
-  gxr_overlay_submit_texture (overlay2, client, texture);
+  gxr_overlay_submit_texture (overlay, texture);
+  gxr_overlay_submit_texture (overlay2, texture);
 
   /* connect glib callbacks */
   g_signal_connect (overlay, "button-press-event", (GCallback) _press_cb, loop);
-  g_signal_connect (overlay, "show", (GCallback) _show_cb, client);
+  g_signal_connect (overlay, "show", (GCallback) _show_cb, NULL);
   g_signal_connect (overlay, "destroy", (GCallback) _destroy_cb, loop);
 
   g_timeout_add (20, timeout_callback, overlay);

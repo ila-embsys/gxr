@@ -573,12 +573,14 @@ gxr_overlay_get_model (GxrOverlay *self, gchar *name,
 
 bool
 gxr_overlay_submit_texture (GxrOverlay    *self,
-                            GulkanClient  *client,
                             GulkanTexture *texture)
 {
   GxrOverlayClass *klass = GXR_OVERLAY_GET_CLASS (self);
   if (klass->submit_texture == NULL)
     return FALSE;
+
+  GxrOverlayPrivate *priv = gxr_overlay_get_instance_private (self);
+  GulkanClient *client = gxr_context_get_gulkan (priv->context);
   return klass->submit_texture (self, client, texture);
 }
 

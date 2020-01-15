@@ -68,7 +68,7 @@ _damage_cb (GtkWidget      *widget,
       gulkan_client_upload_pixbuf (client, self->texture, pixbuf,
                                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
-    gxr_overlay_submit_texture (self->overlay, client, self->texture);
+    gxr_overlay_submit_texture (self->overlay, self->texture);
 
     g_object_unref (pixbuf);
   } else {

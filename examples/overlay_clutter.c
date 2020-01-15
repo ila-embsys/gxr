@@ -118,7 +118,7 @@ repaint_cb (gpointer user_data)
   gulkan_client_upload_pixels (client, texture, pixels,size,
                                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
-  gxr_overlay_submit_texture (data->overlay, client, texture);
+  gxr_overlay_submit_texture (data->overlay, texture);
 
   return TRUE;
 }
