@@ -31,9 +31,6 @@ gboolean
 gxr_overlay_model_get_model (GxrOverlayModel *self, gchar *name,
                              graphene_vec4_t *color, uint32_t *id);
 
-gboolean
-gxr_overlay_model_initialize (GxrOverlayModel *self, gchar* key, gchar* name);
-
 GxrOverlay*
 gxr_overlay_model_get_overlay (GxrOverlayModel *self);
 

@@ -59,33 +59,18 @@ gxr_overlay_model_new (GxrContext *context, gchar* key, gchar* name)
 
   self->overlay = gxr_overlay_new (context);
 
-  if (!gxr_overlay_model_initialize (self, key, name))
-    return NULL;
-
-  return self;
-}
-
-/*
- * TODO: Not sure how the parent _new constructor can be shared with
- *       GxrOverlayPointer. Casting to the child class is not allowed.
- *       As a workaround I am introducting this initialization method.
- */
-
-gboolean
-gxr_overlay_model_initialize (GxrOverlayModel *self, gchar* key, gchar* name)
-{
   if (!gxr_overlay_create (self->overlay, key, name))
-    return FALSE;
+    return NULL;
 
   if (!gxr_overlay_is_valid (self->overlay))
     {
       g_printerr ("Model overlay %s %s unavailable.\n", key, name);
-      return FALSE;
+      return NULL;
     }
 
   GdkPixbuf *pixbuf = _create_empty_pixbuf (10, 10);
   if (pixbuf == NULL)
-    return FALSE;
+    return NULL;
 
   /*
    * Overlay needs a texture to be set to show model
@@ -95,9 +80,9 @@ gxr_overlay_model_initialize (GxrOverlayModel *self, gchar* key, gchar* name)
   g_object_unref (pixbuf);
 
   if (!gxr_overlay_set_alpha (self->overlay, 0.0f))
-    return FALSE;
+    return NULL;
 
-  return TRUE;
+  return self;
 }
 
 static void
