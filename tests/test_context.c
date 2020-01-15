@@ -11,6 +11,16 @@
 
 #define ENUM_TO_STR(r) case r: return #r
 
+static void
+_test_scene_available (void)
+{
+  GxrContext* gxr_context = gxr_context_new ();
+  gboolean scene_available =
+    !gxr_context_is_another_scene_running (gxr_context);
+  g_print ("Scene available: %d\n", scene_available);
+  g_object_unref (gxr_context);
+}
+
 static const gchar*
 gxr_api_string (GxrApi v)
 {
@@ -21,6 +31,24 @@ gxr_api_string (GxrApi v)
       default:
         return "UNKNOWN API";
     }
+}
+
+static void
+_test_init_context (GxrAppType type)
+{
+  GxrContext *context = gxr_context_new ();
+  g_assert_nonnull (context);
+
+  GxrApi api = gxr_context_get_api (context);
+  g_print ("Using API: %s\n", gxr_api_string (api));
+
+  GulkanClient *gc = gulkan_client_new ();
+  g_assert_nonnull (gc);
+
+  g_assert (gxr_context_inititalize (context, gc, type));
+  g_assert (gxr_context_is_valid (context));
+
+  g_object_unref (context);
 }
 
 static void
@@ -37,20 +65,15 @@ _system_quit_cb (GxrContext   *context,
 }
 
 static void
-_init_context (GxrAppType type)
+_test_quit_event (GxrAppType type)
 {
   GxrContext *context = gxr_context_new ();
   g_assert_nonnull (context);
 
-
-  GxrApi api = gxr_context_get_api (context);
-  g_print ("Using API: %s\n", gxr_api_string (api));
-
   GulkanClient *gc = gulkan_client_new ();
+  g_assert_nonnull (gc);
 
-  g_assert (gxr_context_init_runtime (context, type));
-  g_assert (gxr_context_init_gulkan (context, gc));
-  g_assert (gxr_context_init_session (context, gc));
+  g_assert (gxr_context_inititalize (context, gc, type));
   g_assert (gxr_context_is_valid (context));
 
   gboolean quit_completed = FALSE;
@@ -71,22 +94,13 @@ _init_context (GxrAppType type)
   g_print ("Exit completed\n");
 }
 
-static void
-_test_scene_available (void)
-{
-  GxrContext* gxr_context = gxr_context_new ();
-  gboolean scene_available =
-    !gxr_context_is_another_scene_running (gxr_context);
-  g_print ("Scene available: %d\n", scene_available);
-  g_object_unref (gxr_context);
-}
-
 int
 main ()
 {
   _test_scene_available ();
-  _init_context (GXR_APP_SCENE);
-  _init_context (GXR_APP_OVERLAY);
+  _test_init_context (GXR_APP_SCENE);
+  _test_init_context (GXR_APP_OVERLAY);
+  _test_quit_event (GXR_APP_SCENE);
   gxr_backend_shutdown ();
   return 0;
 }
