@@ -20,8 +20,7 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (GxrOverlayModel, gxr_overlay_model, GXR,
                       OVERLAY_MODEL, GObject)
 
-GxrOverlayModel *gxr_overlay_model_new (GxrContext *context,
-                                        gchar* key, gchar* name);
+GxrOverlayModel *gxr_overlay_model_new (GxrContext *context, gchar* key);
 
 gboolean
 gxr_overlay_model_set_model (GxrOverlayModel *self, gchar *name,

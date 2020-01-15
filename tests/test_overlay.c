@@ -58,10 +58,8 @@ test_overlay_pixbuf ()
                                            false);
   g_assert_nonnull (texture);
 
-  GxrOverlay *overlay = gxr_overlay_new (context);
+  GxrOverlay *overlay = gxr_overlay_new (context, "test.pixbuf");
   g_assert_nonnull (overlay);
-
-  gxr_overlay_create (overlay, "test.pixbuf", "GDK pixbuf");
 
   g_assert (gxr_overlay_is_valid (overlay));
 

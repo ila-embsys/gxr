@@ -52,19 +52,15 @@ _create_empty_pixbuf (uint32_t width, uint32_t height)
 }
 
 GxrOverlayModel *
-gxr_overlay_model_new (GxrContext *context, gchar* key, gchar* name)
+gxr_overlay_model_new (GxrContext *context, gchar* key)
 {
   GxrOverlayModel *self =
     (GxrOverlayModel*) g_object_new (GXR_TYPE_OVERLAY_MODEL, 0);
 
-  self->overlay = gxr_overlay_new (context);
-
-  if (!gxr_overlay_create (self->overlay, key, name))
-    return NULL;
-
+  self->overlay = gxr_overlay_new (context, key);
   if (!gxr_overlay_is_valid (self->overlay))
     {
-      g_printerr ("Model overlay %s %s unavailable.\n", key, name);
+      g_printerr ("Model overlay %s unavailable.\n", key);
       return NULL;
     }
 

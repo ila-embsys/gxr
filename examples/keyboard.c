@@ -225,10 +225,8 @@ _init_gtk (Example *self)
 static gboolean
 _create_overlay (Example *self)
 {
-  self->overlay = gxr_overlay_new (self->context);
-  gxr_overlay_create_width (self->overlay,
-                            "gxr.example.keyboard",
-                            "Keyboard Test", 5.0);
+  self->overlay = gxr_overlay_new_width (self->context,
+                                         "gxr.example.keyboard", 5.0);
 
   if (!gxr_overlay_is_valid (self->overlay))
   {

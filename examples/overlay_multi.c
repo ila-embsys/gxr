@@ -128,18 +128,14 @@ test_cat_overlay ()
                                                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                                                    true);
 
-  GxrOverlay *overlay = gxr_overlay_new (context);
-  gxr_overlay_create (overlay, "vulkan.cat", "Vulkan Cat");
-
+  GxrOverlay *overlay = gxr_overlay_new (context, "vulkan.cat");
   if (!gxr_overlay_is_valid (overlay))
   {
     g_printerr ("Overlay 1 handle invalid.\n");
     return -1;
   }
 
-  GxrOverlay *overlay2 = gxr_overlay_new (context);
-  gxr_overlay_create (overlay2, "vulkan.cat2", "Another Vulkan Cat");
-
+  GxrOverlay *overlay2 = gxr_overlay_new (context, "vulkan.cat2");
   if (!gxr_overlay_is_valid (overlay2))
   {
     g_printerr ("Overlay 2 handle invalid.\n");

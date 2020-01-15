@@ -93,10 +93,7 @@ create_overlay ()
       g_printerr ("Unable to transfer layout.\n");
     }
 
-
-  overlay = gxr_overlay_new (context);
-  gxr_overlay_create_width (overlay, "vulkan.dmabuf", "Vulkan DMABUF", 2.0);
-
+  overlay = gxr_overlay_new_width (context, "vulkan.dmabuf", 2.0);
   if (!gxr_overlay_is_valid (overlay))
     {
       g_printerr ("Overlay unavailable.\n");

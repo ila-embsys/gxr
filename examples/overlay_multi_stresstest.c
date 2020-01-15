@@ -159,11 +159,9 @@ int main () {
   for (int i = 0; i < OVERLAY_NUM; i++)
     {
       ex.textures[i] = NULL;
-      ex.overlays[i] = gxr_overlay_new (context);
       char key[16];
       snprintf (key, 16, "test-%d", i);
-      gxr_overlay_create (ex.overlays[i], key, "Gradient");
-
+      ex.overlays[i] = gxr_overlay_new (context, key);
       if (!gxr_overlay_is_valid (ex.overlays[i]))
       {
         fprintf (stderr, "Overlay unavailable.\n");

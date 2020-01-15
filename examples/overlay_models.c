@@ -143,8 +143,7 @@ _poll_events_cb (gpointer _self)
 static gboolean
 _init_model_overlay (Example *self)
 {
-  self->model_overlay = gxr_overlay_model_new (self->context,
-                                               "model", "A 3D model overlay");
+  self->model_overlay = gxr_overlay_model_new (self->context, "model");
 
   graphene_vec4_t color;
   graphene_vec4_init (&color, 1., 1., 1., 1.);

@@ -689,10 +689,10 @@ _new_action_from_type_url (GxrContext   *self,
 }
 
 static GxrOverlay *
-_new_overlay (GxrContext *self)
+_new_overlay (GxrContext *self, gchar* key)
 {
   (void) self;
-  return GXR_OVERLAY (openvr_overlay_new ());
+  return GXR_OVERLAY (openvr_overlay_new (key));
 }
 
 static void

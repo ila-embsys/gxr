@@ -129,9 +129,7 @@ test_cat_overlay ()
                                                           VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
   /* create openvr overlay */
-  GxrOverlay *overlay = gxr_overlay_new (context);
-  gxr_overlay_create (overlay, "examples.cairo", "Gradient");
-
+  GxrOverlay *overlay = gxr_overlay_new (context, "examples.cairo");
   if (!gxr_overlay_is_valid (overlay))
   {
     fprintf (stderr, "Overlay unavailable.\n");

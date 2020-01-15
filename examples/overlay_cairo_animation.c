@@ -164,9 +164,7 @@ test_overlay ()
     return -1;
 
   /* create cairo overlay */
-  GxrOverlay *overlay = gxr_overlay_new (context);
-  gxr_overlay_create (overlay, "examples.cairo", "Cairo Animation");
-
+  GxrOverlay *overlay = gxr_overlay_new (context, "examples.cairo");
   if (!gxr_overlay_is_valid (overlay))
   {
     g_printerr ("Overlay unavailable.\n");

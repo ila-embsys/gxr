@@ -142,9 +142,7 @@ test_cat_overlay (int argc, char *argv[])
   if (!gxr_context_inititalize (context, uploader, GXR_APP_OVERLAY))
     return -1;
 
-  GxrOverlay *overlay = gxr_overlay_new (context);
-  gxr_overlay_create_width (overlay, "example.clutter", "Clutter", 2.0);
-
+  GxrOverlay *overlay = gxr_overlay_new_width (context, "example.clutter", 2.0);
   if (!gxr_overlay_is_valid (overlay))
     {
       fprintf (stderr, "Overlay unavailable.\n");

@@ -113,24 +113,21 @@ gxr_overlay_init (GxrOverlay *self)
 }
 
 GxrOverlay *
-gxr_overlay_new (GxrContext *context)
+gxr_overlay_new (GxrContext *context, gchar* key)
 {
-  return gxr_context_new_overlay (context);
+  return gxr_context_new_overlay (context, key);
 }
 
-gboolean
-gxr_overlay_create_width (GxrOverlay *self,
-                          gchar* key,
-                          gchar* name,
-                          float meters)
+GxrOverlay *
+gxr_overlay_new_width (GxrContext *context,
+                       gchar      *key,
+                       float       meters)
 {
-  if (!gxr_overlay_create (self, key, name))
-    return FALSE;
-
+  GxrOverlay *self = gxr_overlay_new (context, key);
   if (!gxr_overlay_set_width_meters (self, meters))
-    return FALSE;
+    return NULL;
 
-  return TRUE;
+  return self;
 }
 
 gboolean
@@ -301,15 +298,6 @@ void
 gxr_overlay_emit_keyboard_close (GxrOverlay *self)
 {
   g_signal_emit (self, overlay_signals[KEYBOARD_CLOSE_EVENT], 0);
-}
-
-gboolean
-gxr_overlay_create (GxrOverlay *self, gchar* key, gchar* name)
-{
-  GxrOverlayClass *klass = GXR_OVERLAY_GET_CLASS (self);
-  if (klass->create == NULL)
-    return FALSE;
-  return klass->create (self, key, name);
 }
 
 gboolean

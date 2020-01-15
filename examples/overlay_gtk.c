@@ -181,8 +181,7 @@ main (int argc, char *argv[])
   if (!gxr_context_inititalize (context, uploader, GXR_APP_OVERLAY))
     return -1;
 
-  GxrOverlay *overlay = gxr_overlay_new (context);
-  gxr_overlay_create_width (overlay, "openvr.example.gtk", "GTK+", 1.0);
+  GxrOverlay *overlay = gxr_overlay_new_width (context, "gxr.example.gtk", 1.0);
   gxr_overlay_show (overlay);
   graphene_point3d_t position = { .x = 0.f, .y = 1.2f, .z = -1.f };
   gxr_overlay_set_translation (overlay, &position);

@@ -157,7 +157,7 @@ struct _GxrContextClass
                                char          *url);
 
   GxrOverlay *
-  (*new_overlay) (GxrContext *self);
+  (*new_overlay) (GxrContext *self, gchar* key);
 
   void
   (*request_quit) (GxrContext *self);

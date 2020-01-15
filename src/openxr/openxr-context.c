@@ -1431,9 +1431,10 @@ _new_action_from_type_url (GxrContext   *self,
 }
 
 static GxrOverlay *
-_new_overlay (GxrContext *self)
+_new_overlay (GxrContext *self, gchar* key)
 {
   (void) self;
+  (void) key;
   return GXR_OVERLAY (openxr_overlay_new ());
 }
 

@@ -141,9 +141,7 @@ test_cat_overlay ()
                                                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                                                    true);
 
-  GxrOverlay *overlay = gxr_overlay_new (context);
-  gxr_overlay_create_width (overlay, "vulkan.cat", "Vulkan Cat", 2.0f);
-
+  GxrOverlay *overlay = gxr_overlay_new_width (context, "vulkan.cat", 2.0f);
   if (!gxr_overlay_is_valid (overlay))
   {
     fprintf (stderr, "Overlay unavailable.\n");

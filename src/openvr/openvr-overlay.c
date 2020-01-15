@@ -48,10 +48,41 @@ openvr_overlay_init (OpenVROverlay *self)
   self->thumbnail_handle = 0;
 }
 
-OpenVROverlay *
-openvr_overlay_new (void)
+static gboolean
+_create (OpenVROverlay *overlay, gchar* key)
 {
-  return (OpenVROverlay*) g_object_new (OPENVR_TYPE_OVERLAY, 0);
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
+
+  OpenVRFunctions *f = openvr_get_functions ();
+  EVROverlayError err;
+
+  /* k_unVROverlayMaxKeyLength is the limit including the null terminator */
+  if (strlen(key) + 1 > k_unVROverlayMaxKeyLength)
+    {
+      g_printerr ("Overlay key too long, must be shorter than %d characters\n",
+                  k_unMaxSettingsKeyLength - 1);
+      return FALSE;
+    }
+
+  char *key_trimmed = strndup(key, k_unVROverlayMaxNameLength - 1);
+  err = f->overlay->CreateOverlay (key_trimmed,
+                                   key_trimmed,
+                                   &self->overlay_handle);
+
+  free (key_trimmed);
+
+  OVERLAY_CHECK_ERROR ("CreateOverlay", err)
+
+  return TRUE;
+}
+
+OpenVROverlay *
+openvr_overlay_new (gchar* key)
+{
+  OpenVROverlay *self = (OpenVROverlay*) g_object_new (OPENVR_TYPE_OVERLAY, 0);
+  if (!_create(self, key))
+    return NULL;
+  return self;
 }
 
 static gboolean
@@ -75,32 +106,6 @@ _finalize (GObject *gobject)
   OpenVROverlay *self = OPENVR_OVERLAY (gobject);
   _destroy (self);
   G_OBJECT_CLASS (openvr_overlay_parent_class)->finalize (gobject);
-}
-
-static gboolean
-_create (GxrOverlay *overlay, gchar* key, gchar* name)
-{
-  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
-
-  OpenVRFunctions *f = openvr_get_functions ();
-  EVROverlayError err;
-
-  /* k_unVROverlayMaxKeyLength is the limit including the null terminator */
-  if (strlen(key) + 1 > k_unVROverlayMaxKeyLength)
-    {
-      g_printerr ("Overlay key too long, must be shorter than %d characters\n",
-                  k_unMaxSettingsKeyLength - 1);
-      return FALSE;
-    }
-
-  char *name_trimmed = strndup(name, k_unVROverlayMaxNameLength - 1);
-  err = f->overlay->CreateOverlay (key, name_trimmed, &self->overlay_handle);
-
-  free (name_trimmed);
-
-  OVERLAY_CHECK_ERROR ("CreateOverlay", err)
-
-  return TRUE;
 }
 
 static gboolean
@@ -699,7 +704,6 @@ openvr_overlay_class_init (OpenVROverlayClass *klass)
   object_class->finalize = _finalize;
 
   GxrOverlayClass *parent_class = GXR_OVERLAY_CLASS (klass);
-  parent_class->create = _create;
   parent_class->poll_event = _poll_event;
   parent_class->set_mouse_scale = _set_mouse_scale;
   parent_class->is_valid = _is_valid;

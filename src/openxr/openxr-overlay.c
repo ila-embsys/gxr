@@ -30,6 +30,7 @@ openxr_overlay_init (OpenXROverlay *self)
 OpenXROverlay *
 openxr_overlay_new (void)
 {
+  g_print ("stub: OpenXR overlays are not implemented.\n");
   return (OpenXROverlay*) g_object_new (OPENXR_TYPE_OVERLAY, 0);
 }
 
@@ -37,16 +38,6 @@ static void
 _finalize (GObject *gobject)
 {
   G_OBJECT_CLASS (openxr_overlay_parent_class)->finalize (gobject);
-}
-
-static gboolean
-_create (GxrOverlay *overlay, gchar* key, gchar* name)
-{
-  (void) overlay;
-  (void) key;
-  (void) name;
-  g_print ("stub: OpenXR overlays are not implemented.\n");
-  return TRUE;
 }
 
 static gboolean
@@ -273,7 +264,6 @@ openxr_overlay_class_init (OpenXROverlayClass *klass)
   object_class->finalize = _finalize;
 
   GxrOverlayClass *parent_class = GXR_OVERLAY_CLASS (klass);
-  parent_class->create = _create;
   parent_class->poll_event = _poll_event;
   parent_class->set_mouse_scale = _set_mouse_scale;
   parent_class->is_valid = _is_valid;

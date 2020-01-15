@@ -34,11 +34,6 @@ struct _GxrOverlayClass
 {
   GObjectClass parent;
 
-  gboolean
-  (*create) (GxrOverlay *self,
-             gchar* key,
-             gchar* name);
-
   void
   (*poll_event) (GxrOverlay *self);
 
@@ -130,13 +125,12 @@ struct _GxrOverlayClass
 };
 
 GxrOverlay *
-gxr_overlay_new (GxrContext *context);
+gxr_overlay_new (GxrContext *context, gchar* key);
 
-gboolean
-gxr_overlay_create_width (GxrOverlay *self,
-                          gchar* key,
-                          gchar* name,
-                          float meters);
+GxrOverlay *
+gxr_overlay_new_width (GxrContext *context,
+                       gchar      *key,
+                       float       meters);
 
 gboolean
 gxr_overlay_set_visibility (GxrOverlay *self, gboolean visibility);
@@ -163,11 +157,6 @@ gxr_overlay_set_flip_y (GxrOverlay *self,
                         gboolean flip_y);
 
 /* Virtual methods */
-gboolean
-gxr_overlay_create (GxrOverlay *self,
-                    gchar* key,
-                    gchar* name);
-
 void
 gxr_overlay_poll_event (GxrOverlay *self);
 
