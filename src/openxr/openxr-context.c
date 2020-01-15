@@ -912,11 +912,14 @@ _init_runtime (GxrContext *context,
   if (!_create_system(self))
     return false;
 
-  if (!_set_up_views(self))
-    return false;
+  if (type != GXR_APP_BACKGROUND)
+    {
+      if (!_set_up_views(self))
+        return false;
 
-  if (!_check_graphics_api_support(self))
-    return false;
+      if (!_check_graphics_api_support(self))
+        return false;
+    }
 
   return true;
 }
