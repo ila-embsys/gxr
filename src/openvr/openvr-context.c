@@ -423,19 +423,16 @@ _init_runtime (GxrContext *context, GxrAppType type)
 }
 
 static gboolean
-_init_gulkan (GxrContext   *context,
-              GulkanClient *gc)
+_init_gulkan (GxrContext *context)
 {
-  (void) context;
+  GulkanClient *gc = gxr_context_get_gulkan (context);
   return openvr_compositor_gulkan_client_init (gc);
 }
 
 static gboolean
-_init_session (GxrContext   *context,
-               GulkanClient *gc)
+_init_session (GxrContext   *context)
 {
   (void) context;
-  (void) gc;
   // openvr does not need any session setup
   return true;
 }
@@ -443,13 +440,12 @@ _init_session (GxrContext   *context,
 static gboolean
 _init_framebuffers (GxrContext           *context,
                     GulkanFrameBuffer    *framebuffers[2],
-                    GulkanClient         *gc,
                     uint32_t              width,
                     uint32_t              height,
                     VkSampleCountFlagBits msaa_sample_count)
 {
-  (void) context;
-  GulkanDevice *device = gulkan_client_get_device (GULKAN_CLIENT (gc));
+  GulkanClient *gc = gxr_context_get_gulkan (context);
+  GulkanDevice *device = gulkan_client_get_device (gc);
 
   for (uint32_t eye = 0; eye < 2; eye++)
     if (!gulkan_frame_buffer_initialize (framebuffers[eye],
@@ -463,14 +459,13 @@ _init_framebuffers (GxrContext           *context,
 }
 
 static gboolean
-_submit_framebuffers (GxrContext           *self,
+_submit_framebuffers (GxrContext           *context,
                       GulkanFrameBuffer    *framebuffers[2],
-                      GulkanClient         *gc,
                       uint32_t              width,
                       uint32_t              height,
                       VkSampleCountFlagBits msaa_sample_count)
 {
-  (void) self;
+  GulkanClient *gc = gxr_context_get_gulkan (context);
 
   VkImage left =
     gulkan_frame_buffer_get_color_image (framebuffers[GXR_EYE_LEFT]);
@@ -571,13 +566,12 @@ _get_device_model_name (GxrContext *context, uint32_t i)
 
 static gboolean
 _load_model (GxrContext         *context,
-             GulkanClient       *gc,
              GulkanVertexBuffer *vbo,
              GulkanTexture     **texture,
              VkSampler          *sampler,
              const char         *model_name)
 {
-  (void) context;
+  GulkanClient *gc = gxr_context_get_gulkan (context);
   return openvr_model_load (gc, vbo, texture, sampler, model_name);
 }
 

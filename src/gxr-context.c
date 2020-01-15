@@ -112,42 +112,40 @@ _init_runtime (GxrContext *self, GxrAppType type)
 }
 
 static gboolean
-_init_gulkan (GxrContext *self, GulkanClient *gc)
+_init_gulkan (GxrContext *self)
 {
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->init_gulkan == NULL)
       return FALSE;
-  return klass->init_gulkan (self, gc);
+  return klass->init_gulkan (self);
 }
 
 static gboolean
-_init_session (GxrContext *self, GulkanClient *gc)
+_init_session (GxrContext *self)
 {
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->init_session == NULL)
     return FALSE;
-  return klass->init_session (self, gc);
+  return klass->init_session (self);
 }
 
 static gboolean
-_inititalize (GxrContext   *self,
-              GxrAppType    type)
+_inititalize (GxrContext *self,
+              GxrAppType  type)
 {
-  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
-
   if (!_init_runtime (self, type))
     {
       g_error ("Could not init runtime.\n");
       return FALSE;
     }
 
-  if (!_init_gulkan (self, priv->gc))
+  if (!_init_gulkan (self))
     {
       g_error ("Could not initialize Gulkan.\n");
       return FALSE;
     }
 
-  if (!_init_session (self, priv->gc))
+  if (!_init_session (self))
     {
       g_error ("Could not init VR session.\n");
       return FALSE;
@@ -390,7 +388,6 @@ gxr_context_emit_actionset_update (GxrContext *self)
 gboolean
 gxr_context_init_framebuffers (GxrContext           *self,
                                GulkanFrameBuffer    *framebuffers[2],
-                               GulkanClient         *gc,
                                uint32_t              width,
                                uint32_t              height,
                                VkSampleCountFlagBits msaa_sample_count)
@@ -398,14 +395,13 @@ gxr_context_init_framebuffers (GxrContext           *self,
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->init_framebuffers == NULL)
     return FALSE;
-  return klass->init_framebuffers (self, framebuffers, gc,
-                                   width, height, msaa_sample_count);
+  return klass->init_framebuffers (self, framebuffers, width, height,
+                                   msaa_sample_count);
 }
 
 gboolean
 gxr_context_submit_framebuffers (GxrContext           *self,
                                  GulkanFrameBuffer    *framebuffers[2],
-                                 GulkanClient         *gc,
                                  uint32_t              width,
                                  uint32_t              height,
                                  VkSampleCountFlagBits msaa_sample_count)
@@ -413,8 +409,8 @@ gxr_context_submit_framebuffers (GxrContext           *self,
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->submit_framebuffers == NULL)
     return FALSE;
-  return klass->submit_framebuffers (self, framebuffers, gc,
-                                     width, height, msaa_sample_count);
+  return klass->submit_framebuffers (self, framebuffers, width, height,
+                                     msaa_sample_count);
 }
 
 uint32_t
@@ -560,7 +556,6 @@ gxr_context_get_device_model_name (GxrContext *self, uint32_t i)
 
 gboolean
 gxr_context_load_model (GxrContext         *self,
-                        GulkanClient       *gc,
                         GulkanVertexBuffer *vbo,
                         GulkanTexture     **texture,
                         VkSampler          *sampler,
@@ -569,7 +564,7 @@ gxr_context_load_model (GxrContext         *self,
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->load_model == NULL)
     return FALSE;
-  return klass->load_model (self, gc, vbo, texture, sampler, model_name);
+  return klass->load_model (self, vbo, texture, sampler, model_name);
 }
 
 gboolean

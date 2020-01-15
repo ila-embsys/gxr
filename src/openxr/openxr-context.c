@@ -925,10 +925,9 @@ _init_runtime (GxrContext *context,
 }
 
 static gboolean
-_init_gulkan (GxrContext   *context,
-              GulkanClient *gc)
+_init_gulkan (GxrContext *context)
 {
-  (void) context;
+  GulkanClient *gc = gxr_context_get_gulkan (context);
 
   /* TODO: don't hardcode extensions */
   const gchar *instance_extensions[] = {
@@ -974,11 +973,11 @@ _init_gulkan (GxrContext   *context,
 }
 
 static gboolean
-_init_session (GxrContext   *context,
-               GulkanClient *gc)
+_init_session (GxrContext *context)
 {
   OpenXRContext *self = OPENXR_CONTEXT (context);
 
+  GulkanClient *gc = gxr_context_get_gulkan (context);
   GulkanDevice *gk_device = gulkan_client_get_device (gc);
   uint32_t queue_family_index =
     gulkan_device_get_queue_family_index (gk_device);
@@ -1134,7 +1133,6 @@ openxr_context_get_tracked_space (OpenXRContext *self)
 static gboolean
 _init_framebuffers (GxrContext           *context,
                     GulkanFrameBuffer    *framebuffers[2],
-                    GulkanClient         *gc,
                     uint32_t              width,
                     uint32_t              height,
                     VkSampleCountFlagBits msaa_sample_count)
@@ -1143,7 +1141,8 @@ _init_framebuffers (GxrContext           *context,
   XrSwapchainImageVulkanKHR** images = openxr_context_get_images(self);
   VkFormat format = openxr_context_get_swapchain_format(self);
 
-  GulkanDevice *device = gulkan_client_get_device (GULKAN_CLIENT (gc));
+  GulkanClient *gc = gxr_context_get_gulkan (context);
+  GulkanDevice *device = gulkan_client_get_device (gc);
 
   for (uint32_t eye = 0; eye < 2; eye++) {
     if (!gulkan_frame_buffer_initialize_from_image (framebuffers[eye],
@@ -1165,14 +1164,12 @@ _init_framebuffers (GxrContext           *context,
 static gboolean
 _submit_framebuffers (GxrContext           *self,
                       GulkanFrameBuffer    *framebuffers[2],
-                      GulkanClient         *gc,
                       uint32_t              width,
                       uint32_t              height,
                       VkSampleCountFlagBits msaa_sample_count)
 {
   (void) self;
   (void) framebuffers;
-  (void) gc;
   (void) width;
   (void) height;
   (void) msaa_sample_count;
@@ -1315,7 +1312,6 @@ _get_device_model_name (GxrContext *context, uint32_t i)
 
 static gboolean
 _load_model (GxrContext         *context,
-             GulkanClient       *gc,
              GulkanVertexBuffer *vbo,
              GulkanTexture     **texture,
              VkSampler          *sampler,
@@ -1323,7 +1319,6 @@ _load_model (GxrContext         *context,
 {
   /* TODO: Implement in OpenXR */
   (void) context;
-  (void) gc;
   (void) vbo;
   (void) texture;
   (void) sampler;

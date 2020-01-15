@@ -60,15 +60,14 @@ struct _GxrContextClass
   (*init_runtime) (GxrContext *self, GxrAppType type);
 
   gboolean
-  (*init_gulkan) (GxrContext *self, GulkanClient *gc);
+  (*init_gulkan) (GxrContext *self);
 
   gboolean
-  (*init_session) (GxrContext *self, GulkanClient *gc);
+  (*init_session) (GxrContext *self);
 
   gboolean
   (*init_framebuffers) (GxrContext           *self,
                         GulkanFrameBuffer    *framebuffers[2],
-                        GulkanClient         *gc,
                         uint32_t              width,
                         uint32_t              height,
                         VkSampleCountFlagBits msaa_sample_count);
@@ -76,7 +75,6 @@ struct _GxrContextClass
   gboolean
   (*submit_framebuffers) (GxrContext           *self,
                           GulkanFrameBuffer    *framebuffers[2],
-                          GulkanClient         *gc,
                           uint32_t              width,
                           uint32_t              height,
                           VkSampleCountFlagBits msaa_sample_count);
@@ -123,7 +121,6 @@ struct _GxrContextClass
 
   gboolean
   (*load_model) (GxrContext         *self,
-                 GulkanClient       *gc,
                  GulkanVertexBuffer *vbo,
                  GulkanTexture     **texture,
                  VkSampler          *sampler,
@@ -207,7 +204,6 @@ gxr_context_is_valid (GxrContext *self);
 gboolean
 gxr_context_init_framebuffers (GxrContext           *self,
                                GulkanFrameBuffer    *framebuffers[2],
-                               GulkanClient         *gc,
                                uint32_t              width,
                                uint32_t              height,
                                VkSampleCountFlagBits msaa_sample_count);
@@ -215,7 +211,6 @@ gxr_context_init_framebuffers (GxrContext           *self,
 gboolean
 gxr_context_submit_framebuffers (GxrContext           *self,
                                  GulkanFrameBuffer    *framebuffers[2],
-                                 GulkanClient         *gc,
                                  uint32_t              width,
                                  uint32_t              height,
                                  VkSampleCountFlagBits msaa_sample_count);
@@ -268,7 +263,6 @@ gxr_context_get_device_model_name (GxrContext *self, uint32_t i);
 
 gboolean
 gxr_context_load_model (GxrContext         *self,
-                        GulkanClient       *gc,
                         GulkanVertexBuffer *vbo,
                         GulkanTexture     **texture,
                         VkSampler          *sampler,
