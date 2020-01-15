@@ -132,6 +132,9 @@ gxr_overlay_new_width (GxrContext *context,
                        gchar      *key,
                        float       meters);
 
+GxrOverlay *
+gxr_overlay_new_model (GxrContext *context, gchar* key);
+
 gboolean
 gxr_overlay_set_visibility (GxrOverlay *self, gboolean visibility);
 

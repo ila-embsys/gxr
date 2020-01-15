@@ -9,7 +9,6 @@ gxr_sources = [
   'gxr-action-set.c',
   'gxr-io.c',
   'gxr-overlay.c',
-  'gxr-overlay-model.c',
   'gxr-manifest.c',
   'gxr-backend.c'
 ]
@@ -24,7 +23,6 @@ gxr_headers = [
   'gxr-action-set.h',
   'gxr-io.h',
   'gxr-overlay.h',
-  'gxr-overlay-model.h',
   'gxr-manifest.h',
   'gxr-backend.h'
 ]#i

@@ -130,6 +130,53 @@ gxr_overlay_new_width (GxrContext *context,
   return self;
 }
 
+static void
+_destroy_pixels_cb (guchar *pixels, gpointer unused)
+{
+  (void) unused;
+  g_free (pixels);
+}
+
+static GdkPixbuf *
+_create_empty_pixbuf (uint32_t width, uint32_t height)
+{
+  guchar *pixels = (guchar*) g_malloc (sizeof (guchar) * height * width * 4);
+  memset (pixels, 0, height * width * 4 * sizeof (guchar));
+  GdkPixbuf *pixbuf = gdk_pixbuf_new_from_data (pixels, GDK_COLORSPACE_RGB,
+                                                TRUE, 8, (int) width,
+                                                (int) height,
+                                                4 * (int) width,
+                                                _destroy_pixels_cb, NULL);
+  return pixbuf;
+}
+
+GxrOverlay *
+gxr_overlay_new_model (GxrContext *context, gchar* key)
+{
+  GxrOverlay *self = gxr_overlay_new (context, key);
+  if (!gxr_overlay_is_valid (self))
+    {
+      g_printerr ("Model overlay %s unavailable.\n", key);
+      return NULL;
+    }
+
+  GdkPixbuf *pixbuf = _create_empty_pixbuf (10, 10);
+  if (pixbuf == NULL)
+    return NULL;
+
+  /*
+   * Overlay needs a texture to be set to show model
+   * See https://github.com/ValveSoftware/openvr/issues/496
+   */
+  gxr_overlay_set_gdk_pixbuf_raw (self, pixbuf);
+  g_object_unref (pixbuf);
+
+  if (!gxr_overlay_set_alpha (self, 0.0f))
+    return NULL;
+
+  return self;
+}
+
 gboolean
 gxr_overlay_set_visibility (GxrOverlay *self, gboolean visibility)
 {

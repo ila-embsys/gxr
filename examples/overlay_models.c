@@ -13,7 +13,7 @@
 typedef struct Example
 {
   GSList *controllers;
-  GxrOverlayModel *model_overlay;
+  GxrOverlay *overlay;
   GMainLoop *loop;
   guint current_model_list_index;
   GSList *models;
@@ -50,8 +50,7 @@ _pose_cb (GxrAction    *action,
                             &event->pose,
                             &transformed);
 
-  GxrOverlay *overlay = gxr_overlay_model_get_overlay (self->model_overlay);
-  gxr_overlay_set_transform_absolute (overlay, &transformed);
+  gxr_overlay_set_transform_absolute (self->overlay, &transformed);
 
   free (event);
 }
@@ -68,8 +67,7 @@ _update_model (Example *self)
            self->current_model_list_index + 1,
            g_slist_length (self->models));
 
-  if (!gxr_overlay_model_set_model (self->model_overlay,
-                                    (gchar *) name->data, &color))
+  if (!gxr_overlay_set_model (self->overlay, (gchar *) name->data, &color))
     return FALSE;
 
   return TRUE;
@@ -143,32 +141,30 @@ _poll_events_cb (gpointer _self)
 static gboolean
 _init_model_overlay (Example *self)
 {
-  self->model_overlay = gxr_overlay_model_new (self->context, "model");
+  self->overlay = gxr_overlay_new_model (self->context, "model");
 
   graphene_vec4_t color;
   graphene_vec4_init (&color, 1., 1., 1., 1.);
 
   GSList* model_name = g_slist_nth (self->models,
                                     self->current_model_list_index);
-  if (!gxr_overlay_model_set_model (self->model_overlay,
-                               (gchar *) model_name->data, &color))
+  if (!gxr_overlay_set_model (self->overlay,
+                              (gchar *) model_name->data, &color))
     return FALSE;
 
   char name_ret[GXR_MODEL_NAME_MAX];
   graphene_vec4_t color_ret;
 
   uint32_t id;
-  if (!gxr_overlay_model_get_model (self->model_overlay, name_ret,
-                                   &color_ret, &id))
+  if (!gxr_overlay_get_model (self->overlay, name_ret, &color_ret, &id))
     return FALSE;
 
   g_print ("GetOverlayRenderModel returned id %d name: %s\n", id, name_ret);
 
-    GxrOverlay *overlay = gxr_overlay_model_get_overlay (self->model_overlay);
-  if (!gxr_overlay_set_width_meters (overlay, 0.5f))
+  if (!gxr_overlay_set_width_meters (self->overlay, 0.5f))
     return FALSE;
 
-  if (!gxr_overlay_show (overlay))
+  if (!gxr_overlay_show (self->overlay))
     return FALSE;
 
   return TRUE;
@@ -187,7 +183,7 @@ _cleanup (Example *self)
   g_print ("bye\n");
   g_main_loop_unref (self->loop);
 
-  g_object_unref (self->model_overlay);
+  g_object_unref (self->overlay);
   g_slist_free_full (self->models, g_free);
   g_object_unref (self->context);
 }
