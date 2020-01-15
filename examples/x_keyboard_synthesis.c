@@ -51,18 +51,6 @@ timeout_callback (gpointer data)
   return TRUE;
 }
 
-static bool
-_init_openvr (GxrContext *context)
-{
-  if (!gxr_context_init_runtime (context, GXR_APP_OVERLAY))
-    {
-      g_printerr ("Could not init OpenVR.\n");
-      return false;
-    }
-
-  return true;
-}
-
 static void
 _keyboard_closed (GxrContext  *context,
                   GdkEventKey *event,
@@ -355,11 +343,7 @@ main (int argc, char *argv[])
     }
 */
 
-  GxrContext *context = gxr_context_new ();
-
-  /* init openvr */
-  if (!_init_openvr (context))
-    return -1;
+  GxrContext *context = gxr_context_new (GXR_APP_OVERLAY);
 
   gxr_context_show_keyboard (GXR_CONTEXT (context));
 

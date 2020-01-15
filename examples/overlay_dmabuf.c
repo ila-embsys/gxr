@@ -146,13 +146,9 @@ main ()
 
   dma_buf_fill (map, width, height, stride);
 
-  GxrContext *context = gxr_context_new ();
-  GulkanClient *uploader = gulkan_client_new ();
+  GxrContext *context = gxr_context_new (GXR_APP_OVERLAY);
 
-  if (!gxr_context_inititalize (context, uploader, GXR_APP_OVERLAY))
-    return -1;
-
-  GulkanClient *client = GULKAN_CLIENT (uploader);
+  GulkanClient *client = gxr_context_get_gulkan (context);
   GulkanDevice *device = gulkan_client_get_device (client);
 
   texture = gulkan_texture_new_from_dmabuf (device,
@@ -180,7 +176,7 @@ main ()
     }
 
   g_signal_connect (overlay, "button-press-event", (GCallback) _press_cb, loop);
-  g_signal_connect (overlay, "show", (GCallback) _show_cb, uploader);
+  g_signal_connect (overlay, "show", (GCallback) _show_cb, client);
   g_signal_connect (overlay, "destroy", (GCallback) _destroy_cb, loop);
 
   g_timeout_add (20, timeout_callback, overlay);
@@ -191,8 +187,6 @@ main ()
 
   g_object_unref (overlay);
   g_object_unref (texture);
-  g_object_unref (uploader);
-
   g_object_unref (context);
 
   return 0;

@@ -130,13 +130,12 @@ test_cat_overlay ()
 
   loop = g_main_loop_new (NULL, FALSE);
 
-  GxrContext *context = gxr_context_new ();
-  GulkanClient *client = gulkan_client_new ();
+  GxrContext *context = gxr_context_new (GXR_APP_OVERLAY);
 
-  if (!gxr_context_inititalize (context, client, GXR_APP_OVERLAY))
-    return -1;
+  GulkanClient *gc = gxr_context_get_gulkan (context);
 
-  texture = gulkan_client_texture_new_from_pixbuf (client, pixbuf,
+
+  texture = gulkan_client_texture_new_from_pixbuf (gc, pixbuf,
                                                    VK_FORMAT_R8G8B8A8_UNORM,
                                                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                                                    true);
@@ -152,7 +151,7 @@ test_cat_overlay ()
                                   gdk_pixbuf_get_width (pixbuf),
                                   gdk_pixbuf_get_height (pixbuf));
 
-  gxr_overlay_submit_texture (overlay, client, texture);
+  gxr_overlay_submit_texture (overlay, gc, texture);
 
   graphene_matrix_t transform;
   graphene_point3d_t pos =
@@ -186,8 +185,6 @@ test_cat_overlay ()
   g_object_unref (texture);
 
   g_object_unref (context);
-
-  g_object_unref (client);
 
   return 0;
 }

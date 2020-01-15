@@ -105,14 +105,8 @@ main ()
 {
   Example self = {
     .loop = g_main_loop_new (NULL, FALSE),
-    .context = gxr_context_new ()
+    .context = gxr_context_new (GXR_APP_OVERLAY)
   };
-
-  if (!gxr_context_init_runtime (self.context, GXR_APP_OVERLAY))
-    {
-      g_printerr ("Could not init OpenVR.\n");
-      return false;
-    }
 
   if (!gxr_context_load_action_manifest (
         self.context,

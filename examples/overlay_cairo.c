@@ -113,18 +113,10 @@ test_cat_overlay ()
 
   loop = g_main_loop_new (NULL, FALSE);
 
-  GxrContext *context = gxr_context_new ();
-  GulkanClient *uploader = gulkan_client_new ();
-  if (!gxr_context_init_gulkan (context, uploader))
-    {
-      g_printerr ("Could not initialize Gulkan!\n");
-      return FALSE;
-    }
+  GxrContext *context = gxr_context_new (GXR_APP_OVERLAY);
+  GulkanClient *gc = gxr_context_get_gulkan (context);
 
-  if (!gxr_context_inititalize (context, uploader, GXR_APP_OVERLAY))
-    return -1;
-
-  texture = gulkan_client_texture_new_from_cairo_surface (uploader, surface,
+  texture = gulkan_client_texture_new_from_cairo_surface (gc, surface,
                                                           VK_FORMAT_R8G8B8A8_UNORM,
                                                           VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
@@ -141,10 +133,10 @@ test_cat_overlay ()
   if (!gxr_overlay_show (overlay))
     return -1;
 
-  gxr_overlay_submit_texture (overlay, uploader, texture);
+  gxr_overlay_submit_texture (overlay, gc, texture);
 
   g_signal_connect (overlay, "button-press-event", (GCallback) _press_cb, loop);
-  g_signal_connect (overlay, "show", (GCallback) _show_cb, uploader);
+  g_signal_connect (overlay, "show", (GCallback) _show_cb, gc);
   g_signal_connect (overlay, "destroy", (GCallback) _destroy_cb, loop);
 
   g_timeout_add (20, timeout_callback, overlay);
@@ -154,8 +146,6 @@ test_cat_overlay ()
   g_object_unref (overlay);
   cairo_surface_destroy (surface);
   g_object_unref (texture);
-  g_object_unref (uploader);
-
   g_object_unref (context);
 
   return 0;

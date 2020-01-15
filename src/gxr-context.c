@@ -12,6 +12,7 @@
 typedef struct _GxrContextPrivate
 {
   GObject parent;
+  GulkanClient *gc;
   GxrApi api;
 } GxrContextPrivate;
 
@@ -101,6 +102,60 @@ gxr_context_class_init (GxrContextClass *klass)
                 0, NULL, NULL, NULL, G_TYPE_NONE, 0);
 }
 
+static gboolean
+_init_runtime (GxrContext *self, GxrAppType type)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->init_runtime == NULL)
+    return FALSE;
+  return klass->init_runtime (self, type);
+}
+
+static gboolean
+_init_gulkan (GxrContext *self, GulkanClient *gc)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->init_gulkan == NULL)
+      return FALSE;
+  return klass->init_gulkan (self, gc);
+}
+
+static gboolean
+_init_session (GxrContext *self, GulkanClient *gc)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->init_session == NULL)
+    return FALSE;
+  return klass->init_session (self, gc);
+}
+
+static gboolean
+_inititalize (GxrContext   *self,
+              GxrAppType    type)
+{
+  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
+
+  if (!_init_runtime (self, type))
+    {
+      g_error ("Could not init runtime.\n");
+      return FALSE;
+    }
+
+  if (!_init_gulkan (self, priv->gc))
+    {
+      g_error ("Could not initialize Gulkan.\n");
+      return FALSE;
+    }
+
+  if (!_init_session (self, priv->gc))
+    {
+      g_error ("Could not init VR session.\n");
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
 static GxrApi
 _get_api_from_env ()
 {
@@ -113,16 +168,63 @@ _get_api_from_env ()
     return GXR_DEFAULT_API;
 }
 
-GxrContext *
-gxr_context_new_from_api (GxrApi api)
+GxrContext *gxr_context_new (GxrAppType type)
 {
-  return gxr_backend_new_context (gxr_backend_get_instance (api));
+  return gxr_context_new_from_api (type, _get_api_from_env ());
 }
 
-static GxrContext*
-_new_context_from_env ()
+GxrContext *
+gxr_context_new_from_api (GxrAppType type,
+                          GxrApi     api)
 {
-  return gxr_context_new_from_api (_get_api_from_env ());
+  GxrContext *self = gxr_backend_new_context (gxr_backend_get_instance (api));
+  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
+  priv->gc = gulkan_client_new ();
+  if (!_inititalize (self, type))
+    {
+      g_error ("Could not init runtime.\n");
+      return NULL;
+    }
+  return self;
+}
+
+GxrContext *
+gxr_context_new_from_gulkan (GxrAppType type,
+                             GulkanClient *gc)
+{
+  return gxr_context_new_full (type, gc, _get_api_from_env ());
+}
+
+GxrContext *
+gxr_context_new_full (GxrAppType type,
+                      GulkanClient *gc,
+                      GxrApi api)
+{
+  GxrContext *self = gxr_backend_new_context (gxr_backend_get_instance (api));
+  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
+  priv->gc = g_object_ref (gc);
+  if (!_inititalize (self, type))
+    {
+      g_error ("Could not init runtime.\n");
+      return NULL;
+    }
+  return self;
+}
+
+GxrContext *gxr_context_new_headless (void)
+{
+  return gxr_context_new_headless_from_api (_get_api_from_env ());
+}
+
+GxrContext *gxr_context_new_headless_from_api (GxrApi api)
+{
+  GxrContext *self = gxr_backend_new_context (gxr_backend_get_instance (api));
+  if (!_init_runtime (self, GXR_APP_BACKGROUND))
+    {
+      g_error ("Could not init VR runtime.\n");
+      return NULL;
+    }
+  return self;
 }
 
 static void
@@ -130,17 +232,16 @@ gxr_context_init (GxrContext *self)
 {
   GxrContextPrivate *priv = gxr_context_get_instance_private (self);
   priv->api = GXR_API_NONE;
-}
-
-GxrContext *
-gxr_context_new ()
-{
-  return _new_context_from_env ();
+  priv->gc = NULL;
 }
 
 static void
 gxr_context_finalize (GObject *gobject)
 {
+  GxrContext *self = GXR_CONTEXT (gobject);
+  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
+  if (priv->gc != NULL)
+    g_object_unref (priv->gc);
   G_OBJECT_CLASS (gxr_context_parent_class)->finalize (gobject);
 }
 
@@ -151,6 +252,12 @@ gxr_context_get_api (GxrContext *self)
   return priv->api;
 }
 
+GulkanClient*
+gxr_context_get_gulkan (GxrContext *self)
+{
+  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
+  return priv->gc;
+}
 
 void
 gxr_context_set_api (GxrContext *self, GxrApi api)
@@ -206,33 +313,6 @@ gxr_context_is_valid (GxrContext *self)
   if (klass->is_valid == NULL)
       return FALSE;
   return klass->is_valid (self);
-}
-
-gboolean
-gxr_context_init_runtime (GxrContext *self, GxrAppType type)
-{
-  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
-  if (klass->init_runtime == NULL)
-    return FALSE;
-  return klass->init_runtime (self, type);
-}
-
-gboolean
-gxr_context_init_gulkan (GxrContext *self, GulkanClient *gc)
-{
-  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
-  if (klass->init_gulkan == NULL)
-      return FALSE;
-  return klass->init_gulkan (self, gc);
-}
-
-gboolean
-gxr_context_init_session (GxrContext *self, GulkanClient *gc)
-{
-  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
-  if (klass->init_session == NULL)
-    return FALSE;
-  return klass->init_session (self, gc);
 }
 
 void
@@ -499,32 +579,6 @@ gxr_context_is_another_scene_running (GxrContext *self)
   if (klass->is_another_scene_running  == NULL)
     return FALSE;
   return klass->is_another_scene_running (self);
-}
-
-gboolean
-gxr_context_inititalize (GxrContext   *self,
-                         GulkanClient *gc,
-                         GxrAppType    type)
-{
-  if (!gxr_context_init_runtime (self, type))
-    {
-      g_printerr ("Could not init VR runtime.\n");
-      return FALSE;
-    }
-
-  if (!gxr_context_init_gulkan (self, gc))
-    {
-      g_printerr ("Could not initialize Gulkan!\n");
-      return FALSE;
-    }
-
-  if (!gxr_context_init_session (self, gc))
-    {
-      g_printerr ("Could not init VR session.\n");
-      return FALSE;
-    }
-
-  return TRUE;
 }
 
 void

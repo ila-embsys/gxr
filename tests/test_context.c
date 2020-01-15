@@ -14,7 +14,7 @@
 static void
 _test_scene_available (void)
 {
-  GxrContext* gxr_context = gxr_context_new ();
+  GxrContext* gxr_context = gxr_context_new_headless ();
   gboolean scene_available =
     !gxr_context_is_another_scene_running (gxr_context);
   g_print ("Scene available: %d\n", scene_available);
@@ -36,16 +36,12 @@ gxr_api_string (GxrApi v)
 static void
 _test_init_context (GxrAppType type)
 {
-  GxrContext *context = gxr_context_new ();
+  GxrContext *context = gxr_context_new (type);
   g_assert_nonnull (context);
 
   GxrApi api = gxr_context_get_api (context);
   g_print ("Using API: %s\n", gxr_api_string (api));
 
-  GulkanClient *gc = gulkan_client_new ();
-  g_assert_nonnull (gc);
-
-  g_assert (gxr_context_inititalize (context, gc, type));
   g_assert (gxr_context_is_valid (context));
 
   g_object_unref (context);
@@ -67,13 +63,9 @@ _system_quit_cb (GxrContext   *context,
 static void
 _test_quit_event (GxrAppType type)
 {
-  GxrContext *context = gxr_context_new ();
+  GxrContext *context = gxr_context_new (type);
   g_assert_nonnull (context);
 
-  GulkanClient *gc = gulkan_client_new ();
-  g_assert_nonnull (gc);
-
-  g_assert (gxr_context_inititalize (context, gc, type));
   g_assert (gxr_context_is_valid (context));
 
   gboolean quit_completed = FALSE;

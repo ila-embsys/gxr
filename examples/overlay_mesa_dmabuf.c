@@ -21,8 +21,6 @@
 #include <EGL/eglext.h>
 
 static GdkPixbuf *pixbuf;
-static GulkanClient *uploader;
-
 static GulkanTexture *texture;
 static GxrOverlay *overlay;
 static GLuint gl_texture;
@@ -36,7 +34,7 @@ create_overlay ()
 
   guchar* rgba = gdk_pixbuf_get_pixels (pixbuf);
 
-  GulkanClient *client = GULKAN_CLIENT (uploader);
+  GulkanClient *client = gxr_context_get_gulkan (context);
   GulkanDevice *device = gulkan_client_get_device (client);
 
   glGenTextures (1, &gl_texture);
@@ -112,7 +110,7 @@ create_overlay ()
   gxr_overlay_set_transform_absolute (overlay, &transform);
 
   gint64 start = g_get_monotonic_time ();
-  gxr_overlay_submit_texture (overlay, uploader, texture);
+  gxr_overlay_submit_texture (overlay, client, texture);
   gint64 end = g_get_monotonic_time ();
   g_print ("Submit frame took %f ms\n",
            (end - start) / (1000.));
@@ -135,7 +133,8 @@ overlay_change_callback ()
   if (!overlay)
     return FALSE;
 
-  gxr_overlay_submit_texture (overlay, uploader, texture);
+  GulkanClient* gc = gxr_context_get_gulkan (context);
+  gxr_overlay_submit_texture (overlay, gc, texture);
 
   return TRUE;
 }
@@ -192,12 +191,7 @@ main ()
 
   GMainLoop *loop = g_main_loop_new (NULL, FALSE);
 
-  context = gxr_context_new ();
-  uploader = gulkan_client_new ();
-
-  if (!gxr_context_inititalize (context, uploader, GXR_APP_OVERLAY))
-    return -1;
-
+  context = gxr_context_new (GXR_APP_OVERLAY);
   pixbuf = load_gdk_pixbuf ();
   if (pixbuf == NULL)
     return -1;
@@ -242,7 +236,6 @@ main ()
 
   g_object_unref (overlay);
   g_object_unref (texture);
-  g_object_unref (uploader);
 
   g_object_unref (context);
 

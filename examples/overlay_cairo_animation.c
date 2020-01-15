@@ -157,10 +157,7 @@ test_overlay ()
 
   render_context.texture = NULL;
 
-  GxrContext *context = gxr_context_new ();
-  GulkanClient *uploader = gulkan_client_new ();
-
-  if (!gxr_context_inititalize (context, uploader, GXR_APP_OVERLAY))
+  GxrContext *context = gxr_context_new (GXR_APP_OVERLAY);
     return -1;
 
   /* create cairo overlay */
@@ -180,7 +177,7 @@ test_overlay ()
   g_signal_connect (overlay, "destroy", (GCallback) _destroy_cb, loop);
 
   render_context.overlay = overlay;
-  render_context.uploader = uploader;
+  render_context.uploader = gxr_context_get_gulkan (context);
 
   g_timeout_add (20, input_callback, overlay);
   g_timeout_add (11, render_callback, &render_context); // sync to 90 hz
@@ -189,7 +186,6 @@ test_overlay ()
   g_main_loop_unref (loop);
 
   g_object_unref (overlay);
-  g_object_unref (uploader);
 
   g_object_unref (render_context.texture);
 

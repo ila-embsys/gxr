@@ -9,6 +9,7 @@
 #include <glib-unix.h>
 
 #include <gxr.h>
+#include <gulkan.h>
 
 typedef struct Example
 {
@@ -195,15 +196,8 @@ main ()
     .loop = g_main_loop_new (NULL, FALSE),
     .current_model_list_index = 0,
     .models = NULL,
-    .context = gxr_context_new()
+    .context = gxr_context_new (GXR_APP_OVERLAY),
   };
-
-  // TODO: init gulkan for scene, OpenXR backend
-  if (!gxr_context_init_runtime (self.context, GXR_APP_OVERLAY))
-    {
-      g_printerr ("Could not init VR runtime.\n");
-      return false;
-    }
 
   if (!gxr_context_load_action_manifest (
         self.context,

@@ -21,7 +21,7 @@
 #include "clutter_content.h"
 
 static GulkanTexture *texture = NULL;
-static GulkanClient *uploader;
+static GxrContext *context = NULL;
 
 static gboolean
 timeout_callback (gpointer data)
@@ -107,7 +107,7 @@ repaint_cb (gpointer user_data)
   guchar* pixels = clutter_stage_read_pixels
     (CLUTTER_STAGE(data->stage), 0, 0, (gint)width, (gint)height);
 
-  GulkanClient *client = GULKAN_CLIENT (uploader);
+  GulkanClient *client = gxr_context_get_gulkan (context);
   GulkanDevice *device = gulkan_client_get_device (client);
 
   if (texture == NULL)
@@ -118,7 +118,7 @@ repaint_cb (gpointer user_data)
   gulkan_client_upload_pixels (client, texture, pixels,size,
                                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
-  gxr_overlay_submit_texture (data->overlay, uploader, texture);
+  gxr_overlay_submit_texture (data->overlay, client, texture);
 
   return TRUE;
 }
@@ -136,11 +136,7 @@ test_cat_overlay (int argc, char *argv[])
       return EXIT_FAILURE;
     }
 
-  GxrContext *context = gxr_context_new ();
-  uploader = gulkan_client_new ();
-
-  if (!gxr_context_inititalize (context, uploader, GXR_APP_OVERLAY))
-    return -1;
+  context = gxr_context_new (GXR_APP_OVERLAY);
 
   GxrOverlay *overlay = gxr_overlay_new_width (context, "example.clutter", 2.0);
   if (!gxr_overlay_is_valid (overlay))
@@ -182,7 +178,6 @@ test_cat_overlay (int argc, char *argv[])
 
   g_object_unref (overlay);
   g_object_unref (texture);
-  g_object_unref (uploader);
 
   g_object_unref (context);
 

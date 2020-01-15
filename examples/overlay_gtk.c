@@ -15,7 +15,7 @@
 #include "gxr.h"
 
 static GulkanTexture *texture = NULL;
-static GulkanClient *uploader;
+static GxrContext *context = NULL;
 
 static gboolean
 _damage_cb (GtkWidget *widget, GdkEventExpose *event, GxrOverlay *overlay)
@@ -39,7 +39,7 @@ _damage_cb (GtkWidget *widget, GdkEventExpose *event, GxrOverlay *overlay)
     GdkPixbuf *pixbuf = gdk_pixbuf_add_alpha (offscreen_pixbuf, false, 0, 0, 0);
     g_object_unref (offscreen_pixbuf);
 
-    GulkanClient *client = GULKAN_CLIENT (uploader);
+    GulkanClient *client = gxr_context_get_gulkan (context);
 
     if (texture == NULL)
       texture = gulkan_client_texture_new_from_pixbuf (client, pixbuf,
@@ -47,7 +47,7 @@ _damage_cb (GtkWidget *widget, GdkEventExpose *event, GxrOverlay *overlay)
                                                        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                                                        true);
 
-    gxr_overlay_submit_texture (overlay, uploader, texture);
+    gxr_overlay_submit_texture (overlay, client, texture);
 
     g_object_unref (pixbuf);
   } else {
@@ -175,12 +175,7 @@ main (int argc, char *argv[])
 
   gtk_widget_show_all (window);
 
-  GxrContext *context = gxr_context_new ();
-  uploader = gulkan_client_new ();
-
-  if (!gxr_context_inititalize (context, uploader, GXR_APP_OVERLAY))
-    return -1;
-
+  context = gxr_context_new (GXR_APP_OVERLAY);
   GxrOverlay *overlay = gxr_overlay_new_width (context, "gxr.example.gtk", 1.0);
   gxr_overlay_show (overlay);
   graphene_point3d_t position = { .x = 0.f, .y = 1.2f, .z = -1.f };
@@ -207,10 +202,7 @@ main (int argc, char *argv[])
   g_main_loop_unref (loop);
 
   g_object_unref (overlay);
-
   g_object_unref (texture);
-  g_object_unref (uploader);
-
   g_object_unref (context);
 
   return 0;

@@ -163,10 +163,24 @@ struct _GxrContextClass
   (*request_quit) (GxrContext *self);
 };
 
-GxrContext *gxr_context_new (void);
+GxrContext *gxr_context_new (GxrAppType type);
 
 GxrContext *
-gxr_context_new_from_api (GxrApi backend);
+gxr_context_new_from_api (GxrAppType type,
+                          GxrApi backend);
+
+GxrContext *
+gxr_context_new_from_gulkan (GxrAppType type,
+                             GulkanClient *gc);
+
+GxrContext *
+gxr_context_new_full (GxrAppType type,
+                      GulkanClient *gc,
+                      GxrApi api);
+
+GxrContext *gxr_context_new_headless (void);
+
+GxrContext *gxr_context_new_headless_from_api (GxrApi api);
 
 GxrApi
 gxr_context_get_api (GxrContext *self);
@@ -189,20 +203,6 @@ gxr_context_get_render_dimensions (GxrContext *self,
 
 gboolean
 gxr_context_is_valid (GxrContext *self);
-
-gboolean
-gxr_context_init_runtime (GxrContext *self, GxrAppType type);
-
-gboolean
-gxr_context_init_gulkan (GxrContext *self, GulkanClient *gc);
-
-gboolean
-gxr_context_init_session (GxrContext *self, GulkanClient *gc);
-
-gboolean
-gxr_context_inititalize (GxrContext   *self,
-                         GulkanClient *gc,
-                         GxrAppType    type);
 
 gboolean
 gxr_context_init_framebuffers (GxrContext           *self,
@@ -294,6 +294,9 @@ gxr_context_load_action_manifest (GxrContext *self,
 
 void
 gxr_context_request_quit (GxrContext *self);
+
+GulkanClient*
+gxr_context_get_gulkan (GxrContext *self);
 
 G_END_DECLS
 

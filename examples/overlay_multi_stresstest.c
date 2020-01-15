@@ -24,7 +24,7 @@
 typedef struct Example
 {
   GMainLoop *loop;
-  GulkanClient *uploader;
+  GxrContext *context;
   GxrOverlay *overlays[OVERLAY_NUM];
   GulkanTexture *textures[OVERLAY_NUM];
   int tex_count;
@@ -91,12 +91,14 @@ timeout_callback (gpointer data)
     return -1;
   }
 
+  GulkanClient *gc = gxr_context_get_gulkan (self->context);
+
   GulkanTexture *n =
-    gulkan_client_texture_new_from_cairo_surface (self->uploader,
+    gulkan_client_texture_new_from_cairo_surface (gc,
                                                   surface,
                                                   VK_FORMAT_R8G8B8A8_UNORM,
                                                   VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-  gxr_overlay_submit_texture (overlay, self->uploader, n);
+  gxr_overlay_submit_texture (overlay, gc, n);
 
   if (self->textures[en->i] != NULL)
     {
@@ -137,15 +139,9 @@ _destroy_cb (GxrOverlay *overlay,
 int main () {
   Example ex = {
     .loop = g_main_loop_new (NULL, FALSE),
-    .tex_count = 0
+    .tex_count = 0,
+    .context = gxr_context_new (GXR_APP_OVERLAY)
   };
-
-  GxrContext *context = gxr_context_new ();
-  ex.uploader = gulkan_client_new ();
-
-  /* init openvr */
-  if (!gxr_context_inititalize (context, ex.uploader, GXR_APP_OVERLAY))
-    return -1;
 
   ExampleOverlayNum nums[OVERLAY_NUM];
   for (int i = 0; i < OVERLAY_NUM; i++)
@@ -161,7 +157,7 @@ int main () {
       ex.textures[i] = NULL;
       char key[16];
       snprintf (key, 16, "test-%d", i);
-      ex.overlays[i] = gxr_overlay_new (context, key);
+      ex.overlays[i] = gxr_overlay_new (ex.context, key);
       if (!gxr_overlay_is_valid (ex.overlays[i]))
       {
         fprintf (stderr, "Overlay unavailable.\n");
@@ -196,9 +192,7 @@ int main () {
       g_object_unref (ex.textures[i]);
     }
 
-  g_object_unref (ex.uploader);
-
-  g_object_unref (context);
+  g_object_unref (ex.context);
 
   return 0;
 }

@@ -77,6 +77,7 @@ openxr_context_finalize (GObject *gobject);
 static void
 openxr_context_init (OpenXRContext *self)
 {
+  self->view_count = 0;
   self->views = NULL;
   self->manifests = NULL;
 }

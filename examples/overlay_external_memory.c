@@ -22,7 +22,6 @@
 #include <vulkan/vulkan.h>
 
 static GdkPixbuf *pixbuf;
-static GulkanClient *uploader;
 
 static GulkanTexture *gk_texture;
 static GxrOverlay *overlay;
@@ -37,7 +36,7 @@ create_overlay ()
 
   guchar* rgb = gdk_pixbuf_get_pixels (pixbuf);
 
-  GulkanClient *client = GULKAN_CLIENT (uploader);
+  GulkanClient *client = gxr_context_get_gulkan (context);
   GulkanDevice *device = gulkan_client_get_device (client);
 
   gsize size;
@@ -111,7 +110,7 @@ create_overlay ()
   gxr_overlay_set_transform_absolute (overlay, &transform);
 
   gint64 start = g_get_monotonic_time ();
-  gxr_overlay_submit_texture (overlay, uploader, gk_texture);
+  gxr_overlay_submit_texture (overlay, client, gk_texture);
   gint64 end = g_get_monotonic_time ();
   g_print ("Submit frame took %f ms\n",
            (end - start) / (1000.));
@@ -146,7 +145,8 @@ change_callback ()
   glTexSubImage2D (GL_TEXTURE_2D, 0 ,0, 0, (GLsizei)width, (GLsizei)height,
                    GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)rgb);
 
-  gxr_overlay_submit_texture (overlay, uploader, gk_texture);
+  GulkanClient* client = gxr_context_get_gulkan (context);
+  gxr_overlay_submit_texture (overlay, client, gk_texture);
 
   return TRUE;
 }
@@ -198,12 +198,7 @@ main ()
 {
   GMainLoop *loop = g_main_loop_new (NULL, FALSE);
 
-  context = gxr_context_new ();
-  uploader = gulkan_client_new ();
-
-  if (!gxr_context_inititalize (context, uploader, GXR_APP_OVERLAY))
-    return -1;
-
+  context = gxr_context_new (GXR_APP_OVERLAY);
   pixbuf = load_gdk_pixbuf ();
   if (pixbuf == NULL)
     return -1;
@@ -246,7 +241,6 @@ main ()
 
   g_object_unref (overlay);
   g_object_unref (gk_texture);
-  g_object_unref (uploader);
 
   glDeleteTextures (1, &gl_texture);
 

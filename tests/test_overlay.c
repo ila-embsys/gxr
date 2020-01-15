@@ -40,19 +40,16 @@ test_overlay_pixbuf ()
   g_assert (error == NULL);
   g_assert_nonnull (pixbuf);
 
-  GxrContext *context = gxr_context_new ();
+  GxrContext *context = gxr_context_new (GXR_APP_OVERLAY);
   g_assert_nonnull (context);
 
-  GulkanClient *uploader = gulkan_client_new ();
-
-  g_assert (gxr_context_init_runtime (context, GXR_APP_OVERLAY));
-  g_assert (gxr_context_init_gulkan (context, uploader));
-  g_assert (gxr_context_init_session (context, uploader));
   g_assert (gxr_context_is_valid (GXR_CONTEXT (context)));
 
+  GulkanClient *gc = gxr_context_get_gulkan (context);
+  g_assert_nonnull (gc);
 
   GulkanTexture *texture =
-    gulkan_client_texture_new_from_pixbuf (uploader, pixbuf,
+    gulkan_client_texture_new_from_pixbuf (gc, pixbuf,
                                            VK_FORMAT_R8G8B8A8_UNORM,
                                            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                                            false);
@@ -67,7 +64,7 @@ test_overlay_pixbuf ()
                                gdk_pixbuf_get_width (pixbuf),
                                gdk_pixbuf_get_height (pixbuf));
 
-  gxr_overlay_submit_texture (overlay, uploader, texture);
+  gxr_overlay_submit_texture (overlay, gc, texture);
 
   g_object_unref (pixbuf);
 }

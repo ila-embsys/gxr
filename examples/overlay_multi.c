@@ -118,10 +118,8 @@ test_cat_overlay ()
 
   loop = g_main_loop_new (NULL, FALSE);
 
-  GxrContext *context = gxr_context_new ();
-  GulkanClient *client = gulkan_client_new ();
-  if (!gxr_context_inititalize (context, client, GXR_APP_OVERLAY))
-    return -1;
+  GxrContext *context = gxr_context_new (GXR_APP_OVERLAY);
+  GulkanClient *client = gxr_context_get_gulkan (context);
 
   texture = gulkan_client_texture_new_from_pixbuf (client, pixbuf,
                                                    VK_FORMAT_R8G8B8A8_UNORM,
@@ -184,8 +182,6 @@ test_cat_overlay ()
   g_object_unref (overlay);
   g_object_unref (pixbuf);
   g_object_unref (texture);
-  g_object_unref (client);
-
   g_object_unref (context);
 
   return 0;

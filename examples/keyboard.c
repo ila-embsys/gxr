@@ -28,7 +28,6 @@ typedef struct Example
   int text_cursor;
   char input_text[300];
   GulkanTexture *texture;
-  GulkanClient *uploader;
   GxrOverlay *overlay;
   GxrContext *context;
 
@@ -58,7 +57,7 @@ _damage_cb (GtkWidget      *widget,
     GdkPixbuf *pixbuf = gdk_pixbuf_add_alpha (offscreen_pixbuf, false, 0, 0, 0);
     g_object_unref (offscreen_pixbuf);
 
-    GulkanClient *client = GULKAN_CLIENT (self->uploader);
+    GulkanClient *client = gxr_context_get_gulkan (self->context);
 
     if (self->texture == NULL)
       self->texture = gulkan_client_texture_new_from_pixbuf (client, pixbuf,
@@ -69,8 +68,7 @@ _damage_cb (GtkWidget      *widget,
       gulkan_client_upload_pixbuf (client, self->texture, pixbuf,
                                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
-    gxr_overlay_submit_texture (self->overlay, self->uploader,
-                                self->texture);
+    gxr_overlay_submit_texture (self->overlay, client, self->texture);
 
     g_object_unref (pixbuf);
   } else {
@@ -257,7 +255,6 @@ _cleanup (Example *self)
   g_main_loop_unref (self->loop);
   g_object_unref (self->overlay);
   g_object_unref (self->texture);
-  g_object_unref (self->uploader);
   g_object_unref (self->context);
 }
 
@@ -275,15 +272,8 @@ main (int argc, char *argv[])
     .size_y = 600,
     .text_cursor = 0,
     .texture = NULL,
-    .uploader = gulkan_client_new (),
-    .context = gxr_context_new ()
+    .context = gxr_context_new (GXR_APP_OVERLAY)
   };
-
-  if (!gxr_context_init_runtime (self.context, GXR_APP_OVERLAY))
-    {
-      g_printerr ("Could not init OpenVR.\n");
-      return -1;
-    }
 
   if (!gxr_context_load_action_manifest (
       self.context,
@@ -297,20 +287,8 @@ main (int argc, char *argv[])
 
   self.action_set = gxr_action_set_new_from_url (self.context, "/actions/wm");
 
-  if (!gxr_context_init_gulkan (self.context, self.uploader))
-    {
-      g_printerr ("Could not initialize Gulkan!\n");
-      return FALSE;
-    }
-
   if (!_init_gtk (&self))
     return FALSE;
-
-  if (!self.uploader)
-  {
-    g_printerr ("Unable to initialize Vulkan!\n");
-    return false;
-  }
 
   if (!_create_overlay (&self))
     return -1;
