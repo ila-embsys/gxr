@@ -392,7 +392,7 @@ _init_runtime (GxrContext *context, GxrAppType type)
     case GXR_APP_OVERLAY:
       app_type = EVRApplicationType_VRApplication_Overlay;
       break;
-    case GXR_APP_BACKGROUND:
+    case GXR_APP_HEADLESS:
       app_type = EVRApplicationType_VRApplication_Background;
       break;
     default:
@@ -411,7 +411,7 @@ _init_runtime (GxrContext *context, GxrAppType type)
 
   self->initialized = TRUE;
 
-  if (type != GXR_APP_BACKGROUND)
+  if (type != GXR_APP_HEADLESS)
     for (uint32_t eye = 0; eye < 2; eye++)
       {
         self->mat_eye_pos[eye] = openvr_system_get_eye_to_head_transform (eye);

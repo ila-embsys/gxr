@@ -217,7 +217,7 @@ GxrContext *gxr_context_new_headless (void)
 GxrContext *gxr_context_new_headless_from_api (GxrApi api)
 {
   GxrContext *self = gxr_backend_new_context (gxr_backend_get_instance (api));
-  if (!_init_runtime (self, GXR_APP_BACKGROUND))
+  if (!_init_runtime (self, GXR_APP_HEADLESS))
     {
       g_error ("Could not init VR runtime.\n");
       return NULL;

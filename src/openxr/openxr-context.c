@@ -893,8 +893,8 @@ _init_runtime (GxrContext *context,
     case GXR_APP_OVERLAY:
       g_print ("stub: Overlay app type is not implemented in OpenXR.\n");
       break;
-    case GXR_APP_BACKGROUND:
-      g_print ("stub: Background app type is not implemented in OpenXR.\n");
+    case GXR_APP_HEADLESS:
+      g_print ("stub: Headless app type is not implemented in OpenXR.\n");
       break;
     default:
       g_error ("Unknown app type %d\n", type);
@@ -912,7 +912,7 @@ _init_runtime (GxrContext *context,
   if (!_create_system(self))
     return false;
 
-  if (type != GXR_APP_BACKGROUND)
+  if (type != GXR_APP_HEADLESS)
     {
       if (!_set_up_views(self))
         return false;
