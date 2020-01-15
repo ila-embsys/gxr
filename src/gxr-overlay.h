@@ -39,11 +39,6 @@ struct _GxrOverlayClass
              gchar* key,
              gchar* name);
 
-  gboolean
-  (*create_for_dashboard) (GxrOverlay *self,
-                           gchar* key,
-                           gchar* name);
-
   void
   (*poll_event) (GxrOverlay *self);
 
@@ -172,11 +167,6 @@ gboolean
 gxr_overlay_create (GxrOverlay *self,
                     gchar* key,
                     gchar* name);
-
-gboolean
-gxr_overlay_create_for_dashboard (GxrOverlay *self,
-                                  gchar* key,
-                                  gchar* name);
 
 void
 gxr_overlay_poll_event (GxrOverlay *self);

@@ -313,17 +313,6 @@ gxr_overlay_create (GxrOverlay *self, gchar* key, gchar* name)
 }
 
 gboolean
-gxr_overlay_create_for_dashboard (GxrOverlay *self,
-                                  gchar* key,
-                                  gchar* name)
-{
-  GxrOverlayClass *klass = GXR_OVERLAY_GET_CLASS (self);
-  if (klass->create_for_dashboard == NULL)
-    return FALSE;
-  return klass->create_for_dashboard (self, key, name);
-}
-
-gboolean
 gxr_overlay_is_valid (GxrOverlay *self)
 {
   GxrOverlayClass *klass = GXR_OVERLAY_GET_CLASS (self);

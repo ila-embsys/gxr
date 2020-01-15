@@ -173,9 +173,9 @@ main ()
     }
 
   GxrOverlay *overlay = gxr_overlay_new (context);
-  gxr_overlay_create_for_dashboard (overlay,
-                                       "vulkan.dmabuf",
-                                       "Vulkan DMABUF");
+  gxr_overlay_create (overlay,
+                      "vulkan.dmabuf",
+                      "Vulkan DMABUF");
 
   if (!gxr_overlay_is_valid (overlay))
     {

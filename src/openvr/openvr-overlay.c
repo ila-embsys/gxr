@@ -104,23 +104,6 @@ _create (GxrOverlay *overlay, gchar* key, gchar* name)
 }
 
 static gboolean
-_create_for_dashboard (GxrOverlay *overlay,
-                       gchar* key,
-                       gchar* name)
-{
-  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
-  OpenVRFunctions *f = openvr_get_functions ();
-  EVROverlayError err;
-
-  err = f->overlay->CreateDashboardOverlay (key, name, &self->overlay_handle,
-                                           &self->thumbnail_handle);
-
-  OVERLAY_CHECK_ERROR ("CreateDashboardOverlay", err)
-
-  return TRUE;
-}
-
-static gboolean
 _is_valid (GxrOverlay *overlay)
 {
   OpenVROverlay *self = OPENVR_OVERLAY (overlay);
@@ -717,7 +700,6 @@ openvr_overlay_class_init (OpenVROverlayClass *klass)
 
   GxrOverlayClass *parent_class = GXR_OVERLAY_CLASS (klass);
   parent_class->create = _create;
-  parent_class->create_for_dashboard = _create_for_dashboard;
   parent_class->poll_event = _poll_event;
   parent_class->set_mouse_scale = _set_mouse_scale;
   parent_class->is_valid = _is_valid;

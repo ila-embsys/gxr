@@ -50,17 +50,6 @@ _create (GxrOverlay *overlay, gchar* key, gchar* name)
 }
 
 static gboolean
-_create_for_dashboard (GxrOverlay *overlay,
-                       gchar* key,
-                       gchar* name)
-{
-  (void) overlay;
-  (void) key;
-  (void) name;
-  return TRUE;
-}
-
-static gboolean
 _is_valid (GxrOverlay *overlay)
 {
   (void) overlay;
@@ -285,7 +274,6 @@ openxr_overlay_class_init (OpenXROverlayClass *klass)
 
   GxrOverlayClass *parent_class = GXR_OVERLAY_CLASS (klass);
   parent_class->create = _create;
-  parent_class->create_for_dashboard = _create_for_dashboard;
   parent_class->poll_event = _poll_event;
   parent_class->set_mouse_scale = _set_mouse_scale;
   parent_class->is_valid = _is_valid;
