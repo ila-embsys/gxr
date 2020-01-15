@@ -42,9 +42,6 @@ static struct VRTextureBounds_t flippedBounds = { 0., 1., 1., 0. };
 G_DEFINE_TYPE (OpenVROverlay, openvr_overlay, GXR_TYPE_OVERLAY)
 
 static void
-openvr_overlay_finalize (GObject *gobject);
-
-static void
 openvr_overlay_init (OpenVROverlay *self)
 {
   self->overlay_handle = 0;
@@ -57,9 +54,26 @@ openvr_overlay_new (void)
   return (OpenVROverlay*) g_object_new (OPENVR_TYPE_OVERLAY, 0);
 }
 
-static void
-openvr_overlay_finalize (GObject *gobject)
+static gboolean
+_destroy (OpenVROverlay *overlay)
 {
+  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
+
+  OpenVRFunctions *f = openvr_get_functions ();
+  EVROverlayError err;
+
+  err = f->overlay->DestroyOverlay (self->overlay_handle);
+
+  OVERLAY_CHECK_ERROR ("DestroyOverlay", err)
+
+  return TRUE;
+}
+
+static void
+_finalize (GObject *gobject)
+{
+  OpenVROverlay *self = OPENVR_OVERLAY (gobject);
+  _destroy (self);
   G_OBJECT_CLASS (openvr_overlay_parent_class)->finalize (gobject);
 }
 
@@ -504,21 +518,6 @@ _set_keyboard_position (GxrOverlay      *overlay,
 }
 
 static gboolean
-_destroy (GxrOverlay *overlay)
-{
-  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
-
-  OpenVRFunctions *f = openvr_get_functions ();
-  EVROverlayError err;
-
-  err = f->overlay->DestroyOverlay (self->overlay_handle);
-
-  OVERLAY_CHECK_ERROR ("DestroyOverlay", err)
-
-  return TRUE;
-}
-
-static gboolean
 _set_model (GxrOverlay *overlay,
             gchar *name,
             graphene_vec4_t *color)
@@ -714,7 +713,7 @@ static void
 openvr_overlay_class_init (OpenVROverlayClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
-  object_class->finalize = openvr_overlay_finalize;
+  object_class->finalize = _finalize;
 
   GxrOverlayClass *parent_class = GXR_OVERLAY_CLASS (klass);
   parent_class->create = _create;
@@ -740,7 +739,6 @@ openvr_overlay_class_init (OpenVROverlayClass *klass)
   parent_class->get_transform_absolute = _get_transform_absolute;
   parent_class->show_keyboard = _show_keyboard;
   parent_class->set_keyboard_position = _set_keyboard_position;
-  parent_class->destroy = _destroy;
   parent_class->set_model = _set_model;
   parent_class->get_model = _get_model;
   parent_class->submit_texture = _submit_texture;

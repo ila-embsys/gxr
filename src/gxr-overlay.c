@@ -39,13 +39,16 @@ enum {
 static guint overlay_signals[LAST_SIGNAL] = { 0 };
 
 static void
-gxr_overlay_finalize (GObject *gobject);
+_finalize (GObject *gobject)
+{
+  G_OBJECT_CLASS (gxr_overlay_parent_class)->finalize (gobject);
+}
 
 static void
 gxr_overlay_class_init (GxrOverlayClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
-  object_class->finalize = gxr_overlay_finalize;
+  object_class->finalize = _finalize;
   overlay_signals[MOTION_NOTIFY_EVENT] =
     g_signal_new ("motion-notify-event",
                    G_TYPE_FROM_CLASS (klass),
@@ -114,15 +117,6 @@ gxr_overlay_new (GxrContext *context)
 {
   return gxr_context_new_overlay (context);
 }
-
-static void
-gxr_overlay_finalize (GObject *gobject)
-{
-  GxrOverlay *self = GXR_OVERLAY (gobject);
-  gxr_overlay_destroy (self);
-  G_OBJECT_CLASS (gxr_overlay_parent_class)->finalize (gobject);
-}
-
 
 gboolean
 gxr_overlay_create_width (GxrOverlay *self,
@@ -521,15 +515,6 @@ gxr_overlay_set_keyboard_position (GxrOverlay      *self,
   if (klass->set_keyboard_position == NULL)
     return;
   klass->set_keyboard_position (self, top_left, bottom_right);
-}
-
-gboolean
-gxr_overlay_destroy (GxrOverlay *self)
-{
-  GxrOverlayClass *klass = GXR_OVERLAY_GET_CLASS (self);
-  if (klass->destroy == NULL)
-    return FALSE;
-  return klass->destroy (self);
 }
 
 gboolean

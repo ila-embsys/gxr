@@ -22,9 +22,6 @@ struct _OpenXROverlay
 G_DEFINE_TYPE (OpenXROverlay, openxr_overlay, GXR_TYPE_OVERLAY)
 
 static void
-openxr_overlay_finalize (GObject *gobject);
-
-static void
 openxr_overlay_init (OpenXROverlay *self)
 {
   (void) self;
@@ -37,7 +34,7 @@ openxr_overlay_new (void)
 }
 
 static void
-openxr_overlay_finalize (GObject *gobject)
+_finalize (GObject *gobject)
 {
   G_OBJECT_CLASS (openxr_overlay_parent_class)->finalize (gobject);
 }
@@ -232,13 +229,6 @@ _set_keyboard_position (GxrOverlay      *overlay,
 }
 
 static gboolean
-_destroy (GxrOverlay *overlay)
-{
-  (void) overlay;
-  return TRUE;
-}
-
-static gboolean
 _set_model (GxrOverlay      *overlay,
             gchar           *name,
             graphene_vec4_t *color)
@@ -291,7 +281,7 @@ static void
 openxr_overlay_class_init (OpenXROverlayClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
-  object_class->finalize = openxr_overlay_finalize;
+  object_class->finalize = _finalize;
 
   GxrOverlayClass *parent_class = GXR_OVERLAY_CLASS (klass);
   parent_class->create = _create;
@@ -317,7 +307,6 @@ openxr_overlay_class_init (OpenXROverlayClass *klass)
   parent_class->get_transform_absolute = _get_transform_absolute;
   parent_class->show_keyboard = _show_keyboard;
   parent_class->set_keyboard_position = _set_keyboard_position;
-  parent_class->destroy = _destroy;
   parent_class->set_model = _set_model;
   parent_class->get_model = _get_model;
   parent_class->submit_texture = _submit_texture;

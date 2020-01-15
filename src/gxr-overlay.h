@@ -113,9 +113,6 @@ struct _GxrOverlayClass
                             graphene_vec2_t *bottom_right);
 
   gboolean
-  (*destroy) (GxrOverlay *self);
-
-  gboolean
   (*set_model) (GxrOverlay *self,
                 gchar *name,
                 graphene_vec4_t *color);
@@ -248,9 +245,6 @@ void
 gxr_overlay_set_keyboard_position (GxrOverlay   *self,
                                    graphene_vec2_t *top_left,
                                    graphene_vec2_t *bottom_right);
-
-gboolean
-gxr_overlay_destroy (GxrOverlay *self);
 
 gboolean
 gxr_overlay_set_model (GxrOverlay *self,
