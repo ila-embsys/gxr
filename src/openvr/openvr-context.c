@@ -329,23 +329,9 @@ _acknowledge_quit (GxrContext *context)
 }
 
 static gboolean
-_init_runtime (GxrContext *context, GxrAppType type);
-
-static gboolean
 _is_another_scene_running (GxrContext *context)
 {
-  OpenVRContext *self = OPENVR_CONTEXT (context);
-  if (self->initialized)
-    {
-      g_error ("OpenVR context was initialized before."
-               " gxr_is_another_scene_running must be run before.");
-      return FALSE;
-    }
-
-  /* runtime init will fail for background app when steamvr is not running. */
-  if (!_init_runtime (context, GXR_APP_BACKGROUND))
-    return FALSE;
-
+  (void) context;
   OpenVRFunctions *f = openvr_get_functions();
   /* if applications fntable is not loaded, SteamVR is probably not running. */
   if (f->applications == NULL)
