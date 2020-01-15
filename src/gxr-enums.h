@@ -69,7 +69,8 @@ typedef enum {
  **/
 typedef enum {
   GXR_API_OPENVR,
-  GXR_API_OPENXR
+  GXR_API_OPENXR,
+  GXR_API_NONE
 } GxrApi;
 
 /**

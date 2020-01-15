@@ -63,6 +63,9 @@ gxr_backend_new_from_api (GxrApi api)
       func_name = "openxr_context_new";
       module_name = "gxr-openxr";
       break;
+    default:
+      g_error ("Invalid API provided.");
+      return NULL;
     }
 
   g_debug ("Load module %s from path %s\n", module_name, plugin_dir);
