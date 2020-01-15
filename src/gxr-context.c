@@ -7,7 +7,7 @@
 
 #include "gxr-context.h"
 #include "gxr-config.h"
-#include "gxr-backend.h"
+#include "gxr-backend-private.h"
 
 typedef struct _GxrContextPrivate
 {
