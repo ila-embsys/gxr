@@ -129,7 +129,7 @@ static void
 gxr_context_init (GxrContext *self)
 {
   GxrContextPrivate *priv = gxr_context_get_instance_private (self);
-  priv->api = _get_api_from_env ();
+  priv->api = GXR_API_NONE;
 }
 
 GxrContext *
@@ -149,6 +149,14 @@ gxr_context_get_api (GxrContext *self)
 {
   GxrContextPrivate *priv = gxr_context_get_instance_private (self);
   return priv->api;
+}
+
+
+void
+gxr_context_set_api (GxrContext *self, GxrApi api)
+{
+  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
+  priv->api = api;
 }
 
 gboolean
@@ -567,3 +575,4 @@ gxr_context_get_model_list (GxrContext *self)
     return FALSE;
   return klass->get_model_list (self);
 }
+

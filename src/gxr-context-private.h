@@ -53,6 +53,9 @@ gxr_context_emit_binding_loaded (GxrContext *self);
 void
 gxr_context_emit_actionset_update (GxrContext *self);
 
+void
+gxr_context_set_api (GxrContext *self, GxrApi api);
+
 G_END_DECLS
 
 #endif /* GXR_CONTEXT_PRIVATE_H_ */

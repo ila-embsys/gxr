@@ -11,12 +11,13 @@
 
 #include "gxr-enums.h"
 #include "gxr-config.h"
-#include "gxr-context.h"
+#include "gxr-context-private.h"
 
 struct _GxrBackend
 {
   GObject parent;
   GModule *module;
+  GxrApi api;
   GxrContext *(*context_new) (void);
 };
 
@@ -46,6 +47,7 @@ gxr_backend_new_from_api (GxrApi api)
     }
 
   GxrBackend *self = (GxrBackend*) g_object_new (GXR_TYPE_BACKEND, 0);
+  self->api = api;
 
   const gchar *plugin_dir = g_getenv ("GXR_BACKEND_DIR");
   if (!plugin_dir || !*plugin_dir)
@@ -125,7 +127,9 @@ gxr_backend_init (GxrBackend *self)
 GxrContext *
 gxr_backend_new_context (GxrBackend *self)
 {
-  return self->context_new();
+  GxrContext *context = self->context_new();
+  gxr_context_set_api (context, self->api);
+  return context;
 }
 
 static void
