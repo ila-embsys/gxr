@@ -43,8 +43,6 @@ test_overlay_pixbuf ()
   GxrContext *context = gxr_context_new (GXR_APP_OVERLAY);
   g_assert_nonnull (context);
 
-  g_assert (gxr_context_is_valid (GXR_CONTEXT (context)));
-
   GulkanClient *gc = gxr_context_get_gulkan (context);
   g_assert_nonnull (gc);
 

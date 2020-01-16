@@ -18,9 +18,6 @@ _test_load_action_manifest ()
   GulkanClient *gc = gulkan_client_new ();
   g_assert_nonnull (gc);
 
-  g_assert (gxr_context_is_valid (context));
-
-
   if (gxr_context_get_api (context) == GXR_API_OPENVR)
   {
     if (!gxr_context_load_action_manifest (

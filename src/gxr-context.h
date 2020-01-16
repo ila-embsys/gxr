@@ -47,9 +47,6 @@ struct _GxrContextClass
                             uint32_t   *width,
                             uint32_t   *height);
 
-  gboolean
-  (*is_valid) (GxrContext *self);
-
   void
   (*poll_event) (GxrContext *self);
 
@@ -197,9 +194,6 @@ void
 gxr_context_get_render_dimensions (GxrContext *self,
                                    uint32_t *width,
                                    uint32_t *height);
-
-gboolean
-gxr_context_is_valid (GxrContext *self);
 
 gboolean
 gxr_context_init_framebuffers (GxrContext           *self,

@@ -304,15 +304,6 @@ gxr_context_get_render_dimensions (GxrContext *self,
   klass->get_render_dimensions (self, width, height);
 }
 
-gboolean
-gxr_context_is_valid (GxrContext *self)
-{
-  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
-  if (klass->is_valid == NULL)
-      return FALSE;
-  return klass->is_valid (self);
-}
-
 void
 gxr_context_poll_event (GxrContext *self)
 {

@@ -103,13 +103,6 @@ _vr_init (EVRApplicationType app_type)
   return TRUE;
 }
 
-static gboolean
-_is_valid (GxrContext *context)
-{
-  (void) context;
-  return openvr_functions_is_valid (functions);
-}
-
 gboolean
 openvr_context_is_installed (void)
 {
@@ -690,7 +683,6 @@ openvr_context_class_init (OpenVRContextClass *klass)
   gxr_context_class->is_input_available = _is_input_available;
   gxr_context_class->get_frustum_angles = _get_frustum_angles;
   gxr_context_class->get_head_pose = _get_head_pose;
-  gxr_context_class->is_valid = _is_valid;
   gxr_context_class->init_runtime = _init_runtime;
   gxr_context_class->init_gulkan = _init_gulkan;
   gxr_context_class->init_session = _init_session;

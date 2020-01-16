@@ -42,8 +42,6 @@ _test_init_context (GxrAppType type)
   GxrApi api = gxr_context_get_api (context);
   g_print ("Using API: %s\n", gxr_api_string (api));
 
-  g_assert (gxr_context_is_valid (context));
-
   g_object_unref (context);
 }
 
@@ -65,8 +63,6 @@ _test_quit_event (GxrAppType type)
 {
   GxrContext *context = gxr_context_new (type);
   g_assert_nonnull (context);
-
-  g_assert (gxr_context_is_valid (context));
 
   gboolean quit_completed = FALSE;
   g_signal_connect (context, "quit-event",
