@@ -163,7 +163,7 @@ GxrOverlay *
 gxr_overlay_new_model (GxrContext *context, gchar* key)
 {
   GxrOverlay *self = gxr_overlay_new (context, key);
-  if (!gxr_overlay_is_valid (self))
+  if (self == NULL)
     {
       g_printerr ("Model overlay %s unavailable.\n", key);
       return NULL;
@@ -354,15 +354,6 @@ void
 gxr_overlay_emit_keyboard_close (GxrOverlay *self)
 {
   g_signal_emit (self, overlay_signals[KEYBOARD_CLOSE_EVENT], 0);
-}
-
-gboolean
-gxr_overlay_is_valid (GxrOverlay *self)
-{
-  GxrOverlayClass *klass = GXR_OVERLAY_GET_CLASS (self);
-  if (klass->is_valid == NULL)
-    return FALSE;
-  return klass->is_valid (self);
 }
 
 gboolean

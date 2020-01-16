@@ -81,7 +81,7 @@ _show_cb (GxrOverlay *overlay,
   gboolean is_invisible = !gxr_overlay_is_visible (overlay) &&
                           !gxr_overlay_thumbnail_is_visible (overlay);
 
-  if (!gxr_overlay_is_valid (overlay) || is_invisible)
+  if (is_invisible)
     return;
 
   gxr_overlay_submit_texture (overlay, texture);
@@ -121,7 +121,7 @@ test_cat_overlay ()
 
   /* create openvr overlay */
   GxrOverlay *overlay = gxr_overlay_new (context, "examples.cairo");
-  if (!gxr_overlay_is_valid (overlay))
+  if (overlay == NULL)
   {
     fprintf (stderr, "Overlay unavailable.\n");
     return -1;

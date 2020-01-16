@@ -111,7 +111,7 @@ _show_cb (GxrOverlay *overlay,
   gboolean is_invisible = !gxr_overlay_is_visible (overlay) &&
                           !gxr_overlay_thumbnail_is_visible (overlay);
 
-  if (!gxr_overlay_is_valid (overlay) || is_invisible)
+  if (is_invisible)
     return;
 
   gxr_overlay_submit_texture (overlay, texture);
@@ -168,7 +168,7 @@ main ()
     }
 
   GxrOverlay *overlay = gxr_overlay_new (context, "vulkan.dmabuf");
-  if (!gxr_overlay_is_valid (overlay))
+  if (!overlay)
     {
       g_printerr ("Overlay unavailable.\n");
       return -1;

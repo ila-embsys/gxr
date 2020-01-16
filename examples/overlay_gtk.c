@@ -30,7 +30,7 @@ _damage_cb (GtkWidget *widget, GdkEventExpose *event, GxrOverlay *overlay)
     gboolean is_invisible = !gxr_overlay_is_visible (overlay) &&
                             !gxr_overlay_thumbnail_is_visible (overlay);
 
-    if (!gxr_overlay_is_valid (overlay) || is_invisible)
+    if (is_invisible)
       {
         g_object_unref (offscreen_pixbuf);
         return TRUE;
@@ -181,7 +181,7 @@ main (int argc, char *argv[])
   graphene_point3d_t position = { .x = 0.f, .y = 1.2f, .z = -1.f };
   gxr_overlay_set_translation (overlay, &position);
 
-  if (!gxr_overlay_is_valid (overlay))
+  if (overlay == NULL)
   {
     fprintf (stderr, "Overlay unavailable.\n");
     return -1;

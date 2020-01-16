@@ -41,13 +41,6 @@ _finalize (GObject *gobject)
 }
 
 static gboolean
-_is_valid (GxrOverlay *overlay)
-{
-  (void) overlay;
-  return TRUE;
-}
-
-static gboolean
 _show (GxrOverlay *overlay)
 {
   (void) overlay;
@@ -266,7 +259,6 @@ openxr_overlay_class_init (OpenXROverlayClass *klass)
   GxrOverlayClass *parent_class = GXR_OVERLAY_CLASS (klass);
   parent_class->poll_event = _poll_event;
   parent_class->set_mouse_scale = _set_mouse_scale;
-  parent_class->is_valid = _is_valid;
   parent_class->is_visible = _is_visible;
   parent_class->thumbnail_is_visible = _thumbnail_is_visible;
   parent_class->show = _show;

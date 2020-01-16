@@ -93,7 +93,7 @@ create_overlay ()
 
   overlay = gxr_overlay_new_width (context, "vulkan.dmabuf", 2.0);
 
-  if (!gxr_overlay_is_valid (overlay))
+  if (overlay == NULL)
     {
       g_printerr ("Overlay unavailable.\n");
       return;

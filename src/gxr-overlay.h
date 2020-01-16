@@ -41,9 +41,6 @@ struct _GxrOverlayClass
   (*set_mouse_scale) (GxrOverlay *self, float width, float height);
 
   gboolean
-  (*is_valid) (GxrOverlay *self);
-
-  gboolean
   (*is_visible) (GxrOverlay *self);
 
   gboolean
@@ -165,9 +162,6 @@ gxr_overlay_poll_event (GxrOverlay *self);
 
 gboolean
 gxr_overlay_set_mouse_scale (GxrOverlay *self, float width, float height);
-
-gboolean
-gxr_overlay_is_valid (GxrOverlay *self);
 
 gboolean
 gxr_overlay_is_visible (GxrOverlay *self);

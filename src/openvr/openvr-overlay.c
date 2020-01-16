@@ -81,7 +81,17 @@ openvr_overlay_new (gchar* key)
 {
   OpenVROverlay *self = (OpenVROverlay*) g_object_new (OPENVR_TYPE_OVERLAY, 0);
   if (!_create(self, key))
-    return NULL;
+    {
+      g_object_unref (self);
+      return NULL;
+    }
+
+  if (self->overlay_handle == k_ulOverlayHandleInvalid)
+    {
+      g_object_unref (self);
+      return NULL;
+    }
+
   return self;
 }
 
@@ -106,13 +116,6 @@ _finalize (GObject *gobject)
   OpenVROverlay *self = OPENVR_OVERLAY (gobject);
   _destroy (self);
   G_OBJECT_CLASS (openvr_overlay_parent_class)->finalize (gobject);
-}
-
-static gboolean
-_is_valid (GxrOverlay *overlay)
-{
-  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
-  return self->overlay_handle != k_ulOverlayHandleInvalid;
 }
 
 static gboolean
@@ -706,7 +709,6 @@ openvr_overlay_class_init (OpenVROverlayClass *klass)
   GxrOverlayClass *parent_class = GXR_OVERLAY_CLASS (klass);
   parent_class->poll_event = _poll_event;
   parent_class->set_mouse_scale = _set_mouse_scale;
-  parent_class->is_valid = _is_valid;
   parent_class->is_visible = _is_visible;
   parent_class->thumbnail_is_visible = _thumbnail_is_visible;
   parent_class->show = _show;

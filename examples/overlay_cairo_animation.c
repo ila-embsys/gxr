@@ -161,7 +161,7 @@ test_overlay ()
 
   /* create cairo overlay */
   GxrOverlay *overlay = gxr_overlay_new (context, "examples.cairo");
-  if (!gxr_overlay_is_valid (overlay))
+  if (overlay == NULL)
   {
     g_printerr ("Overlay unavailable.\n");
     return -1;

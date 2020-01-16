@@ -226,7 +226,7 @@ _create_overlay (Example *self)
   self->overlay = gxr_overlay_new_width (self->context,
                                          "gxr.example.keyboard", 5.0);
 
-  if (!gxr_overlay_is_valid (self->overlay))
+  if (!self->overlay)
   {
     g_printerr ("Overlay unavailable.\n");
     return FALSE;

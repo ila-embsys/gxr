@@ -89,7 +89,7 @@ _show_cb (GxrOverlay *overlay,
   gboolean is_invisible = !gxr_overlay_is_visible (overlay) &&
                           !gxr_overlay_thumbnail_is_visible (overlay);
 
-  if (!gxr_overlay_is_valid (overlay) || is_invisible)
+  if (is_invisible)
     return;
 
   gxr_overlay_submit_texture (overlay, texture);
@@ -127,16 +127,10 @@ test_cat_overlay ()
                                                    true);
 
   GxrOverlay *overlay = gxr_overlay_new (context, "vulkan.cat");
-  if (!gxr_overlay_is_valid (overlay))
-  {
-    g_printerr ("Overlay 1 handle invalid.\n");
-    return -1;
-  }
-
   GxrOverlay *overlay2 = gxr_overlay_new (context, "vulkan.cat2");
-  if (!gxr_overlay_is_valid (overlay2))
+  if (overlay == NULL || overlay2 == NULL)
   {
-    g_printerr ("Overlay 2 handle invalid.\n");
+    g_error ("Could not create overlays.");
     return -1;
   }
 

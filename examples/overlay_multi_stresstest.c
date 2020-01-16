@@ -158,7 +158,7 @@ int main () {
       char key[16];
       snprintf (key, 16, "test-%d", i);
       ex.overlays[i] = gxr_overlay_new (ex.context, key);
-      if (!gxr_overlay_is_valid (ex.overlays[i]))
+      if (ex.overlays[i] == NULL)
       {
         fprintf (stderr, "Overlay unavailable.\n");
         return -1;

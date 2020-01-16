@@ -56,8 +56,6 @@ test_overlay_pixbuf ()
   GxrOverlay *overlay = gxr_overlay_new (context, "test.pixbuf");
   g_assert_nonnull (overlay);
 
-  g_assert (gxr_overlay_is_valid (overlay));
-
   gxr_overlay_set_mouse_scale (overlay,
                                gdk_pixbuf_get_width (pixbuf),
                                gdk_pixbuf_get_height (pixbuf));

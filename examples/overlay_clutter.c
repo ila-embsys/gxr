@@ -96,7 +96,7 @@ repaint_cb (gpointer user_data)
   gboolean is_invisible = !gxr_overlay_is_visible (data->overlay) &&
                           !gxr_overlay_thumbnail_is_visible (data->overlay);
 
-  if (!gxr_overlay_is_valid (data->overlay) || is_invisible)
+  if (is_invisible)
     return FALSE;
 
   uint32_t width = 500;
@@ -139,7 +139,7 @@ test_cat_overlay (int argc, char *argv[])
   context = gxr_context_new (GXR_APP_OVERLAY);
 
   GxrOverlay *overlay = gxr_overlay_new_width (context, "example.clutter", 2.0);
-  if (!gxr_overlay_is_valid (overlay))
+  if (overlay == NULL)
     {
       fprintf (stderr, "Overlay unavailable.\n");
       return -1;

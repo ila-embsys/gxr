@@ -141,7 +141,7 @@ test_cat_overlay ()
                                                    true);
 
   GxrOverlay *overlay = gxr_overlay_new_width (context, "vulkan.cat", 2.0f);
-  if (!gxr_overlay_is_valid (overlay))
+  if (overlay == NULL)
   {
     fprintf (stderr, "Overlay unavailable.\n");
     return -1;
