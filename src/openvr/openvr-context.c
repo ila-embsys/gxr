@@ -32,8 +32,6 @@ struct _OpenVRContext
 
   graphene_matrix_t last_mat_head_pose;
   graphene_matrix_t mat_eye_pos[2];
-
-  gboolean initialized;
 };
 
 G_DEFINE_TYPE (OpenVRContext, openvr_context, GXR_TYPE_CONTEXT)
@@ -45,7 +43,6 @@ static void
 openvr_context_init (OpenVRContext *self)
 {
   graphene_matrix_init_identity (&self->last_mat_head_pose);
-  self->initialized = FALSE;
 }
 
 static void
@@ -109,8 +106,8 @@ _vr_init (EVRApplicationType app_type)
 static gboolean
 _is_valid (GxrContext *context)
 {
-  OpenVRContext *self = OPENVR_CONTEXT (context);
-  return openvr_functions_is_valid (functions) && self->initialized;
+  (void) context;
+  return openvr_functions_is_valid (functions);
 }
 
 gboolean
@@ -408,8 +405,6 @@ _init_runtime (GxrContext *context, GxrAppType type)
     g_error ("Could not load OpenVR function pointers.\n");
     return FALSE;
   }
-
-  self->initialized = TRUE;
 
   if (type != GXR_APP_HEADLESS)
     for (uint32_t eye = 0; eye < 2; eye++)
