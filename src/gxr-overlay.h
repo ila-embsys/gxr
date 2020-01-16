@@ -244,6 +244,9 @@ gxr_overlay_submit_texture (GxrOverlay    *self,
 gboolean
 gxr_overlay_print_info (GxrOverlay *self);
 
+GxrContext *
+gxr_overlay_get_context (GxrOverlay *self);
+
 G_END_DECLS
 
 #endif /* GXR_OVERLAY_H_ */

@@ -592,3 +592,10 @@ gxr_overlay_print_info (GxrOverlay *self)
     return FALSE;
   return klass->print_info (self);
 }
+
+GxrContext *
+gxr_overlay_get_context (GxrOverlay *self)
+{
+  GxrOverlayPrivate *priv = gxr_overlay_get_instance_private (self);
+  return priv->context;
+}
