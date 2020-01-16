@@ -8,12 +8,14 @@
 #include "gxr-context-private.h"
 #include "gxr-config.h"
 #include "gxr-backend-private.h"
+#include "gxr-controller.h"
 
 typedef struct _GxrContextPrivate
 {
   GObject parent;
   GulkanClient *gc;
   GxrApi api;
+  GSList *controllers;
 } GxrContextPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (GxrContext, gxr_context, G_TYPE_OBJECT)
@@ -296,6 +298,47 @@ gxr_context_init (GxrContext *self)
   GxrContextPrivate *priv = gxr_context_get_instance_private (self);
   priv->api = GXR_API_NONE;
   priv->gc = NULL;
+  priv->controllers = NULL;
+}
+
+GSList *
+gxr_context_get_controllers (GxrContext *self)
+{
+  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
+  return priv->controllers;
+}
+
+void
+gxr_context_add_controller (GxrContext *self, guint64 handle)
+{
+  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
+
+  GxrController *controller = gxr_controller_new (handle, self);
+  priv->controllers = g_slist_append (priv->controllers, controller);
+  g_debug ("Created controller for %lu\n", handle);
+
+  gxr_context_emit_device_activate (self, controller);
+}
+
+void
+gxr_context_remove_controller (GxrContext *self, guint64 handle)
+{
+
+  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
+
+  for (GSList *l = priv->controllers; l; l = l->next)
+    {
+      GxrController *controller = GXR_CONTROLLER (l->data);
+      if (gxr_controller_get_handle (controller) == handle)
+        {
+          priv->controllers = g_slist_remove (priv->controllers, controller);
+          gxr_context_emit_device_deactivate (self, controller);
+          g_object_unref (controller);
+          g_debug ("Removed controller %lu\n", handle);
+          return;
+        }
+    }
+  g_debug ("Controller %lu not found for removal\n", handle);
 }
 
 static void

@@ -1,5 +1,3 @@
 .buildconfig
 build/
-res/tests.c
-shaders/*.spv
-shaders/shaders.c
+examples/cube/shaders/*.spv

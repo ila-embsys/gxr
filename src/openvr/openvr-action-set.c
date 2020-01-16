@@ -33,32 +33,6 @@ static gboolean
 _update (GxrActionSet **sets, uint32_t count);
 
 static void
-_update_input_handles (OpenVRActionSet *self)
-{
-  GxrActionSet *self_gxr = GXR_ACTION_SET (self);
-  if (!_update (&self_gxr, 1))
-    {
-      g_print ("Failed to update Action Set after binding update!\n");
-      return;
-    }
-
-  GSList *actions = gxr_action_set_get_actions (GXR_ACTION_SET (self));
-  for (GSList *l = actions; l != NULL; l = l->next)
-    {
-      OpenVRAction *action = (OpenVRAction*) l->data;
-      openvr_action_update_input_handles (action);
-    }
-}
-
-static void
-_binding_loaded_cb (OpenVRContext   *context,
-                    OpenVRActionSet *self)
-{
-  (void) context;
-  _update_input_handles (self);
-}
-
-static void
 openvr_action_set_init (OpenVRActionSet *self)
 {
   self->handle = k_ulInvalidActionSetHandle;
@@ -69,8 +43,6 @@ openvr_action_set_new (OpenVRContext *context)
 {
   (void) context;
   OpenVRActionSet *self = (OpenVRActionSet*) g_object_new (OPENVR_TYPE_ACTION_SET, 0);
-  g_signal_connect (context, "binding-loaded-event",
-                    (GCallback) _binding_loaded_cb, self);
   return self;
 }
 
@@ -180,7 +152,8 @@ _create_action (GxrActionSet *self, GxrContext *context,
                 GxrActionType type, char *url)
 {
   (void) context;
-  return (GxrAction*) openvr_action_new_from_type_url (self, type, url);
+  return (GxrAction*) openvr_action_new_from_type_url (context, self,
+                                                       type, url);
 }
 
 static void

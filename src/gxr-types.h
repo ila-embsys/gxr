@@ -19,6 +19,9 @@
 
 #include "gxr-enums.h"
 
+struct GxrController;
+typedef struct _GxrController GxrController;
+
 /**
  * GxrDigitalEvent:
  * @active: Whether or not this action is currently available to be bound in the active action set.
@@ -33,7 +36,7 @@ typedef struct {
   gboolean active;
   gboolean state;
   gboolean changed;
-  guint64 controller_handle;
+  GxrController *controller;
   gfloat time;
 } GxrDigitalEvent;
 
@@ -51,7 +54,7 @@ typedef struct {
   gboolean active;
   graphene_vec3_t state;
   graphene_vec3_t delta;
-  guint64 controller_handle;
+  GxrController *controller;
   gfloat time;
 } GxrAnalogEvent;
 
@@ -74,7 +77,7 @@ typedef struct {
   graphene_vec3_t angular_velocity;
   gboolean valid;
   gboolean device_connected;
-  guint64 controller_handle;
+  GxrController *controller;
 } GxrPoseEvent;
 
 /**
@@ -86,17 +89,6 @@ typedef struct {
 typedef struct {
   GxrQuitReason reason;
 } GxrQuitEvent;
-
-/**
- * GxrDeviceIndexEvent:
- * @controller_handle: A #guint64 controller handle.
- *
- * Event that is emitted when a controller is activated or deactivated.
- * It carries the handle of a controller.
- **/
-typedef struct {
-  guint64 controller_handle;
-} GxrDeviceIndexEvent;
 
 /**
  * GxrPose:

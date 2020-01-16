@@ -25,6 +25,7 @@
 #include "openvr-compositor.h"
 #include "openvr-action.h"
 #include "gxr-io.h"
+#include "gxr-controller.h"
 
 struct _OpenVRContext
 {
@@ -189,29 +190,29 @@ _poll_event (GxrContext *context)
 
       case EVREventType_VREvent_TrackedDeviceActivated:
       {
-        GxrDeviceIndexEvent *event =
-          g_malloc (sizeof (GxrDeviceIndexEvent));
-        event->controller_handle = vr_event.trackedDeviceIndex;
-        g_debug ("Event: sending DEVICE_ACTIVATE_EVENT signal\n");
+        /*  TODO
+        controller = vr_event.trackedDeviceIndex;
         gxr_context_emit_device_activate (context, event);
+        */
+        g_debug ("Event: sending DEVICE_ACTIVATE_EVENT signal\n");
       } break;
 
       case EVREventType_VREvent_TrackedDeviceDeactivated:
       {
-        GxrDeviceIndexEvent *event =
-          g_malloc (sizeof (GxrDeviceIndexEvent));
-        event->controller_handle = vr_event.trackedDeviceIndex;
-        g_debug ("Event: sending DEVICE_DEACTIVATE_EVENT signal\n");
+        /* TODO
+        controller = vr_event.trackedDeviceIndex;
         gxr_context_emit_device_deactivate (context, event);
+        */
+        g_debug ("Event: sending DEVICE_DEACTIVATE_EVENT signal\n");
       } break;
 
       case EVREventType_VREvent_TrackedDeviceUpdated:
       {
-        GxrDeviceIndexEvent *event =
-          g_malloc (sizeof (GxrDeviceIndexEvent));
-        event->controller_handle = vr_event.trackedDeviceIndex;
-        g_debug ("Event: sending DEVICE_UPDATE_EVENT signal\n");
+        /* TODO
+        event->controller = vr_event.trackedDeviceIndex;
         gxr_context_emit_device_update (context, event);
+        */
+        g_debug ("Event: sending DEVICE_UPDATE_EVENT signal\n");
       } break;
 
       case EVREventType_VREvent_ActionBindingReloaded:
@@ -693,13 +694,12 @@ _load_action_manifest (GxrContext *self,
 }
 
 static GxrAction *
-_new_action_from_type_url (GxrContext   *self,
+_new_action_from_type_url (GxrContext   *context,
                            GxrActionSet *action_set,
                            GxrActionType type,
                            char          *url)
 {
-  (void) self;
-  return GXR_ACTION (openvr_action_new_from_type_url (action_set, type, url));
+  return GXR_ACTION (openvr_action_new_from_type_url (context, action_set, type, url));
 }
 
 static GxrOverlay *

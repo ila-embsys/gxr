@@ -102,3 +102,5 @@ if glew_dep.found() and glfw_dep.found() and egl_dep.found()
     include_directories: gxr_inc,
     install: false)
 endif
+
+subdir('cube')

@@ -12,6 +12,7 @@
 #include "openxr-action.h"
 #include "openxr-context.h"
 #include "openxr-action-set.h"
+#include "gxr-controller.h"
 
 #define NUM_HANDS 2
 struct _OpenXRAction
@@ -177,6 +178,21 @@ openxr_action_new_from_type_url (OpenXRContext *context,
   return self;
 }
 
+static GxrController *
+_find_controller (GxrContext *self, guint64 handle)
+{
+  GSList *controllers = gxr_context_get_controllers (self);
+  for (GSList *l = controllers; l; l = l->next)
+  {
+    GxrController *controller = GXR_CONTROLLER (l->data);
+    if (gxr_controller_get_handle (controller) == handle)
+    {
+      return l->data;
+    }
+  }
+  return NULL;
+}
+
 static gboolean
 _action_poll_digital (OpenXRAction *self)
 {
@@ -203,7 +219,8 @@ _action_poll_digital (OpenXRAction *self)
         }
 
       GxrDigitalEvent *event = g_malloc (sizeof (GxrDigitalEvent));
-      event->controller_handle = (guint64)i;
+      event->controller =
+        _find_controller (GXR_CONTEXT (self->context), (guint)i);
       event->active = (gboolean)value.isActive;
       event->state = (gboolean)value.currentState;
       event->changed = (gboolean)value.changedSinceLastSync;
@@ -260,7 +277,8 @@ _action_poll_digital_from_float (OpenXRAction *self)
     gboolean currentState = value.currentState >= self->threshold;
 
     GxrDigitalEvent *event = g_malloc (sizeof (GxrDigitalEvent));
-    event->controller_handle = (guint64)i;
+    event->controller =
+      _find_controller (GXR_CONTEXT (self->context), (guint)i);
     event->active = (gboolean)value.isActive;
     event->state = (gboolean)currentState;
     event->changed = (gboolean)(value.changedSinceLastSync &&
@@ -302,8 +320,8 @@ _action_poll_analog (OpenXRAction *self)
     }
 
     GxrAnalogEvent *event = g_malloc (sizeof (GxrAnalogEvent));
-    event->controller_handle = (guint64)i;
-    event->active = (gboolean)value.isActive;
+    event->controller =
+      _find_controller (GXR_CONTEXT (self->context), (guint)i);    event->active = (gboolean)value.isActive;
     graphene_vec3_init (&event->state, value.currentState, 0, 0);
     graphene_vec3_init (&event->delta, 0, 0, 0); /* TODO */
     event->time = value.lastChangeTime;
@@ -341,7 +359,8 @@ _action_poll_vec2f (OpenXRAction *self)
         }
 
       GxrAnalogEvent *event = g_malloc (sizeof (GxrAnalogEvent));
-      event->controller_handle = (guint64)i;
+      event->controller =
+        _find_controller (GXR_CONTEXT (self->context), (guint)i);
       event->active = (gboolean)value.isActive;
       graphene_vec3_init (&event->state, value.currentState.x, value.currentState.y, 0);
       graphene_vec3_init (&event->delta, 0, 0, 0); /* TODO */
@@ -432,7 +451,8 @@ _action_poll_pose_secs_from_now (OpenXRAction *self,
 
       GxrPoseEvent *event = g_malloc (sizeof (GxrPoseEvent));
       event->active = (gboolean)value.isActive;
-      event->controller_handle = (guint64)i;
+      event->controller =
+        _find_controller (GXR_CONTEXT (self->context), (guint)i);
       _get_model_matrix_from_pose(&space_location.pose, &event->pose);
       graphene_vec3_init (&event->velocity, 0, 0, 0);
       graphene_vec3_init (&event->angular_velocity, 0, 0, 0);

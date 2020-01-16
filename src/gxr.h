@@ -26,6 +26,9 @@
 #include "gxr-overlay.h"
 #include "gxr-manifest.h"
 #include "gxr-backend.h"
+#include "gxr-controller.h"
+#include "gxr-pointer.h"
+#include "gxr-pointer-tip.h"
 
 #undef GXR_INSIDE
 

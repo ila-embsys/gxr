@@ -140,7 +140,7 @@ struct _GxrContextClass
                            va_list     args);
 
   GxrAction *
-  (*new_action_from_type_url) (GxrContext   *self,
+  (*new_action_from_type_url) (GxrContext   *context,
                                GxrActionSet *action_set,
                                GxrActionType type,
                                char          *url);
@@ -294,6 +294,15 @@ gboolean
 gxr_context_get_device_extensions (GxrContext   *self,
                                    GulkanClient *gc,
                                    GSList      **out_list);
+
+GSList *
+gxr_context_get_controllers (GxrContext *self);
+
+void
+gxr_context_add_controller (GxrContext *self, guint64 handle);
+
+void
+gxr_context_remove_controller (GxrContext *self, guint64 handle);
 
 G_END_DECLS
 

@@ -17,15 +17,18 @@
 #include "openvr-context.h"
 #include "openvr-compositor.h"
 
+#include "gxr-context.h"
+#include "gxr-controller.h"
+
 /* openvr k_unMaxTrackedDeviceCount */
 #define MAX_DEVICE_COUNT 64
 
 struct _OpenVRAction
 {
   GxrAction parent;
+  GxrContext *context;
 
   VRActionHandle_t handle;
-  GSList *input_handles;
 
   /* Only used for DIGITAL_FROM_FLOAT */
   float threshold;
@@ -44,29 +47,31 @@ static void
 openvr_action_init (OpenVRAction *self)
 {
   self->handle = k_ulInvalidActionHandle;
-  self->input_handles = NULL;
-    for (int i = 0; i < MAX_DEVICE_COUNT; i++)
+  for (int i = 0; i < MAX_DEVICE_COUNT; i++)
     {
       self->last_float[i] = 0.0f;
       self->last_bool[i] = FALSE;
     }
   self->haptic_action = NULL;
+  self->context = NULL;
 }
 
 static gboolean
-_input_handle_already_known (OpenVRAction *self, VRInputValueHandle_t handle)
+_controller_already_exists (GSList *controllers, VRInputValueHandle_t handle)
 {
-  for(GSList *e = self->input_handles; e; e = e->next)
+  for (GSList *l = controllers; l; l = l->next)
     {
-      VRActionHandle_t *input_handle = e->data;
-      if (handle == *input_handle)
-        return TRUE;
+      GxrController *controller = GXR_CONTROLLER (l);
+      if (gxr_controller_get_handle (controller) == handle)
+        {
+          return TRUE;
+        }
     }
   return FALSE;
 }
 
-void
-openvr_action_update_input_handles (OpenVRAction *self)
+static void
+_update_controllers_from_action (OpenVRAction *self)
 {
   OpenVRFunctions *f = openvr_get_functions ();
 
@@ -91,7 +96,7 @@ openvr_action_update_input_handles (OpenVRAction *self)
   int origin_count = -1;
   while (origin_handles[++origin_count] != k_ulInvalidInputValueHandle);
 
-  /* g_print ("Action %s has %d origins\n", self->url, origin_count); */
+  // g_print ("Action %s has %d origins\n", self->url, origin_count);
 
   for (int i = 0; i < origin_count; i++)
     {
@@ -106,38 +111,39 @@ openvr_action_update_input_handles (OpenVRAction *self)
           return;
         }
 
-      if (_input_handle_already_known (self, origin_info.devicePath))
-        continue;
+      guint64 handle = origin_info.devicePath;
+      GSList *controllers = gxr_context_get_controllers (self->context);
+      if (!_controller_already_exists (controllers, handle))
+        {
+          gxr_context_add_controller (self->context, handle);
 
-      VRInputValueHandle_t *input_handle =
-        g_malloc (sizeof (VRInputValueHandle_t));
-      *input_handle = origin_info.devicePath;
-      self->input_handles = g_slist_append (self->input_handles, input_handle);
 
-      /* TODO: origin localized name max length same as action name? */
-      char *origin_name = g_malloc (sizeof (char) * k_unMaxActionNameLength);
-      f->input->GetOriginLocalizedName (origin_handles[i], origin_name,
-                                        k_unMaxActionNameLength,
-                                        EVRInputStringBits_VRInputString_All);
-      g_print ("Added origin %s for action %s\n", origin_name,
-               gxr_action_get_url (GXR_ACTION (self)));
-      g_free (origin_name);
+          char *origin_name = g_malloc (sizeof (char) * k_unMaxActionNameLength);
+          f->input->GetOriginLocalizedName (origin_handles[i], origin_name,
+                                            k_unMaxActionNameLength,
+                                            EVRInputStringBits_VRInputString_All);
+          g_print ("Added controller for origin %s for action %s\n", origin_name,
+                   gxr_action_get_url (GXR_ACTION (self)));
+          g_free (origin_name);
+        }
     }
 
   g_free (origin_handles);
 }
 
-OpenVRAction *
+static OpenVRAction *
 openvr_action_new (void)
 {
   return (OpenVRAction*) g_object_new (OPENVR_TYPE_ACTION, 0);
 }
 
 OpenVRAction *
-openvr_action_new_from_type_url (GxrActionSet *action_set,
+openvr_action_new_from_type_url (GxrContext *context, GxrActionSet *action_set,
                                  GxrActionType type, char *url)
 {
   OpenVRAction *self = openvr_action_new ();
+
+  self->context = context;
   gxr_action_set_action_type (GXR_ACTION (self), type);
   gxr_action_set_url (GXR_ACTION (self), g_strdup (url));
   gxr_action_set_action_set(GXR_ACTION (self), action_set);
@@ -167,6 +173,22 @@ openvr_action_load_handle (OpenVRAction *self,
   return TRUE;
 }
 
+static GxrController *
+_find_controller (GxrContext *self, guint64 handle)
+{
+  GSList *controllers = gxr_context_get_controllers (self);
+  for (GSList *l = controllers; l; l = l->next)
+    {
+      GxrController *controller = GXR_CONTROLLER (l->data);
+      if (gxr_controller_get_handle (controller) == handle)
+        {
+          return l->data;
+        }
+    }
+  g_debug ("Controller %lu not found\n", handle);
+  return NULL;
+}
+
 static gboolean
 _action_poll_digital (OpenVRAction *self)
 {
@@ -174,13 +196,15 @@ _action_poll_digital (OpenVRAction *self)
 
   InputDigitalActionData_t data;
 
+  GSList *controllers = gxr_context_get_controllers (self->context);
+
   EVRInputError err;
-  for(GSList *e = self->input_handles; e; e = e->next)
+  for(GSList *l = controllers; l; l = l->next)
     {
-      VRActionHandle_t *input_handle = e->data;
+      VRActionHandle_t input_handle = gxr_controller_get_handle (l->data);
 
       err = f->input->GetDigitalActionData (self->handle, &data,
-                                            sizeof(data), *input_handle);
+                                            sizeof(data), input_handle);
 
       if (err != EVRInputError_VRInputError_None)
         {
@@ -205,8 +229,13 @@ _action_poll_digital (OpenVRAction *self)
           return FALSE;
         }
 
+      GxrController *controller =
+        _find_controller (self->context, origin_info.devicePath);
+      if (!controller)
+        continue;
+
       GxrDigitalEvent *event = g_malloc (sizeof (GxrDigitalEvent));
-      event->controller_handle = origin_info.trackedDeviceIndex;
+      event->controller = controller;
       event->active = data.bActive;
       event->state = data.bState;
       event->changed = data.bChanged;
@@ -232,13 +261,14 @@ _action_poll_digital_from_float (OpenVRAction *self)
 
   InputAnalogActionData_t data;
 
-  EVRInputError err;
+  GSList *controllers = gxr_context_get_controllers (self->context);
 
-  for(GSList *e = self->input_handles; e; e = e->next)
+  EVRInputError err;
+  for(GSList *l = controllers; l; l = l->next)
     {
-      VRActionHandle_t *input_handle = e->data;
+      VRActionHandle_t input_handle = gxr_controller_get_handle (l->data);
       err = f->input->GetAnalogActionData (self->handle, &data,
-                                           sizeof(data), *input_handle);
+                                            sizeof(data), input_handle);
 
       if (err != EVRInputError_VRInputError_None)
         {
@@ -249,7 +279,7 @@ _action_poll_digital_from_float (OpenVRAction *self)
 
       InputOriginInfo_t origin_info;
       err = f->input->GetOriginTrackedDeviceInfo (data.activeOrigin,
-                                                 &origin_info,
+                                                  &origin_info,
                                                   sizeof (origin_info));
 
       if (err != EVRInputError_VRInputError_None)
@@ -266,19 +296,24 @@ _action_poll_digital_from_float (OpenVRAction *self)
 
       if (self->haptic_action &&
           _threshold_passed (self->threshold,
-                             self->last_float[origin_info.trackedDeviceIndex],
-                             data.x))
+                              self->last_float[origin_info.trackedDeviceIndex],
+                              data.x))
         {
           g_debug ("Threshold %f passed, triggering haptic\n", self->threshold);
           gxr_action_trigger_haptic (GXR_ACTION (self->haptic_action),
-                                     0.f, 0.03f, 50.f, 0.4f,
-                                     origin_info.devicePath);
+                                      0.f, 0.03f, 50.f, 0.4f,
+                                      origin_info.devicePath);
         }
 
       gboolean currentState = data.x >= self->threshold;
 
+      GxrController *controller =
+        _find_controller (self->context, origin_info.devicePath);
+      if (!controller)
+        continue;
+
       GxrDigitalEvent *event = g_malloc (sizeof (GxrDigitalEvent));
-      event->controller_handle = origin_info.trackedDeviceIndex;
+      event->controller = controller;
       event->active = data.bActive;
       event->state = currentState;
       event->changed =
@@ -301,13 +336,14 @@ _action_poll_analog (OpenVRAction *self)
 
   InputAnalogActionData_t data;
 
-  EVRInputError err;
+  GSList *controllers = gxr_context_get_controllers (self->context);
 
-  for(GSList *e = self->input_handles; e; e = e->next)
+  EVRInputError err;
+  for(GSList *l = controllers; l; l = l->next)
     {
-      VRActionHandle_t *input_handle = e->data;
+      VRActionHandle_t input_handle = gxr_controller_get_handle (l->data);
       err = f->input->GetAnalogActionData (self->handle, &data,
-                                           sizeof(data), *input_handle);
+                                           sizeof(data), input_handle);
 
       if (err != EVRInputError_VRInputError_None)
         {
@@ -332,9 +368,14 @@ _action_poll_analog (OpenVRAction *self)
           return FALSE;
         }
 
+      GxrController *controller =
+        _find_controller (self->context, origin_info.devicePath);
+      if (!controller)
+        continue;
+
       GxrAnalogEvent *event = g_malloc (sizeof (GxrAnalogEvent));
       event->active = data.bActive;
-      event->controller_handle = origin_info.trackedDeviceIndex;
+      event->controller = controller;
       graphene_vec3_init (&event->state, data.x, data.y, data.z);
       graphene_vec3_init (&event->delta, data.deltaX, data.deltaY, data.deltaZ);
       event->time = data.fUpdateTime;
@@ -367,9 +408,14 @@ _emit_pose_event (OpenVRAction          *self,
       return FALSE;
     }
 
+  GxrController *controller =
+    _find_controller (self->context, origin_info.devicePath);
+  if (!controller)
+    return TRUE;
+
   GxrPoseEvent *event = g_malloc (sizeof (GxrPoseEvent));
   event->active = data->bActive;
-  event->controller_handle = origin_info.trackedDeviceIndex;
+  event->controller = controller;
   openvr_math_matrix34_to_graphene (&data->pose.mDeviceToAbsoluteTracking,
                                     &event->pose);
   graphene_vec3_init_from_float (&event->velocity,
@@ -390,11 +436,12 @@ _action_poll_pose_secs_from_now (OpenVRAction *self,
 {
   OpenVRFunctions *f = openvr_get_functions ();
 
-  EVRInputError err;
+  GSList *controllers = gxr_context_get_controllers (self->context);
 
-  for(GSList *e = self->input_handles; e; e = e->next)
+  EVRInputError err;
+  for(GSList *l = controllers; l; l = l->next)
     {
-      VRActionHandle_t *input_handle = e->data;
+      VRActionHandle_t input_handle = gxr_controller_get_handle (l->data);
 
       InputPoseActionData_t data;
 
@@ -405,7 +452,7 @@ _action_poll_pose_secs_from_now (OpenVRAction *self,
                                                       secs,
                                                      &data,
                                                       sizeof(data),
-                                                     *input_handle);
+                                                     input_handle);
       if (err != EVRInputError_VRInputError_None)
         {
           g_printerr ("ERROR: GetPoseActionData: %s\n",
@@ -423,6 +470,11 @@ _action_poll_pose_secs_from_now (OpenVRAction *self,
 static gboolean
 _poll (GxrAction *action)
 {
+  OpenVRAction *o_action = OPENVR_ACTION (action);
+  if (g_slist_length (gxr_context_get_controllers (o_action->context)) == 0)
+    _update_controllers_from_action (o_action);
+
+
   OpenVRAction *self = OPENVR_ACTION (action);
   GxrActionType type = gxr_action_get_action_type (action);
   switch (type)
@@ -479,7 +531,6 @@ _finalize (GObject *gobject)
   OpenVRAction *self = OPENVR_ACTION (gobject);
   if (self->haptic_action)
     g_object_unref (self->haptic_action);
-  g_slist_free_full (self->input_handles, g_free);
 }
 
 static void
