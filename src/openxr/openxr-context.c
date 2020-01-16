@@ -704,13 +704,21 @@ openxr_context_end_frame(OpenXRContext* self)
 void
 openxr_context_cleanup(OpenXRContext* self)
 {
-  for (uint32_t i = 0; i < self->view_count; i++) {
-    xrDestroySwapchain(self->swapchains[i]);
-  }
-  free(self->swapchains);
-  xrDestroySpace(self->local_space);
-  xrDestroySession(self->session);
-  xrDestroyInstance(self->instance);
+  if (!self->swapchains)
+    {
+      for (uint32_t i = 0; i < self->view_count; i++) {
+        xrDestroySwapchain(self->swapchains[i]);
+      }
+    }
+
+  if (self->swapchains)
+    free(self->swapchains);
+  if (self->local_space)
+    xrDestroySpace(self->local_space);
+  if (self->session)
+    xrDestroySession(self->session);
+  if (self->instance)
+    xrDestroyInstance(self->instance);
 }
 
 static void
