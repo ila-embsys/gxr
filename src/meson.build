@@ -138,10 +138,6 @@ install_headers(gxr_headers, subdir: api_path)
 pkg = import('pkgconfig')
 
 pkg_requires = ['gulkan-' + api_version, 'gdk-3.0']
-if openvr_dep.found()
-  pkg_requires += ['openvr']
-endif
-
 pkg.generate(
   description: 'GLib abtration for XR APIs.',
     libraries: gxr_lib,
