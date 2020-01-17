@@ -197,7 +197,21 @@ main ()
 {
   GMainLoop *loop = g_main_loop_new (NULL, FALSE);
 
-  context = gxr_context_new (GXR_APP_OVERLAY);
+  GulkanClient *gc = gulkan_client_new ();
+
+  GSList *instance_ext_list =
+    gulkan_client_get_external_memory_instance_extensions ();
+
+  GSList *device_ext_list =
+    gulkan_client_get_external_memory_device_extensions ();
+
+  if (!gulkan_client_init_vulkan (gc, instance_ext_list, device_ext_list))
+    return -1;
+
+  g_slist_free (instance_ext_list);
+  g_slist_free (device_ext_list);
+
+  context = gxr_context_new_from_gulkan (GXR_APP_OVERLAY, gc);
   pixbuf = load_gdk_pixbuf ();
   if (pixbuf == NULL)
     return -1;
