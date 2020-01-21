@@ -157,6 +157,7 @@ test_overlay ()
   render_context.texture = NULL;
 
   GxrContext *context = gxr_context_new (GXR_APP_OVERLAY);
+  if (!context)
     return -1;
 
   /* create cairo overlay */
