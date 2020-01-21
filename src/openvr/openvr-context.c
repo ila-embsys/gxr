@@ -411,13 +411,6 @@ _init_runtime (GxrContext *context, GxrAppType type)
 }
 
 static gboolean
-_init_gulkan (GxrContext *context)
-{
-  GulkanClient *gc = gxr_context_get_gulkan (context);
-  return openvr_compositor_gulkan_client_init (gc);
-}
-
-static gboolean
 _init_session (GxrContext   *context)
 {
   (void) context;
@@ -673,6 +666,73 @@ _request_quit (GxrContext *context)
 }
 
 static void
+_split (gchar *str, GSList **out_list)
+{
+  gchar **array = g_strsplit (str, " ", 0);
+  int i = 0;
+  while(array[i] != NULL)
+    {
+      *out_list = g_slist_append (*out_list, g_strdup (array[i]));
+      i++;
+    }
+  g_strfreev (array);
+}
+
+
+static bool
+_get_instance_extensions (GxrContext *self, GSList **out_list)
+{
+  (void) self;
+  OpenVRFunctions *f = openvr_get_functions ();
+
+  uint32_t size =
+    f->compositor->GetVulkanInstanceExtensionsRequired (NULL, 0);
+
+  if (size > 0)
+    {
+      gchar *extensions = g_malloc (sizeof(gchar) * size);
+      extensions[0] = 0;
+      f->compositor->GetVulkanInstanceExtensionsRequired (extensions, size);
+      _split (extensions, out_list);
+      g_free(extensions);
+    }
+
+  return TRUE;
+}
+
+static bool
+_get_device_extensions (GxrContext   *self,
+                        GulkanClient *gc,
+                        GSList      **out_list)
+{
+  (void) self;
+  OpenVRFunctions *f = openvr_get_functions ();
+
+  VkPhysicalDevice physical_device = 0;
+  f->system->GetOutputDevice ((uint64_t *) &physical_device,
+                              ETextureType_TextureType_Vulkan,
+                              (struct VkInstance_T *)
+                              gulkan_client_get_instance_handle (gc));
+
+
+  uint32_t size = f->compositor->
+    GetVulkanDeviceExtensionsRequired (physical_device, NULL, 0);
+
+  if (size > 0)
+    {
+      gchar *extensions = g_malloc (sizeof(gchar) * size);
+      extensions[0] = 0;
+      f->compositor->GetVulkanDeviceExtensionsRequired (
+        physical_device, extensions, size);
+
+      _split (extensions, out_list);
+      g_free (extensions);
+    }
+
+  return TRUE;
+}
+
+static void
 openvr_context_class_init (OpenVRContextClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
@@ -684,7 +744,6 @@ openvr_context_class_init (OpenVRContextClass *klass)
   gxr_context_class->get_frustum_angles = _get_frustum_angles;
   gxr_context_class->get_head_pose = _get_head_pose;
   gxr_context_class->init_runtime = _init_runtime;
-  gxr_context_class->init_gulkan = _init_gulkan;
   gxr_context_class->init_session = _init_session;
   gxr_context_class->poll_event = _poll_event;
   gxr_context_class->show_keyboard = _show_system_keyboard;
@@ -710,4 +769,6 @@ openvr_context_class_init (OpenVRContextClass *klass)
   gxr_context_class->new_action_from_type_url = _new_action_from_type_url;
   gxr_context_class->new_overlay = _new_overlay;
   gxr_context_class->request_quit = _request_quit;
+  gxr_context_class->get_instance_extensions = _get_instance_extensions;
+  gxr_context_class->get_device_extensions = _get_device_extensions;
 }

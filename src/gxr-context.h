@@ -57,9 +57,6 @@ struct _GxrContextClass
   (*init_runtime) (GxrContext *self, GxrAppType type);
 
   gboolean
-  (*init_gulkan) (GxrContext *self);
-
-  gboolean
   (*init_session) (GxrContext *self);
 
   gboolean
@@ -155,6 +152,14 @@ struct _GxrContextClass
 
   void
   (*request_quit) (GxrContext *self);
+
+  bool
+  (*get_instance_extensions) (GxrContext *self, GSList **out_list);
+
+  bool
+  (*get_device_extensions) (GxrContext   *self,
+                            GulkanClient *gc,
+                            GSList      **out_list);
 };
 
 GxrContext *gxr_context_new (GxrAppType type);
@@ -163,14 +168,9 @@ GxrContext *
 gxr_context_new_from_api (GxrAppType type,
                           GxrApi backend);
 
-GxrContext *
-gxr_context_new_from_gulkan (GxrAppType type,
-                             GulkanClient *gc);
-
-GxrContext *
-gxr_context_new_full (GxrAppType type,
-                      GulkanClient *gc,
-                      GxrApi api);
+GxrContext *gxr_context_new_from_vulkan_extensions (GxrAppType type,
+                                                    GSList *instance_ext_list,
+                                                    GSList *device_ext_list);
 
 GxrContext *gxr_context_new_headless (void);
 
@@ -285,6 +285,14 @@ gxr_context_request_quit (GxrContext *self);
 
 GulkanClient*
 gxr_context_get_gulkan (GxrContext *self);
+
+bool
+gxr_context_get_instance_extensions (GxrContext *self, GSList **out_list);
+
+bool
+gxr_context_get_device_extensions (GxrContext   *self,
+                                   GulkanClient *gc,
+                                   GSList      **out_list);
 
 G_END_DECLS
 

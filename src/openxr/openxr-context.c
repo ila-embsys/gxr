@@ -925,13 +925,6 @@ _init_runtime (GxrContext *context,
 }
 
 static gboolean
-_init_gulkan (GxrContext *context)
-{
-  GulkanClient *gc = gxr_context_get_gulkan (context);
-  return gulkan_client_init_vulkan (gc, NULL, NULL);
-}
-
-static gboolean
 _init_session (GxrContext *context)
 {
   OpenXRContext *self = OPENXR_CONTEXT (context);
@@ -1410,6 +1403,25 @@ _request_quit (GxrContext *context)
   xrRequestExitSession (self->session);
 }
 
+static bool
+_get_instance_extensions (GxrContext *self, GSList **out_list)
+{
+  (void) self;
+  (void) out_list;
+  g_print ("Stub: get instance extensions\n");
+  return TRUE;
+}
+
+static bool
+_get_device_extensions (GxrContext *self, GulkanClient *gc, GSList **out_list)
+{
+  (void) self;
+  (void) gc;
+  (void) out_list;
+  g_print ("Stub: get device extensions\n");
+  return TRUE;
+}
+
 static void
 openxr_context_class_init (OpenXRContextClass *klass)
 {
@@ -1422,7 +1434,6 @@ openxr_context_class_init (OpenXRContextClass *klass)
   gxr_context_class->get_frustum_angles = _get_frustum_angles;
   gxr_context_class->get_head_pose = _get_head_pose;
   gxr_context_class->init_runtime = _init_runtime;
-  gxr_context_class->init_gulkan = _init_gulkan;
   gxr_context_class->init_session = _init_session;
   gxr_context_class->poll_event = _poll_event;
   gxr_context_class->show_keyboard = _show_keyboard;
@@ -1448,4 +1459,6 @@ openxr_context_class_init (OpenXRContextClass *klass)
   gxr_context_class->new_action_from_type_url = _new_action_from_type_url;
   gxr_context_class->new_overlay = _new_overlay;
   gxr_context_class->request_quit = _request_quit;
+  gxr_context_class->get_instance_extensions = _get_instance_extensions;
+  gxr_context_class->get_device_extensions = _get_device_extensions;
 }

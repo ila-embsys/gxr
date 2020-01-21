@@ -112,15 +112,6 @@ _init_runtime (GxrContext *self, GxrAppType type)
 }
 
 static gboolean
-_init_gulkan (GxrContext *self)
-{
-  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
-  if (klass->init_gulkan == NULL)
-      return FALSE;
-  return klass->init_gulkan (self);
-}
-
-static gboolean
 _init_session (GxrContext *self)
 {
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
@@ -129,29 +120,84 @@ _init_session (GxrContext *self)
   return klass->init_session (self);
 }
 
-static gboolean
-_inititalize (GxrContext *self,
-              GxrAppType  type)
+static void
+_add_missing (GSList **target, GSList *source)
 {
+  for (GSList *l = source; l; l = l->next)
+    {
+      gchar *source_ext = l->data;
+      if (!g_slist_find_custom (*target, source_ext, (GCompareFunc) g_strcmp0))
+        *target = g_slist_append (*target, g_strdup (source_ext));
+    }
+}
+
+static GxrContext *
+_new (GxrAppType  type,
+      GxrApi      api,
+      GSList *instance_ext_list,
+      GSList *device_ext_list)
+{
+  GxrContext *self = gxr_backend_new_context (gxr_backend_get_instance (api));
+  if (!self)
+  {
+    g_error ("Could not init gxr context.\n");
+    return NULL;
+  }
+
   if (!_init_runtime (self, type))
     {
+      g_object_unref (self);
       g_error ("Could not init runtime.\n");
-      return FALSE;
+      return NULL;
     }
 
-  if (!_init_gulkan (self))
+  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
+
+  GSList *runtime_instance_ext_list = NULL;
+  gxr_context_get_instance_extensions (self, &runtime_instance_ext_list);
+
+  /* vk instance required for checking required device exts */
+  GulkanClient *gc_tmp =
+    gulkan_client_new_from_extensions (runtime_instance_ext_list, NULL);
+
+  if (!gc_tmp)
     {
-      g_error ("Could not initialize Gulkan.\n");
-      return FALSE;
+      g_object_unref (self);
+      g_slist_free_full (runtime_instance_ext_list, g_free);
+      g_error ("Could not init gulkan client from instance exts.\n");
+      return NULL;
+    }
+
+  GSList *runtime_device_ext_list = NULL;
+
+  gxr_context_get_device_extensions (self, gc_tmp, &runtime_device_ext_list);
+
+  g_object_unref (gc_tmp);
+
+  _add_missing (&runtime_instance_ext_list, instance_ext_list);
+  _add_missing (&runtime_device_ext_list, device_ext_list);
+
+  priv->gc =
+    gulkan_client_new_from_extensions (runtime_instance_ext_list, runtime_device_ext_list);
+
+  g_slist_free_full (runtime_instance_ext_list, g_free);
+  g_slist_free_full (runtime_device_ext_list, g_free);
+
+  if (!priv->gc)
+    {
+      g_object_unref (self);
+      g_error ("Could not init gulkan client.\n");
+      return NULL;
     }
 
   if (!_init_session (self))
     {
+      g_object_unref (self);
       g_error ("Could not init VR session.\n");
-      return FALSE;
+      return NULL;
     }
 
-  return TRUE;
+  return self;
 }
 
 static GxrApi
@@ -171,42 +217,18 @@ GxrContext *gxr_context_new (GxrAppType type)
   return gxr_context_new_from_api (type, _get_api_from_env ());
 }
 
+GxrContext *gxr_context_new_from_vulkan_extensions (GxrAppType type,
+                                                    GSList *instance_ext_list,
+                                                    GSList *device_ext_list)
+{
+  return _new (type, _get_api_from_env (), instance_ext_list, device_ext_list);
+}
+
 GxrContext *
 gxr_context_new_from_api (GxrAppType type,
                           GxrApi     api)
 {
-  GxrContext *self = gxr_backend_new_context (gxr_backend_get_instance (api));
-  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
-  priv->gc = gulkan_client_new ();
-  if (!_inititalize (self, type))
-    {
-      g_error ("Could not init runtime.\n");
-      return NULL;
-    }
-  return self;
-}
-
-GxrContext *
-gxr_context_new_from_gulkan (GxrAppType type,
-                             GulkanClient *gc)
-{
-  return gxr_context_new_full (type, gc, _get_api_from_env ());
-}
-
-GxrContext *
-gxr_context_new_full (GxrAppType type,
-                      GulkanClient *gc,
-                      GxrApi api)
-{
-  GxrContext *self = gxr_backend_new_context (gxr_backend_get_instance (api));
-  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
-  priv->gc = g_object_ref (gc);
-  if (!_inititalize (self, type))
-    {
-      g_error ("Could not init runtime.\n");
-      return NULL;
-    }
-  return self;
+  return _new (type, api, NULL, NULL);
 }
 
 GxrContext *gxr_context_new_headless (void)
@@ -616,3 +638,23 @@ gxr_context_get_model_list (GxrContext *self)
   return klass->get_model_list (self);
 }
 
+
+bool
+gxr_context_get_instance_extensions (GxrContext *self, GSList **out_list)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->get_instance_extensions == NULL)
+    return FALSE;
+  return klass->get_instance_extensions (self, out_list);
+}
+
+bool
+gxr_context_get_device_extensions (GxrContext   *self,
+                                   GulkanClient *gc,
+                                   GSList      **out_list)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->get_device_extensions == NULL)
+    return FALSE;
+  return klass->get_device_extensions (self, gc, out_list);
+}
