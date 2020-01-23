@@ -41,6 +41,11 @@ struct _GxrActionClass
                      float frequency,
                      float amplitude,
                      guint64 controller_handle);
+
+  void
+  (*set_digital_from_float_threshold) (GxrAction *self,
+                                       float      threshold,
+                                       GxrAction *haptic_action);
 };
 
 GxrAction *
@@ -89,6 +94,11 @@ gxr_action_emit_analog (GxrAction      *self,
 void
 gxr_action_emit_pose (GxrAction    *self,
                       GxrPoseEvent *event);
+
+void
+gxr_action_set_digital_from_float_threshold (GxrAction *self,
+                                             float      threshold,
+                                             GxrAction *haptic_action);
 
 G_END_DECLS
 

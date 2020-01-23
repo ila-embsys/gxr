@@ -83,6 +83,8 @@ _get_binding_type (const gchar *type_string)
 {
   if (g_str_equal (type_string, "boolean"))
     return BINDING_TYPE_BOOLEAN;
+  if (g_str_equal (type_string, "vector1"))
+    return BINDING_TYPE_FLOAT;
   if (g_str_equal (type_string, "vector2"))
     return BINDING_TYPE_VEC2;
   if (g_str_equal (type_string, "pose"))
@@ -115,6 +117,8 @@ _get_binding_component (const gchar *component_string)
 {
   if (g_str_equal (component_string, "click"))
     return BINDING_COMPONENT_CLICK;
+  if (g_str_equal (component_string, "pull"))
+    return BINDING_COMPONENT_PULL;
   if (g_str_equal (component_string, "position"))
     return BINDING_COMPONENT_POSITION;
   if (g_str_equal (component_string, "touch"))

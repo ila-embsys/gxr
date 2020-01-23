@@ -17,12 +17,21 @@
 #include "openvr-context.h"
 #include "openvr-compositor.h"
 
+/* openvr k_unMaxTrackedDeviceCount */
+#define MAX_DEVICE_COUNT 64
+
 struct _OpenVRAction
 {
   GxrAction parent;
 
   VRActionHandle_t handle;
   GSList *input_handles;
+
+  /* Only used for DIGITAL_FROM_FLOAT */
+  float threshold;
+  float last_float[MAX_DEVICE_COUNT];
+  bool last_bool[MAX_DEVICE_COUNT];
+  GxrAction *haptic_action;
 };
 
 G_DEFINE_TYPE (OpenVRAction, openvr_action, GXR_TYPE_ACTION)
@@ -36,6 +45,12 @@ openvr_action_init (OpenVRAction *self)
 {
   self->handle = k_ulInvalidActionHandle;
   self->input_handles = NULL;
+    for (int i = 0; i < MAX_DEVICE_COUNT; i++)
+    {
+      self->last_float[i] = 0.0f;
+      self->last_bool[i] = false;
+    }
+  self->haptic_action = NULL;
 }
 
 static gboolean
@@ -132,6 +147,7 @@ openvr_action_new_from_type_url (GxrActionSet *action_set,
       g_object_unref (self);
       self = NULL;
     }
+
   return self;
 }
 
@@ -198,6 +214,83 @@ _action_poll_digital (OpenVRAction *self)
 
       gxr_action_emit_digital (GXR_ACTION (self), event);
     }
+  return TRUE;
+}
+
+static bool
+_threshold_passed (float threshold, float last, float current)
+{
+  return
+    (last < threshold && current >= threshold) ||
+    (last >= threshold && current <= threshold);
+}
+
+static gboolean
+_action_poll_digital_from_float (OpenVRAction *self)
+{
+  OpenVRFunctions *f = openvr_get_functions ();
+
+  InputAnalogActionData_t data;
+
+  EVRInputError err;
+
+  for(GSList *e = self->input_handles; e; e = e->next)
+    {
+      VRActionHandle_t *input_handle = e->data;
+      err = f->input->GetAnalogActionData (self->handle, &data,
+                                           sizeof(data), *input_handle);
+
+      if (err != EVRInputError_VRInputError_None)
+        {
+          g_printerr ("ERROR: GetAnalogActionData: %s\n",
+                      openvr_input_error_string (err));
+          return FALSE;
+        }
+
+      InputOriginInfo_t origin_info;
+      err = f->input->GetOriginTrackedDeviceInfo (data.activeOrigin,
+                                                 &origin_info,
+                                                  sizeof (origin_info));
+
+      if (err != EVRInputError_VRInputError_None)
+        {
+          /* controller is not active, but might be active later */
+          if (err == EVRInputError_VRInputError_InvalidHandle)
+            continue;
+
+          g_printerr ("ERROR: GetOriginTrackedDeviceInfo: %s\n",
+                      openvr_input_error_string (err));
+          return FALSE;
+        }
+
+
+      if (self->haptic_action &&
+          _threshold_passed (self->threshold,
+                             self->last_float[origin_info.trackedDeviceIndex],
+                             data.x))
+        {
+          g_debug ("Threshold %f passed, triggering haptic\n", self->threshold);
+          gxr_action_trigger_haptic (GXR_ACTION (self->haptic_action),
+                                     0.f, 0.03f, 50.f, 0.4f,
+                                     origin_info.trackedDeviceIndex);
+        }
+
+      bool currentState = data.x >= self->threshold;
+
+      GxrDigitalEvent *event = g_malloc (sizeof (GxrDigitalEvent));
+      event->controller_handle = origin_info.trackedDeviceIndex;
+      event->active = data.bActive;
+      event->state = currentState;
+      event->changed =
+        currentState != self->last_bool[origin_info.trackedDeviceIndex];
+      event->time = data.fUpdateTime;
+
+      gxr_action_emit_digital (GXR_ACTION (self), event);
+
+      self->last_float[origin_info.trackedDeviceIndex] = data.x;
+      self->last_bool[origin_info.trackedDeviceIndex] = currentState;
+    }
+
   return TRUE;
 }
 
@@ -336,6 +429,8 @@ _poll (GxrAction *action)
     {
     case GXR_ACTION_DIGITAL:
       return _action_poll_digital (self);
+    case GXR_ACTION_DIGITAL_FROM_FLOAT:
+      return _action_poll_digital_from_float (self);
     case GXR_ACTION_FLOAT:
     case GXR_ACTION_VEC2F:
       return _action_poll_analog (self);
@@ -382,7 +477,19 @@ static void
 _finalize (GObject *gobject)
 {
   OpenVRAction *self = OPENVR_ACTION (gobject);
+  if (self->haptic_action)
+    g_object_unref (self->haptic_action);
   g_slist_free_full (self->input_handles, g_free);
+}
+
+static void
+_set_digital_from_float_threshold (GxrAction *action,
+                                   float      threshold,
+                                   GxrAction *haptic_action)
+{
+  OpenVRAction *self = OPENVR_ACTION (action);
+  self->threshold = threshold;
+  self->haptic_action = haptic_action;
 }
 
 static void
@@ -395,4 +502,6 @@ openvr_action_class_init (OpenVRActionClass *klass)
   GxrActionClass *gxr_action_class = GXR_ACTION_CLASS (klass);
   gxr_action_class->poll = _poll;
   gxr_action_class->trigger_haptic = _trigger_haptic;
+  gxr_action_class->set_digital_from_float_threshold =
+    _set_digital_from_float_threshold;
 }

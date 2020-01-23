@@ -30,6 +30,12 @@ struct _OpenXRAction
   char *url;
 
   XrAction handle;
+
+  /* Only used for DIGITAL_FROM_FLOAT */
+  float threshold;
+  float last_float[NUM_HANDS];
+  bool last_bool[NUM_HANDS];
+  GxrAction *haptic_action;
 };
 
 G_DEFINE_TYPE (OpenXRAction, openxr_action, GXR_TYPE_ACTION)
@@ -39,7 +45,13 @@ openxr_action_init (OpenXRAction *self)
 {
   self->handle = XR_NULL_HANDLE;
   for (int i = 0; i < NUM_HANDS; i++)
-    self->hand_spaces[i] = XR_NULL_HANDLE;
+    {
+      self->hand_spaces[i] = XR_NULL_HANDLE;
+      self->last_float[i] = 0.0f;
+      self->last_bool[i] = false;
+    }
+  self->threshold = 0.0f;
+  self->haptic_action = NULL;
 }
 
 OpenXRAction *
@@ -83,6 +95,7 @@ openxr_action_new_from_type_url (OpenXRContext *context,
   XrActionType action_type;
   switch (type)
   {
+    case GXR_ACTION_DIGITAL_FROM_FLOAT:
     case GXR_ACTION_FLOAT:
       action_type = XR_ACTION_TYPE_FLOAT_INPUT;
       break;
@@ -193,6 +206,66 @@ _action_poll_digital (OpenXRAction *self)
 
       gxr_action_emit_digital (GXR_ACTION (self), event);
     }
+
+  return TRUE;
+}
+
+static bool
+_threshold_passed (float threshold, float last, float current)
+{
+  return
+    (last < threshold && current >= threshold) ||
+    (last >= threshold && current <= threshold);
+}
+
+static gboolean
+_action_poll_digital_from_float (OpenXRAction *self)
+{
+  for (int i = 0; i < NUM_HANDS; i++)
+  {
+    XrActionStateGetInfo get_info = {
+      .type = XR_TYPE_ACTION_STATE_GET_INFO,
+      .next = NULL,
+      .action = self->handle,
+      .subactionPath = self->hand_paths[i]
+    };
+
+    XrActionStateFloat value = {
+      .type = XR_TYPE_ACTION_STATE_FLOAT,
+      .next = NULL
+    };
+
+    XrResult result = xrGetActionStateFloat(self->session, &get_info, &value);
+
+    if (result != XR_SUCCESS)
+      {
+        g_debug ("Failed to poll float action\n");
+        continue;
+      }
+
+    if (self->haptic_action && _threshold_passed (self->threshold,
+                                                  self->last_float[i],
+                                                  value.currentState))
+      {
+        g_debug ("Threshold %f passed, triggering haptic\n", self->threshold);
+        gxr_action_trigger_haptic (GXR_ACTION (self->haptic_action),
+                                   0.f, 0.03f, 50.f, 0.4f, (guint64)i);
+      }
+
+    bool currentState = value.currentState >= self->threshold;
+
+    GxrDigitalEvent *event = g_malloc (sizeof (GxrDigitalEvent));
+    event->controller_handle = (guint64)i;
+    event->active = (gboolean)value.isActive;
+    event->state = (gboolean)currentState;
+    event->changed = (gboolean)(value.changedSinceLastSync &&
+      currentState != self->last_bool[i]);
+    event->time = value.lastChangeTime;
+
+    gxr_action_emit_digital (GXR_ACTION (self), event);
+    self->last_float[i] = value.currentState;
+    self->last_bool[i] = currentState;
+  }
 
   return TRUE;
 }
@@ -378,6 +451,8 @@ _poll (GxrAction *action)
     {
     case GXR_ACTION_DIGITAL:
       return _action_poll_digital (self);
+    case GXR_ACTION_DIGITAL_FROM_FLOAT:
+      return _action_poll_digital_from_float (self);
     case GXR_ACTION_FLOAT:
       return _action_poll_analog (self);
     case GXR_ACTION_VEC2F:
@@ -427,7 +502,19 @@ static void
 _finalize (GObject *gobject)
 {
   OpenXRAction *self = OPENXR_ACTION (gobject);
+  if (self->haptic_action)
+    g_object_unref (self->haptic_action);
   g_free (self->url);
+}
+
+static void
+_set_digital_from_float_threshold (GxrAction *action,
+                                   float      threshold,
+                                   GxrAction *haptic_action)
+{
+  OpenXRAction *self = OPENXR_ACTION (action);
+  self->threshold = threshold;
+  self->haptic_action = haptic_action;
 }
 
 static void
@@ -440,4 +527,6 @@ openxr_action_class_init (OpenXRActionClass *klass)
   GxrActionClass *gxr_action_class = GXR_ACTION_CLASS (klass);
   gxr_action_class->poll = _poll;
   gxr_action_class->trigger_haptic = _trigger_haptic;
+  gxr_action_class->set_digital_from_float_threshold =
+    _set_digital_from_float_threshold;
 }

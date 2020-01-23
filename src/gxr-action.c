@@ -186,3 +186,15 @@ gxr_action_emit_pose (GxrAction    *self,
 {
   g_signal_emit (self, action_signals[POSE_EVENT], 0, event);
 }
+
+void
+gxr_action_set_digital_from_float_threshold (GxrAction *self,
+                                             float       threshold,
+                                             GxrAction  *haptic_action)
+{
+  GxrActionClass *klass = GXR_ACTION_GET_CLASS (self);
+  if (klass->set_digital_from_float_threshold == NULL)
+    return;
+  klass->set_digital_from_float_threshold (self, threshold, haptic_action);
+}
+

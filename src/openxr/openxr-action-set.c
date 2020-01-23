@@ -161,6 +161,8 @@ _component_to_str (GxrManifestBindingComponent c)
   {
     case BINDING_COMPONENT_CLICK:
       return "click";
+    case BINDING_COMPONENT_PULL:
+      return "value";
     case BINDING_COMPONENT_POSITION:
       /* use .../trackpad instead of .../trackpad/x etc. */
       return NULL;

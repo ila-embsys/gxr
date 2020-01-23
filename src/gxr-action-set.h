@@ -55,6 +55,15 @@ gxr_action_set_connect (GxrActionSet *self,
                         GCallback     callback,
                         gpointer      data);
 
+gboolean
+gxr_action_set_connect_digital_from_float (GxrActionSet *self,
+                                           GxrContext   *context,
+                                           gchar        *url,
+                                           float         threshold,
+                                           char         *haptic_url,
+                                           GCallback     callback,
+                                           gpointer      data);
+
 GSList *
 gxr_action_set_get_actions (GxrActionSet *self);
 

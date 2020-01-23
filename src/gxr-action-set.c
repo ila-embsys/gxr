@@ -76,6 +76,45 @@ gxr_action_sets_poll (GxrActionSet **sets, uint32_t count)
 }
 
 gboolean
+gxr_action_set_connect_digital_from_float (GxrActionSet *self,
+                                           GxrContext   *context,
+                                           gchar        *url,
+                                           float         threshold,
+                                           char         *haptic_url,
+                                           GCallback     callback,
+                                           gpointer      data)
+{
+  GxrActionSetPrivate *priv = gxr_action_set_get_instance_private (self);
+
+  GxrActionSetClass *klass = GXR_ACTION_SET_GET_CLASS (self);
+  if (klass->create_action == NULL)
+    return FALSE;
+  GxrAction *action = klass->create_action (self,
+                                            context,
+                                            GXR_ACTION_DIGITAL_FROM_FLOAT,
+                                            url);
+
+  if (action != NULL)
+    priv->actions = g_slist_append (priv->actions, action);
+
+
+  GxrAction *haptic_action = NULL;
+  if (haptic_url)
+    haptic_action = gxr_action_new_from_type_url (context,
+                                                  self,
+                                                  GXR_ACTION_HAPTIC,
+                                                  haptic_url);
+
+  gxr_action_set_digital_from_float_threshold (action,
+                                               threshold,
+                                               haptic_action);
+
+  g_signal_connect (action, "digital-event", callback, data);
+
+  return TRUE;
+}
+
+gboolean
 gxr_action_set_connect (GxrActionSet *self,
                         GxrContext   *context,
                         GxrActionType type,
