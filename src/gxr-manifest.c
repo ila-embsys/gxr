@@ -84,7 +84,7 @@ _get_binding_type (const gchar *type_string)
   if (g_str_equal (type_string, "boolean"))
     return BINDING_TYPE_BOOLEAN;
   if (g_str_equal (type_string, "vector2"))
-    return BINDING_TYPE_BOOLEAN;
+    return BINDING_TYPE_VEC2;
   if (g_str_equal (type_string, "pose"))
     return BINDING_TYPE_POSE;
   if (g_str_equal (type_string, "vibration"))
