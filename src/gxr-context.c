@@ -400,16 +400,16 @@ gxr_context_emit_actionset_update (GxrContext *self)
 
 gboolean
 gxr_context_init_framebuffers (GxrContext           *self,
-                               GulkanRenderPass     *render_pass,
                                VkExtent2D            extent,
                                VkSampleCountFlagBits sample_count,
-                               GulkanFrameBuffer    *framebuffers[2])
+                               GulkanFrameBuffer    *framebuffers[2],
+                               GulkanRenderPass    **render_pass)
 {
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->init_framebuffers == NULL)
     return FALSE;
-  return klass->init_framebuffers (self, render_pass, extent, sample_count,
-                                   framebuffers);
+  return klass->init_framebuffers (self, extent, sample_count,
+                                   framebuffers, render_pass);
 }
 
 gboolean

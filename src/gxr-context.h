@@ -61,10 +61,10 @@ struct _GxrContextClass
 
   gboolean
   (*init_framebuffers) (GxrContext           *self,
-                        GulkanRenderPass     *render_pass,
                         VkExtent2D            extent,
                         VkSampleCountFlagBits sample_count,
-                        GulkanFrameBuffer    *framebuffers[2]);
+                        GulkanFrameBuffer    *framebuffers[2],
+                        GulkanRenderPass    **render_pass);
 
   gboolean
   (*submit_framebuffers) (GxrContext           *self,
@@ -196,10 +196,10 @@ gxr_context_get_render_dimensions (GxrContext *self,
 
 gboolean
 gxr_context_init_framebuffers (GxrContext           *self,
-                               GulkanRenderPass     *render_pass,
                                VkExtent2D            extent,
                                VkSampleCountFlagBits sample_count,
-                               GulkanFrameBuffer    *framebuffers[2]);
+                               GulkanFrameBuffer    *framebuffers[2],
+                               GulkanRenderPass    **render_pass);
 
 gboolean
 gxr_context_submit_framebuffers (GxrContext           *self,

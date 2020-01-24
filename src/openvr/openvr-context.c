@@ -420,17 +420,27 @@ _init_session (GxrContext   *context)
 
 static gboolean
 _init_framebuffers (GxrContext           *context,
-                    GulkanRenderPass     *render_pass,
                     VkExtent2D            extent,
                     VkSampleCountFlagBits sample_count,
-                    GulkanFrameBuffer    *framebuffers[2])
+                    GulkanFrameBuffer    *framebuffers[2],
+                    GulkanRenderPass    **render_pass)
 {
   GulkanClient *gc = gxr_context_get_gulkan (context);
   GulkanDevice *device = gulkan_client_get_device (gc);
 
+  *render_pass =
+    gulkan_render_pass_new (device, sample_count,
+                            VK_FORMAT_R8G8B8A8_UNORM,
+                            VK_IMAGE_LAYOUT_UNDEFINED, TRUE);
+  if (!*render_pass)
+    {
+      g_printerr ("Could not init render pass.\n");
+      return FALSE;
+    }
+
   for (uint32_t eye = 0; eye < 2; eye++)
     {
-      framebuffers[eye] = gulkan_frame_buffer_new (device, render_pass,
+      framebuffers[eye] = gulkan_frame_buffer_new (device, *render_pass,
                                                    extent, sample_count,
                                                    VK_FORMAT_R8G8B8A8_UNORM,
                                                    TRUE);
