@@ -55,7 +55,7 @@ gxr_action_set_connect (GxrActionSet *self,
                         GCallback     callback,
                         gpointer      data);
 
-gboolean
+GxrAction *
 gxr_action_set_connect_digital_from_float (GxrActionSet *self,
                                            GxrContext   *context,
                                            gchar        *url,

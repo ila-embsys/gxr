@@ -75,7 +75,7 @@ gxr_action_sets_poll (GxrActionSet **sets, uint32_t count)
   return TRUE;
 }
 
-gboolean
+GxrAction *
 gxr_action_set_connect_digital_from_float (GxrActionSet *self,
                                            GxrContext   *context,
                                            gchar        *url,
@@ -100,18 +100,20 @@ gxr_action_set_connect_digital_from_float (GxrActionSet *self,
 
   GxrAction *haptic_action = NULL;
   if (haptic_url)
-    haptic_action = gxr_action_new_from_type_url (context,
-                                                  self,
-                                                  GXR_ACTION_HAPTIC,
-                                                  haptic_url);
+    {
+      haptic_action = gxr_action_new_from_type_url (context,
+                                                    self,
+                                                    GXR_ACTION_HAPTIC,
+                                                    haptic_url);
+      gxr_action_set_digital_from_float_haptic (action, haptic_action);
+    }
+  gxr_action_set_digital_from_float_threshold (action, threshold);
 
-  gxr_action_set_digital_from_float_threshold (action,
-                                               threshold,
-                                               haptic_action);
+
 
   g_signal_connect (action, "digital-event", callback, data);
 
-  return TRUE;
+  return action;
 }
 
 gboolean

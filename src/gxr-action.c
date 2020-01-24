@@ -189,12 +189,20 @@ gxr_action_emit_pose (GxrAction    *self,
 
 void
 gxr_action_set_digital_from_float_threshold (GxrAction *self,
-                                             float       threshold,
-                                             GxrAction  *haptic_action)
+                                             float       threshold)
 {
   GxrActionClass *klass = GXR_ACTION_GET_CLASS (self);
   if (klass->set_digital_from_float_threshold == NULL)
     return;
-  klass->set_digital_from_float_threshold (self, threshold, haptic_action);
+  klass->set_digital_from_float_threshold (self, threshold);
 }
 
+void
+gxr_action_set_digital_from_float_haptic (GxrAction *self,
+                                          GxrAction *haptic_action)
+{
+  GxrActionClass *klass = GXR_ACTION_GET_CLASS (self);
+  if (klass->set_digital_from_float_haptic == NULL)
+    return;
+  klass->set_digital_from_float_haptic (self, haptic_action);
+}

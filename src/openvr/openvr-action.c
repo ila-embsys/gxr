@@ -484,11 +484,17 @@ _finalize (GObject *gobject)
 
 static void
 _set_digital_from_float_threshold (GxrAction *action,
-                                   float      threshold,
-                                   GxrAction *haptic_action)
+                                   float      threshold)
 {
   OpenVRAction *self = OPENVR_ACTION (action);
   self->threshold = threshold;
+}
+
+static void
+_set_digital_from_float_haptic (GxrAction *action,
+                                GxrAction *haptic_action)
+{
+  OpenVRAction *self = OPENVR_ACTION (action);
   self->haptic_action = haptic_action;
 }
 
@@ -504,4 +510,6 @@ openvr_action_class_init (OpenVRActionClass *klass)
   gxr_action_class->trigger_haptic = _trigger_haptic;
   gxr_action_class->set_digital_from_float_threshold =
     _set_digital_from_float_threshold;
+  gxr_action_class->set_digital_from_float_haptic =
+    _set_digital_from_float_haptic;
 }

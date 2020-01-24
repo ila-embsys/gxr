@@ -509,11 +509,17 @@ _finalize (GObject *gobject)
 
 static void
 _set_digital_from_float_threshold (GxrAction *action,
-                                   float      threshold,
-                                   GxrAction *haptic_action)
+                                   float      threshold)
 {
   OpenXRAction *self = OPENXR_ACTION (action);
   self->threshold = threshold;
+}
+
+static void
+_set_digital_from_float_haptic (GxrAction *action,
+                                GxrAction *haptic_action)
+{
+  OpenXRAction *self = OPENXR_ACTION (action);
   self->haptic_action = haptic_action;
 }
 
@@ -529,4 +535,6 @@ openxr_action_class_init (OpenXRActionClass *klass)
   gxr_action_class->trigger_haptic = _trigger_haptic;
   gxr_action_class->set_digital_from_float_threshold =
     _set_digital_from_float_threshold;
+  gxr_action_class->set_digital_from_float_haptic =
+    _set_digital_from_float_haptic;
 }
