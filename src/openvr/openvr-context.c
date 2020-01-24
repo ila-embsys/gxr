@@ -333,11 +333,10 @@ _is_another_scene_running (GxrContext *context)
 
 static void
 _get_render_dimensions (GxrContext *context,
-                        uint32_t   *width,
-                        uint32_t   *height)
+                        VkExtent2D *extent)
 {
   (void) context;
-  openvr_system_get_render_target_size (width, height);
+  openvr_system_get_render_dimensions (extent);
 }
 
 static gboolean

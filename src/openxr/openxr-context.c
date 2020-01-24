@@ -739,11 +739,10 @@ openxr_context_get_images(OpenXRContext *self)
 void
 openxr_context_get_swapchain_dimensions (OpenXRContext *self,
                                          uint32_t i,
-                                         uint32_t *width,
-                                         uint32_t *height)
+                                         VkExtent2D *extent)
 {
-  *width = self->configuration_views[i].recommendedImageRectWidth;
-  *height = self->configuration_views[i].recommendedImageRectHeight;
+  extent->width = self->configuration_views[i].recommendedImageRectWidth;
+  extent->height = self->configuration_views[i].recommendedImageRectHeight;
 }
 
 static void
@@ -857,11 +856,10 @@ openxr_context_get_swapchain_format (OpenXRContext *self)
 
 static void
 _get_render_dimensions (GxrContext *context,
-                        uint32_t   *width,
-                        uint32_t   *height)
+                        VkExtent2D *extent)
 {
   OpenXRContext *self = OPENXR_CONTEXT (context);
-  openxr_context_get_swapchain_dimensions (self, 0, width, height);
+  openxr_context_get_swapchain_dimensions (self, 0, extent);
 }
 
 static gboolean

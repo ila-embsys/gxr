@@ -114,10 +114,10 @@ openvr_system_device_is_controller (uint32_t i)
 }
 
 void
-openvr_system_get_render_target_size (uint32_t *w, uint32_t *h)
+openvr_system_get_render_dimensions (VkExtent2D *extent)
 {
   OpenVRFunctions *f = openvr_get_functions ();
-  f->system->GetRecommendedRenderTargetSize (w, h);
+  f->system->GetRecommendedRenderTargetSize (&extent->width, &extent->height);
 }
 
 /**

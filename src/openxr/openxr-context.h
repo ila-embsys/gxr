@@ -54,8 +54,7 @@ openxr_context_get_images(OpenXRContext *self);
 void
 openxr_context_get_swapchain_dimensions (OpenXRContext *self,
                                          uint32_t i,
-                                         uint32_t *width,
-                                         uint32_t *height);
+                                         VkExtent2D *extent);
 
 void
 openxr_context_get_position (OpenXRContext *self,

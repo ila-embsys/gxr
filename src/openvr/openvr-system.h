@@ -15,6 +15,7 @@
 
 #include "gxr-enums.h"
 #include "openvr-wrapper.h"
+#include "vulkan/vulkan.h"
 
 graphene_matrix_t
 openvr_system_get_projection_matrix (GxrEye eye, float near, float far);
@@ -33,7 +34,7 @@ EVREye
 openvr_system_eye_to_openvr (GxrEye eye);
 
 void
-openvr_system_get_render_target_size (uint32_t *w, uint32_t *h);
+openvr_system_get_render_dimensions (VkExtent2D *extent);
 
 void
 openvr_system_get_frustum_angles (GxrEye eye,

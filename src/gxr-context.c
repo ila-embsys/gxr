@@ -317,13 +317,12 @@ gxr_context_is_input_available (GxrContext *self)
 
 void
 gxr_context_get_render_dimensions (GxrContext *self,
-                                   uint32_t *width,
-                                   uint32_t *height)
+                                   VkExtent2D *extent)
 {
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->get_render_dimensions == NULL)
       return;
-  klass->get_render_dimensions (self, width, height);
+  klass->get_render_dimensions (self, extent);
 }
 
 void
