@@ -420,31 +420,32 @@ _init_session (GxrContext   *context)
 
 static gboolean
 _init_framebuffers (GxrContext           *context,
-                    GulkanFrameBuffer    *framebuffers[2],
-                    uint32_t              width,
-                    uint32_t              height,
-                    VkSampleCountFlagBits msaa_sample_count)
+                    GulkanRenderPass     *render_pass,
+                    VkExtent2D            extent,
+                    VkSampleCountFlagBits sample_count,
+                    GulkanFrameBuffer    *framebuffers[2])
 {
   GulkanClient *gc = gxr_context_get_gulkan (context);
   GulkanDevice *device = gulkan_client_get_device (gc);
 
   for (uint32_t eye = 0; eye < 2; eye++)
-    if (!gulkan_frame_buffer_initialize (framebuffers[eye],
-                                         device,
-                                         width,
-                                         height,
-                                         msaa_sample_count,
-                                         VK_FORMAT_R8G8B8A8_UNORM))
-    return false;
+    {
+      framebuffers[eye] = gulkan_frame_buffer_new (device, render_pass,
+                                                   extent, sample_count,
+                                                   VK_FORMAT_R8G8B8A8_UNORM,
+                                                   TRUE);
+      if (!framebuffers[eye])
+        return FALSE;
+    }
+
   return true;
 }
 
 static gboolean
 _submit_framebuffers (GxrContext           *context,
                       GulkanFrameBuffer    *framebuffers[2],
-                      uint32_t              width,
-                      uint32_t              height,
-                      VkSampleCountFlagBits msaa_sample_count)
+                      VkExtent2D            extent,
+                      VkSampleCountFlagBits sample_count)
 {
   GulkanClient *gc = gxr_context_get_gulkan (context);
 
@@ -454,8 +455,9 @@ _submit_framebuffers (GxrContext           *context,
   VkImage right =
     gulkan_frame_buffer_get_color_image (framebuffers[GXR_EYE_RIGHT]);
 
-  if (!openvr_compositor_submit (gc, width, height, VK_FORMAT_R8G8B8A8_UNORM,
-                                 msaa_sample_count, left, right))
+  if (!openvr_compositor_submit (gc, extent.width, extent.height,
+                                 VK_FORMAT_R8G8B8A8_UNORM,
+                                 sample_count, left, right))
     return FALSE;
 
   return TRUE;

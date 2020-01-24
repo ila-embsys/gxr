@@ -400,30 +400,28 @@ gxr_context_emit_actionset_update (GxrContext *self)
 
 gboolean
 gxr_context_init_framebuffers (GxrContext           *self,
-                               GulkanFrameBuffer    *framebuffers[2],
-                               uint32_t              width,
-                               uint32_t              height,
-                               VkSampleCountFlagBits msaa_sample_count)
+                               GulkanRenderPass     *render_pass,
+                               VkExtent2D            extent,
+                               VkSampleCountFlagBits sample_count,
+                               GulkanFrameBuffer    *framebuffers[2])
 {
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->init_framebuffers == NULL)
     return FALSE;
-  return klass->init_framebuffers (self, framebuffers, width, height,
-                                   msaa_sample_count);
+  return klass->init_framebuffers (self, render_pass, extent, sample_count,
+                                   framebuffers);
 }
 
 gboolean
 gxr_context_submit_framebuffers (GxrContext           *self,
                                  GulkanFrameBuffer    *framebuffers[2],
-                                 uint32_t              width,
-                                 uint32_t              height,
-                                 VkSampleCountFlagBits msaa_sample_count)
+                                 VkExtent2D            extent,
+                                 VkSampleCountFlagBits sample_count)
 {
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->submit_framebuffers == NULL)
     return FALSE;
-  return klass->submit_framebuffers (self, framebuffers, width, height,
-                                     msaa_sample_count);
+  return klass->submit_framebuffers (self, framebuffers, extent, sample_count);
 }
 
 uint32_t

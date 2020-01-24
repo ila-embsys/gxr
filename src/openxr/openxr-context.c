@@ -1084,10 +1084,10 @@ openxr_context_get_tracked_space (OpenXRContext *self)
 
 static gboolean
 _init_framebuffers (GxrContext           *context,
-                    GulkanFrameBuffer    *framebuffers[2],
-                    uint32_t              width,
-                    uint32_t              height,
-                    VkSampleCountFlagBits msaa_sample_count)
+                    GulkanRenderPass     *render_pass,
+                    VkExtent2D            extent,
+                    VkSampleCountFlagBits sample_count,
+                    GulkanFrameBuffer    *framebuffers[2])
 {
   OpenXRContext *self = OPENXR_CONTEXT (context);
   XrSwapchainImageVulkanKHR** images = openxr_context_get_images(self);
@@ -1096,35 +1096,33 @@ _init_framebuffers (GxrContext           *context,
   GulkanClient *gc = gxr_context_get_gulkan (context);
   GulkanDevice *device = gulkan_client_get_device (gc);
 
-  for (uint32_t eye = 0; eye < 2; eye++) {
-    if (!gulkan_frame_buffer_initialize_from_image (framebuffers[eye],
-                                                    device,
-                                                    images[eye][0].image,
-                                                    width,
-                                                    height,
-                                                    msaa_sample_count,
-                                                    format))
+  for (uint32_t eye = 0; eye < 2; eye++)
     {
-      g_printerr("Could not initialize frambuffer.");
-      return false;
-    }
+      framebuffers[eye] =
+        gulkan_frame_buffer_new_from_image_with_depth (device, render_pass,
+                                                       images[eye][0].image,
+                                                       extent, sample_count,
+                                                       format);
+      if (!framebuffers[eye])
+        {
+          g_printerr("Could not initialize frambuffer.");
+          return FALSE;
+        }
   }
-  return true;
+  return TRUE;
 }
 
 /* Not required in OpenXR */
 static gboolean
 _submit_framebuffers (GxrContext           *self,
                       GulkanFrameBuffer    *framebuffers[2],
-                      uint32_t              width,
-                      uint32_t              height,
-                      VkSampleCountFlagBits msaa_sample_count)
+                      VkExtent2D            extent,
+                      VkSampleCountFlagBits sample_count)
 {
   (void) self;
   (void) framebuffers;
-  (void) width;
-  (void) height;
-  (void) msaa_sample_count;
+  (void) extent;
+  (void) sample_count;
   return TRUE;
 }
 
