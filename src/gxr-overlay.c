@@ -267,7 +267,7 @@ gxr_overlay_get_size_meters (GxrOverlay *self, graphene_vec2_t *size)
   if (!gxr_overlay_get_width_meters (self, &width_meters))
     return FALSE;
 
-  GxrPixelSize size_pixels = {};
+  VkExtent2D size_pixels = {};
   if (!gxr_overlay_get_size_pixels (self, &size_pixels))
     return FALSE;
 
@@ -504,7 +504,7 @@ gxr_overlay_set_raw (GxrOverlay *self, guchar *pixels,
 }
 
 gboolean
-gxr_overlay_get_size_pixels (GxrOverlay *self, GxrPixelSize *size)
+gxr_overlay_get_size_pixels (GxrOverlay *self, VkExtent2D *size)
 {
   GxrOverlayClass *klass = GXR_OVERLAY_GET_CLASS (self);
   if (klass->get_size_pixels == NULL)

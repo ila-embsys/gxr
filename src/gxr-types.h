@@ -110,16 +110,4 @@ typedef struct {
   gboolean is_valid;
 } GxrPose;
 
-/**
- * GxrPixelSize:
- * @width: Width
- * @height: Height
- *
- * Size in pixels.
- **/
-typedef struct {
-  uint32_t width;
-  uint32_t height;
-} GxrPixelSize;
-
 #endif /* GXR_TYPES_H_ */

@@ -79,7 +79,7 @@ struct _GxrOverlayClass
               uint32_t width, uint32_t height, uint32_t depth);
 
   gboolean
-  (*get_size_pixels) (GxrOverlay *self, GxrPixelSize *size);
+  (*get_size_pixels) (GxrOverlay *self, VkExtent2D *size);
 
   gboolean
   (*get_width_meters) (GxrOverlay *self, float *width);
@@ -202,7 +202,7 @@ gxr_overlay_set_raw (GxrOverlay *self, guchar *pixels,
                      uint32_t width, uint32_t height, uint32_t depth);
 
 gboolean
-gxr_overlay_get_size_pixels (GxrOverlay *self, GxrPixelSize *size);
+gxr_overlay_get_size_pixels (GxrOverlay *self, VkExtent2D *size);
 
 gboolean
 gxr_overlay_get_width_meters (GxrOverlay *self, float *width);

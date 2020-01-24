@@ -169,7 +169,7 @@ _set_raw (GxrOverlay *overlay, guchar *pixels,
 }
 
 static gboolean
-_get_size_pixels (GxrOverlay *overlay, GxrPixelSize *size)
+_get_size_pixels (GxrOverlay *overlay, VkExtent2D *size)
 {
   (void) overlay;
   (void) size;
