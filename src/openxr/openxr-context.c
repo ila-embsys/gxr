@@ -1445,6 +1445,12 @@ _get_device_extensions (GxrContext *self, GulkanClient *gc, GSList **out_list)
   return TRUE;
 }
 
+XrTime
+openxr_context_get_predicted_display_time (OpenXRContext *self)
+{
+  return self->frame_state.predictedDisplayTime;
+}
+
 static void
 openxr_context_class_init (OpenXRContextClass *klass)
 {

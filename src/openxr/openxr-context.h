@@ -76,6 +76,9 @@ openxr_context_get_tracked_space (OpenXRContext *self);
 GSList *
 openxr_context_get_manifests (OpenXRContext *self);
 
+XrTime
+openxr_context_get_predicted_display_time (OpenXRContext *self);
+
 G_END_DECLS
 
 #endif /* GXR_OPENXR_CONTEXT_H_ */

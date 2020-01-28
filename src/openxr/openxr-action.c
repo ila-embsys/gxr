@@ -18,6 +18,7 @@ struct _OpenXRAction
 {
   GxrAction parent;
 
+  OpenXRContext *context;
   XrInstance instance;
   XrSession session;
 
@@ -60,6 +61,7 @@ openxr_action_new (OpenXRContext *context)
   OpenXRAction* self = (OpenXRAction*) g_object_new (OPENXR_TYPE_ACTION, 0);
 
   /* TODO: Handle this more nicely */
+  self->context = context;
   self->instance = openxr_context_get_openxr_instance (context);
   self->session = openxr_context_get_openxr_session (context);
   self->tracked_space = openxr_context_get_tracked_space (context);
@@ -408,8 +410,10 @@ _action_poll_pose_secs_from_now (OpenXRAction *self,
         .next = NULL
       };
 
-      /* TODO: need predicted display time here, not seconds from now */
-      result = xrLocateSpace (self->hand_spaces[i], self->tracked_space, 0, &space_location);
+      /* TODO: secs from now ignored, API not appropriate for OpenXR */
+      XrTime time = openxr_context_get_predicted_display_time (self->context);
+      result = xrLocateSpace (self->hand_spaces[i], self->tracked_space,
+                              time, &space_location);
 
       if (result != XR_SUCCESS)
         {
