@@ -94,10 +94,10 @@ timeout_callback (gpointer data)
   GulkanClient *gc = gxr_context_get_gulkan (self->context);
 
   GulkanTexture *n =
-    gulkan_client_texture_new_from_cairo_surface (gc,
-                                                  surface,
-                                                  VK_FORMAT_R8G8B8A8_UNORM,
-                                                  VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    gulkan_texture_new_from_cairo_surface (gc,
+                                           surface,
+                                           VK_FORMAT_R8G8B8A8_UNORM,
+                                           VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
   gxr_overlay_submit_texture (overlay, n);
 
   if (self->textures[en->i] != NULL)

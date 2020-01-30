@@ -42,10 +42,10 @@ _damage_cb (GtkWidget *widget, GdkEventExpose *event, GxrOverlay *overlay)
     GulkanClient *client = gxr_context_get_gulkan (context);
 
     if (texture == NULL)
-      texture = gulkan_client_texture_new_from_pixbuf (client, pixbuf,
-                                                       VK_FORMAT_R8G8B8A8_UNORM,
-                                                       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                                                       true);
+      texture = gulkan_texture_new_from_pixbuf (client, pixbuf,
+                                                VK_FORMAT_R8G8B8A8_UNORM,
+                                                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                                true);
 
     gxr_overlay_submit_texture (overlay, texture);
 

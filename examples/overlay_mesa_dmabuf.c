@@ -35,7 +35,6 @@ create_overlay ()
   guchar* rgba = gdk_pixbuf_get_pixels (pixbuf);
 
   GulkanClient *client = gxr_context_get_gulkan (context);
-  GulkanDevice *device = gulkan_client_get_device (client);
 
   glGenTextures (1, &gl_texture);
   glActiveTexture (GL_TEXTURE0);
@@ -74,8 +73,9 @@ create_overlay ()
 
   eglDestroyImage (eglDisplay, egl_image);
 
-  texture = gulkan_texture_new_from_dmabuf (device,
-                                            fd, width, height,
+  VkExtent2D extent = { width, height };
+
+  texture = gulkan_texture_new_from_dmabuf (client, fd, extent,
                                             VK_FORMAT_R8G8B8A8_UNORM);
   if (texture == NULL)
     {
@@ -83,10 +83,9 @@ create_overlay ()
       return;
     }
 
-  if (!gulkan_client_transfer_layout (client,
-                                      texture,
-                                      VK_IMAGE_LAYOUT_UNDEFINED,
-                                      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL))
+  if (!gulkan_texture_transfer_layout (texture,
+                                       VK_IMAGE_LAYOUT_UNDEFINED,
+                                       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL))
     {
       g_printerr ("Unable to transfer layout.\n");
     }

@@ -110,12 +110,12 @@ render_callback (gpointer data)
 
   if (context->texture == NULL)
     context->texture =
-      gulkan_client_texture_new_from_cairo_surface (client, surface,
-                                                    VK_FORMAT_R8G8B8A8_UNORM,
-                                                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+      gulkan_texture_new_from_cairo_surface (client, surface,
+                                             VK_FORMAT_R8G8B8A8_UNORM,
+                                             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
   else
-    gulkan_client_upload_cairo_surface (client, context->texture, surface,
-                                        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    gulkan_texture_upload_cairo_surface (context->texture, surface,
+                                         VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
   cairo_surface_destroy (surface);
   gxr_overlay_submit_texture (context->overlay, context->texture);

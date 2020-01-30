@@ -37,11 +37,13 @@ create_overlay ()
   guchar* rgb = gdk_pixbuf_get_pixels (pixbuf);
 
   GulkanClient *client = gxr_context_get_gulkan (context);
-  GulkanDevice *device = gulkan_client_get_device (client);
 
   gsize size;
   int fd;
-  gk_texture = gulkan_texture_new_export_fd (device, width, height,
+
+  VkExtent2D extent = { width, height };
+
+  gk_texture = gulkan_texture_new_export_fd (client, extent,
                                              VK_FORMAT_R8G8B8A8_UNORM, &size,
                                              &fd);
   g_print ("Mem size: %lu\n", size);
@@ -84,10 +86,9 @@ create_overlay ()
 
   glFinish();
 
-  if (!gulkan_client_transfer_layout (client,
-                                      gk_texture,
-                                      VK_IMAGE_LAYOUT_UNDEFINED,
-                                      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL))
+  if (!gulkan_texture_transfer_layout (gk_texture,
+                                       VK_IMAGE_LAYOUT_UNDEFINED,
+                                       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL))
     {
       g_printerr ("Unable to transfer layout.\n");
     }

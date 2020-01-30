@@ -47,10 +47,10 @@ test_overlay_pixbuf ()
   g_assert_nonnull (gc);
 
   GulkanTexture *texture =
-    gulkan_client_texture_new_from_pixbuf (gc, pixbuf,
-                                           VK_FORMAT_R8G8B8A8_UNORM,
-                                           VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                                           false);
+    gulkan_texture_new_from_pixbuf (gc, pixbuf,
+                                    VK_FORMAT_R8G8B8A8_UNORM,
+                                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                    false);
   g_assert_nonnull (texture);
 
   GxrOverlay *overlay = gxr_overlay_new (context, "test.pixbuf");

@@ -135,10 +135,10 @@ test_cat_overlay ()
   GulkanClient *gc = gxr_context_get_gulkan (context);
 
 
-  texture = gulkan_client_texture_new_from_pixbuf (gc, pixbuf,
-                                                   VK_FORMAT_R8G8B8A8_UNORM,
-                                                   VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                                                   true);
+  texture = gulkan_texture_new_from_pixbuf (gc, pixbuf,
+                                            VK_FORMAT_R8G8B8A8_UNORM,
+                                            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                            true);
 
   GxrOverlay *overlay = gxr_overlay_new_width (context, "vulkan.cat", 2.0f);
   if (overlay == NULL)

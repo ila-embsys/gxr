@@ -60,13 +60,13 @@ _damage_cb (GtkWidget      *widget,
     GulkanClient *client = gxr_context_get_gulkan (self->context);
 
     if (self->texture == NULL)
-      self->texture = gulkan_client_texture_new_from_pixbuf (client, pixbuf,
-                                                             VK_FORMAT_R8G8B8A8_UNORM,
-                                                             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                                                             false);
+      self->texture = gulkan_texture_new_from_pixbuf (client, pixbuf,
+                                                      VK_FORMAT_R8G8B8A8_UNORM,
+                                                      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                                      false);
     else
-      gulkan_client_upload_pixbuf (client, self->texture, pixbuf,
-                                   VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+      gulkan_texture_upload_pixbuf (self->texture, pixbuf,
+                                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
     gxr_overlay_submit_texture (self->overlay, self->texture);
 

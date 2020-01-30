@@ -577,6 +577,8 @@ _submit_texture (GxrOverlay    *overlay,
 
   GulkanDevice *device = gulkan_client_get_device (client);
 
+  VkExtent2D extent = gulkan_texture_get_extent (texture);
+
   struct VRVulkanTextureData_t texture_data =
     {
       .m_nImage = (uint64_t)
@@ -586,8 +588,8 @@ _submit_texture (GxrOverlay    *overlay,
       .m_pInstance = gulkan_client_get_instance_handle (client),
       .m_pQueue = gulkan_device_get_queue_handle (device),
       .m_nQueueFamilyIndex = gulkan_device_get_queue_family_index (device),
-      .m_nWidth = gulkan_texture_get_width (texture),
-      .m_nHeight = gulkan_texture_get_height (texture),
+      .m_nWidth = extent.width,
+      .m_nHeight = extent.height,
       .m_nFormat = gulkan_texture_get_format (texture),
       .m_nSampleCount = 1
     };

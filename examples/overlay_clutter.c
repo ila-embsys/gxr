@@ -108,15 +108,14 @@ repaint_cb (gpointer user_data)
     (CLUTTER_STAGE(data->stage), 0, 0, (gint)width, (gint)height);
 
   GulkanClient *client = gxr_context_get_gulkan (context);
-  GulkanDevice *device = gulkan_client_get_device (client);
+
+  VkExtent2D extent = { width, height };
 
   if (texture == NULL)
-    texture = gulkan_texture_new (device,
-                                  width, height, size,
-                                  VK_FORMAT_R8G8B8A8_UNORM);
+    texture = gulkan_texture_new (client, extent, VK_FORMAT_R8G8B8A8_UNORM);
 
-  gulkan_client_upload_pixels (client, texture, pixels,size,
-                               VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+  gulkan_texture_upload_pixels (texture, pixels,size,
+                                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
   gxr_overlay_submit_texture (data->overlay, texture);
 

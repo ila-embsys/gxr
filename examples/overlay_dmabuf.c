@@ -148,10 +148,10 @@ main ()
   GxrContext *context = gxr_context_new (GXR_APP_OVERLAY);
 
   GulkanClient *client = gxr_context_get_gulkan (context);
-  GulkanDevice *device = gulkan_client_get_device (client);
 
-  texture = gulkan_texture_new_from_dmabuf (device,
-                                            fd, width, height,
+  VkExtent2D extent = { width, height };
+
+  texture = gulkan_texture_new_from_dmabuf (client, fd, extent,
                                             VK_FORMAT_B8G8R8A8_UNORM);
   if (texture == NULL)
     {
@@ -159,12 +159,12 @@ main ()
       return -1;
     }
 
-  if (!gulkan_client_transfer_layout (client,
-                                      texture,
-                                      VK_IMAGE_LAYOUT_UNDEFINED,
-                                      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL))
+  if (!gulkan_texture_transfer_layout (texture,
+                                       VK_IMAGE_LAYOUT_UNDEFINED,
+                                       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL))
     {
       g_printerr ("Unable to transfer layout.\n");
+      return -1;
     }
 
   GxrOverlay *overlay = gxr_overlay_new (context, "vulkan.dmabuf");
