@@ -53,10 +53,9 @@ _load_openvr_mesh (RenderModel_t **model,
 
   do
     {
-      error = f->model->LoadRenderModel_Async ((char *) g_strdup (name),
-                                                     model);
+      error = f->model->LoadRenderModel_Async ((char *) g_strdup (name), model);
       /* Treat async loading synchronously.. */
-      usleep (1000);
+      g_usleep (1000);
     }
   while (error == EVRRenderModelError_VRRenderModelError_Loading);
 
@@ -81,7 +80,7 @@ _load_openvr_texture (TextureID_t                id,
     {
       error = f->model->LoadTexture_Async (id, texture);
       /* Treat async loading synchronously.. */
-      usleep (1000);
+      g_usleep (1000);
     }
   while (error == EVRRenderModelError_VRRenderModelError_Loading);
 

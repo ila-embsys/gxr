@@ -184,9 +184,6 @@ load_gdk_pixbuf ()
 int
 main ()
 {
-  /* TODO: radeon specific workaround for enforcing no tiling */
-  putenv ("R600_DEBUG=notiling");
-
   GMainLoop *loop = g_main_loop_new (NULL, FALSE);
 
   context = gxr_context_new (GXR_APP_OVERLAY);
