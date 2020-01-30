@@ -5,20 +5,13 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <GL/gl.h>
-
-#include <math.h>
-#include <glib.h>
-#include <gdk-pixbuf/gdk-pixbuf.h>
-#include <gdk/gdk.h>
-
-#include "gxr.h"
-
-#include <cairo.h>
-
 #define COGL_ENABLE_EXPERIMENTAL_2_0_API 1
 #include <clutter/clutter.h>
 #include "clutter_content.h"
+
+#include <GL/gl.h>
+
+#include <gxr.h>
 
 static GulkanTexture *texture = NULL;
 static GxrContext *context = NULL;

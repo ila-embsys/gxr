@@ -1,5 +1,9 @@
 project('gxr', 'c', version: '0.13.99',
-  meson_version: '>= 0.45.1',
+        meson_version: '>= 0.45.1',
+        default_options : [
+          'c_std=c11',
+          'warning_level=3',
+        ],
 )
 
 gnome = import('gnome')
@@ -7,9 +11,7 @@ gnome = import('gnome')
 config_h = configuration_data()
 
 project_args = ['-I' + meson.build_root(),
-   #'-Werror',
-   '-Wall',
-   '-Wextra',
+                '-Wno-overlength-strings'
 ]
 
 compiler = meson.get_compiler('c')
@@ -22,7 +24,6 @@ if compiler_id == 'clang'
     '-Wno-documentation',
     '-Wno-documentation-unknown-command',
     '-Wno-padded',
-    '-Wno-overlength-strings',
     '-Wno-disabled-macro-expansion',
     '-Wno-atomic-implicit-seq-cst',
     '-Wno-gnu-empty-initializer',

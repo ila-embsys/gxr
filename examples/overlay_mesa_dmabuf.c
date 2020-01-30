@@ -62,7 +62,7 @@ create_overlay ()
   EGLImage egl_image = eglCreateImage (eglDisplay,
                                        eglContext,
                                        EGL_GL_TEXTURE_2D,
-                                       (EGLClientBuffer)(ulong)gl_texture,
+                                       (EGLClientBuffer)(gulong)gl_texture,
                                        NULL);
 
   int fd;

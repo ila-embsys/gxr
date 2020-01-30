@@ -101,7 +101,6 @@ if openvr_dep.found()
     ],
     include_directories: gxr_inc,
     c_args : ['-DGXR_COMPILATION'],
-    output: '../',
     link_with: gxr_lib,
     install_dir: backend_install_dir,
     install: true,

@@ -267,7 +267,7 @@ gxr_overlay_get_size_meters (GxrOverlay *self, graphene_vec2_t *size)
   if (!gxr_overlay_get_width_meters (self, &width_meters))
     return FALSE;
 
-  VkExtent2D size_pixels = {};
+  VkExtent2D size_pixels;
   if (!gxr_overlay_get_size_pixels (self, &size_pixels))
     return FALSE;
 

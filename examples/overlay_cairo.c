@@ -5,19 +5,13 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <math.h>
-#include <glib.h>
-#include <GL/gl.h>
-#include <gdk-pixbuf/gdk-pixbuf.h>
-#include <gdk/gdk.h>
+#include "cairo_content.h"
 
-#include "gxr.h"
+#include <gxr.h>
 
 #define WIDTH 1280
 #define HEIGHT 720
 #define STRIDE (WIDTH * 4)
-
-#include "cairo_content.h"
 
 static GulkanTexture *texture;
 

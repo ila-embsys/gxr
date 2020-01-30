@@ -64,7 +64,7 @@ _create (OpenVROverlay *overlay, gchar* key)
       return FALSE;
     }
 
-  char *key_trimmed = strndup(key, k_unVROverlayMaxNameLength - 1);
+  gchar *key_trimmed = g_strndup (key, k_unVROverlayMaxNameLength - 1);
   err = f->overlay->CreateOverlay (key_trimmed,
                                    key_trimmed,
                                    &self->overlay_handle);

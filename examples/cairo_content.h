@@ -1,6 +1,8 @@
 #pragma once
 
+#define M_PI 3.14159265358979323846
 #include <glib.h>
+#include <cairo.h>
 
 void
 draw_gradient_quad (cairo_t *cr, unsigned width, unsigned height);

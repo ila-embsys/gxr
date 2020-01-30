@@ -5,20 +5,15 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <math.h>
-#include <glib.h>
-#include <GL/gl.h>
-#include <gdk-pixbuf/gdk-pixbuf.h>
-#include <gdk/gdk.h>
+#include "cairo_content.h"
+
 #include <glib/gprintf.h>
 
-#include "gxr.h"
+#include <gxr.h>
 
 #define WIDTH 1000
 #define HEIGHT 1000
 #define STRIDE (WIDTH * 4)
-
-#include "cairo_content.h"
 
 static struct timespec last_time;
 static unsigned frames_without_time_update = 60;
