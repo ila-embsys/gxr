@@ -142,7 +142,8 @@ _check_vk_extension()
                  "Failed to enumerate number of instance extension properties"))
     return false;
 
-  XrExtensionProperties instanceExtensionProperties[instanceExtensionCount];
+  XrExtensionProperties *instanceExtensionProperties =
+    g_malloc (sizeof (XrExtensionProperties) * instanceExtensionCount);
   for (uint16_t i = 0; i < instanceExtensionCount; i++)
     instanceExtensionProperties[i] = (XrExtensionProperties){
       .type = XR_TYPE_EXTENSION_PROPERTIES,
@@ -157,6 +158,9 @@ _check_vk_extension()
   result =
     _is_extension_supported (XR_KHR_VULKAN_ENABLE_EXTENSION_NAME,
                            instanceExtensionProperties, instanceExtensionCount);
+
+  g_free (instanceExtensionProperties);
+
   if (!_check_xr_result
       (result,
                  "Runtime does not support required instance extension %s\n",
@@ -172,7 +176,8 @@ _enumerate_api_layers()
   uint32_t apiLayerCount;
   xrEnumerateApiLayerProperties(0, &apiLayerCount, NULL);
 
-  XrApiLayerProperties apiLayerProperties[apiLayerCount];
+  XrApiLayerProperties *apiLayerProperties =
+    g_malloc (sizeof (XrApiLayerProperties) * apiLayerCount);
   memset(apiLayerProperties, 0, apiLayerCount * sizeof(XrApiLayerProperties));
 
   for (uint32_t i = 0; i < apiLayerCount; i++) {
@@ -190,6 +195,8 @@ _enumerate_api_layers()
       g_print("XR_APILAYER_LUNARG_core_validation supported.\n");
     }
   }
+
+  g_free (apiLayerProperties);
 
   return true;
 }
@@ -269,7 +276,8 @@ _set_up_views(OpenXRContext* self)
   if (!_check_xr_result (result, "Failed to get view configuration count"))
     return false;
 
-  XrViewConfigurationType viewConfigurations[viewConfigurationCount];
+  XrViewConfigurationType *viewConfigurations =
+    g_malloc (sizeof (XrViewConfigurationType) * viewConfigurationCount);
   result = xrEnumerateViewConfigurations(
     self->instance, self->system_id, viewConfigurationCount,
     &viewConfigurationCount, viewConfigurations);
@@ -306,6 +314,9 @@ _set_up_views(OpenXRContext* self)
       secondaryViewConfigProperties = properties;
     }
   }
+
+  g_free (viewConfigurations);
+
   if (requiredViewConfigProperties.type !=
       XR_TYPE_VIEW_CONFIGURATION_PROPERTIES) {
     g_print("Couldn't get required VR View Configuration %s from Runtime!\n",
@@ -424,7 +435,8 @@ _check_supported_spaces (OpenXRContext* self)
       (result, "Getting number of reference spaces failed!"))
     return false;
 
-  XrReferenceSpaceType spaces[count];
+  XrReferenceSpaceType *spaces =
+    g_malloc (sizeof (XrReferenceSpaceType) * count);
   result = xrEnumerateReferenceSpaces (self->session, count, &count, spaces);
   if (!_check_xr_result (result, "Enumerating reference spaces failed!"))
     return false;
@@ -438,6 +450,8 @@ _check_supported_spaces (OpenXRContext* self)
     g_print ("XR_REFERENCE_SPACE_TYPE_VIEW unsupported.\n");
     return false;
   }
+
+  g_free (spaces);
 
   XrPosef identity = {
     .orientation = { .x = 0, .y = 0, .z = 0, .w = 1.0 },
@@ -486,7 +500,8 @@ _create_swapchains(OpenXRContext* self)
       (result, "Failed to get number of supported swapchain formats"))
     return false;
 
-  int64_t swapchainFormats[swapchainFormatCount];
+  int64_t *swapchainFormats =
+    g_malloc (sizeof (int64_t) * swapchainFormatCount);
   result = xrEnumerateSwapchainFormats(self->session, swapchainFormatCount,
                                        &swapchainFormatCount, swapchainFormats);
   if (!_check_xr_result (result, "Failed to enumerate swapchain formats"))
@@ -495,7 +510,7 @@ _create_swapchains(OpenXRContext* self)
   /* First create swapchains and query the length for each swapchain. */
   self->swapchains = malloc(sizeof(XrSwapchain) * self->view_count);
 
-  uint32_t swapchainLength[self->view_count];
+  uint32_t *swapchainLength = g_malloc (sizeof (uint32_t) * self->view_count);
 
   self->swapchain_format = swapchainFormats[0];
 
@@ -530,6 +545,8 @@ _create_swapchains(OpenXRContext* self)
       return false;
   }
 
+  g_free (swapchainFormats);
+
   // most likely all swapchains have the same length, but let's not fail
   // if they are not
   uint32_t maxSwapchainLength = 0;
@@ -545,7 +562,6 @@ _create_swapchains(OpenXRContext* self)
       malloc(sizeof(XrSwapchainImageVulkanKHR) * maxSwapchainLength);
   }
 
-
   for (uint32_t i = 0; i < self->view_count; i++) {
     result = xrEnumerateSwapchainImages(
       self->swapchains[i], swapchainLength[i], &swapchainLength[i],
@@ -553,6 +569,8 @@ _create_swapchains(OpenXRContext* self)
     if (!_check_xr_result (result, "Failed to enumerate swapchains"))
       return false;
   }
+
+  g_free (swapchainLength);
 
   return true;
 }

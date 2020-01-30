@@ -10,7 +10,7 @@
 
 #include <gdk/gdk.h>
 
-#include "gxr-overlay.h"
+#include "gxr-overlay-private.h"
 #include "gxr-time.h"
 #include "gxr-config.h"
 

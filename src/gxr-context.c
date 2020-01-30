@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "gxr-context.h"
+#include "gxr-context-private.h"
 #include "gxr-config.h"
 #include "gxr-backend-private.h"
 

@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "gxr-backend.h"
+#include "gxr-backend-private.h"
 
 #include <gmodule.h>
 
@@ -36,8 +36,8 @@ gxr_backend_class_init (GxrBackendClass *klass)
   object_class->finalize = gxr_backend_finalize;
 }
 
-GxrBackend *
-gxr_backend_new_from_api (GxrApi api)
+static GxrBackend *
+_new_from_api (GxrApi api)
 {
   gboolean supported = g_module_supported();
   if (!supported)
@@ -108,7 +108,7 @@ GxrBackend *
 gxr_backend_get_instance (GxrApi api)
 {
   if (backend == NULL)
-    backend = gxr_backend_new_from_api (api);
+    backend = _new_from_api (api);
   return backend;
 }
 

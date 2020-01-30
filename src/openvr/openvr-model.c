@@ -16,7 +16,7 @@ openvr_model_print_list (void)
   OpenVRFunctions *f = openvr_get_functions ();
 
   uint32_t model_count = f->model->GetRenderModelCount ();
-  char name[k_unMaxPropertyStringSize];
+  char *name = g_malloc (sizeof (char) * k_unMaxPropertyStringSize);
 
   g_print ("You have %d render models:\n", model_count);
   for (uint32_t i = 0; i < model_count; i++)
@@ -25,6 +25,7 @@ openvr_model_print_list (void)
                                                    k_unMaxPropertyStringSize);
       g_print ("\t%03d: %s\n", ret, name);
     }
+  g_free (name);
 }
 
 GSList *
@@ -34,13 +35,13 @@ openvr_model_get_list (void)
 
   GSList *models = NULL;
 
-  char name[k_unMaxPropertyStringSize];
+  char *name = g_malloc (sizeof (char) * k_unMaxPropertyStringSize);
   for (uint32_t i = 0; i < f->model->GetRenderModelCount (); i++)
     {
       f->model->GetRenderModelName (i, name,k_unMaxPropertyStringSize);
       models = g_slist_append (models, g_strdup (name));
     }
-
+  g_free (name);
   return models;
 }
 

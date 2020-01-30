@@ -31,6 +31,7 @@ if compiler_id == 'clang'
     '-Wno-switch-enum',
     '-Wno-used-but-marked-unused',
     '-Wno-double-promotion',
+    '-Wno-format-nonliteral',
     # variadic %f
     '-Wno-gnu-folding-constant'
     # openvr max length macros

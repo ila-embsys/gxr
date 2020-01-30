@@ -60,7 +60,8 @@ openvr_action_update_input_handles (OpenVRAction *self)
   VRActionSetHandle_t actionset_handle =
     openvr_action_set_get_handle (OPENVR_ACTION_SET (action_set));
 
-  VRInputValueHandle_t origin_handles[k_unMaxActionOriginCount];
+  VRInputValueHandle_t *origin_handles =
+    g_malloc (sizeof (VRInputValueHandle_t) * k_unMaxActionOriginCount);
   EVRInputError err =
     f->input->GetActionOrigins (actionset_handle, self->handle,
                                 origin_handles, k_unMaxActionOriginCount);
@@ -99,13 +100,16 @@ openvr_action_update_input_handles (OpenVRAction *self)
       self->input_handles = g_slist_append (self->input_handles, input_handle);
 
       /* TODO: origin localized name max length same as action name? */
-      char origin_name[k_unMaxActionNameLength];
+      char *origin_name = g_malloc (sizeof (char) * k_unMaxActionNameLength);
       f->input->GetOriginLocalizedName (origin_handles[i], origin_name,
                                         k_unMaxActionNameLength,
                                         EVRInputStringBits_VRInputString_All);
       g_print ("Added origin %s for action %s\n", origin_name,
                gxr_action_get_url (GXR_ACTION (self)));
+      g_free (origin_name);
     }
+
+  g_free (origin_handles);
 }
 
 OpenVRAction *
