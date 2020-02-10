@@ -202,7 +202,7 @@ main ()
   if (!gxr_context_load_action_manifest (
         self.context,
         "gxr",
-        "/res/bindings",
+        "/res/bindings/openvr",
         "example_model_actions.json",
         "example_model_bindings_vive_controller.json",
         NULL))
