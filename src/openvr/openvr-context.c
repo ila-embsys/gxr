@@ -50,7 +50,7 @@ openvr_context_finalize (GObject *gobject)
 {
   VR_ShutdownInternal();
   if (functions)
-    g_object_unref (functions);
+    g_clear_object (&functions);
   G_OBJECT_CLASS (openvr_context_parent_class)->finalize (gobject);
 }
 
