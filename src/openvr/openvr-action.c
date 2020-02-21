@@ -272,7 +272,7 @@ _action_poll_digital_from_float (OpenVRAction *self)
           g_debug ("Threshold %f passed, triggering haptic\n", self->threshold);
           gxr_action_trigger_haptic (GXR_ACTION (self->haptic_action),
                                      0.f, 0.03f, 50.f, 0.4f,
-                                     origin_info.trackedDeviceIndex);
+                                     origin_info.devicePath);
         }
 
       bool currentState = data.x >= self->threshold;
