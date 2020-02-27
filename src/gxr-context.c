@@ -221,7 +221,8 @@ GxrContext *gxr_context_new_from_vulkan_extensions (GxrAppType type,
                                                     GSList *instance_ext_list,
                                                     GSList *device_ext_list)
 {
-  return _new (type, _get_api_from_env (), instance_ext_list, device_ext_list);
+  return gxr_context_new_full (type, _get_api_from_env (),
+                               instance_ext_list, device_ext_list);
 }
 
 GxrContext *gxr_context_new_full (GxrAppType type,
@@ -243,7 +244,7 @@ GxrContext *
 gxr_context_new_from_api (GxrAppType type,
                           GxrApi     api)
 {
-  return _new (type, api, NULL, NULL);
+  return gxr_context_new_full (type, api, NULL, NULL);
 }
 
 GxrContext *gxr_context_new_headless (void)
