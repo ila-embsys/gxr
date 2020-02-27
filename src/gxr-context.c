@@ -224,6 +224,21 @@ GxrContext *gxr_context_new_from_vulkan_extensions (GxrAppType type,
   return _new (type, _get_api_from_env (), instance_ext_list, device_ext_list);
 }
 
+GxrContext *gxr_context_new_full (GxrAppType type,
+                                  GxrApi     api,
+                                  GSList    *instance_ext_list,
+                                  GSList    *device_ext_list)
+{
+  /* Override with API from env */
+  const gchar *api_env = g_getenv ("GXR_API");
+  if (g_strcmp0 (api_env, "openxr") == 0)
+    api = GXR_API_OPENXR;
+  else if (g_strcmp0 (api_env, "openvr") == 0)
+    api = GXR_API_OPENVR;
+
+  return _new (type, api, instance_ext_list, device_ext_list);
+}
+
 GxrContext *
 gxr_context_new_from_api (GxrAppType type,
                           GxrApi     api)

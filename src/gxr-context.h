@@ -174,6 +174,11 @@ GxrContext *gxr_context_new_headless (void);
 
 GxrContext *gxr_context_new_headless_from_api (GxrApi api);
 
+GxrContext *gxr_context_new_full (GxrAppType type,
+                                  GxrApi     api,
+                                  GSList    *instance_ext_list,
+                                  GSList    *device_ext_list);
+
 GxrApi
 gxr_context_get_api (GxrContext *self);
 
