@@ -33,8 +33,8 @@ if compiler_id == 'clang'
     '-Wno-double-promotion',
     '-Wno-format-nonliteral',
     # variadic %f
-    '-Wno-gnu-folding-constant'
-    # openvr max length macros
+    '-Wno-gnu-folding-constant',
+    '-Wno-cast-qual' # G_DEFINE_TYPE produces this
   ]
 endif
 
