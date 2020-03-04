@@ -10,7 +10,6 @@
 #define GXR_OPENXR_CONTEXT_H_
 
 #include <glib.h>
-#include <stdbool.h>
 #include <glib-object.h>
 #include <graphene.h>
 
