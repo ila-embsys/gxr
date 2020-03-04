@@ -40,7 +40,7 @@ _compositor_error_to_str (EVRCompositorError err)
     }
 }
 
-bool
+gboolean
 openvr_compositor_submit (GulkanClient         *client,
                           uint32_t              width,
                           uint32_t              height,
@@ -88,7 +88,7 @@ openvr_compositor_submit (GulkanClient         *client,
     {
       g_printerr ("Submit returned error: %s\n",
                   _compositor_error_to_str (err));
-      return false;
+      return FALSE;
     }
 
   openvr_texture_data.m_nImage = (uint64_t) right;
@@ -99,10 +99,10 @@ openvr_compositor_submit (GulkanClient         *client,
     {
       g_printerr ("Submit returned error: %s\n",
                   _compositor_error_to_str (err));
-      return false;
+      return FALSE;
     }
 
-  return true;
+  return TRUE;
 }
 
 void

@@ -414,7 +414,7 @@ _init_session (GxrContext   *context)
 {
   (void) context;
   // openvr does not need any session setup
-  return true;
+  return TRUE;
 }
 
 static gboolean
@@ -447,7 +447,7 @@ _init_framebuffers (GxrContext           *context,
         return FALSE;
     }
 
-  return true;
+  return TRUE;
 }
 
 static gboolean
@@ -690,7 +690,7 @@ _split (gchar *str, GSList **out_list)
 }
 
 
-static bool
+static gboolean
 _get_instance_extensions (GxrContext *self, GSList **out_list)
 {
   (void) self;
@@ -711,7 +711,7 @@ _get_instance_extensions (GxrContext *self, GSList **out_list)
   return TRUE;
 }
 
-static bool
+static gboolean
 _get_device_extensions (GxrContext   *self,
                         GulkanClient *gc,
                         GSList      **out_list)

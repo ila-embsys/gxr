@@ -26,7 +26,7 @@ openvr_compositor_wait_get_poses (GxrPose *poses, uint32_t count);
 enum ETrackingUniverseOrigin
 openvr_compositor_get_tracking_space (void);
 
-bool
+gboolean
 openvr_compositor_submit (GulkanClient         *client,
                           uint32_t              width,
                           uint32_t              height,

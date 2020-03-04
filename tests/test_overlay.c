@@ -26,7 +26,7 @@ load_gdk_pixbuf ()
     }
   else
     {
-      GdkPixbuf *pixbuf = gdk_pixbuf_add_alpha (pixbuf_rgb, false, 0, 0, 0);
+      GdkPixbuf *pixbuf = gdk_pixbuf_add_alpha (pixbuf_rgb, FALSE, 0, 0, 0);
       g_object_unref (pixbuf_rgb);
       return pixbuf;
     }
@@ -50,7 +50,7 @@ test_overlay_pixbuf ()
     gulkan_texture_new_from_pixbuf (gc, pixbuf,
                                     VK_FORMAT_R8G8B8A8_UNORM,
                                     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                                    false);
+                                    FALSE);
   g_assert_nonnull (texture);
 
   GxrOverlay *overlay = gxr_overlay_new (context, "test.pixbuf");

@@ -35,7 +35,7 @@ struct _OpenXRAction
   /* Only used for DIGITAL_FROM_FLOAT */
   float threshold;
   float last_float[NUM_HANDS];
-  bool last_bool[NUM_HANDS];
+  gboolean last_bool[NUM_HANDS];
   GxrAction *haptic_action;
 };
 
@@ -49,7 +49,7 @@ openxr_action_init (OpenXRAction *self)
     {
       self->hand_spaces[i] = XR_NULL_HANDLE;
       self->last_float[i] = 0.0f;
-      self->last_bool[i] = false;
+      self->last_bool[i] = FALSE;
     }
   self->threshold = 0.0f;
   self->haptic_action = NULL;
@@ -77,10 +77,10 @@ _url_to_name (char *url, char *name)
 {
   char *basename = g_path_get_basename (url);
   if (g_strcmp0 (basename, ".") == 0)
-    return false;
+    return FALSE;
 
   strncpy (name, basename, XR_MAX_ACTION_NAME_SIZE - 1);
-  return true;
+  return TRUE;
 }
 
 OpenXRAction *
@@ -212,7 +212,7 @@ _action_poll_digital (OpenXRAction *self)
   return TRUE;
 }
 
-static bool
+static gboolean
 _threshold_passed (float threshold, float last, float current)
 {
   return
@@ -254,7 +254,7 @@ _action_poll_digital_from_float (OpenXRAction *self)
                                    0.f, 0.03f, 50.f, 0.4f, (guint64)i);
       }
 
-    bool currentState = value.currentState >= self->threshold;
+    gboolean currentState = value.currentState >= self->threshold;
 
     GxrDigitalEvent *event = g_malloc (sizeof (GxrDigitalEvent));
     event->controller_handle = (guint64)i;
@@ -354,7 +354,7 @@ _action_poll_vec2f (OpenXRAction *self)
   return TRUE;
 }
 
-static bool
+static gboolean
 _space_location_valid (XrSpaceLocation *sl)
 {
   return
@@ -404,7 +404,7 @@ _action_poll_pose_secs_from_now (OpenXRAction *self,
           continue;
         }
 
-      bool spaceLocationValid;
+      gboolean spaceLocationValid;
       XrSpaceLocation space_location = {
         .type = XR_TYPE_SPACE_LOCATION,
         .next = NULL
@@ -438,7 +438,7 @@ _action_poll_pose_secs_from_now (OpenXRAction *self,
       graphene_vec3_init (&event->velocity, 0, 0, 0);
       graphene_vec3_init (&event->angular_velocity, 0, 0, 0);
       event->valid = spaceLocationValid;
-      event->device_connected = true;
+      event->device_connected = TRUE;
 
       gxr_action_emit_pose (GXR_ACTION (self), event);
     }

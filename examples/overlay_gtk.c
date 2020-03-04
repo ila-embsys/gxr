@@ -36,7 +36,7 @@ _damage_cb (GtkWidget *widget, GdkEventExpose *event, GxrOverlay *overlay)
         return TRUE;
       }
 
-    GdkPixbuf *pixbuf = gdk_pixbuf_add_alpha (offscreen_pixbuf, false, 0, 0, 0);
+    GdkPixbuf *pixbuf = gdk_pixbuf_add_alpha (offscreen_pixbuf, FALSE, 0, 0, 0);
     g_object_unref (offscreen_pixbuf);
 
     GulkanClient *client = gxr_context_get_gulkan (context);
@@ -45,7 +45,7 @@ _damage_cb (GtkWidget *widget, GdkEventExpose *event, GxrOverlay *overlay)
       texture = gulkan_texture_new_from_pixbuf (client, pixbuf,
                                                 VK_FORMAT_R8G8B8A8_UNORM,
                                                 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                                                true);
+                                                TRUE);
 
     gxr_overlay_submit_texture (overlay, texture);
 

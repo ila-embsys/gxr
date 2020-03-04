@@ -30,7 +30,7 @@ struct _OpenVRAction
   /* Only used for DIGITAL_FROM_FLOAT */
   float threshold;
   float last_float[MAX_DEVICE_COUNT];
-  bool last_bool[MAX_DEVICE_COUNT];
+  gboolean last_bool[MAX_DEVICE_COUNT];
   GxrAction *haptic_action;
 };
 
@@ -48,7 +48,7 @@ openvr_action_init (OpenVRAction *self)
     for (int i = 0; i < MAX_DEVICE_COUNT; i++)
     {
       self->last_float[i] = 0.0f;
-      self->last_bool[i] = false;
+      self->last_bool[i] = FALSE;
     }
   self->haptic_action = NULL;
 }
@@ -217,7 +217,7 @@ _action_poll_digital (OpenVRAction *self)
   return TRUE;
 }
 
-static bool
+static gboolean
 _threshold_passed (float threshold, float last, float current)
 {
   return
@@ -275,7 +275,7 @@ _action_poll_digital_from_float (OpenVRAction *self)
                                      origin_info.devicePath);
         }
 
-      bool currentState = data.x >= self->threshold;
+      gboolean currentState = data.x >= self->threshold;
 
       GxrDigitalEvent *event = g_malloc (sizeof (GxrDigitalEvent));
       event->controller_handle = origin_info.trackedDeviceIndex;

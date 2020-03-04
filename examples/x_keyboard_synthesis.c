@@ -106,22 +106,22 @@ _keyboard_input (GxrContext  *context,
         {
           KeySym key_code = mod_key_codes.key_codes[i];
           //g_print ("%c: modkey %lu\n", c, key_code);
-          XTestFakeKeyEvent (dpy, (guint) key_code, true, 0);
+          XTestFakeKeyEvent (dpy, (guint) key_code, TRUE, 0);
         }
 
       unsigned int key_code = XKeysymToKeycode (dpy, key_sym);
       //g_print ("%c (%d): keycode %d (keysym %d)\n", c, c, key_code, key_sym);
-      XTestFakeKeyEvent (dpy, key_code, true, 0);
-      XTestFakeKeyEvent (dpy, key_code, false, 0);
+      XTestFakeKeyEvent (dpy, key_code, TRUE, 0);
+      XTestFakeKeyEvent (dpy, key_code, FALSE, 0);
 
       for (int i = 0; i < mod_key_codes.length; i++)
         {
           KeySym key_code_to_send = mod_key_codes.key_codes[i];
           //g_print ("%c: modkey %lu\n", c, key_code);
-          XTestFakeKeyEvent (dpy, (guint)key_code_to_send, false, 0);
+          XTestFakeKeyEvent (dpy, (guint)key_code_to_send, FALSE, 0);
         }
 
-      XSync (dpy, false);
+      XSync (dpy, FALSE);
     }
 }
 

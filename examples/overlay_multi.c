@@ -59,7 +59,7 @@ load_gdk_pixbuf ()
     return NULL;
   } else {
     //GdkPixbuf * pixbuf = gdk_pixbuf_flip (pixbuf_unflipped, FALSE);
-    GdkPixbuf *pixbuf = gdk_pixbuf_add_alpha (pixbuf_unflipped, false, 0, 0, 0);
+    GdkPixbuf *pixbuf = gdk_pixbuf_add_alpha (pixbuf_unflipped, FALSE, 0, 0, 0);
     g_object_unref (pixbuf_unflipped);
     //g_object_unref (pixbuf);
     return pixbuf;
@@ -124,7 +124,7 @@ test_cat_overlay ()
   texture = gulkan_texture_new_from_pixbuf (client, pixbuf,
                                             VK_FORMAT_R8G8B8A8_UNORM,
                                             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                                            true);
+                                            TRUE);
 
   GxrOverlay *overlay = gxr_overlay_new (context, "vulkan.cat");
   GxrOverlay *overlay2 = gxr_overlay_new (context, "vulkan.cat2");

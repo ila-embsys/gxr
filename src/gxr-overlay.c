@@ -562,7 +562,7 @@ gxr_overlay_get_model (GxrOverlay *self, gchar *name,
   return klass->get_model (self, name, color, id);
 }
 
-bool
+gboolean
 gxr_overlay_submit_texture (GxrOverlay    *self,
                             GulkanTexture *texture)
 {

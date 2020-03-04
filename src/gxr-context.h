@@ -151,10 +151,10 @@ struct _GxrContextClass
   void
   (*request_quit) (GxrContext *self);
 
-  bool
+  gboolean
   (*get_instance_extensions) (GxrContext *self, GSList **out_list);
 
-  bool
+  gboolean
   (*get_device_extensions) (GxrContext   *self,
                             GulkanClient *gc,
                             GSList      **out_list);
@@ -287,10 +287,10 @@ gxr_context_request_quit (GxrContext *self);
 GulkanClient*
 gxr_context_get_gulkan (GxrContext *self);
 
-bool
+gboolean
 gxr_context_get_instance_extensions (GxrContext *self, GSList **out_list);
 
-bool
+gboolean
 gxr_context_get_device_extensions (GxrContext   *self,
                                    GulkanClient *gc,
                                    GSList      **out_list);

@@ -652,7 +652,7 @@ gxr_context_get_model_list (GxrContext *self)
 }
 
 
-bool
+gboolean
 gxr_context_get_instance_extensions (GxrContext *self, GSList **out_list)
 {
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
@@ -661,7 +661,7 @@ gxr_context_get_instance_extensions (GxrContext *self, GSList **out_list)
   return klass->get_instance_extensions (self, out_list);
 }
 
-bool
+gboolean
 gxr_context_get_device_extensions (GxrContext   *self,
                                    GulkanClient *gc,
                                    GSList      **out_list)

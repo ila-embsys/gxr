@@ -232,7 +232,7 @@ _set_flip_y (GxrOverlay *overlay,
 }
 
 /* Submit frame to OpenXR runtime */
-static bool
+static gboolean
 _submit_texture (GxrOverlay    *overlay,
                  GulkanClient  *client,
                  GulkanTexture *texture)

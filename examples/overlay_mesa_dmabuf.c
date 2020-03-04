@@ -175,7 +175,7 @@ load_gdk_pixbuf ()
     g_error_free (error);
     return NULL;
   } else {
-    GdkPixbuf *pb = gdk_pixbuf_add_alpha (pixbuf_unflipped, false, 0, 0, 0);
+    GdkPixbuf *pb = gdk_pixbuf_add_alpha (pixbuf_unflipped, FALSE, 0, 0, 0);
     g_object_unref (pixbuf_unflipped);
     return pb;
   }

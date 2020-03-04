@@ -32,19 +32,19 @@ OpenXRContext *openxr_context_new (void);
 void
 openxr_context_cleanup(OpenXRContext *self);
 
-bool
+gboolean
 openxr_context_begin_frame(OpenXRContext *self);
 
-bool
+gboolean
 openxr_context_aquire_swapchain(OpenXRContext *self,
                                 uint32_t i,
                                 uint32_t *buffer_index);
 
-bool
+gboolean
 openxr_context_release_swapchain(OpenXRContext *self,
                                  uint32_t eye);
 
-bool
+gboolean
 openxr_context_end_frame(OpenXRContext *self);
 
 XrSwapchainImageVulkanKHR**

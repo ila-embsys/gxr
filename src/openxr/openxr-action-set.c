@@ -69,10 +69,10 @@ _url_to_name (char *url, char *name)
 {
   char *basename = g_path_get_basename (url);
   if (g_strcmp0 (basename, ".") == 0)
-    return false;
+    return FALSE;
 
   strncpy (name, basename, XR_MAX_ACTION_NAME_SIZE - 1);
-  return true;
+  return TRUE;
 }
 
 OpenXRActionSet *
@@ -275,10 +275,10 @@ _suggest_for_interaction_profile (GxrActionSet **sets, uint32_t count,
       xrResultToString(instance, result, buffer);
       g_printerr ("ERROR: Suggesting actions for profile %s: %s\n",
                   gxr_manifest_get_interaction_profile (manifest), buffer);
-      return false;
+      return FALSE;
     }
 
-  return true;
+  return TRUE;
 }
 
 static gboolean
@@ -326,11 +326,11 @@ _attach_bindings (GxrActionSet **sets, GxrContext *context, uint32_t count)
       char buffer[XR_MAX_RESULT_STRING_SIZE];
       xrResultToString(self->instance, result, buffer);
       g_printerr ("ERROR: attaching action set: %s\n", buffer);
-      return false;
+      return FALSE;
     }
 
   g_debug ("Attached %d action sets\n", count);
-  return true;
+  return TRUE;
 }
 
 static GxrAction*
