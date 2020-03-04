@@ -27,9 +27,6 @@ enum ETrackingUniverseOrigin
 openvr_compositor_get_tracking_space (void);
 
 bool
-openvr_compositor_gulkan_client_init (GulkanClient *client);
-
-bool
 openvr_compositor_submit (GulkanClient         *client,
                           uint32_t              width,
                           uint32_t              height,
