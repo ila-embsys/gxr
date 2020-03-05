@@ -82,50 +82,50 @@ static GxrBindingType
 _get_binding_type (const gchar *type_string)
 {
   if (g_str_equal (type_string, "boolean"))
-    return BINDING_TYPE_BOOLEAN;
+    return GXR_BINDING_TYPE_BOOLEAN;
   if (g_str_equal (type_string, "vector1"))
-    return BINDING_TYPE_FLOAT;
+    return GXR_BINDING_TYPE_FLOAT;
   if (g_str_equal (type_string, "vector2"))
-    return BINDING_TYPE_VEC2;
+    return GXR_BINDING_TYPE_VEC2;
   if (g_str_equal (type_string, "pose"))
-    return BINDING_TYPE_POSE;
+    return GXR_BINDING_TYPE_POSE;
   if (g_str_equal (type_string, "vibration"))
-    return BINDING_TYPE_HAPTIC;
+    return GXR_BINDING_TYPE_HAPTIC;
 
   g_print ("Binding type %s is not known\n", type_string);
-  return BINDING_TYPE_UNKNOWN;
+  return GXR_BINDING_TYPE_UNKNOWN;
 }
 
 static GxrBindingMode
 _get_binding_mode (const gchar *mode_string)
 {
   if (mode_string == NULL)
-    return BINDING_MODE_NONE;
+    return GXR_BINDING_MODE_NONE;
   if (g_str_equal (mode_string, "button"))
-    return BINDING_MODE_BUTTON;
+    return GXR_BINDING_MODE_BUTTON;
   if (g_str_equal (mode_string, "trackpad"))
-    return BINDING_MODE_TRACKPAD;
+    return GXR_BINDING_MODE_TRACKPAD;
   if (g_str_equal (mode_string, "joystick"))
-    return BINDING_MODE_JOYSTICK;
+    return GXR_BINDING_MODE_JOYSTICK;
 
   g_print ("Binding mode %s is not known\n", mode_string);
-  return BINDING_MODE_UNKNOWN;
+  return GXR_BINDING_MODE_UNKNOWN;
 }
 
 static GxrBindingComponent
 _get_binding_component (const gchar *component_string)
 {
   if (g_str_equal (component_string, "click"))
-    return BINDING_COMPONENT_CLICK;
+    return GXR_BINDING_COMPONENT_CLICK;
   if (g_str_equal (component_string, "pull"))
-    return BINDING_COMPONENT_PULL;
+    return GXR_BINDING_COMPONENT_PULL;
   if (g_str_equal (component_string, "position"))
-    return BINDING_COMPONENT_POSITION;
+    return GXR_BINDING_COMPONENT_POSITION;
   if (g_str_equal (component_string, "touch"))
-    return BINDING_COMPONENT_TOUCH;
+    return GXR_BINDING_COMPONENT_TOUCH;
 
   g_print ("Binding component %s is not known\n", component_string);
-  return BINDING_COMPONENT_UNKNOWN;
+  return GXR_BINDING_COMPONENT_UNKNOWN;
 }
 
 static gboolean
@@ -163,7 +163,7 @@ _parse_actions (GxrManifest *self, GInputStream *stream)
 
       GxrBinding *binding = g_malloc (sizeof (GxrBinding));
       binding->input_paths = NULL;
-      binding->mode = BINDING_MODE_UNKNOWN;
+      binding->mode = GXR_BINDING_MODE_UNKNOWN;
       binding->binding_type = _get_binding_type (binding_type);
 
       g_hash_table_insert (self->actions, g_strdup (name), binding);
@@ -277,9 +277,9 @@ _parse_bindings (GxrManifest *self, GInputStream *stream)
               continue;
             }
 
-          binding->mode = BINDING_MODE_NONE;
+          binding->mode = GXR_BINDING_MODE_NONE;
           GxrBindingInputPath *input_path = g_malloc (sizeof (GxrBindingInputPath));
-          input_path->component = BINDING_COMPONENT_NONE;
+          input_path->component = GXR_BINDING_COMPONENT_NONE;
           input_path->path = g_strdup (path);
           g_debug ("Parsed input path %s\n", input_path->path);
           binding->input_paths = g_list_append (binding->input_paths, input_path);

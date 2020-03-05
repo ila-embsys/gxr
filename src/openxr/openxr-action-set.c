@@ -159,11 +159,11 @@ _component_to_str (GxrBindingComponent c)
 {
   switch (c)
   {
-    case BINDING_COMPONENT_CLICK:
+    case GXR_BINDING_COMPONENT_CLICK:
       return "click";
-    case BINDING_COMPONENT_PULL:
+    case GXR_BINDING_COMPONENT_PULL:
       return "value";
-    case BINDING_COMPONENT_POSITION:
+    case GXR_BINDING_COMPONENT_POSITION:
       /* use .../trackpad instead of .../trackpad/x etc. */
       return NULL;
     default:
