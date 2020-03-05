@@ -78,7 +78,7 @@ gxr_manifest_init (GxrManifest *self)
   self->num_inputs = 0;
 }
 
-static GxrManifestBindingType
+static GxrBindingType
 _get_binding_type (const gchar *type_string)
 {
   if (g_str_equal (type_string, "boolean"))
@@ -96,7 +96,7 @@ _get_binding_type (const gchar *type_string)
   return BINDING_TYPE_UNKNOWN;
 }
 
-static GxrManifestBindingMode
+static GxrBindingMode
 _get_binding_mode (const gchar *mode_string)
 {
   if (mode_string == NULL)
@@ -112,7 +112,7 @@ _get_binding_mode (const gchar *mode_string)
   return BINDING_MODE_UNKNOWN;
 }
 
-static GxrManifestBindingComponent
+static GxrBindingComponent
 _get_binding_component (const gchar *component_string)
 {
   if (g_str_equal (component_string, "click"))

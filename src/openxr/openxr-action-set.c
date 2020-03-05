@@ -155,7 +155,7 @@ _update (GxrActionSet **sets, uint32_t count)
 }
 
 static gchar *
-_component_to_str (GxrManifestBindingComponent c)
+_component_to_str (GxrBindingComponent c)
 {
   switch (c)
   {

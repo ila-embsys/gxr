@@ -12,7 +12,7 @@
 #include <gio/gio.h>
 
 /**
- * GxrManifestBindingType:
+ * GxrBindingType:
  * @BINDING_TYPE_UNKNOWN: An unknown binding type.
  * @BINDING_TYPE_POSE: A pose binding type.
  * @BINDING_TYPE_BOOLEAN: A pose boolean type.
@@ -31,10 +31,10 @@ typedef enum
   BINDING_TYPE_FLOAT,
   BINDING_TYPE_VEC2,
   BINDING_TYPE_HAPTIC
-} GxrManifestBindingType;
+} GxrBindingType;
 
 /**
- * GxrManifestBindingMode:
+ * GxrBindingMode:
  * @BINDING_MODE_NONE: A digital action.
  * @BINDING_MODE_UNKNOWN: A digital action constructed from float thresholds.
  * @BINDING_MODE_BUTTON: An analog action with floats x,y.
@@ -51,10 +51,10 @@ typedef enum
   BINDING_MODE_BUTTON,
   BINDING_MODE_TRACKPAD,
   BINDING_MODE_JOYSTICK,
-} GxrManifestBindingMode;
+} GxrBindingMode;
 
 /**
- * GxrManifestBindingComponent:
+ * GxrBindingComponent:
  * @BINDING_COMPONENT_NONE: None.
  * @BINDING_COMPONENT_UNKNOWN: Unknown.
  * @BINDING_COMPONENT_CLICK: Click.
@@ -73,19 +73,19 @@ typedef enum
   BINDING_COMPONENT_PULL,
   BINDING_COMPONENT_POSITION,
   BINDING_COMPONENT_TOUCH
-} GxrManifestBindingComponent;
+} GxrBindingComponent;
 
 typedef struct
 {
-  GxrManifestBindingComponent component;
+  GxrBindingComponent component;
   gchar *path;
 } GxrBindingInputPath;
 
 typedef struct
 {
-  GxrManifestBindingType binding_type;
+  GxrBindingType binding_type;
   GList *input_paths;
-  GxrManifestBindingMode mode;
+  GxrBindingMode mode;
 } GxrBinding;
 
 G_BEGIN_DECLS

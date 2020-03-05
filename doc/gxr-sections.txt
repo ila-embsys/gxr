@@ -106,9 +106,9 @@ gxr_io_get_cache_path
 
 <SECTION>
 <FILE>gxr-manifest</FILE>
-GxrManifestBindingType
-GxrManifestBindingMode
-GxrManifestBindingComponent
+GxrBindingType
+GxrBindingMode
+GxrBindingComponent
 GXR_TYPE_MANIFEST
 gxr_manifest_new
 gxr_manifest_load
