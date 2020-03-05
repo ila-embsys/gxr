@@ -106,7 +106,7 @@ _get_binding_mode (const gchar *mode_string)
   if (g_str_equal (mode_string, "trackpad"))
     return GXR_BINDING_MODE_TRACKPAD;
   if (g_str_equal (mode_string, "joystick"))
-    return GXR_BINDING_MODE_JOYSTICK;
+    return GXR_BINDING_MODE_ANALOG_STICK;
 
   g_print ("Binding mode %s is not known\n", mode_string);
   return GXR_BINDING_MODE_UNKNOWN;

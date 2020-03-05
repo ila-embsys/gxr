@@ -39,7 +39,7 @@ typedef enum
  * @GXR_BINDING_MODE_UNKNOWN: Unknown.
  * @GXR_BINDING_MODE_BUTTON: Button.
  * @GXR_BINDING_MODE_TRACKPAD: Trackpad.
- * @GXR_BINDING_MODE_JOYSTICK: Thumbstick.
+ * @GXR_BINDING_MODE_ANALOG_STICK: Thumbstick.
  *
  * The mode of the GxrBinding.
  *
@@ -50,7 +50,7 @@ typedef enum
   GXR_BINDING_MODE_UNKNOWN,
   GXR_BINDING_MODE_BUTTON,
   GXR_BINDING_MODE_TRACKPAD,
-  GXR_BINDING_MODE_JOYSTICK,
+  GXR_BINDING_MODE_ANALOG_STICK,
 } GxrBindingMode;
 
 /**
