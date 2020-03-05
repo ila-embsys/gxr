@@ -21,10 +21,10 @@
 
     <refsect2 id="overview">
       <para>
-        gxr is a glib wrapper for OpenVR.
+        gxr is a glib wrapper for OpenVR and OpenXR APIs.
       </para>
       <para>
-        gxr manages OpenVR API calls.
+        gxr abstracts XR API calls.
       </para>
     </refsect2>
 
