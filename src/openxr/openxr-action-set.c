@@ -230,7 +230,7 @@ _suggest_for_interaction_profile (GxrActionSet **sets, uint32_t count,
               return FALSE;
             }
 
-          GxrBindingInputPath *input_path = m->data;
+          GxrBindingPath *input_path = m->data;
 
           gchar *component_str = _component_to_str (input_path->component);
 

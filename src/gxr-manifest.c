@@ -57,7 +57,7 @@ gxr_manifest_class_init (GxrManifestClass *klass)
 static void
 _free_input_path (gpointer data)
 {
-  GxrBindingInputPath *path = data;
+  GxrBindingPath *path = data;
   g_free (path->path);
   g_free (path);
 }
@@ -164,7 +164,7 @@ _parse_actions (GxrManifest *self, GInputStream *stream)
       GxrBinding *binding = g_malloc (sizeof (GxrBinding));
       binding->input_paths = NULL;
       binding->mode = GXR_BINDING_MODE_UNKNOWN;
-      binding->binding_type = _get_binding_type (binding_type);
+      binding->type = _get_binding_type (binding_type);
 
       g_hash_table_insert (self->actions, g_strdup (name), binding);
     }
@@ -242,7 +242,7 @@ _parse_bindings (GxrManifest *self, GInputStream *stream)
                 }
 
               binding->mode = _get_binding_mode (mode);
-              GxrBindingInputPath *input_path = g_malloc (sizeof (GxrBindingInputPath));
+              GxrBindingPath *input_path = g_malloc (sizeof (GxrBindingPath));
               input_path->component = _get_binding_component (component);
               input_path->path = g_strdup (path);
               g_debug ("Parsed input path %s\n", input_path->path);
@@ -278,7 +278,7 @@ _parse_bindings (GxrManifest *self, GInputStream *stream)
             }
 
           binding->mode = GXR_BINDING_MODE_NONE;
-          GxrBindingInputPath *input_path = g_malloc (sizeof (GxrBindingInputPath));
+          GxrBindingPath *input_path = g_malloc (sizeof (GxrBindingPath));
           input_path->component = GXR_BINDING_COMPONENT_NONE;
           input_path->path = g_strdup (path);
           g_debug ("Parsed input path %s\n", input_path->path);

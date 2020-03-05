@@ -62,7 +62,7 @@ typedef enum
  * @GXR_BINDING_COMPONENT_POSITION: Position.
  * @GXR_BINDING_COMPONENT_TOUCH: Touch.
  *
- * The component of the GxrBindingInputPath.
+ * The component of the GxrBindingPath.
  *
  **/
 typedef enum
@@ -79,11 +79,11 @@ typedef struct
 {
   GxrBindingComponent component;
   gchar *path;
-} GxrBindingInputPath;
+} GxrBindingPath;
 
 typedef struct
 {
-  GxrBindingType binding_type;
+  GxrBindingType type;
   GList *input_paths;
   GxrBindingMode mode;
 } GxrBinding;
