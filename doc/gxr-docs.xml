@@ -28,16 +28,16 @@
       </para>
     </refsect2>
 
-    <xi:include href="xml/GxrIO.xml"/>
-    <xi:include href="xml/GxrMath.xml"/>
-    <xi:include href="xml/GxrTime.xml"/>
-    <xi:include href="xml/OpenVRAction.xml"/>
-    <xi:include href="xml/OpenVRActionSet.xml"/>
-    <xi:include href="xml/OpenVRContext.xml"/>
-    <xi:include href="xml/OpenVRCompositor.xml"/>
-    <xi:include href="xml/OpenVROverlay.xml"/>
-    <xi:include href="xml/OpenVRSystem.xml"/>
-    <xi:include href="xml/OpenVRModel.xml"/>
+    <xi:include href="xml/gxr-action-set.xml"/>
+    <xi:include href="xml/gxr-action.xml"/>
+    <xi:include href="xml/gxr-backend.xml"/>
+    <xi:include href="xml/gxr-context.xml"/>
+    <xi:include href="xml/gxr-enums.xml"/>
+    <xi:include href="xml/gxr-io.xml"/>
+    <xi:include href="xml/gxr-manifest.xml"/>
+    <xi:include href="xml/gxr-overlay.xml"/>
+    <xi:include href="xml/gxr-time.xml"/>
+    <xi:include href="xml/gxr-types.xml"/>
 
   </chapter>
   <index id="api-index">
