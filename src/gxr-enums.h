@@ -18,11 +18,11 @@
 
 /**
  * GxrAppType:
- * @OPENVR_APP_SCENE: Scene application. Renders stereo viewports for the whole scene.
+ * @GXR_APP_SCENE: Scene application. Renders stereo viewports for the whole scene.
  * @GXR_APP_OVERLAY: Overlay application. Renders mono buffers to overlays.
- * @OPENVR_APP_BACKGROUND: Background application. Does not render anything.
+ * @GXR_APP_HEADLESS: Background application. Does not render anything.
  *
- * Type of OpenVR application.
+ * Type of Gxr application.
  *
  **/
 typedef enum {
@@ -33,9 +33,9 @@ typedef enum {
 
 /**
  * GxrQuitReason:
- * @VR_QUIT_SHUTDOWN: Runtime is shutting down.
- * @VR_QUIT_APPLICATION_TRANSITION: A new scene application was opened.
- * @VR_QUIT_PROCESS_QUIT: .VR_QUIT_PROCESS_QUIT
+ * @GXR_QUIT_SHUTDOWN: Runtime is shutting down.
+ * @GXR_QUIT_APPLICATION_TRANSITION: A new scene application was opened.
+ * @GXR_QUIT_PROCESS_QUIT: The process has received a quit signal from the runtime.
  *
  * Reason why an quit signal was received
  *
@@ -51,7 +51,7 @@ typedef enum {
  * @GXR_EYE_LEFT: Left eye.
  * @GXR_EYE_RIGHT: Right eye.
  *
- * Type of OpenVR viewport.
+ * Type of Gxr viewport.
  *
  **/
 typedef enum {
@@ -63,6 +63,7 @@ typedef enum {
  * GxrApi:
  * @GXR_API_OPENVR: Use OpenVR.
  * @GXR_API_OPENXR: Use OpenXR.
+ * @GXR_API_NONE: No API specified.
  *
  * Type of API backend to use.
  *
@@ -76,11 +77,13 @@ typedef enum {
 /**
  * GxrActionType:
  * @GXR_ACTION_DIGITAL: A digital action.
+ * @GXR_ACTION_DIGITAL_FROM_FLOAT: A digital action constructed from float thresholds.
  * @GXR_ACTION_VEC2F: An analog action with floats x,y.
  * @GXR_ACTION_FLOAT: An analog action.
  * @GXR_ACTION_POSE: A pose action.
+ * @GXR_ACTION_HAPTIC: A haptic action.
  *
- * The type of the OpenVR action.
+ * The type of the GxrAction.
  *
  **/
 typedef enum {

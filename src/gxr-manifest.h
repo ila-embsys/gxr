@@ -11,6 +11,18 @@
 #include <glib-object.h>
 #include <gio/gio.h>
 
+/**
+ * GxrManifestBindingType:
+ * @BINDING_TYPE_UNKNOWN: An unknown binding type.
+ * @BINDING_TYPE_POSE: A pose binding type.
+ * @BINDING_TYPE_BOOLEAN: A pose boolean type.
+ * @BINDING_TYPE_FLOAT: A pose float type.
+ * @BINDING_TYPE_VEC2: A pose vec2 type.
+ * @BINDING_TYPE_HAPTIC: A pose haptic type.
+ *
+ * The type of GxrBinding.
+ *
+ **/
 typedef enum
 {
   BINDING_TYPE_UNKNOWN,
@@ -21,6 +33,17 @@ typedef enum
   BINDING_TYPE_HAPTIC
 } GxrManifestBindingType;
 
+/**
+ * GxrManifestBindingMode:
+ * @BINDING_MODE_NONE: A digital action.
+ * @BINDING_MODE_UNKNOWN: A digital action constructed from float thresholds.
+ * @BINDING_MODE_BUTTON: An analog action with floats x,y.
+ * @BINDING_MODE_TRACKPAD: An analog action.
+ * @BINDING_MODE_JOYSTICK: A pose action.
+ *
+ * The mode of the GxrBinding.
+ *
+ **/
 typedef enum
 {
   BINDING_MODE_NONE,
@@ -30,6 +53,18 @@ typedef enum
   BINDING_MODE_JOYSTICK,
 } GxrManifestBindingMode;
 
+/**
+ * GxrManifestBindingComponent:
+ * @BINDING_COMPONENT_NONE: None.
+ * @BINDING_COMPONENT_UNKNOWN: Unknown.
+ * @BINDING_COMPONENT_CLICK: Click.
+ * @BINDING_COMPONENT_PULL: Pull.
+ * @BINDING_COMPONENT_POSITION: Position.
+ * @BINDING_COMPONENT_TOUCH: Touch.
+ *
+ * The component of the GxrBindingInputPath.
+ *
+ **/
 typedef enum
 {
   BINDING_COMPONENT_NONE,
