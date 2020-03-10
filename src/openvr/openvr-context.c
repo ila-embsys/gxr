@@ -118,13 +118,9 @@ openvr_context_is_hmd_present (void)
 static void
 _poll_event (GxrContext *context)
 {
-  /* When a(nother) scene app is started, OpenVR sends a
-   * SceneApplicationStateChanged event and a quit event, in this case we
-   * ignore the quit event and only send an app state changed event.
-   */
-  gboolean shutdown_event = FALSE;
-  gboolean scene_application_state_changed = FALSE;
-  GxrQuitReason quit_reason = GXR_QUIT_SHUTDOWN;
+  gboolean received_shutdown_event = FALSE;
+  gboolean transition_instead_of_shutdown = FALSE;
+
   OpenVRFunctions* f = openvr_get_functions ();
 
   struct VREvent_t vr_event;
@@ -157,38 +153,38 @@ _poll_event (GxrContext *context)
 #if (OPENVR_VERSION_MINOR >= 8)
       case EVREventType_VREvent_SceneApplicationStateChanged:
       {
-        EVRSceneApplicationState app_state =
-          f->applications->GetSceneApplicationState ();
-        if (app_state == EVRSceneApplicationState_Starting)
-          {
-            scene_application_state_changed = TRUE;
-          }
+        g_debug ("Event: VREvent_SceneApplicationStateChanged\n");
       } break;
 #endif
       case EVREventType_VREvent_ProcessQuit:
       {
-        scene_application_state_changed = TRUE;
-        quit_reason = GXR_QUIT_PROCESS_QUIT;
+        g_debug ("Event: EVREventType_VREvent_ProcessQuit\n");
+
+        GxrQuitEvent *event = g_malloc (sizeof (GxrQuitEvent));
+        event->reason = GXR_QUIT_PROCESS_QUIT;
+        gxr_context_emit_quit (context, event);
       } break;
 
       case EVREventType_VREvent_Quit:
       {
+        g_debug ("Event: EVREventType_VREvent_Quit\n");
+        received_shutdown_event = TRUE;
+
         g_debug ("Event: got quit event, finding out reason...");
 #if (OPENVR_VERSION_MINOR >= 8)
         EVRSceneApplicationState app_state =
           f->applications->GetSceneApplicationState ();
         if (app_state == EVRSceneApplicationState_Quitting)
           {
-            g_debug ("Event: Another Scene app is starting");
-            scene_application_state_changed = TRUE;
-            quit_reason = GXR_QUIT_APPLICATION_TRANSITION;
+            g_debug ("Event: Another scene app wants focus\n");
+            transition_instead_of_shutdown = TRUE;
           }
         else if (app_state == EVRSceneApplicationState_Running)
           {
-            g_debug ("Event: SteamVR is quitting");
+            g_debug ("Event: We should really quit\n");
+            transition_instead_of_shutdown = FALSE;
           }
 #endif
-        shutdown_event = TRUE;
       } break;
 
       case EVREventType_VREvent_TrackedDeviceActivated:
@@ -246,6 +242,11 @@ _poll_event (GxrContext *context)
         g_debug ("Event: VREvent_ProcessConnected\n");
       } break;
 
+      case EVREventType_VREvent_ProcessDisconnected:
+      {
+        g_debug ("Event: VREvent_ProcessDisconnected\n");
+      } break;
+
       case EVREventType_VREvent_PropertyChanged:
       {
         g_debug ("Event: VREvent_PropertyChanged\n");
@@ -256,6 +257,31 @@ _poll_event (GxrContext *context)
             0, vr_event.data.property.prop, NULL);
           g_debug ("Vsync To Photon Latency Prop: %f ms\n", latency * 1000.f);
         }
+      } break;
+      case EVREventType_VREvent_Input_BindingsUpdated: {
+        g_debug ("Event: VREvent_Input_BindingsUpdated\n");
+      } break;
+
+      case EVREventType_VREvent_TrackedDeviceRoleChanged:
+      {
+        /* This event is a hint that left/right hand changed.
+         * Not useful with SteamVR Action input.
+         * g_debug ("Event: VREvent_TrackedDeviceRoleChanged\n");
+         */
+      } break;
+      case EVREventType_VREvent_Input_HapticVibration:
+      {
+        /* g_debug ("Event: VREvent_Input_HapticVibration\n"); */
+      } break;
+
+      case EVREventType_VREvent_SceneApplicationChanged:
+      {
+        g_debug ("Event: VREvent_SceneApplicationChanged\n");
+      } break;
+
+      case EVREventType_VREvent_Compositor_ApplicationResumed:
+      {
+        g_debug ("Event: VREvent_Compositor_ApplicationResumed\n");
       } break;
 
       case EVREventType_VREvent_DashboardDeactivated:
@@ -277,22 +303,18 @@ _poll_event (GxrContext *context)
     }
   }
 
-  if (shutdown_event && !scene_application_state_changed)
+  if (received_shutdown_event && !transition_instead_of_shutdown)
     {
       GxrQuitEvent *event = g_malloc (sizeof (GxrQuitEvent));
       event->reason = GXR_QUIT_SHUTDOWN;
       g_debug ("Event: sending VR_QUIT_SHUTDOWN signal\n");
       gxr_context_emit_quit (context, event);
     }
-  else if (scene_application_state_changed)
+  else if (transition_instead_of_shutdown)
     {
       GxrQuitEvent *event = g_malloc (sizeof (GxrQuitEvent));
-      event->reason = quit_reason;
-      gchar *reason =
-        (quit_reason == GXR_QUIT_APPLICATION_TRANSITION) ?
-        "scene app start" : "scene app stop";
-
-      g_debug ("Event: sending VR_QUIT signal for %s\n", reason);
+      event->reason = GXR_QUIT_APPLICATION_TRANSITION;
+      g_debug ("Event: sending APPLICATION_TRANSITION signal\n");
       gxr_context_emit_quit (context, event);
     }
 }

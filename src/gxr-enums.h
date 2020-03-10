@@ -34,8 +34,8 @@ typedef enum {
 /**
  * GxrQuitReason:
  * @GXR_QUIT_SHUTDOWN: Runtime is shutting down.
- * @GXR_QUIT_APPLICATION_TRANSITION: A new scene application was opened.
- * @GXR_QUIT_PROCESS_QUIT: The process has received a quit signal from the runtime.
+ * @GXR_QUIT_APPLICATION_TRANSITION: A new scene application wants the focus.
+ * @GXR_QUIT_PROCESS_QUIT: A running scene application releases the focus.
  *
  * Reason why an quit signal was received
  *
