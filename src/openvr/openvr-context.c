@@ -258,6 +258,18 @@ _poll_event (GxrContext *context)
         }
       } break;
 
+      case EVREventType_VREvent_DashboardDeactivated:
+      {
+        g_debug ("Event: VREvent_DashboardDeactivated\n");
+      } break;
+
+      case EVREventType_VREvent_InputFocusChanged:
+      {
+        g_debug ("Event: VREvent_InputFocusChanged\n");
+        g_debug ("Emitting bindig-loaded, maybe missed one while unfocused.\n");
+        gxr_context_emit_binding_loaded (context);
+      } break;
+
     default:
       g_debug ("Context: Unhandled OpenVR system event: %s\n",
                f->system->GetEventTypeNameFromEnum (vr_event.eventType));
