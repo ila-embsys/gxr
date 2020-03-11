@@ -1113,7 +1113,7 @@ _init_framebuffers (GxrContext           *context,
 
   *render_pass =
     gulkan_render_pass_new (device, sample_count, format,
-                            VK_IMAGE_LAYOUT_UNDEFINED, TRUE);
+                            VK_IMAGE_LAYOUT_GENERAL, TRUE);
   if (!*render_pass)
     {
       g_printerr ("Could not init render pass.\n");
