@@ -76,15 +76,6 @@ if x11_dep.found() and xtst_dep.found()
     install: false)
 endif
 
-if clutter_dep.found()
-  executable(
-    'overlay_clutter', ['overlay_clutter.c'],
-    dependencies: gxr_deps + [clutter_dep],
-    link_with: gxr_lib,
-    include_directories: gxr_inc,
-    install: false)
-endif
-
 if libdrm_amdgpu_dep.found()
   executable(
     'overlay_dmabuf', ['overlay_dmabuf.c'],
