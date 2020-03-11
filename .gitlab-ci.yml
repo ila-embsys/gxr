@@ -1,0 +1,37 @@
+.build_template: &build_definition
+  script:
+    # Build gulkan
+    - mkdir deps
+    - cd deps
+    - git clone --depth 1 https://gitlab.freedesktop.org/xrdesktop/gulkan.git
+    - cd gulkan
+    - CC=clang meson build --prefix /usr
+    - ninja -C build install
+    - cd ..
+    # Build OpenXR loader
+    - git clone --depth 1 https://github.com/KhronosGroup/OpenXR-SDK-Source.git
+    - cd OpenXR-SDK-Source
+    - cmake -B build -G Ninja -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DDYNAMIC_LOADER=ON
+    - ninja -C build install
+    - cd ..
+    # OpenVR
+    - git clone --depth 1 https://github.com/ValveSoftware/openvr.git
+    - cd openvr
+    - cmake  -B build -G Ninja -DBUILD_SHARED=1 -DCMAKE_INSTALL_PREFIX=/usr/
+    - ninja -C build install
+    - cd ..
+    # Build gxr
+    - cd ..
+    - CC=clang meson build --prefix /usr
+    - ninja -C build install
+    - meson test -C build/ --no-suite xr
+
+build:arch:
+  image: archlinux/base:latest
+  before_script:
+    - pacman -Sy --noconfirm pkgconf meson git cmake clang # generic build deps
+    - pacman -Sy --noconfirm gdk-pixbuf2 vulkan-headers vulkan-icd-loader graphene cairo glslang  # gulkan deps
+    - pacman -Sy --noconfirm gtk3 # gxr deps
+  <<: *build_definition
+
+
