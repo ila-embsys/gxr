@@ -64,7 +64,7 @@ json_glib_dep = dependency('json-glib-1.0', required: true)
 
 ## Optional
 openxr_dep = dependency('openxr', required: false)
-openvr_dep = dependency('openvr', required: false)
+openvr_dep = dependency('openvr', version: '>= 1.4.18', required: false)
 
 if openvr_dep.found()
   openvr_version_str_list = openvr_dep.version().split('.')
