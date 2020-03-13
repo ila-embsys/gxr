@@ -52,13 +52,15 @@ openvr_compositor_submit (GulkanClient         *client,
   GulkanDevice *device = gulkan_client_get_device (client);
   VkDevice device_handle = gulkan_device_get_handle (device);
 
+  GulkanQueue *queue = gulkan_device_get_graphics_queue (device);
+
   VRVulkanTextureData_t openvr_texture_data = {
     .m_nImage = (uint64_t) left,
     .m_pDevice = device_handle,
     .m_pPhysicalDevice = gulkan_client_get_physical_device_handle (client),
     .m_pInstance = gulkan_client_get_instance_handle (client),
-    .m_pQueue = gulkan_device_get_queue_handle (device),
-    .m_nQueueFamilyIndex = gulkan_device_get_queue_family_index (device),
+    .m_pQueue = gulkan_queue_get_handle (queue),
+    .m_nQueueFamilyIndex = gulkan_queue_get_family_index (queue),
     .m_nWidth = width,
     .m_nHeight = height,
     .m_nFormat = format,

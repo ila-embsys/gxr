@@ -945,19 +945,19 @@ _init_session (GxrContext *context)
   OpenXRContext *self = OPENXR_CONTEXT (context);
 
   GulkanClient *gc = gxr_context_get_gulkan (context);
-  GulkanDevice *gk_device = gulkan_client_get_device (gc);
-  uint32_t queue_family_index =
-    gulkan_device_get_queue_family_index (gk_device);
+  GulkanDevice *gd = gulkan_client_get_device (gc);
+  GulkanQueue *queue = gulkan_device_get_graphics_queue (gd);
+
+  uint32_t family_index = gulkan_queue_get_family_index (queue);
 
   self->graphics_binding = (XrGraphicsBindingVulkanKHR){
     .type = XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR,
     .instance = gulkan_client_get_instance_handle (gc),
-    .physicalDevice = gulkan_device_get_physical_handle (gk_device),
-    .device = gulkan_device_get_handle (gk_device),
-    .queueFamilyIndex = queue_family_index,
+    .physicalDevice = gulkan_device_get_physical_handle (gd),
+    .device = gulkan_device_get_handle (gd),
+    .queueFamilyIndex = family_index,
     .queueIndex = 0,
   };
-
 
   if (!_create_session(self))
     return FALSE;
