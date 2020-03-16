@@ -201,7 +201,7 @@ _new (GxrAppType  type,
 }
 
 static GxrApi
-_get_api_from_env ()
+_parse_api_from_env ()
 {
   const gchar *api_env = g_getenv ("GXR_API");
   if (g_strcmp0 (api_env, "openxr") == 0)
@@ -209,7 +209,17 @@ _get_api_from_env ()
   else if (g_strcmp0 (api_env, "openvr") == 0)
     return GXR_API_OPENVR;
   else
+    return GXR_API_NONE;
+}
+
+static GxrApi
+_get_api_from_env ()
+{
+  GxrApi parsed_api = _parse_api_from_env ();
+  if (parsed_api == GXR_API_NONE)
     return GXR_DEFAULT_API;
+
+  return parsed_api;
 }
 
 GxrContext *gxr_context_new (GxrAppType type)
