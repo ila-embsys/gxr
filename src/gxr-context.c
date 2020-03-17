@@ -259,11 +259,6 @@ GxrContext *
 gxr_context_new_from_api (GxrAppType type,
                           GxrApi     api)
 {
-  /* Override with API from env */
-  GxrApi api_env = _parse_api_from_env ();
-  if (api_env != GXR_API_NONE)
-    api = api_env;
-
   return gxr_context_new_full (type, api, NULL, NULL);
 }
 
