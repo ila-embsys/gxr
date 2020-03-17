@@ -201,28 +201,6 @@ _set_keyboard_position (GxrOverlay      *overlay,
   (void) bottom_right;
 }
 
-static gboolean
-_set_model (GxrOverlay      *overlay,
-            gchar           *name,
-            graphene_vec4_t *color)
-{
-  (void) overlay;
-  (void) color;
-  (void) name;
-  return TRUE;
-}
-
-static gboolean
-_get_model (GxrOverlay *overlay, gchar *name,
-            graphene_vec4_t *color, uint32_t *id)
-{
-  (void) overlay;
-  (void) color;
-  (void) name;
-  (void) id;
-  return TRUE;
-}
-
 static void
 _set_flip_y (GxrOverlay *overlay,
              gboolean flip_y)
@@ -277,8 +255,6 @@ openxr_overlay_class_init (OpenXROverlayClass *klass)
   parent_class->get_transform_absolute = _get_transform_absolute;
   parent_class->show_keyboard = _show_keyboard;
   parent_class->set_keyboard_position = _set_keyboard_position;
-  parent_class->set_model = _set_model;
-  parent_class->get_model = _get_model;
   parent_class->submit_texture = _submit_texture;
   parent_class->print_info = _print_info;
   parent_class->set_flip_y = _set_flip_y;

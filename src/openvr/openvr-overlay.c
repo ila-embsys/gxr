@@ -685,8 +685,6 @@ openvr_overlay_class_init (OpenVROverlayClass *klass)
   parent_class->get_transform_absolute = _get_transform_absolute;
   parent_class->show_keyboard = _show_keyboard;
   parent_class->set_keyboard_position = _set_keyboard_position;
-  parent_class->set_model = NULL;
-  parent_class->get_model = NULL;
   parent_class->submit_texture = _submit_texture;
   parent_class->print_info = _print_info;
   parent_class->set_flip_y = _set_flip_y;

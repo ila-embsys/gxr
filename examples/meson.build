@@ -42,13 +42,6 @@ executable(
   include_directories: gxr_inc,
   install: false)
 
-executable(
-  'overlay_models', ['overlay_models.c', test_resources],
-  dependencies: gxr_deps,
-  link_with: gxr_lib,
-  include_directories: gxr_inc,
-  install: false)
-
 if gtk3_dep.found()
   executable(
     'overlay_gtk', ['overlay_gtk.c'],

@@ -100,15 +100,6 @@ struct _GxrOverlayClass
                             graphene_vec2_t *bottom_right);
 
   gboolean
-  (*set_model) (GxrOverlay *self,
-                gchar *name,
-                graphene_vec4_t *color);
-
-  gboolean
-  (*get_model) (GxrOverlay *self, gchar *name,
-                graphene_vec4_t *color, uint32_t *id);
-
-  gboolean
   (*submit_texture) (GxrOverlay *self,
                      GulkanClient  *client,
                      GulkanTexture *texture);
@@ -128,9 +119,6 @@ GxrOverlay *
 gxr_overlay_new_width (GxrContext *context,
                        gchar      *key,
                        float       meters);
-
-GxrOverlay *
-gxr_overlay_new_model (GxrContext *context, gchar* key);
 
 gboolean
 gxr_overlay_set_visibility (GxrOverlay *self, gboolean visibility);
@@ -221,15 +209,6 @@ void
 gxr_overlay_set_keyboard_position (GxrOverlay   *self,
                                    graphene_vec2_t *top_left,
                                    graphene_vec2_t *bottom_right);
-
-gboolean
-gxr_overlay_set_model (GxrOverlay *self,
-                       gchar *name,
-                       graphene_vec4_t *color);
-
-gboolean
-gxr_overlay_get_model (GxrOverlay *self, gchar *name,
-                       graphene_vec4_t *color, uint32_t *id);
 
 gboolean
 gxr_overlay_submit_texture (GxrOverlay    *self,
