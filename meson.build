@@ -104,7 +104,7 @@ if 'openxr' in config_backends
 endif
 
 if backends.length() == 0
-  error('You must enable at least one backend!')
+  warning('Gxr will be built without back ends!')
 endif
 
 message('Enabled backends: ' + ', '.join(backends))
@@ -126,7 +126,7 @@ if 'openvr' in backends
 elif 'openxr' in backends
   config_h.set('GXR_DEFAULT_API', 'GXR_API_OPENXR')
 else
-  error('No default backend available')
+  config_h.set('GXR_DEFAULT_API', 'GXR_API_NONE')
 endif
 
 gtk3_dep = dependency('gtk+-3.0', version: '>= 3.22', required : false)
