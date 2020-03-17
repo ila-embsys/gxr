@@ -480,7 +480,8 @@ _show_keyboard (GxrOverlay *overlay)
     self->overlay_handle,
     EGamepadTextInputMode_k_EGamepadTextInputModeNormal,
     EGamepadTextInputLineMode_k_EGamepadTextInputLineModeSingleLine,
-    "OpenVR Overlay Keyboard", 1, "", TRUE, 0);
+    EKeyboardFlags_KeyboardFlag_Modal,
+    "OpenVR Overlay Keyboard", 1, "", 0);
 
   OVERLAY_CHECK_ERROR ("ShowKeyboardForOverlay", err)
 
@@ -506,49 +507,6 @@ _set_keyboard_position (GxrOverlay      *overlay,
     }
   };
   f->overlay->SetKeyboardPositionForOverlay (self->overlay_handle, rect);
-}
-
-static gboolean
-_set_model (GxrOverlay *overlay,
-            gchar *name,
-            graphene_vec4_t *color)
-{
-  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
-  OpenVRFunctions *f = openvr_get_functions ();
-  EVROverlayError err;
-
-  struct HmdColor_t hmd_color = {
-    .r = graphene_vec4_get_x (color),
-    .g = graphene_vec4_get_y (color),
-    .b = graphene_vec4_get_z (color),
-    .a = graphene_vec4_get_w (color)
-  };
-
-  err = f->overlay->SetOverlayRenderModel (self->overlay_handle,
-                                           name, &hmd_color);
-
-  OVERLAY_CHECK_ERROR ("SetOverlayRenderModel", err)
-  return TRUE;
-}
-
-static gboolean
-_get_model (GxrOverlay *overlay, gchar *name,
-            graphene_vec4_t *color, uint32_t *id)
-{
-  OpenVROverlay *self = OPENVR_OVERLAY (overlay);
-  OpenVRFunctions *f = openvr_get_functions ();
-  EVROverlayError err;
-
-  struct HmdColor_t hmd_color;
-  *id = f->overlay->GetOverlayRenderModel (self->overlay_handle,
-                                           name, k_unMaxPropertyStringSize,
-                                          &hmd_color, &err);
-
-  graphene_vec4_init (color,
-                      hmd_color.r, hmd_color.g, hmd_color.b, hmd_color.a);
-
-  OVERLAY_CHECK_ERROR ("GetOverlayRenderModel", err)
-  return TRUE;
 }
 
 static void
@@ -613,24 +571,9 @@ static gboolean
 _print_info (GxrOverlay *overlay)
 {
   OpenVROverlay *self = OPENVR_OVERLAY (overlay);
-  struct HmdVector2_t center;
-  float radius;
-  EDualAnalogWhich which = EDualAnalogWhich_k_EDualAnalog_Left;
 
   OpenVRFunctions *f = openvr_get_functions ();
   EVROverlayError err;
-
-  err = f->overlay->GetOverlayDualAnalogTransform (self->overlay_handle, which,
-                                                  &center, &radius);
-
-  if (err != EVROverlayError_VROverlayError_None)
-    {
-      g_printerr ("Could not GetOverlayDualAnalogTransform: %s\n",
-                  f->overlay->GetOverlayErrorNameFromEnum (err));
-      return FALSE;
-    }
-
-  g_print ("Center [%f, %f] Radius %f\n", center.v[0], center.v[1], radius);
 
   VROverlayTransformType transform_type;
   err = f->overlay->GetOverlayTransformType (self->overlay_handle,
@@ -656,7 +599,6 @@ _print_info (GxrOverlay *overlay)
     case VROverlayTransformType_VROverlayTransform_TrackedComponent:
       g_print ("VROverlayTransform_TrackedComponent\n");
       break;
-#if (OPENVR_VERSION_MINOR >= 9)
     case VROverlayTransformType_VROverlayTransform_Invalid:
       g_print ("VROverlayTransform_Invalid\n");
       break;
@@ -669,7 +611,9 @@ _print_info (GxrOverlay *overlay)
     case VROverlayTransformType_VROverlayTransform_DashboardThumb:
       g_print ("VROverlayTransform_DashboardThumb\n");
       break;
-#endif
+    case VROverlayTransformType_VROverlayTransform_Mountable:
+      g_print ("VROverlayTransform_Mountable\n");
+      break;
     }
 
   TrackingUniverseOrigin tracking_origin;
@@ -731,8 +675,8 @@ openvr_overlay_class_init (OpenVROverlayClass *klass)
   parent_class->get_transform_absolute = _get_transform_absolute;
   parent_class->show_keyboard = _show_keyboard;
   parent_class->set_keyboard_position = _set_keyboard_position;
-  parent_class->set_model = _set_model;
-  parent_class->get_model = _get_model;
+  parent_class->set_model = NULL;
+  parent_class->get_model = NULL;
   parent_class->submit_texture = _submit_texture;
   parent_class->print_info = _print_info;
   parent_class->set_flip_y = _set_flip_y;
