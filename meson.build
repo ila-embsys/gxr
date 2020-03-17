@@ -51,22 +51,65 @@ src_inc = include_directories('src')
 c = meson.get_compiler('c')
 
 ## Required
-
-
 m_dep = c.find_library('m')
 
 gulkan_dep = dependency('gulkan-0.14', version: '>= 0.13.0')
 gdk_dep = dependency('gdk-3.0', version: '>= 3.22')
 gmodule_dep = dependency('gmodule-2.0')
 
-# TODO: only required when openxr support is built
-json_glib_dep = dependency('json-glib-1.0', required: true)
+config_backends = get_option('backends')
+backends = []
 
 ## Optional
-openxr_dep = dependency('openxr', required: false)
-openvr_dep = dependency('openvr', version: '>= 1.4.18', required: false)
+if 'auto' in config_backends
+  config_backends += [ 'openvr', 'openxr' ]
+endif
 
-if openvr_dep.found()
+if 'openvr' in config_backends
+  openvr_dep = dependency('openvr', version: '>= 1.4.18', required: false)
+  if openvr_dep.found()
+    backends += 'openvr'
+  else
+    if 'auto' in config_backends
+      message('OpenVR dep not found, disabling OpenVR backend')
+    else
+      error('OpenVR backend enabled, but not found.')
+    endif
+  endif
+endif
+
+if 'openxr' in config_backends
+  openxr_dep = dependency('openxr', required: false)
+  json_glib_dep = dependency('json-glib-1.0', required: true)
+
+  if openxr_dep.found() and json_glib_dep.found()
+    backends += 'openxr'
+  else
+
+    missing_deps = []
+    if not openxr_dep.found()
+      missing_deps += 'openxr'
+    endif
+
+    if not json_glib_dep.found()
+      missing_deps += 'json-glib-1.0'
+    endif
+
+    if 'auto' in config_backends
+      message('Deps ' + ', '.join(missing_deps) + ' not found, disabling OpenXR backend')
+    else
+      error('OpenXR backend enabled, but deps ' + ', '.join(missing_deps) + ' not found.')
+    endif
+  endif
+endif
+
+if backends.length() == 0
+  error('You must enable at least one backend!')
+endif
+
+message('Enabled backends: ' + ', '.join(backends))
+
+if 'openvr' in backends
   openvr_version_str_list = openvr_dep.version().split('.')
   config_h.set('OPENVR_VERSION_MAJOR', openvr_version_str_list[0].to_int())
   config_h.set('OPENVR_VERSION_MINOR', openvr_version_str_list[1].to_int())
@@ -78,10 +121,12 @@ if openvr_dep.found()
   dl_dep = c.find_library('dl')
 endif
 
-if openvr_dep.found()
+if 'openvr' in backends
   config_h.set('GXR_DEFAULT_API', 'GXR_API_OPENVR')
-else
+elif 'openxr' in backends
   config_h.set('GXR_DEFAULT_API', 'GXR_API_OPENXR')
+else
+  error('No default backend available')
 endif
 
 gtk3_dep = dependency('gtk+-3.0', version: '>= 3.22', required : false)

@@ -85,7 +85,7 @@ if libdrm_amdgpu_dep.found()
     install: false)
 endif
 
-if json_glib_dep.found()
+if 'openxr' in backends
   executable(
     'parse_manifest', ['parse_manifest.c', test_resources],
     dependencies: gxr_deps,

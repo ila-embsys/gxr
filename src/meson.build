@@ -9,9 +9,12 @@ gxr_sources = [
   'gxr-action-set.c',
   'gxr-io.c',
   'gxr-overlay.c',
-  'gxr-manifest.c',
   'gxr-backend.c'
 ]
+
+if 'openxr' in backends
+  gxr_sources += 'gxr-manifest.c'
+endif
 
 gxr_headers = [
   'gxr.h',
@@ -23,9 +26,12 @@ gxr_headers = [
   'gxr-action-set.h',
   'gxr-io.h',
   'gxr-overlay.h',
-  'gxr-manifest.h',
   'gxr-backend.h'
-]#i
+]
+
+if 'openxr' in backends
+  gxr_headers += 'gxr-manifest.h'
+endif
 
 version_split = meson.project_version().split('.')
 MAJOR_VERSION = version_split[0]
@@ -63,9 +69,12 @@ gxr_deps = [
   gulkan_dep,
   gdk_dep,
   m_dep,
-  json_glib_dep,
   gmodule_dep
 ]
+
+if 'openxr' in backends
+  gxr_deps += json_glib_dep
+endif
 
 gxr_inc = include_directories('.')
 
@@ -81,7 +90,7 @@ gxr_lib = shared_library(api_path,
 
 
 
-if openvr_dep.found()
+if 'openvr' in backends
   openvr_lib = shared_module('gxr-openvr',
     [
       'openvr/openvr-system.c',
@@ -108,7 +117,8 @@ if openvr_dep.found()
     install_rpath : openvr_dep.get_pkgconfig_variable('libdir')
   )
 endif
-if openxr_dep.found()
+
+if 'openxr' in backends
   openxr_lib = shared_module('gxr-openxr',
     [
       'openxr/openxr-context.c',
