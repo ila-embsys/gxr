@@ -475,14 +475,20 @@ _show_keyboard (GxrOverlay *overlay)
   OpenVROverlay *self = OPENVR_OVERLAY (overlay);
   OpenVRFunctions *f = openvr_get_functions ();
   EVROverlayError err;
-
+#if (OPENVR_VERSION_MINOR >= 10)
   err = f->overlay->ShowKeyboardForOverlay (
     self->overlay_handle,
     EGamepadTextInputMode_k_EGamepadTextInputModeNormal,
     EGamepadTextInputLineMode_k_EGamepadTextInputLineModeSingleLine,
     EKeyboardFlags_KeyboardFlag_Modal,
     "OpenVR Overlay Keyboard", 1, "", 0);
-
+#else
+  err = f->overlay->ShowKeyboardForOverlay (
+    self->overlay_handle,
+    EGamepadTextInputMode_k_EGamepadTextInputModeNormal,
+    EGamepadTextInputLineMode_k_EGamepadTextInputLineModeSingleLine,
+    "OpenVR Overlay Keyboard", 1, "", TRUE, 0);
+#endif
   OVERLAY_CHECK_ERROR ("ShowKeyboardForOverlay", err)
 
   return TRUE;
@@ -599,6 +605,7 @@ _print_info (GxrOverlay *overlay)
     case VROverlayTransformType_VROverlayTransform_TrackedComponent:
       g_print ("VROverlayTransform_TrackedComponent\n");
       break;
+#if (OPENVR_VERSION_MINOR >= 9)
     case VROverlayTransformType_VROverlayTransform_Invalid:
       g_print ("VROverlayTransform_Invalid\n");
       break;
@@ -611,9 +618,12 @@ _print_info (GxrOverlay *overlay)
     case VROverlayTransformType_VROverlayTransform_DashboardThumb:
       g_print ("VROverlayTransform_DashboardThumb\n");
       break;
+#endif
+#if (OPENVR_VERSION_MINOR >= 10)
     case VROverlayTransformType_VROverlayTransform_Mountable:
       g_print ("VROverlayTransform_Mountable\n");
       break;
+#endif
     }
 
   TrackingUniverseOrigin tracking_origin;
