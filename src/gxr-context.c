@@ -137,7 +137,14 @@ _new (GxrAppType  type,
       GSList *instance_ext_list,
       GSList *device_ext_list)
 {
-  GxrContext *self = gxr_backend_new_context (gxr_backend_get_instance (api));
+  GxrBackend *backend = gxr_backend_get_instance (api);
+  if (!backend)
+    {
+      g_print ("%s: Failed to load backend\n", __FUNCTION__);
+      return NULL;
+    }
+
+  GxrContext *self = gxr_backend_new_context (backend);
   if (!self)
   {
     g_error ("Could not init gxr context.\n");
@@ -272,7 +279,14 @@ GxrContext *gxr_context_new_headless_from_api (GxrApi api)
   if (api_env != GXR_API_NONE)
     api = api_env;
 
-  GxrContext *self = gxr_backend_new_context (gxr_backend_get_instance (api));
+  GxrBackend *backend = gxr_backend_get_instance (api);
+  if (!backend)
+    {
+      g_print ("%s: Failed to load backend\n", __FUNCTION__);
+      return NULL;
+    }
+
+  GxrContext *self = gxr_backend_new_context (backend);
   if (!_init_runtime (self, GXR_APP_HEADLESS))
     {
       g_error ("Could not init VR runtime.\n");
