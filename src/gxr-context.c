@@ -140,7 +140,7 @@ _new (GxrAppType  type,
   GxrBackend *backend = gxr_backend_get_instance (api);
   if (!backend)
     {
-      g_print ("%s: Failed to load backend\n", __FUNCTION__);
+      g_print ("Failed to load backend %d\n", api);
       return NULL;
     }
 
@@ -282,7 +282,7 @@ GxrContext *gxr_context_new_headless_from_api (GxrApi api)
   GxrBackend *backend = gxr_backend_get_instance (api);
   if (!backend)
     {
-      g_print ("%s: Failed to load backend\n", __FUNCTION__);
+      g_print ("Failed to load backend %d\n", api);
       return NULL;
     }
 
