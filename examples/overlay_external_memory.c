@@ -43,9 +43,10 @@ create_overlay ()
 
   VkExtent2D extent = { width, height };
 
+  VkImageLayout layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   gk_texture = gulkan_texture_new_export_fd (client, extent,
-                                             VK_FORMAT_R8G8B8A8_UNORM, &size,
-                                             &fd);
+                                             VK_FORMAT_R8G8B8A8_UNORM,
+                                             layout, &size, &fd);
   g_print ("Mem size: %lu\n", size);
   if (gk_texture == NULL)
     {
