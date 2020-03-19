@@ -480,7 +480,7 @@ _show_keyboard (GxrOverlay *overlay)
     self->overlay_handle,
     EGamepadTextInputMode_k_EGamepadTextInputModeNormal,
     EGamepadTextInputLineMode_k_EGamepadTextInputLineModeSingleLine,
-    EKeyboardFlags_KeyboardFlag_Modal,
+    EKeyboardFlags_KeyboardFlag_Minimal,
     "OpenVR Overlay Keyboard", 1, "", 0);
 #else
   err = f->overlay->ShowKeyboardForOverlay (

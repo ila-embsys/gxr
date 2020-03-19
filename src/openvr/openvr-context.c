@@ -328,7 +328,7 @@ _show_system_keyboard (GxrContext *context)
   f->overlay->ShowKeyboard (
     EGamepadTextInputMode_k_EGamepadTextInputModeNormal,
     EGamepadTextInputLineMode_k_EGamepadTextInputLineModeSingleLine,
-    EKeyboardFlags_KeyboardFlag_Modal,
+    EKeyboardFlags_KeyboardFlag_Minimal,
     "OpenVR System Keyboard", 1, "", 0);
 #else
   f->overlay->ShowKeyboard (
