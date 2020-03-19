@@ -1,4 +1,4 @@
-project('gxr', 'c', version: '0.13.99',
+project('gxr', 'c', version: '0.14.0',
         meson_version: '>= 0.49.0',
         default_options : [
           'c_std=c11',
