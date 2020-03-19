@@ -9,12 +9,9 @@ gxr_sources = [
   'gxr-action-set.c',
   'gxr-io.c',
   'gxr-overlay.c',
-  'gxr-backend.c'
+  'gxr-backend.c',
+  'gxr-manifest.c'
 ]
-
-if 'openxr' in backends
-  gxr_sources += 'gxr-manifest.c'
-endif
 
 gxr_headers = [
   'gxr.h',
@@ -26,12 +23,9 @@ gxr_headers = [
   'gxr-action-set.h',
   'gxr-io.h',
   'gxr-overlay.h',
-  'gxr-backend.h'
+  'gxr-backend.h',
+  'gxr-manifest.h'
 ]
-
-if 'openxr' in backends
-  gxr_headers += 'gxr-manifest.h'
-endif
 
 version_split = meson.project_version().split('.')
 MAJOR_VERSION = version_split[0]
