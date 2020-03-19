@@ -125,7 +125,6 @@ GXR_TYPE_OVERLAY
 GxrOverlayClass
 gxr_overlay_new
 gxr_overlay_new_width
-gxr_overlay_new_model
 gxr_overlay_set_visibility
 gxr_overlay_set_cairo_surface_raw
 gxr_overlay_set_gdk_pixbuf_raw
@@ -153,8 +152,6 @@ gxr_overlay_enable_mouse_input
 gxr_overlay_get_transform_absolute
 gxr_overlay_show_keyboard
 gxr_overlay_set_keyboard_position
-gxr_overlay_set_model
-gxr_overlay_get_model
 gxr_overlay_submit_texture
 gxr_overlay_print_info
 gxr_overlay_get_context
