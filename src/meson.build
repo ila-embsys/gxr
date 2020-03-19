@@ -63,12 +63,9 @@ gxr_deps = [
   gulkan_dep,
   gdk_dep,
   m_dep,
-  gmodule_dep
+  gmodule_dep,
+  json_glib_dep
 ]
-
-if 'openxr' in backends
-  gxr_deps += json_glib_dep
-endif
 
 gxr_inc = include_directories('.')
 
@@ -81,8 +78,6 @@ gxr_lib = shared_library(api_path,
   install: true,
   c_args : ['-DGXR_COMPILATION']
 )
-
-
 
 if 'openvr' in backends
   openvr_lib = shared_module('gxr-openvr',

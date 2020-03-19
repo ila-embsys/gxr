@@ -56,6 +56,7 @@ m_dep = c.find_library('m')
 gulkan_dep = dependency('gulkan-0.14', version: '>= 0.13.0')
 gdk_dep = dependency('gdk-3.0', version: '>= 3.22')
 gmodule_dep = dependency('gmodule-2.0')
+json_glib_dep = dependency('json-glib-1.0')
 
 config_backends = get_option('backends')
 backends = []
@@ -80,19 +81,13 @@ endif
 
 if 'openxr' in config_backends
   openxr_dep = dependency('openxr', required: false)
-  json_glib_dep = dependency('json-glib-1.0', required: true)
 
-  if openxr_dep.found() and json_glib_dep.found()
+  if openxr_dep.found()
     backends += 'openxr'
   else
-
     missing_deps = []
     if not openxr_dep.found()
       missing_deps += 'openxr'
-    endif
-
-    if not json_glib_dep.found()
-      missing_deps += 'json-glib-1.0'
     endif
 
     if 'auto' in config_backends
