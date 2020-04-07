@@ -148,8 +148,8 @@ test_cat_overlay ()
   }
 
   gxr_overlay_set_mouse_scale (overlay,
-                                  gdk_pixbuf_get_width (pixbuf),
-                                  gdk_pixbuf_get_height (pixbuf));
+                               (float) (gdk_pixbuf_get_width (pixbuf)),
+                               (float) (gdk_pixbuf_get_height (pixbuf)));
 
   gxr_overlay_submit_texture (overlay, texture);
 

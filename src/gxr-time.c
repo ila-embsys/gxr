@@ -30,7 +30,7 @@ gxr_time_substract (struct timespec* a,
 double
 gxr_time_to_double_secs (struct timespec* time)
 {
-  return ((double) time->tv_sec + (time->tv_nsec / SEC_IN_NSEC_D));
+  return ((double) time->tv_sec + ((double)time->tv_nsec / SEC_IN_NSEC_D));
 }
 
 void

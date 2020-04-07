@@ -10,6 +10,8 @@
 
 #include <glib-object.h>
 
+#include "gxr-device.h"
+
 #include "gxr-pointer-tip.h"
 #include "gxr-pointer.h"
 #include <graphene.h>
@@ -17,7 +19,7 @@
 G_BEGIN_DECLS
 
 #define GXR_TYPE_CONTROLLER gxr_controller_get_type()
-G_DECLARE_FINAL_TYPE (GxrController, gxr_controller, GXR, CONTROLLER, GObject)
+G_DECLARE_FINAL_TYPE (GxrController, gxr_controller, GXR, CONTROLLER, GxrDevice)
 
 /**
  * GxrTransformLock:
@@ -46,12 +48,13 @@ typedef struct {
   gpointer              grabbed_object;
   graphene_quaternion_t object_rotation;
   graphene_quaternion_t inverse_controller_rotation;
-  graphene_point3d_t    grab_offset;
+  graphene_point_t      grab_offset;
   GxrTransformLock      transform_lock;
 } GxrGrabState;
 
 GxrController *gxr_controller_new (guint64 controller_handle,
-                                   GxrContext *context);
+                                   GxrContext *context,
+                                   gchar      *model_name);
 
 GxrPointer *
 gxr_controller_get_pointer (GxrController *self);
@@ -81,16 +84,21 @@ void
 gxr_controller_reset_hover_state (GxrController *self);
 
 void
-gxr_controller_update_hand_grip_pose (GxrController *self,
-                                      graphene_matrix_t *pose);
-
-void
 gxr_controller_get_hand_grip_pose (GxrController *self,
                                    graphene_matrix_t *pose);
 
 void
-gxr_controller_update_pointer_pose (GxrController *self,
-                                    graphene_matrix_t *pose);
+gxr_controller_update_pointer_pose (GxrController     *self,
+                                    graphene_matrix_t *pose,
+                                    gboolean           valid);
+
+void
+gxr_controller_update_hand_grip_pose (GxrController     *self,
+                                      graphene_matrix_t *pose,
+                                      gboolean           valid);
+
+gboolean
+gxr_controller_is_pointer_pose_valid (GxrController *self);
 
 void
 gxr_controller_hide_pointer (GxrController *self);
@@ -101,11 +109,35 @@ gxr_controller_show_pointer (GxrController *self);
 gboolean
 gxr_controller_is_pointer_visible (GxrController *self);
 
+float
+gxr_controller_get_distance (GxrController *self, graphene_point3d_t *point);
+
+gboolean
+gxr_controller_get_pointer_pose (GxrController *self, graphene_matrix_t *pose);
+
 void
-gxr_controller_set_user_pointer (GxrController *self, gpointer ptr);
+gxr_controller_update_hovered_object (GxrController *self,
+                                      gpointer last_object,
+                                      gpointer object,
+                                      graphene_matrix_t *object_pose,
+                                      graphene_point3d_t *intersection_point,
+                                      graphene_point_t *intersection_2d,
+                                      float intersection_distance);
+
+void
+gxr_controller_drag_start (GxrController *self,
+                           gpointer grabbed_object,
+                           graphene_matrix_t *object_pose);
+
+gboolean
+gxr_controller_get_drag_pose (GxrController     *self,
+                              graphene_matrix_t *drag_pose);
+
+void
+gxr_controller_set_user_data (GxrController *self, gpointer data);
 
 gpointer
-gxr_controller_get_user_pointer (GxrController *self);
+gxr_controller_get_user_data (GxrController *self);
 
 G_END_DECLS
 

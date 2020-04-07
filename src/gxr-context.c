@@ -9,13 +9,16 @@
 #include "gxr-config.h"
 #include "gxr-backend-private.h"
 #include "gxr-controller.h"
+#include "gxr-device-manager.h"
 
 typedef struct _GxrContextPrivate
 {
   GObject parent;
   GulkanClient *gc;
   GxrApi api;
-  GSList *controllers;
+
+  GxrDeviceManager *device_manager;
+
 } GxrContextPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (GxrContext, gxr_context, G_TYPE_OBJECT)
@@ -24,8 +27,6 @@ enum {
   KEYBOARD_PRESS_EVENT,
   KEYBOARD_CLOSE_EVENT,
   QUIT_EVENT,
-  DEVICE_ACTIVATE_EVENT,
-  DEVICE_DEACTIVATE_EVENT,
   DEVICE_UPDATE_EVENT,
   BINDING_LOADED,
   BINDINGS_UPDATE,
@@ -59,20 +60,6 @@ gxr_context_class_init (GxrContextClass *klass)
 
   context_signals[QUIT_EVENT] =
   g_signal_new ("quit-event",
-                G_TYPE_FROM_CLASS (klass),
-                G_SIGNAL_RUN_LAST,
-                0, NULL, NULL, NULL, G_TYPE_NONE,
-                1, G_TYPE_POINTER | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  context_signals[DEVICE_ACTIVATE_EVENT] =
-  g_signal_new ("device-activate-event",
-                G_TYPE_FROM_CLASS (klass),
-                G_SIGNAL_RUN_LAST,
-                0, NULL, NULL, NULL, G_TYPE_NONE,
-                1, G_TYPE_POINTER | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  context_signals[DEVICE_DEACTIVATE_EVENT] =
-  g_signal_new ("device-deactivate-event",
                 G_TYPE_FROM_CLASS (klass),
                 G_SIGNAL_RUN_LAST,
                 0, NULL, NULL, NULL, G_TYPE_NONE,
@@ -298,47 +285,7 @@ gxr_context_init (GxrContext *self)
   GxrContextPrivate *priv = gxr_context_get_instance_private (self);
   priv->api = GXR_API_NONE;
   priv->gc = NULL;
-  priv->controllers = NULL;
-}
-
-GSList *
-gxr_context_get_controllers (GxrContext *self)
-{
-  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
-  return priv->controllers;
-}
-
-void
-gxr_context_add_controller (GxrContext *self, guint64 handle)
-{
-  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
-
-  GxrController *controller = gxr_controller_new (handle, self);
-  priv->controllers = g_slist_append (priv->controllers, controller);
-  g_debug ("Created controller for %lu\n", handle);
-
-  gxr_context_emit_device_activate (self, controller);
-}
-
-void
-gxr_context_remove_controller (GxrContext *self, guint64 handle)
-{
-
-  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
-
-  for (GSList *l = priv->controllers; l; l = l->next)
-    {
-      GxrController *controller = GXR_CONTROLLER (l->data);
-      if (gxr_controller_get_handle (controller) == handle)
-        {
-          priv->controllers = g_slist_remove (priv->controllers, controller);
-          gxr_context_emit_device_deactivate (self, controller);
-          g_object_unref (controller);
-          g_debug ("Removed controller %lu\n", handle);
-          return;
-        }
-    }
-  g_debug ("Controller %lu not found for removal\n", handle);
+  priv->device_manager = gxr_device_manager_new ();
 }
 
 static void
@@ -346,6 +293,10 @@ gxr_context_finalize (GObject *gobject)
 {
   GxrContext *self = GXR_CONTEXT (gobject);
   GxrContextPrivate *priv = gxr_context_get_instance_private (self);
+
+  if (priv->device_manager != NULL)
+    g_clear_object (&priv->device_manager);
+
   if (priv->gc != NULL)
     g_object_unref (priv->gc);
   G_OBJECT_CLASS (gxr_context_parent_class)->finalize (gobject);
@@ -447,17 +398,6 @@ gxr_context_emit_quit (GxrContext *self, gpointer event)
   g_signal_emit (self, context_signals[QUIT_EVENT], 0, event);
 }
 
-void
-gxr_context_emit_device_activate (GxrContext *self, gpointer event)
-{
-  g_signal_emit (self, context_signals[DEVICE_ACTIVATE_EVENT], 0, event);
-}
-
-void
-gxr_context_emit_device_deactivate (GxrContext *self, gpointer event)
-{
-  g_signal_emit (self, context_signals[DEVICE_DEACTIVATE_EVENT], 0, event);
-}
 
 void
 gxr_context_emit_device_update (GxrContext *self, gpointer event)
@@ -570,13 +510,19 @@ gxr_context_begin_frame (GxrContext *self)
 }
 
 gboolean
-gxr_context_end_frame (GxrContext *self,
-                       GxrPose *poses)
+gxr_context_end_frame (GxrContext *self)
 {
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->end_frame == NULL)
     return FALSE;
-  return klass->end_frame (self, poses);
+
+  GxrPose poses[GXR_DEVICE_INDEX_MAX];
+  gboolean res = klass->end_frame (self, poses);
+
+  GxrDeviceManager *dm = gxr_context_get_device_manager (self);
+  gxr_device_manager_update_poses (dm, poses);
+
+  return res;
 }
 
 GxrActionSet *
@@ -740,4 +686,11 @@ gxr_context_get_device_extensions (GxrContext   *self,
   if (klass->get_device_extensions == NULL)
     return FALSE;
   return klass->get_device_extensions (self, gc, out_list);
+}
+
+GxrDeviceManager *
+gxr_context_get_device_manager (GxrContext *self)
+{
+  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
+  return priv->device_manager;
 }

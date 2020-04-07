@@ -28,7 +28,7 @@ openxr_action_new_from_type_url (OpenXRContext *context,
 OpenXRAction *openxr_action_new (OpenXRContext *context);
 
 void
-openxr_action_update_input_handles (OpenXRAction *self);
+openxr_action_update_controllers (OpenXRAction *self);
 
 uint32_t
 openxr_action_get_num_bindings (OpenXRAction *self);

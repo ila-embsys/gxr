@@ -182,6 +182,21 @@ xrd_scene_pointer_tip_new (void)
 static void
 xrd_scene_pointer_tip_finalize (GObject *gobject)
 {
+  XrdScenePointerTip *self = XRD_SCENE_POINTER_TIP (gobject);
+
+  /* cancels potentially running animation */
+  gxr_pointer_tip_set_active (GXR_POINTER_TIP (self), FALSE);
+
+  XrdSceneRenderer *renderer = xrd_scene_renderer_get_instance ();
+  GulkanClient *gc = xrd_scene_renderer_get_gulkan (renderer);
+  VkDevice device = gulkan_client_get_device_handle (gc);
+  vkDestroySampler (device, self->sampler, NULL);
+
+  g_object_unref (self->vertex_buffer);
+  g_object_unref (self->shading_buffer);
+
+  g_object_unref (self->texture);
+
   G_OBJECT_CLASS (xrd_scene_pointer_tip_parent_class)->finalize (gobject);
 }
 

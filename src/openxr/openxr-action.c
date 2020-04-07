@@ -19,7 +19,7 @@ struct _OpenXRAction
 {
   GxrAction parent;
 
-  OpenXRContext *context;
+  GxrContext *context;
   XrInstance instance;
   XrSession session;
 
@@ -62,7 +62,7 @@ openxr_action_new (OpenXRContext *context)
   OpenXRAction* self = (OpenXRAction*) g_object_new (OPENXR_TYPE_ACTION, 0);
 
   /* TODO: Handle this more nicely */
-  self->context = context;
+  self->context = GXR_CONTEXT (context);
   self->instance = openxr_context_get_openxr_instance (context);
   self->session = openxr_context_get_openxr_session (context);
   self->tracked_space = openxr_context_get_tracked_space (context);
@@ -178,31 +178,38 @@ openxr_action_new_from_type_url (OpenXRContext *context,
   return self;
 }
 
-static GxrController *
-_find_controller (GxrContext *self, guint64 handle)
+static XrPath
+_handle_to_subaction (OpenXRAction *self, guint64 handle)
 {
-  GSList *controllers = gxr_context_get_controllers (self);
-  for (GSList *l = controllers; l; l = l->next)
-  {
-    GxrController *controller = GXR_CONTROLLER (l->data);
-    if (gxr_controller_get_handle (controller) == handle)
-    {
-      return l->data;
-    }
-  }
-  return NULL;
+  return self->hand_paths[handle];
+}
+
+/* equivalent to openvr: "Time relative to now when this event happened" */
+static float
+_get_time_diff (XrTime xr_time)
+{
+  (void) xr_time;
+  /* TODO: for now pretend everything happens right now */
+  return 0;
 }
 
 static gboolean
 _action_poll_digital (OpenXRAction *self)
 {
-  for (int i = 0; i < NUM_HANDS; i++)
+  GxrDeviceManager *dm = gxr_context_get_device_manager (self->context);
+  GSList *controllers = gxr_device_manager_get_controllers (dm);
+
+  for (GSList *l = controllers; l; l = l->next)
     {
+      GxrController *controller = GXR_CONTROLLER (l->data);
+      guint64 controller_handle = gxr_controller_get_handle (controller);
+      XrPath subaction_path = _handle_to_subaction (self, controller_handle);
+
       XrActionStateGetInfo get_info = {
         .type = XR_TYPE_ACTION_STATE_GET_INFO,
         .next = NULL,
         .action = self->handle,
-        .subactionPath = self->hand_paths[i]
+        .subactionPath = subaction_path
       };
 
       XrActionStateBoolean value = {
@@ -218,13 +225,18 @@ _action_poll_digital (OpenXRAction *self)
           continue;
         }
 
+      if (!controller)
+        {
+          g_print ("Digital without controller\n");
+          return TRUE;
+        }
+
       GxrDigitalEvent *event = g_malloc (sizeof (GxrDigitalEvent));
-      event->controller =
-        _find_controller (GXR_CONTEXT (self->context), (guint)i);
+      event->controller = controller;
       event->active = (gboolean)value.isActive;
       event->state = (gboolean)value.currentState;
       event->changed = (gboolean)value.changedSinceLastSync;
-      event->time = value.lastChangeTime;
+      event->time = _get_time_diff (value.lastChangeTime);
 
       gxr_action_emit_digital (GXR_ACTION (self), event);
     }
@@ -243,52 +255,59 @@ _threshold_passed (float threshold, float last, float current)
 static gboolean
 _action_poll_digital_from_float (OpenXRAction *self)
 {
-  for (int i = 0; i < NUM_HANDS; i++)
-  {
-    XrActionStateGetInfo get_info = {
-      .type = XR_TYPE_ACTION_STATE_GET_INFO,
-      .next = NULL,
-      .action = self->handle,
-      .subactionPath = self->hand_paths[i]
-    };
+  GxrDeviceManager *dm = gxr_context_get_device_manager (self->context);
+  GSList *controllers = gxr_device_manager_get_controllers (dm);
 
-    XrActionStateFloat value = {
-      .type = XR_TYPE_ACTION_STATE_FLOAT,
-      .next = NULL
-    };
+  for (GSList *l = controllers; l; l = l->next)
+    {
+      GxrController *controller = GXR_CONTROLLER (l->data);
+      guint64 controller_handle = gxr_controller_get_handle (controller);
+      XrPath subaction_path = _handle_to_subaction (self, controller_handle);
 
-    XrResult result = xrGetActionStateFloat(self->session, &get_info, &value);
+      XrActionStateGetInfo get_info = {
+        .type = XR_TYPE_ACTION_STATE_GET_INFO,
+        .next = NULL,
+        .action = self->handle,
+        .subactionPath = subaction_path
+      };
 
-    if (result != XR_SUCCESS)
-      {
-        g_debug ("Failed to poll float action\n");
-        continue;
-      }
+      XrActionStateFloat value = {
+        .type = XR_TYPE_ACTION_STATE_FLOAT,
+        .next = NULL
+      };
 
-    if (self->haptic_action && _threshold_passed (self->threshold,
-                                                  self->last_float[i],
-                                                  value.currentState))
-      {
-        g_debug ("Threshold %f passed, triggering haptic\n", self->threshold);
-        gxr_action_trigger_haptic (GXR_ACTION (self->haptic_action),
-                                   0.f, 0.03f, 50.f, 0.4f, (guint64)i);
-      }
+      XrResult result = xrGetActionStateFloat(self->session, &get_info, &value);
 
-    gboolean currentState = value.currentState >= self->threshold;
+      if (result != XR_SUCCESS)
+        {
+          g_debug ("Failed to poll float action\n");
+          continue;
+        }
 
-    GxrDigitalEvent *event = g_malloc (sizeof (GxrDigitalEvent));
-    event->controller =
-      _find_controller (GXR_CONTEXT (self->context), (guint)i);
-    event->active = (gboolean)value.isActive;
-    event->state = (gboolean)currentState;
-    event->changed = (gboolean)(value.changedSinceLastSync &&
-      currentState != self->last_bool[i]);
-    event->time = value.lastChangeTime;
+      if (self->haptic_action &&
+          _threshold_passed (self->threshold,
+                             self->last_float[controller_handle],
+                             value.currentState))
+        {
+          g_debug ("Threshold %f passed, triggering haptic\n", self->threshold);
+          gxr_action_trigger_haptic (GXR_ACTION (self->haptic_action),
+                                     0.f, 0.03f, 50.f, 0.4f, controller_handle);
+        }
 
-    gxr_action_emit_digital (GXR_ACTION (self), event);
-    self->last_float[i] = value.currentState;
-    self->last_bool[i] = currentState;
-  }
+      gboolean currentState = value.currentState >= self->threshold;
+
+      GxrDigitalEvent *event = g_malloc (sizeof (GxrDigitalEvent));
+      event->controller = controller;
+      event->active = (gboolean)value.isActive;
+      event->state = (gboolean)currentState;
+      event->changed = (gboolean)(value.changedSinceLastSync &&
+        currentState != self->last_bool[controller_handle]);
+      event->time = _get_time_diff (value.lastChangeTime);
+
+      gxr_action_emit_digital (GXR_ACTION (self), event);
+      self->last_float[controller_handle] = value.currentState;
+      self->last_bool[controller_handle] = currentState;
+    }
 
   return TRUE;
 }
@@ -297,37 +316,44 @@ static gboolean
 _action_poll_analog (OpenXRAction *self)
 {
 
-  for (int i = 0; i < NUM_HANDS; i++)
-  {
-    XrActionStateGetInfo get_info = {
-      .type = XR_TYPE_ACTION_STATE_GET_INFO,
-      .next = NULL,
-      .action = self->handle,
-      .subactionPath = self->hand_paths[i]
-    };
+  GxrDeviceManager *dm = gxr_context_get_device_manager (self->context);
+  GSList *controllers = gxr_device_manager_get_controllers (dm);
 
-    XrActionStateFloat value = {
-      .type = XR_TYPE_ACTION_STATE_FLOAT,
-      .next = NULL
-    };
-
-    XrResult result = xrGetActionStateFloat(self->session, &get_info, &value);
-
-    if (result != XR_SUCCESS)
+  for (GSList *l = controllers; l; l = l->next)
     {
-      g_debug ("Failed to poll float action\n");
-      continue;
+      GxrController *controller = GXR_CONTROLLER (l->data);
+      guint64 controller_handle = gxr_controller_get_handle (controller);
+      XrPath subaction_path = _handle_to_subaction (self, controller_handle);
+
+      XrActionStateGetInfo get_info = {
+        .type = XR_TYPE_ACTION_STATE_GET_INFO,
+        .next = NULL,
+        .action = self->handle,
+        .subactionPath = subaction_path
+      };
+
+      XrActionStateFloat value = {
+        .type = XR_TYPE_ACTION_STATE_FLOAT,
+        .next = NULL
+      };
+
+      XrResult result = xrGetActionStateFloat(self->session, &get_info, &value);
+
+      if (result != XR_SUCCESS)
+      {
+        g_debug ("Failed to poll float action\n");
+        continue;
+      }
+
+      GxrAnalogEvent *event = g_malloc (sizeof (GxrAnalogEvent));
+      event->controller = controller;
+      event->active = (gboolean)value.isActive;
+      graphene_vec3_init (&event->state, value.currentState, 0, 0);
+      graphene_vec3_init (&event->delta, 0, 0, 0); /* TODO */
+      event->time = _get_time_diff (value.lastChangeTime);
+
+      gxr_action_emit_analog (GXR_ACTION (self), event);
     }
-
-    GxrAnalogEvent *event = g_malloc (sizeof (GxrAnalogEvent));
-    event->controller =
-      _find_controller (GXR_CONTEXT (self->context), (guint)i);    event->active = (gboolean)value.isActive;
-    graphene_vec3_init (&event->state, value.currentState, 0, 0);
-    graphene_vec3_init (&event->delta, 0, 0, 0); /* TODO */
-    event->time = value.lastChangeTime;
-
-    gxr_action_emit_analog (GXR_ACTION (self), event);
-  }
 
   return TRUE;
 }
@@ -335,14 +361,20 @@ _action_poll_analog (OpenXRAction *self)
 static gboolean
 _action_poll_vec2f (OpenXRAction *self)
 {
+  GxrDeviceManager *dm = gxr_context_get_device_manager (self->context);
+  GSList *controllers = gxr_device_manager_get_controllers (dm);
 
-  for (int i = 0; i < NUM_HANDS; i++)
+  for (GSList *l = controllers; l; l = l->next)
     {
+      GxrController *controller = GXR_CONTROLLER (l->data);
+      guint64 controller_handle = gxr_controller_get_handle (controller);
+      XrPath subaction_path = _handle_to_subaction (self, controller_handle);
+
       XrActionStateGetInfo get_info = {
         .type = XR_TYPE_ACTION_STATE_GET_INFO,
         .next = NULL,
         .action = self->handle,
-        .subactionPath = self->hand_paths[i]
+        .subactionPath = subaction_path
       };
 
       XrActionStateVector2f value = {
@@ -359,12 +391,11 @@ _action_poll_vec2f (OpenXRAction *self)
         }
 
       GxrAnalogEvent *event = g_malloc (sizeof (GxrAnalogEvent));
-      event->controller =
-        _find_controller (GXR_CONTEXT (self->context), (guint)i);
+      event->controller = controller;
       event->active = (gboolean)value.isActive;
       graphene_vec3_init (&event->state, value.currentState.x, value.currentState.y, 0);
       graphene_vec3_init (&event->delta, 0, 0, 0); /* TODO */
-      event->time = value.lastChangeTime;
+      event->time = _get_time_diff (value.lastChangeTime);
 
       gxr_action_emit_analog (GXR_ACTION (self), event);
     }
@@ -400,13 +431,21 @@ _action_poll_pose_secs_from_now (OpenXRAction *self,
                                  float         secs)
 {
   (void) secs;
-  for (int i = 0; i < NUM_HANDS; i++)
+
+  GxrDeviceManager *dm = gxr_context_get_device_manager (self->context);
+  GSList *controllers = gxr_device_manager_get_controllers (dm);
+
+  for (GSList *l = controllers; l; l = l->next)
     {
+      GxrController *controller = GXR_CONTROLLER (l->data);
+      guint64 controller_handle = gxr_controller_get_handle (controller);
+      XrPath subaction_path = _handle_to_subaction (self, controller_handle);
+
       XrActionStateGetInfo get_info = {
         .type = XR_TYPE_ACTION_STATE_GET_INFO,
         .next = NULL,
         .action = self->handle,
-        .subactionPath = self->hand_paths[i]
+        .subactionPath = subaction_path
       };
 
       XrActionStatePose value = {
@@ -429,8 +468,12 @@ _action_poll_pose_secs_from_now (OpenXRAction *self,
       };
 
       /* TODO: secs from now ignored, API not appropriate for OpenXR */
-      XrTime time = openxr_context_get_predicted_display_time (self->context);
-      result = xrLocateSpace (self->hand_spaces[i], self->tracked_space,
+      XrTime time = openxr_context_get_predicted_display_time (
+        OPENXR_CONTEXT (self->context));
+
+
+      XrSpace hand_space = self->hand_spaces[controller_handle];
+      result = xrLocateSpace (hand_space, self->tracked_space,
                               time, &space_location);
 
       if (result != XR_SUCCESS)
@@ -451,8 +494,7 @@ _action_poll_pose_secs_from_now (OpenXRAction *self,
 
       GxrPoseEvent *event = g_malloc (sizeof (GxrPoseEvent));
       event->active = (gboolean)value.isActive;
-      event->controller =
-        _find_controller (GXR_CONTEXT (self->context), (guint)i);
+      event->controller = controller;
       _get_model_matrix_from_pose(&space_location.pose, &event->pose);
       graphene_vec3_init (&event->velocity, 0, 0, 0);
       graphene_vec3_init (&event->angular_velocity, 0, 0, 0);
@@ -464,6 +506,29 @@ _action_poll_pose_secs_from_now (OpenXRAction *self,
 
   return TRUE;
 }
+
+/* creates controllers with handles 0 for left hand and 1 for right hand.
+ * TODO: create controllers dynamically for the inputs bound to this action */
+void
+openxr_action_update_controllers (OpenXRAction *self)
+{
+  GxrContext *context = GXR_CONTEXT (self->context);
+  GxrDeviceManager *dm = gxr_context_get_device_manager (context);
+
+  for (guint64 i = 0; i < NUM_HANDS; i++)
+    {
+      guint64 controller_handle = i;
+
+      if (!gxr_device_manager_get (dm, controller_handle))
+        {
+          gxr_device_manager_add (dm, context, controller_handle, TRUE);
+
+          g_debug ("Added controller %lu from action %s\n",
+                   controller_handle, self->url);
+        }
+    }
+}
+
 
 static gboolean
 _poll (GxrAction *action)

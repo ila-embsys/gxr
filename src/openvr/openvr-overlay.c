@@ -60,7 +60,7 @@ _create (OpenVROverlay *overlay, gchar* key)
   if (strlen(key) + 1 > k_unVROverlayMaxKeyLength)
     {
       g_printerr ("Overlay key too long, must be shorter than %ld characters\n",
-                  k_unMaxSettingsKeyLength - 1);
+                  (long)k_unMaxSettingsKeyLength - 1);
       return FALSE;
     }
 

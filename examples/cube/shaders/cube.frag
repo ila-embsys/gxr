@@ -37,7 +37,6 @@ main ()
       specular = pow (specular_angle, shininess);
     }
 
-  out_color = vec4 (lambertian * diffuse_color.xyz +
-                      lambertian * specular * specular_color,
+  out_color = vec4 (lambertian * diffuse_color.xyz
                     1.0);
 }

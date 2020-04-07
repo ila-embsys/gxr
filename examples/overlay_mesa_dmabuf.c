@@ -112,7 +112,7 @@ create_overlay ()
   gxr_overlay_submit_texture (overlay, texture);
   gint64 end = g_get_monotonic_time ();
   g_print ("Submit frame took %f ms\n",
-           (end - start) / (1000.));
+           (double) (end - start) / (1000.));
 
   gxr_overlay_show (overlay);
 }
@@ -146,7 +146,7 @@ timeout_callback ()
       destroy_overlay ();
       gint64 end = g_get_monotonic_time ();
       g_print ("Destroy overlay took %f ms\n",
-               (end - start) / (1000.));
+               (double) (end - start) / (1000.));
     }
   else
     {
@@ -157,7 +157,7 @@ timeout_callback ()
       g_timeout_add (100, overlay_change_callback, NULL);
       gint64 end = g_get_monotonic_time ();
       g_print ("Create overlay took %f ms\n",
-               (end - start) / (1000.));
+               (double) (end - start) / (1000.));
     }
 
   return TRUE;

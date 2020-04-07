@@ -14,7 +14,10 @@ gxr_sources = [
   'gxr-controller.c',
   'gxr-pointer.c',
   'gxr-pointer-tip.c',
-  'graphene-ext.c'
+  'graphene-ext.c',
+  'gxr-device-manager.c',
+  'gxr-device.c',
+  'gxr-model.c'
 ]
 
 gxr_headers = [
@@ -32,7 +35,10 @@ gxr_headers = [
   'gxr-controller.h',
   'gxr-pointer.h',
   'gxr-pointer-tip.h',
-  'graphene-ext.h'
+  'graphene-ext.h',
+  'gxr-device-manager.h',
+  'gxr-device.h',
+  'gxr-model.h'
 ]
 
 version_split = meson.project_version().split('.')

@@ -23,7 +23,7 @@ openvr_action_new_from_type_url (GxrContext *context, GxrActionSet *action_set,
                                  GxrActionType type, char *url);
 
 void
-openvr_action_update_input_handles (OpenVRAction *self);
+openvr_action_update_controllers (OpenVRAction *self);
 
 G_END_DECLS
 

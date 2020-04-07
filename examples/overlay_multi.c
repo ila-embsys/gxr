@@ -135,8 +135,8 @@ test_cat_overlay ()
   }
 
   gxr_overlay_set_mouse_scale (overlay,
-                                  gdk_pixbuf_get_width (pixbuf),
-                                  gdk_pixbuf_get_height (pixbuf));
+                               (float) (gdk_pixbuf_get_width (pixbuf)),
+                               (float) (gdk_pixbuf_get_height (pixbuf)));
 
   if (!gxr_overlay_show (overlay))
     return -1;

@@ -44,6 +44,17 @@ openxr_action_set_init (OpenXRActionSet *self)
   self->handle = XR_NULL_HANDLE;
 }
 
+static void
+openxr_action_set_update_controllers (OpenXRActionSet *self)
+{
+  GSList *actions = gxr_action_set_get_actions (GXR_ACTION_SET (self));
+  for (GSList *l = actions; l != NULL; l = l->next)
+  {
+    OpenXRAction *action = OPENXR_ACTION (l->data);
+    openxr_action_update_controllers (action);
+  }
+}
+
 OpenXRActionSet *
 openxr_action_set_new (OpenXRContext *context)
 {
@@ -334,6 +345,10 @@ _attach_bindings (GxrActionSet **sets, GxrContext *context, uint32_t count)
     }
 
   g_debug ("Attached %d action sets\n", count);
+
+  openxr_action_set_update_controllers (self);
+  g_debug ("Updating controllers based on actions\n");
+
   return TRUE;
 }
 

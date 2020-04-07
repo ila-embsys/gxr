@@ -53,7 +53,7 @@ struct _GxrPointerInterface
 
   void
   (*set_selected_object) (GxrPointer *pointer,
-                          gpointer   *object);
+                          gpointer    object);
 
   void
   (*show) (GxrPointer *self);
@@ -111,9 +111,6 @@ gxr_pointer_hide (GxrPointer *self);
 gboolean
 gxr_pointer_is_visible (GxrPointer *self);
 
-void
-gxr_pointer_init_settings (GxrPointer     *self,
-                           GxrPointerData *data);
 
 G_END_DECLS
 

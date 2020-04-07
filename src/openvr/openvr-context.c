@@ -190,20 +190,43 @@ _poll_event (GxrContext *context)
 
       case EVREventType_VREvent_TrackedDeviceActivated:
       {
-        /*  TODO
-        controller = vr_event.trackedDeviceIndex;
-        gxr_context_emit_device_activate (context, event);
-        */
-        g_debug ("Event: sending DEVICE_ACTIVATE_EVENT signal\n");
+        g_debug ("Device activated, checking if it is controller...\n");
+
+        TrackedDeviceIndex_t device_index = vr_event.trackedDeviceIndex;
+        if (!f->system->IsTrackedDeviceConnected (device_index))
+          {
+            g_debug ("Skipping unconnected device %d\n", device_index);
+            continue;
+          }
+
+        if (f->system->GetTrackedDeviceClass (device_index) !=
+          ETrackedDeviceClass_TrackedDeviceClass_Controller)
+          {
+            g_debug ("Skipping device %d, not a controller\n", device_index);
+            continue;
+          }
+
+        /* gxr_device_manager_add() emits device-activate event */
+        GxrDeviceManager *dm = gxr_context_get_device_manager (context);
+        gxr_device_manager_add (dm, context, device_index, TRUE);
       } break;
 
       case EVREventType_VREvent_TrackedDeviceDeactivated:
       {
-        /* TODO
-        controller = vr_event.trackedDeviceIndex;
-        gxr_context_emit_device_deactivate (context, event);
-        */
-        g_debug ("Event: sending DEVICE_DEACTIVATE_EVENT signal\n");
+        g_debug ("Device deactivated, checking if it is controller...\n");
+
+        TrackedDeviceIndex_t device_index = vr_event.trackedDeviceIndex;
+
+        if (f->system->GetTrackedDeviceClass (device_index) !=
+          ETrackedDeviceClass_TrackedDeviceClass_Controller)
+          {
+            g_debug ("Skipping device %d, not a controller\n", device_index);
+            continue;
+          }
+
+        /* gxr_device_manager_remove() emits device-deactivate event */
+        GxrDeviceManager *dm = gxr_context_get_device_manager (context);
+        gxr_device_manager_remove (dm, vr_event.trackedDeviceIndex);
       } break;
 
       case EVREventType_VREvent_TrackedDeviceUpdated:
@@ -574,6 +597,24 @@ _end_frame (GxrContext *context,
   if (poses[GXR_DEVICE_INDEX_HMD].is_valid)
     graphene_matrix_inverse (&poses[GXR_DEVICE_INDEX_HMD].transformation,
                              &self->last_mat_head_pose);
+
+  GxrDeviceManager *dm = gxr_context_get_device_manager (context);
+
+  /* Add any device (basestation, ...) that has a valid pose to device manager.
+   * HMD model is the only one we don't want to render. */
+  for (guint64 i = 0; i < GXR_DEVICE_INDEX_MAX; i++)
+    {
+      if (i == k_unTrackedDeviceIndex_Hmd)
+        continue;
+
+      if (poses[i].is_valid && gxr_device_manager_get (dm, i) == NULL)
+        {
+          gboolean is_controller =
+            gxr_context_device_is_controller (context, (uint32_t)i);
+
+          gxr_device_manager_add (dm, context, i, is_controller);
+        }
+    }
 
   return TRUE;
 }

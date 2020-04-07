@@ -13,13 +13,16 @@
 #include <gulkan.h>
 #include <gxr.h>
 
+#include "xrd-scene-object.h"
+
 G_BEGIN_DECLS
 
 #define XRD_TYPE_SCENE_MODEL xrd_scene_model_get_type()
 G_DECLARE_FINAL_TYPE (XrdSceneModel, xrd_scene_model,
-                      XRD, SCENE_MODEL, GObject)
+                      XRD, SCENE_MODEL, XrdSceneObject)
 
-XrdSceneModel *xrd_scene_model_new (void);
+XrdSceneModel *
+xrd_scene_model_new (VkDescriptorSetLayout *layout);
 
 gboolean
 xrd_scene_model_load (XrdSceneModel *self,
@@ -34,6 +37,15 @@ xrd_scene_model_get_vbo (XrdSceneModel *self);
 
 GulkanTexture*
 xrd_scene_model_get_texture (XrdSceneModel *self);
+
+void
+xrd_scene_model_draw (XrdSceneModel     *self,
+                      GxrEye             eye,
+                      VkPipeline         pipeline,
+                      VkCommandBuffer    cmd_buffer,
+                      VkPipelineLayout   pipeline_layout,
+                      graphene_matrix_t *transformation,
+                      graphene_matrix_t *vp);
 
 G_END_DECLS
 

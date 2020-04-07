@@ -14,7 +14,8 @@
 struct _OpenVRActionSet
 {
   GxrActionSet parent;
-
+  guint64 binding_loaded_source;
+  GxrContext *context;
   VRActionSetHandle_t handle;
 };
 
@@ -36,15 +37,21 @@ static void
 openvr_action_set_init (OpenVRActionSet *self)
 {
   self->handle = k_ulInvalidActionSetHandle;
+  self->binding_loaded_source = 0;
+  self->context = NULL;
 }
 
-OpenVRActionSet *
-openvr_action_set_new (OpenVRContext *context)
+void
+openvr_action_set_update_controllers (OpenVRActionSet *self)
 {
-  (void) context;
-  OpenVRActionSet *self = (OpenVRActionSet*) g_object_new (OPENVR_TYPE_ACTION_SET, 0);
-  return self;
+  GSList *actions = gxr_action_set_get_actions (GXR_ACTION_SET (self));
+  for (GSList *l = actions; l != NULL; l = l->next)
+  {
+    OpenVRAction *action = OPENVR_ACTION (l->data);
+    openvr_action_update_controllers (action);
+  }
 }
+
 
 static gboolean
 _load_handle (OpenVRActionSet *self,
@@ -66,6 +73,15 @@ _load_handle (OpenVRActionSet *self,
   return TRUE;
 }
 
+static void
+_binding_loaded_cb (void          *context,
+                    gpointer       _self)
+{
+  (void) context;
+  OpenVRActionSet *self = OPENVR_ACTION_SET (_self);
+  openvr_action_set_update_controllers (self);
+}
+
 OpenVRActionSet *
 openvr_action_set_new_from_url (OpenVRContext *context, gchar *url)
 {
@@ -78,9 +94,26 @@ openvr_action_set_new_from_url (OpenVRContext *context, gchar *url)
   return self;
 }
 
+OpenVRActionSet *
+openvr_action_set_new (OpenVRContext *context)
+{
+  OpenVRActionSet *self = (OpenVRActionSet*) g_object_new (OPENVR_TYPE_ACTION_SET, 0);
+  self->context = GXR_CONTEXT (context);
+
+  self->binding_loaded_source =
+    g_signal_connect (context, "binding-loaded-event",
+                      (GCallback) _binding_loaded_cb, self);
+
+  return self;
+}
+
 static void
 openvr_action_set_finalize (GObject *gobject)
 {
+  OpenVRActionSet *self = OPENVR_ACTION_SET (gobject);
+  if (self->binding_loaded_source != 0)
+    g_signal_handler_disconnect (self->context, self->binding_loaded_source);
+
   G_OBJECT_CLASS (openvr_action_set_parent_class)->finalize (gobject);
 }
 

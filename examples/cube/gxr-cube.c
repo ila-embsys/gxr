@@ -11,16 +11,16 @@
 
 #include <gxr.h>
 
-#include "graphene-ext.h"
-
 #include "gxr-pointer-tip.h"
 #include "gxr-controller.h"
 
+#include "xrd-scene-pointer.h"
 #include "xrd-scene-pointer-tip.h"
 #include "xrd-scene-renderer.h"
-#include "xrd-scene-device-manager.h"
+#include "gxr-device-manager.h"
 #include "xrd-scene-background.h"
 #include "xrd-scene-cube.h"
+#include "xrd-scene-model.h"
 
 typedef struct Example
 {
@@ -35,8 +35,6 @@ typedef struct Example
   guint poll_input_source_id;
 
   guint poll_runtime_event_source_id;
-
-  XrdSceneDeviceManager *device_manager;
 
   graphene_matrix_t mat_view[2];
   graphene_matrix_t mat_projection[2];
@@ -82,7 +80,6 @@ _cleanup (Example *self)
 
   g_clear_object (&self->actionset_wm);
 
-  g_clear_object (&self->device_manager);
   g_object_unref (self->background);
 
   xrd_scene_renderer_destroy_instance ();
@@ -115,10 +112,8 @@ _iterate_cb (gpointer _self)
   XrdSceneRenderer *renderer = xrd_scene_renderer_get_instance ();
   xrd_scene_renderer_draw (renderer);
 
-  GxrPose poses[GXR_DEVICE_INDEX_MAX];
-  gxr_context_end_frame (context, poses);
+  gxr_context_end_frame (context);
 
-  xrd_scene_device_manager_update_poses (self->device_manager, poses);
   return TRUE;
 }
 
@@ -144,36 +139,121 @@ _create_gxr_context ()
 }
 
 static void
-_init_device_model (Example *self,
-                    uint32_t   device_id)
+_render_pointers (Example           *self,
+                  GxrEye             eye,
+                  VkCommandBuffer    cmd_buffer,
+                  VkPipeline        *pipelines,
+                  VkPipelineLayout   pipeline_layout,
+                  graphene_matrix_t *vp)
 {
   GxrContext *context = self->context;
+  if (!gxr_context_is_input_available (context))
+    return;
+
+  GxrDeviceManager *dm = gxr_context_get_device_manager (self->context);
+  GSList *controllers = gxr_device_manager_get_controllers (dm);
+
+  for (GSList *l = controllers; l; l = l->next)
+    {
+      GxrController *controller = GXR_CONTROLLER (l->data);
+
+      if (!gxr_controller_is_pointer_pose_valid (controller))
+        {
+          /*
+          g_print ("Pointer pose not valid: %lu\n",
+                   gxr_controller_get_handle (controller));
+          */
+          continue;
+        }
+
+      XrdScenePointer *pointer =
+        XRD_SCENE_POINTER (gxr_controller_get_pointer (controller));
+
+      xrd_scene_pointer_render (pointer, eye,
+                                pipelines[PIPELINE_POINTER],
+                                pipeline_layout, cmd_buffer, vp);
+
+      XrdScenePointerTip *scene_tip =
+        XRD_SCENE_POINTER_TIP (gxr_controller_get_pointer_tip (controller));
+      xrd_scene_pointer_tip_draw (scene_tip, eye,
+                                  pipelines[PIPELINE_TIP],
+                                  pipeline_layout,
+                                  cmd_buffer, vp);
+    }
+}
+
+static XrdSceneModel *
+_get_scene_model (Example *self, GxrDevice *device)
+{
+  GxrModel *model = gxr_device_get_model (device);
+  if (model)
+    {
+      // g_print ("Using model %s\n", gxr_model_get_name (model));
+      return XRD_SCENE_MODEL (model);
+    }
+
+  gchar *model_name = gxr_device_get_model_name (device);
+  if (!model_name)
+      return NULL;
 
   XrdSceneRenderer *renderer = xrd_scene_renderer_get_instance ();
   VkDescriptorSetLayout *descriptor_set_layout =
     xrd_scene_renderer_get_descriptor_set_layout (renderer);
 
-  gchar *model_name = gxr_context_get_device_model_name (context, device_id);
-  gboolean is_controller =
-  gxr_context_device_is_controller (context, device_id);
+  XrdSceneModel *sm = xrd_scene_model_new (descriptor_set_layout);
+  // g_print ("Loading model %s\n", model_name);
+  xrd_scene_model_load (sm, self->context, model_name);
 
-  xrd_scene_device_manager_add (self->device_manager, context,
-                                device_id, model_name, is_controller,
-                                descriptor_set_layout);
+  gxr_device_set_model (device, GXR_MODEL (sm));
 
-  g_free (model_name);
+  return sm;
 }
 
 static void
-_init_device_models (Example *self)
+_render_device (GxrDevice       *device,
+                uint32_t         eye,
+                VkCommandBuffer  cmd_buffer,
+                VkPipelineLayout pipeline_layout,
+                VkPipeline       pipeline,
+                graphene_matrix_t *vp,
+                Example         *self)
+{
+  XrdSceneModel *model = _get_scene_model (self, device);
+  if (!model)
+    {
+      // g_print ("Device has no model\n");
+      return;
+    }
+
+  if (!gxr_device_is_pose_valid (device))
+    {
+      // g_print ("Pose invalid for %s\n", gxr_device_get_model_name (device));
+      return;
+    }
+
+  graphene_matrix_t transformation;
+  gxr_device_get_transformation_direct (device, &transformation);
+
+  xrd_scene_model_draw (model, eye, pipeline, cmd_buffer, pipeline_layout,
+                        &transformation, vp);
+}
+
+static void
+_render_devices (uint32_t           eye,
+                 VkCommandBuffer    cmd_buffer,
+                 VkPipelineLayout   pipeline_layout,
+                 VkPipeline         *pipelines,
+                 graphene_matrix_t *vp,
+                 Example           *self)
 {
   GxrContext *context = self->context;
-  for (uint32_t i = GXR_DEVICE_INDEX_HMD + 1; i < GXR_DEVICE_INDEX_MAX; i++)
-  {
-    if (!gxr_context_is_tracked_device_connected (context, i))
-      continue;
-    _init_device_model (self, i);
-  }
+  GxrDeviceManager *dm = gxr_context_get_device_manager (context);
+  GList *devices = gxr_device_manager_get_devices (dm);
+
+  for (GList *l = devices; l; l = l->next)
+    _render_device (l->data, eye, cmd_buffer, pipeline_layout,
+                    pipelines[PIPELINE_DEVICE_MODELS], vp, self);
+  g_list_free (devices);
 }
 
 static void
@@ -193,26 +273,12 @@ _render_eye_cb (uint32_t         eye,
                                pipelines[PIPELINE_BACKGROUND],
                                pipeline_layout, cmd_buffer, &vp);
 
-  GxrContext *context = self->context;
-  xrd_scene_device_manager_render (self->device_manager,
-                                   gxr_context_is_input_available (context),
-                                   eye, cmd_buffer,
-                                   pipelines[PIPELINE_DEVICE_MODELS],
-                                   pipeline_layout, &vp);
+  _render_devices (eye, cmd_buffer, pipeline_layout, pipelines, &vp, self);
 
-  GSList *controllers = gxr_context_get_controllers (self->context);
-  for (GSList *l = controllers; l; l = l->next)
-    {
-      GxrController *controller = GXR_CONTROLLER (l->data);
-      XrdScenePointerTip *scene_tip =
-      XRD_SCENE_POINTER_TIP (gxr_controller_get_pointer_tip (controller));
-      xrd_scene_pointer_tip_draw (scene_tip, eye,
-                                  pipelines[PIPELINE_TIP],
-                                  pipeline_layout,
-                                  cmd_buffer, &vp);
-    }
+  _render_pointers (self, eye, cmd_buffer, pipelines, pipeline_layout, &vp);
 
-  xrd_scene_cube_render (self->cube, eye, cmd_buffer, &self->mat_view[eye], &self->mat_projection[eye]);
+  xrd_scene_cube_render (self->cube, eye, cmd_buffer, &self->mat_view[eye],
+                         &self->mat_projection[eye]);
 }
 
 /*
@@ -224,7 +290,8 @@ _update_lights_cb (gpointer _self)
 {
   Example *self = _self;
 
-  GSList *controllers = gxr_context_get_controllers (self->context);
+  GxrDeviceManager *dm = gxr_context_get_device_manager (self->context);
+  GSList *controllers = gxr_device_manager_get_controllers (dm);
 
   XrdSceneRenderer *renderer = xrd_scene_renderer_get_instance ();
   xrd_scene_renderer_update_lights (renderer, controllers);
@@ -239,7 +306,7 @@ _init_vulkan (Example          *self,
   if (!xrd_scene_renderer_init_vulkan (renderer, context))
     return FALSE;
 
-  _init_device_models (self);
+  //_init_device_models (self);
 
   GulkanDevice *device = gulkan_client_get_device (gc);
   VkDescriptorSetLayout *descriptor_set_layout =
@@ -247,7 +314,8 @@ _init_vulkan (Example          *self,
 
   self->cube = xrd_scene_cube_new ();
   GulkanRenderPass *render_pass = xrd_scene_renderer_get_render_pass (renderer);
-  xrd_scene_cube_initialize (self->cube, self->context, GULKAN_RENDERER (renderer), render_pass);
+  xrd_scene_cube_initialize (self->cube, self->context,
+                             GULKAN_RENDERER (renderer), render_pass);
 
 
   xrd_scene_background_initialize (self->background,
@@ -261,11 +329,12 @@ _init_vulkan (Example          *self,
 }
 
 static void
-_device_activate_cb (void          *context,
-                     GxrController *controller,
-                     gpointer       _self)
+_device_activate_cb (GxrDeviceManager *dm,
+                     GxrController    *controller,
+                     gpointer          _self)
 {
-  (void) context;
+  (void) dm;
+
   Example *self = _self;
 
   g_print ("Controller %lu activated.\n",
@@ -273,74 +342,30 @@ _device_activate_cb (void          *context,
   XrdScenePointerTip *pointer_tip = xrd_scene_pointer_tip_new ();
   gxr_controller_set_pointer_tip (controller, GXR_POINTER_TIP (pointer_tip));
 
-  /* TODO */
-  guint64 device_id = gxr_controller_get_handle (controller);
-  _init_device_model (self, (uint32_t) device_id);
+
+  XrdSceneRenderer *renderer = xrd_scene_renderer_get_instance ();
+  VkDescriptorSetLayout *descriptor_set_layout =
+    xrd_scene_renderer_get_descriptor_set_layout (renderer);
+  GulkanClient *client = gxr_context_get_gulkan (self->context);
+  GulkanDevice *device = gulkan_client_get_device (client);
+
+  XrdScenePointer *pointer = xrd_scene_pointer_new ();
+  xrd_scene_pointer_initialize (pointer, device,
+                                descriptor_set_layout);
+
+  gxr_controller_set_pointer (controller, GXR_POINTER (pointer));
 }
 
 static void
-_device_deactivate_cb (GxrContext    *context,
-                       GxrController *controller,
-                       gpointer       _self)
+_device_deactivate_cb (GxrDeviceManager *dm,
+                       GxrController    *controller,
+                       gpointer          _self)
 {
-  (void) context;
   Example *self = _self;
+  (void) self;
+  (void) dm;
+  (void) controller;
   g_print ("Controller deactivated..\n");
-
-  /* TODO */
-  guint64 device_id = gxr_controller_get_handle (controller);
-  xrd_scene_device_manager_remove (self->device_manager, (uint32_t) device_id);
-}
-
-/* TODO: move to GxrController */
-static void
-_transform_tip (GxrController *controller,
-                graphene_matrix_t *controller_pose,
-                GxrContext   *context)
-{
-  GxrPointerTip *pointer_tip = gxr_controller_get_pointer_tip (controller);
-
-
-  graphene_point3d_t distance_translation_point;
-  graphene_point3d_init (&distance_translation_point,
-                         0.f,
-                         0.f,
-                         -5.0f);
-
-  graphene_matrix_t tip_pose;
-
-  graphene_quaternion_t controller_rotation;
-  graphene_quaternion_init_from_matrix (&controller_rotation, controller_pose);
-
-  graphene_point3d_t controller_translation_point;
-  graphene_ext_matrix_get_translation_point3d (controller_pose,
-                                               &controller_translation_point);
-
-  graphene_matrix_init_identity (&tip_pose);
-  graphene_matrix_translate (&tip_pose, &distance_translation_point);
-  graphene_matrix_rotate_quaternion (&tip_pose, &controller_rotation);
-  graphene_matrix_translate (&tip_pose, &controller_translation_point);
-
-  gxr_pointer_tip_set_transformation (pointer_tip, &tip_pose);
-
-  gxr_pointer_tip_update_apparent_size (pointer_tip, context);
-
-  gxr_pointer_tip_set_active (pointer_tip, FALSE);
-
-  gxr_controller_reset_hover_state (controller);
-}
-
-static void
-_action_hand_pose_cb (GxrAction    *action,
-                      GxrPoseEvent *event,
-                      Example      *self)
-{
-  (void) action;
-  if (event->device_connected && event->valid && event->active)
-  {
-    _transform_tip (event->controller, &event->pose, self->context);
-  }
-  g_free (event);
 }
 
 static void
@@ -350,6 +375,10 @@ _action_grab_cb (GxrAction       *action,
 {
   (void) action;
   (void) self;
+  if (event->active && event->changed && event->state)
+    {
+      g_print ("Grab action\n");
+    }
   g_free (event);
 }
 
@@ -359,12 +388,15 @@ _create_wm_action_set (Example *self)
   GxrActionSet *set = gxr_action_set_new_from_url (self->context,
                                                    "/actions/wm");
 
-  gxr_action_set_connect (set, self->context, GXR_ACTION_POSE,
-                          "/actions/wm/in/hand_pose",
-                          (GCallback) _action_hand_pose_cb, self);
   gxr_action_set_connect (set, self->context, GXR_ACTION_DIGITAL,
                           "/actions/wm/in/grab_window",
                           (GCallback) _action_grab_cb, self);
+
+  GxrDeviceManager *dm = gxr_context_get_device_manager (self->context);
+
+  gxr_device_manager_connect_pose_actions (dm, self->context, set,
+                                           "/actions/wm/in/hand_pose",
+                                           NULL);
 
   return set;
 }
@@ -472,7 +504,6 @@ _init_example (Example *self)
   self->context = NULL;
   self->near = 0.05f;
   self->far = 100.0f;
-  self->device_manager = xrd_scene_device_manager_new ();
   self->background = xrd_scene_background_new ();
 
   self->render_source = g_timeout_add (1, _iterate_cb, self);
@@ -481,9 +512,10 @@ _init_example (Example *self)
 
 
   self->context = _create_gxr_context ();
-  g_signal_connect (self->context, "device-activate-event",
+  GxrDeviceManager *dm = gxr_context_get_device_manager (self->context);
+  g_signal_connect (dm, "device-activate-event",
                     (GCallback) _device_activate_cb, self);
-  g_signal_connect (self->context, "device-deactivate-event",
+  g_signal_connect (dm, "device-deactivate-event",
                     (GCallback) _device_deactivate_cb, self);
 
   GulkanClient *gc = gxr_context_get_gulkan (self->context);

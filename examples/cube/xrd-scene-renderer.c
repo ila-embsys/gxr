@@ -630,8 +630,8 @@ _render_stereo (XrdSceneRenderer *self, VkCommandBuffer cmd_buffer)
 
   VkViewport viewport = {
     .x = 0.0f,
-    .y = extent.height,
-    .width = extent.width,
+    .y = (float) extent.height,
+    .width = (float) extent.width,
     .height = - (float) extent.height,
     .minDepth = 0.0f,
     .maxDepth = 1.0f

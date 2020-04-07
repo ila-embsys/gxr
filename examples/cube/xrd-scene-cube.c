@@ -413,9 +413,6 @@ _update_ubo (XrdSceneCube      *self,
 {
   XrdSceneCubeUniformBuffer ub;
 
-  int64_t t = gulkan_renderer_get_msec_since_start (self->renderer);
-  t /= 5;
-
   graphene_matrix_t m_matrix;
   xrd_scene_object_get_transformation (XRD_SCENE_OBJECT (self), &m_matrix);
 
@@ -443,9 +440,9 @@ _set_transformation (XrdSceneCube *self)
   int64_t t = gulkan_renderer_get_msec_since_start (self->renderer);
   t /= 5;
 
-  graphene_matrix_rotate_x (&m_matrix, 45.0f + (0.25f * t));
-  graphene_matrix_rotate_y (&m_matrix, 45.0f - (0.5f * t));
-  graphene_matrix_rotate_z (&m_matrix, 10.0f + (0.15f * t));
+  graphene_matrix_rotate_x (&m_matrix, 45.0f + (0.25f * (float) t));
+  graphene_matrix_rotate_y (&m_matrix, 45.0f - (0.5f * (float) t));
+  graphene_matrix_rotate_z (&m_matrix, 10.0f + (0.15f * (float) t));
 
   graphene_point3d_t pos = { 0.0f, 0.0f, -6.0f };
   graphene_matrix_translate (&m_matrix, &pos);

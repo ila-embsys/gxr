@@ -191,4 +191,3 @@ gxr_pointer_is_visible (GxrPointer *self)
   GxrPointerData *data = gxr_pointer_get_data (self);
   return data->visible;
 }
-

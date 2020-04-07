@@ -23,12 +23,16 @@
 /* openvr k_unMaxTrackedDeviceCount */
 #define MAX_DEVICE_COUNT 64
 
+#define INVALID_DEVICE_PATH UINT64_MAX
+
 struct _OpenVRAction
 {
   GxrAction parent;
   GxrContext *context;
 
   VRActionHandle_t handle;
+
+  gboolean controller_update_required;
 
   /* Only used for DIGITAL_FROM_FLOAT */
   float threshold;
@@ -54,24 +58,11 @@ openvr_action_init (OpenVRAction *self)
     }
   self->haptic_action = NULL;
   self->context = NULL;
+  self->controller_update_required = FALSE;
 }
 
-static gboolean
-_controller_already_exists (GSList *controllers, VRInputValueHandle_t handle)
-{
-  for (GSList *l = controllers; l; l = l->next)
-    {
-      GxrController *controller = GXR_CONTROLLER (l);
-      if (gxr_controller_get_handle (controller) == handle)
-        {
-          return TRUE;
-        }
-    }
-  return FALSE;
-}
-
-static void
-_update_controllers_from_action (OpenVRAction *self)
+void
+openvr_action_update_controllers (OpenVRAction *self)
 {
   OpenVRFunctions *f = openvr_get_functions ();
 
@@ -88,10 +79,16 @@ _update_controllers_from_action (OpenVRAction *self)
 
   if (err != EVRInputError_VRInputError_None)
     {
-      g_printerr ("GetActionOrigins for %s failed, retrying later...\n",
-                  gxr_action_get_url (GXR_ACTION (self)));
+      g_debug ("GetActionOrigins for %s failed, retrying later...\n",
+               gxr_action_get_url (GXR_ACTION (self)));
+      self->controller_update_required = TRUE;
       return;
     }
+
+  if (self->controller_update_required)
+    g_debug ("GetActionOrigins for %s succeeded now\n",
+             gxr_action_get_url (GXR_ACTION (self)));
+  self->controller_update_required = FALSE;
 
   int origin_count = -1;
   while (origin_handles[++origin_count] != k_ulInvalidInputValueHandle);
@@ -111,11 +108,26 @@ _update_controllers_from_action (OpenVRAction *self)
           return;
         }
 
-      guint64 handle = origin_info.devicePath;
-      GSList *controllers = gxr_context_get_controllers (self->context);
-      if (!_controller_already_exists (controllers, handle))
+      TrackedDeviceIndex_t device_index  = origin_info.trackedDeviceIndex;
+
+      if (!f->system->IsTrackedDeviceConnected (device_index))
         {
-          gxr_context_add_controller (self->context, handle);
+          g_debug ("Skipping unconnected device %d\n", device_index);
+          continue;
+        }
+
+      if (f->system->GetTrackedDeviceClass (device_index) !=
+        ETrackedDeviceClass_TrackedDeviceClass_Controller)
+        {
+          g_debug ("Skipping device %d, not a controller\n", device_index);
+          continue;
+        }
+
+      GxrDeviceManager *device_manager = gxr_context_get_device_manager (self->context);
+      if (!gxr_device_manager_get (device_manager, device_index))
+        {
+          gxr_device_manager_add (device_manager, self->context,
+                                  device_index, TRUE);
 
 
           char *origin_name = g_malloc (sizeof (char) * k_unMaxActionNameLength);
@@ -131,11 +143,62 @@ _update_controllers_from_action (OpenVRAction *self)
   g_free (origin_handles);
 }
 
+/* TODO: maybe there is a better way */
+static VRInputValueHandle_t
+_index_to_device_path (OpenVRAction *self, TrackedDeviceIndex_t index)
+{
+  OpenVRFunctions *f = openvr_get_functions ();
+
+  GxrActionSet *action_set = gxr_action_get_action_set (GXR_ACTION (self));
+
+  VRActionSetHandle_t actionset_handle =
+    openvr_action_set_get_handle (OPENVR_ACTION_SET (action_set));
+
+  VRInputValueHandle_t *origin_handles =
+  g_malloc (sizeof (VRInputValueHandle_t) * k_unMaxActionOriginCount);
+  EVRInputError err =
+    f->input->GetActionOrigins (actionset_handle, self->handle,
+                                origin_handles, k_unMaxActionOriginCount);
+
+  if (err != EVRInputError_VRInputError_None)
+    {
+      g_printerr ("GetActionOrigins for %s failed, retrying later...\n",
+                  gxr_action_get_url (GXR_ACTION (self)));
+      return INVALID_DEVICE_PATH;
+    }
+
+  int origin_count = -1;
+  while (origin_handles[++origin_count] != k_ulInvalidInputValueHandle);
+
+  // g_print ("Action %s has %d origins\n", self->url, origin_count);
+
+  for (int i = 0; i < origin_count; i++)
+    {
+      InputOriginInfo_t origin_info;
+      err = f->input->GetOriginTrackedDeviceInfo (origin_handles[i],
+                                                  &origin_info,
+                                                  sizeof (origin_info));
+      if (err != EVRInputError_VRInputError_None)
+        {
+          g_printerr ("GetOriginTrackedDeviceInfo for %s failed\n",
+                      gxr_action_get_url (GXR_ACTION (self)));
+          continue;
+        }
+
+      if (origin_info.trackedDeviceIndex == index)
+        return origin_info.devicePath;
+    }
+  return INVALID_DEVICE_PATH;
+}
+
 static OpenVRAction *
 openvr_action_new (void)
 {
   return (OpenVRAction*) g_object_new (OPENVR_TYPE_ACTION, 0);
 }
+
+static gboolean
+_poll (GxrAction *action);
 
 OpenVRAction *
 openvr_action_new_from_type_url (GxrContext *context, GxrActionSet *action_set,
@@ -173,22 +236,6 @@ openvr_action_load_handle (OpenVRAction *self,
   return TRUE;
 }
 
-static GxrController *
-_find_controller (GxrContext *self, guint64 handle)
-{
-  GSList *controllers = gxr_context_get_controllers (self);
-  for (GSList *l = controllers; l; l = l->next)
-    {
-      GxrController *controller = GXR_CONTROLLER (l->data);
-      if (gxr_controller_get_handle (controller) == handle)
-        {
-          return l->data;
-        }
-    }
-  g_debug ("Controller %lu not found\n", handle);
-  return NULL;
-}
-
 static gboolean
 _action_poll_digital (OpenVRAction *self)
 {
@@ -196,12 +243,18 @@ _action_poll_digital (OpenVRAction *self)
 
   InputDigitalActionData_t data;
 
-  GSList *controllers = gxr_context_get_controllers (self->context);
+  GxrDeviceManager *dm = gxr_context_get_device_manager (self->context);
+  GSList *controllers = gxr_device_manager_get_controllers (dm);
 
   EVRInputError err;
   for(GSList *l = controllers; l; l = l->next)
     {
-      VRActionHandle_t input_handle = gxr_controller_get_handle (l->data);
+      GxrController *controller = l->data;
+
+      TrackedDeviceIndex_t index =
+        (TrackedDeviceIndex_t) gxr_controller_get_handle (controller);
+
+      VRActionHandle_t input_handle = _index_to_device_path (self, index);
 
       err = f->input->GetDigitalActionData (self->handle, &data,
                                             sizeof(data), input_handle);
@@ -228,11 +281,6 @@ _action_poll_digital (OpenVRAction *self)
                       openvr_input_error_string (err));
           return FALSE;
         }
-
-      GxrController *controller =
-        _find_controller (self->context, origin_info.devicePath);
-      if (!controller)
-        continue;
 
       GxrDigitalEvent *event = g_malloc (sizeof (GxrDigitalEvent));
       event->controller = controller;
@@ -261,12 +309,17 @@ _action_poll_digital_from_float (OpenVRAction *self)
 
   InputAnalogActionData_t data;
 
-  GSList *controllers = gxr_context_get_controllers (self->context);
+  GxrDeviceManager *dm = gxr_context_get_device_manager (self->context);
+  GSList *controllers = gxr_device_manager_get_controllers (dm);
 
   EVRInputError err;
   for(GSList *l = controllers; l; l = l->next)
     {
-      VRActionHandle_t input_handle = gxr_controller_get_handle (l->data);
+      GxrController *controller = l->data;
+
+      TrackedDeviceIndex_t index =
+        (TrackedDeviceIndex_t) gxr_controller_get_handle (controller);
+      VRInputValueHandle_t input_handle = _index_to_device_path (self, index);
       err = f->input->GetAnalogActionData (self->handle, &data,
                                             sizeof(data), input_handle);
 
@@ -307,11 +360,6 @@ _action_poll_digital_from_float (OpenVRAction *self)
 
       gboolean currentState = data.x >= self->threshold;
 
-      GxrController *controller =
-        _find_controller (self->context, origin_info.devicePath);
-      if (!controller)
-        continue;
-
       GxrDigitalEvent *event = g_malloc (sizeof (GxrDigitalEvent));
       event->controller = controller;
       event->active = data.bActive;
@@ -336,12 +384,18 @@ _action_poll_analog (OpenVRAction *self)
 
   InputAnalogActionData_t data;
 
-  GSList *controllers = gxr_context_get_controllers (self->context);
+  GxrDeviceManager *dm = gxr_context_get_device_manager (self->context);
+  GSList *controllers = gxr_device_manager_get_controllers (dm);
 
   EVRInputError err;
   for(GSList *l = controllers; l; l = l->next)
     {
-      VRActionHandle_t input_handle = gxr_controller_get_handle (l->data);
+      GxrController *controller = l->data;
+
+
+      TrackedDeviceIndex_t index =
+        (TrackedDeviceIndex_t) gxr_controller_get_handle (controller);
+      VRInputValueHandle_t input_handle = _index_to_device_path (self, index);
       err = f->input->GetAnalogActionData (self->handle, &data,
                                            sizeof(data), input_handle);
 
@@ -367,11 +421,6 @@ _action_poll_analog (OpenVRAction *self)
                       openvr_input_error_string (err));
           return FALSE;
         }
-
-      GxrController *controller =
-        _find_controller (self->context, origin_info.devicePath);
-      if (!controller)
-        continue;
 
       GxrAnalogEvent *event = g_malloc (sizeof (GxrAnalogEvent));
       event->active = data.bActive;
@@ -408,14 +457,15 @@ _emit_pose_event (OpenVRAction          *self,
       return FALSE;
     }
 
-  GxrController *controller =
-    _find_controller (self->context, origin_info.devicePath);
-  if (!controller)
+  GxrDeviceManager *dm = gxr_context_get_device_manager (self->context);
+  GxrDevice *controller =
+    gxr_device_manager_get (dm, origin_info.trackedDeviceIndex);
+  if (!controller || !gxr_device_is_controller (controller))
     return TRUE;
 
   GxrPoseEvent *event = g_malloc (sizeof (GxrPoseEvent));
   event->active = data->bActive;
-  event->controller = controller;
+  event->controller = GXR_CONTROLLER (controller);
   openvr_math_matrix34_to_graphene (&data->pose.mDeviceToAbsoluteTracking,
                                     &event->pose);
   graphene_vec3_init_from_float (&event->velocity,
@@ -436,12 +486,17 @@ _action_poll_pose_secs_from_now (OpenVRAction *self,
 {
   OpenVRFunctions *f = openvr_get_functions ();
 
-  GSList *controllers = gxr_context_get_controllers (self->context);
+  GxrDeviceManager *dm = gxr_context_get_device_manager (self->context);
+  GSList *controllers = gxr_device_manager_get_controllers (dm);
 
   EVRInputError err;
   for(GSList *l = controllers; l; l = l->next)
     {
-      VRActionHandle_t input_handle = gxr_controller_get_handle (l->data);
+      GxrController *controller = l->data;
+
+      TrackedDeviceIndex_t index =
+        (TrackedDeviceIndex_t) gxr_controller_get_handle (controller);
+      VRInputValueHandle_t input_handle = _index_to_device_path (self, index);
 
       InputPoseActionData_t data;
 
@@ -470,12 +525,11 @@ _action_poll_pose_secs_from_now (OpenVRAction *self,
 static gboolean
 _poll (GxrAction *action)
 {
-  OpenVRAction *o_action = OPENVR_ACTION (action);
-  if (g_slist_length (gxr_context_get_controllers (o_action->context)) == 0)
-    _update_controllers_from_action (o_action);
-
-
   OpenVRAction *self = OPENVR_ACTION (action);
+
+  if (self->controller_update_required)
+    openvr_action_update_controllers (self);
+
   GxrActionType type = gxr_action_get_action_type (action);
   switch (type)
     {

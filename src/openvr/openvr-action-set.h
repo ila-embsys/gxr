@@ -35,6 +35,9 @@ openvr_action_set_get_handle (OpenVRActionSet *self);
 const gchar*
 openvr_input_error_string (EVRInputError err);
 
+void
+openvr_action_set_update_controllers (OpenVRActionSet *self);
+
 G_END_DECLS
 
 #endif /* GXR_OPENVR_ACTION_SET_H_ */

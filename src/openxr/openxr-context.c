@@ -1250,7 +1250,11 @@ static gboolean
 _end_frame (GxrContext *context,
             GxrPose *poses)
 {
-  (void) poses;
+  /* TODO: device model rendering not implemented in OpenXR */
+  for (int i = 0; i < GXR_DEVICE_INDEX_MAX; i++)
+    {
+      poses[i].is_valid = FALSE;
+    }
 
   OpenXRContext *self = OPENXR_CONTEXT (context);
   for (uint32_t i = 0; i < 2; i++)
@@ -1297,7 +1301,7 @@ _get_device_model_name (GxrContext *context, uint32_t i)
   /* TODO: Implement in OpenXR */
   (void) context;
   (void) i;
-  return (gchar*) g_malloc (1);
+  return NULL;
 }
 
 static gboolean

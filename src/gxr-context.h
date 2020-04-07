@@ -21,6 +21,7 @@
 #include "gxr-types.h"
 #include "gxr-action-set.h"
 #include "gxr-overlay.h"
+#include "gxr-device-manager.h"
 
 G_BEGIN_DECLS
 
@@ -241,8 +242,7 @@ gboolean
 gxr_context_begin_frame (GxrContext *self);
 
 gboolean
-gxr_context_end_frame (GxrContext *self,
-                       GxrPose *poses);
+gxr_context_end_frame (GxrContext *self);
 
 void
 gxr_context_acknowledge_quit (GxrContext *self);
@@ -253,8 +253,7 @@ gxr_context_is_tracked_device_connected (GxrContext *self, uint32_t i);
 gboolean
 gxr_context_device_is_controller (GxrContext *self, uint32_t i);
 
-gchar*
-gxr_context_get_device_model_name (GxrContext *self, uint32_t i);
+gchar* gxr_context_get_device_model_name(GxrContext* self, uint32_t i);
 
 gboolean
 gxr_context_load_model (GxrContext         *self,
@@ -295,14 +294,10 @@ gxr_context_get_device_extensions (GxrContext   *self,
                                    GulkanClient *gc,
                                    GSList      **out_list);
 
-GSList *
-gxr_context_get_controllers (GxrContext *self);
+struct _GxrDeviceManager;
 
-void
-gxr_context_add_controller (GxrContext *self, guint64 handle);
-
-void
-gxr_context_remove_controller (GxrContext *self, guint64 handle);
+struct _GxrDeviceManager *
+gxr_context_get_device_manager (GxrContext *self);
 
 G_END_DECLS
 

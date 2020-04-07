@@ -1,3 +1,4 @@
+
 /*
  * gxr
  * Copyright 2019 Collabora Ltd.
@@ -8,13 +9,14 @@
 #ifndef GXR_POINTER_TIP_H_
 #define GXR_POINTER_TIP_H_
 
+#if !defined (GXR_INSIDE) && !defined (GXR_COMPILATION)
+#error "Only <gxr.h> can be included directly."
+#endif
+
 #include <glib-object.h>
 #include <graphene.h>
 #include <gulkan.h>
 
-#ifndef GXR_INSIDE
-#define GXR_INSIDE
-#endif
 #include "gxr-context.h"
 
 G_BEGIN_DECLS
