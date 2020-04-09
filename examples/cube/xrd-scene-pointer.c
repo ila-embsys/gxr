@@ -13,7 +13,7 @@
 #include "graphene-ext.h"
 #include "gxr-pointer.h"
 
-typedef struct {
+typedef struct __attribute__((__packed__)) {
   float mvp[16];
 } XrdScenePointerUniformBuffer;
 
@@ -118,7 +118,11 @@ _update_ubo (XrdScenePointer   *self,
 
   graphene_matrix_t mvp_matrix;
   graphene_matrix_multiply (&m_matrix, vp, &mvp_matrix);
-  graphene_matrix_to_float (&mvp_matrix, ub.mvp);
+
+  float mvp[16];
+  graphene_matrix_to_float (&mvp_matrix, mvp);
+  for (int i = 0; i < 16; i++)
+    ub.mvp[i] = mvp[i];
 
   xrd_scene_object_update_ubo (XRD_SCENE_OBJECT (self), eye, &ub);
 }

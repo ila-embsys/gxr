@@ -18,7 +18,7 @@ typedef struct __attribute__((__packed__)) {
   bool receive_light;
 } XrdScenePointerTipUniformBuffer;
 
-typedef struct {
+typedef struct __attribute__((__packed__)) {
   float color[4];
   bool flip_y;
 } XrdWindowUniformBuffer;
@@ -102,7 +102,10 @@ _set_color (XrdScenePointerTip    *self,
   graphene_vec4_t color_vec4;
   graphene_vec4_init_from_vec3 (&color_vec4, color, 1.0f);
 
-  graphene_vec4_to_float (&color_vec4, self->shading_buffer_data.color);
+  float color_arr[4];
+  graphene_vec4_to_float (&color_vec4, color_arr);
+  for (int i = 0; i < 4; i++)
+    self->shading_buffer_data.color[i] = color_arr[i];
 
   gulkan_uniform_buffer_update (self->shading_buffer,
                                 (gpointer) &self->shading_buffer_data);
@@ -446,7 +449,11 @@ _update_ubo (XrdScenePointerTip *self,
 
   graphene_matrix_t mvp_matrix;
   graphene_matrix_multiply (&m_matrix, vp, &mvp_matrix);
-  graphene_matrix_to_float (&mvp_matrix, ub.mvp);
+
+  float mvp[16];
+  graphene_matrix_to_float (&mvp_matrix, mvp);
+  for (int i = 0; i < 16; i++)
+    ub.mvp[i] = mvp[i];
 
   xrd_scene_object_update_ubo (XRD_SCENE_OBJECT (self), eye, &ub);
 }

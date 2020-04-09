@@ -10,8 +10,7 @@
 #include "graphene-ext.h"
 #include "xrd-scene-cube.h"
 
-typedef struct
-{
+typedef struct __attribute__((__packed__)) {
   float mv_matrix[16];
   float mvp_matrix[16];
   float normal_matrix[12];
@@ -428,8 +427,15 @@ _update_ubo (XrdSceneCube      *self,
   graphene_matrix_t mvp_matrix;
   graphene_matrix_multiply (&mv_matrix, projection, &mvp_matrix);
 
-  graphene_matrix_to_float (&mv_matrix, ub.mv_matrix);
-  graphene_matrix_to_float (&mvp_matrix, ub.mvp_matrix);
+  float mv[16];
+  graphene_matrix_to_float (&mv_matrix, mv);
+  for (int i = 0; i < 16; i++)
+    ub.mv_matrix[i] = mv[i];
+
+  float mvp[16];
+  graphene_matrix_to_float (&mvp_matrix, mvp);
+  for (int i = 0; i < 16; i++)
+    ub.mvp_matrix[i] = mvp[i];
 
   /* The mat3 normalMatrix is laid out as 3 vec4s. */
   memcpy (ub.normal_matrix, ub.mv_matrix, sizeof ub.normal_matrix);
