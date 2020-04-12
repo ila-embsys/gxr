@@ -20,6 +20,7 @@ compiler_id = compiler.get_id()
 if compiler_id == 'clang'
   project_args += [
     '-Weverything',
+    '-Wno-float-equal',
     '-Wno-reserved-id-macro',
     '-Wno-documentation',
     '-Wno-documentation-unknown-command',
