@@ -67,6 +67,7 @@ openvr_action_set_init (OpenVRActionSet *self)
 OpenVRActionSet *
 openvr_action_set_new (OpenVRContext *context)
 {
+  (void) context;
   OpenVRActionSet *self = (OpenVRActionSet*) g_object_new (OPENVR_TYPE_ACTION_SET, 0);
   g_signal_connect (context, "binding-loaded-event",
                     (GCallback) _binding_loaded_cb, self);
