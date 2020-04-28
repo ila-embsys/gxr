@@ -163,6 +163,8 @@ _component_to_str (GxrBindingComponent c)
       return "click";
     case GXR_BINDING_COMPONENT_PULL:
       return "value";
+    case GXR_BINDING_COMPONENT_TOUCH:
+      return "touch";
     case GXR_BINDING_COMPONENT_POSITION:
       /* use .../trackpad instead of .../trackpad/x etc. */
       return NULL;
@@ -239,6 +241,8 @@ _suggest_for_interaction_profile (GxrActionSet **sets, uint32_t count,
             g_string_printf (full_path, "%s/%s", input_path->path, component_str);
           else
             g_string_append (full_path, input_path->path);
+
+          g_debug ("\t%s ", full_path->str);
 
           XrPath component_path;
           xrStringToPath(instance, full_path->str, &component_path);
