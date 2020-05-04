@@ -110,6 +110,9 @@ openxr_action_new_from_type_url (OpenXRContext *context,
     case GXR_ACTION_POSE:
       action_type = XR_ACTION_TYPE_POSE_INPUT;
       break;
+    case GXR_ACTION_HAPTIC:
+      action_type = XR_ACTION_TYPE_VIBRATION_OUTPUT;
+      break;
     default:
       g_printerr ("Unknown action type %d\n", type);
       action_type = XR_ACTION_TYPE_BOOLEAN_INPUT;
@@ -460,7 +463,7 @@ _poll (GxrAction *action)
     case GXR_ACTION_POSE:
       return _action_poll_pose_secs_from_now (self, 0);
     default:
-      g_printerr ("Uknown action type %d\n", type);
+      g_printerr ("Unknown action type %d\n", type);
       return FALSE;
     }
 }
@@ -473,17 +476,34 @@ _trigger_haptic (GxrAction *action,
                  float amplitude,
                  guint64 controller_handle)
 {
-  OpenXRAction *self = OPENXR_ACTION (action);
-  (void) self;
   (void) start_seconds_from_now;
-  (void) duration_seconds;
-  (void) frequency;
-  (void) amplitude;
-  (void) controller_handle;
 
-  g_print ("Stub: Trigger haptic\n");
+  OpenXRAction *self = OPENXR_ACTION (action);
 
-  return TRUE;
+  XrTime duration = (XrTime) ((double)duration_seconds * 1000. * 1000. * 1000.);
+
+  // g_debug ("Haptic %f %f Hz, %lu ns\n", amplitude, frequency, duration);
+
+  XrHapticVibration vibration =  {
+    .type = XR_TYPE_HAPTIC_VIBRATION,
+    .next = NULL,
+    .amplitude = amplitude,
+    .duration = duration,
+    .frequency = frequency
+  };
+
+  XrHapticActionInfo hapticActionInfo = {
+    .type = XR_TYPE_HAPTIC_ACTION_INFO,
+    .next = NULL,
+    .action = self->handle,
+    .subactionPath = self->hand_paths[controller_handle]
+  };
+
+  XrResult result =
+    xrApplyHapticFeedback(self->session, &hapticActionInfo,
+                          (const XrHapticBaseHeader*)&vibration);
+
+  return result == XR_SUCCESS;
 }
 
 char *

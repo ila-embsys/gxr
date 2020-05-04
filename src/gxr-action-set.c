@@ -68,6 +68,10 @@ gxr_action_sets_poll (GxrActionSet **sets, uint32_t count)
         {
           GxrAction *action = (GxrAction*) l->data;
 
+          /* haptic has no inputs, can't be polled */
+          if (gxr_action_get_action_type (action) == GXR_ACTION_HAPTIC)
+            continue;
+
           if (!gxr_action_poll (action))
             return FALSE;
         }
@@ -105,7 +109,11 @@ gxr_action_set_connect_digital_from_float (GxrActionSet *self,
                                                     self,
                                                     GXR_ACTION_HAPTIC,
                                                     haptic_url);
-      gxr_action_set_digital_from_float_haptic (action, haptic_action);
+      if (haptic_action != NULL)
+        {
+          priv->actions = g_slist_append (priv->actions, haptic_action);
+          gxr_action_set_digital_from_float_haptic (action, haptic_action);
+        }
     }
   gxr_action_set_digital_from_float_threshold (action, threshold);
 
@@ -133,6 +141,11 @@ gxr_action_set_connect (GxrActionSet *self,
 
   if (action != NULL)
     priv->actions = g_slist_append (priv->actions, action);
+  else
+    {
+      g_printerr ("Failed to create/connect action %s\n", url);
+      return FALSE;
+    }
 
   switch (type)
     {
@@ -145,6 +158,9 @@ gxr_action_set_connect (GxrActionSet *self,
       break;
     case GXR_ACTION_POSE:
       g_signal_connect (action, "pose-event", callback, data);
+      break;
+    case GXR_ACTION_HAPTIC:
+      /* no input, only output */
       break;
     default:
       g_printerr ("Unknown action type %d\n", type);
