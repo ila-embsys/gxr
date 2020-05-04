@@ -207,84 +207,115 @@ _parse_bindings (GxrManifest *self, GInputStream *stream)
 
       JsonObject *joactionset = json_object_get_object_member (jobinding, actionset);
 
-      JsonArray *jasources = json_object_get_array_member (joactionset, "sources");
-      guint sources_len = json_array_get_length (jasources);
-      for (guint i = 0; i < sources_len; i++)
+      if (json_object_has_member (joactionset, "sources"))
         {
-          JsonObject *josource = json_array_get_object_element (jasources, i);
-
-          const gchar *path = json_object_get_string_member (josource, "path");
-          const gchar *mode = NULL;
-          if (json_object_has_member (josource, "mode"))
-            json_object_get_string_member (josource, "mode");
-
-          g_debug ("Parsed path %s with mode %s\n", path, mode);
-
-          JsonObject *joinputs = json_object_get_object_member (josource, "inputs");
-
-          GList *input_list = json_object_get_members (joinputs);
-          for (GList *m = input_list; m != NULL; m = m->next)
+          JsonArray *jasources = json_object_get_array_member (joactionset, "sources");
+          guint sources_len = json_array_get_length (jasources);
+          for (guint i = 0; i < sources_len; i++)
             {
-              gchar *component = m->data;
-              g_debug ("Parsing component %s\n", component);
+              JsonObject *josource = json_array_get_object_element (jasources, i);
 
-              JsonObject *joinput = json_object_get_object_member (joinputs, component);
+              const gchar *path = json_object_get_string_member (josource, "path");
+              const gchar *mode = NULL;
+              if (json_object_has_member (josource, "mode"))
+                json_object_get_string_member (josource, "mode");
 
-              const gchar *output = json_object_get_string_member (joinput, "output");
+              g_debug ("Parsed path %s with mode %s\n", path, mode);
 
-              g_debug ("%s: Parsed output %s for component %s\n", path, output, component);
+              JsonObject *joinputs = json_object_get_object_member (josource, "inputs");
+
+              GList *input_list = json_object_get_members (joinputs);
+              for (GList *m = input_list; m != NULL; m = m->next)
+                {
+                  gchar *component = m->data;
+                  g_debug ("Parsing component %s\n", component);
+
+                  JsonObject *joinput = json_object_get_object_member (joinputs, component);
+
+                  const gchar *output = json_object_get_string_member (joinput, "output");
+
+                  g_debug ("%s: Parsed output %s for component %s\n", path, output, component);
+
+                  GxrBinding *binding = g_hash_table_lookup (self->actions, output);
+                  if (!binding)
+                    {
+                      g_print ("Binding: Failed to find action %s in paresed actions\n", output);
+                      continue;
+                    }
+
+                  binding->mode = _get_binding_mode (mode);
+                  GxrBindingPath *input_path = g_malloc (sizeof (GxrBindingPath));
+                  input_path->component = _get_binding_component (component);
+                  input_path->path = g_strdup (path);
+                  g_debug ("Parsed input path %s\n", input_path->path);
+                  binding->input_paths = g_list_append (binding->input_paths, input_path);
+
+                  self->num_inputs++;
+                }
+              g_list_free (input_list);
+            }
+        }
+
+      if (json_object_has_member (joactionset, "haptics"))
+        {
+          JsonArray *jahaptics = json_object_get_array_member (joactionset, "haptics");
+          guint haptics_len = json_array_get_length (jahaptics);
+          for (guint i = 0; i < haptics_len; i++)
+            {
+              JsonObject *johaptics = json_array_get_object_element (jahaptics, i);
+
+              const gchar *path = json_object_get_string_member (johaptics, "path");
+              const gchar *output = json_object_get_string_member (johaptics, "output");
+
+              g_debug ("%s: Parsed haptics %s \n", path, output);
 
               GxrBinding *binding = g_hash_table_lookup (self->actions, output);
               if (!binding)
                 {
-                  g_print ("Binding: Failed to find action %s in paresed actions\n", output);
+                  g_print ("Binding: Failed to find action %s in parsed actions\n", output);
                   continue;
                 }
 
-              binding->mode = _get_binding_mode (mode);
+              binding->mode = GXR_BINDING_MODE_NONE;
+              GxrBindingPath *output_path = g_malloc (sizeof (GxrBindingPath));
+              output_path->component = GXR_BINDING_COMPONENT_NONE;
+              output_path->path = g_strdup (path);
+              g_debug ("Parsed input path %s\n", output_path->path);
+              binding->input_paths = g_list_append (binding->input_paths, output_path);
+
+              self->num_inputs++;
+          }
+      }
+
+      if (json_object_has_member (joactionset, "pose"))
+        {
+          JsonArray *japose = json_object_get_array_member (joactionset, "pose");
+          guint pose_len = json_array_get_length (japose);
+          for (guint i = 0; i < pose_len; i++)
+            {
+              JsonObject *jopose = json_array_get_object_element (japose, i);
+
+              const gchar *path = json_object_get_string_member (jopose, "path");
+              const gchar *output = json_object_get_string_member (jopose, "output");
+
+              g_debug ("%s: Parsed output pose %s \n", path, output);
+
+              GxrBinding *binding = g_hash_table_lookup (self->actions, output);
+              if (!binding)
+                {
+                  g_print ("Binding: Failed to find action %s in parsed actions\n", output);
+                  continue;
+                }
+
+              binding->mode = GXR_BINDING_MODE_NONE;
               GxrBindingPath *input_path = g_malloc (sizeof (GxrBindingPath));
-              input_path->component = _get_binding_component (component);
+              input_path->component = GXR_BINDING_COMPONENT_NONE;
               input_path->path = g_strdup (path);
               g_debug ("Parsed input path %s\n", input_path->path);
               binding->input_paths = g_list_append (binding->input_paths, input_path);
 
               self->num_inputs++;
             }
-          g_list_free (input_list);
-        }
-
-
-      /* TODO: haptics */
-
-      if (!json_object_has_member (joactionset, "pose"))
-        continue;
-
-      JsonArray *japose = json_object_get_array_member (joactionset, "pose");
-      guint pose_len = json_array_get_length (japose);
-      for (guint i = 0; i < pose_len; i++)
-        {
-          JsonObject *jopose = json_array_get_object_element (japose, i);
-
-          const gchar *path = json_object_get_string_member (jopose, "path");
-          const gchar *output = json_object_get_string_member (jopose, "output");
-
-          g_debug ("%s: Parsed output pose %s \n", path, output);
-
-          GxrBinding *binding = g_hash_table_lookup (self->actions, output);
-          if (!binding)
-            {
-              g_print ("Binding: Failed to find action %s in paresed actions\n", output);
-              continue;
-            }
-
-          binding->mode = GXR_BINDING_MODE_NONE;
-          GxrBindingPath *input_path = g_malloc (sizeof (GxrBindingPath));
-          input_path->component = GXR_BINDING_COMPONENT_NONE;
-          input_path->path = g_strdup (path);
-          g_debug ("Parsed input path %s\n", input_path->path);
-          binding->input_paths = g_list_append (binding->input_paths, input_path);
-
-          self->num_inputs++;
         }
     }
 
