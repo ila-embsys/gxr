@@ -59,7 +59,7 @@ _create (OpenVROverlay *overlay, gchar* key)
   /* k_unVROverlayMaxKeyLength is the limit including the null terminator */
   if (strlen(key) + 1 > k_unVROverlayMaxKeyLength)
     {
-      g_printerr ("Overlay key too long, must be shorter than %d characters\n",
+      g_printerr ("Overlay key too long, must be shorter than %ld characters\n",
                   k_unMaxSettingsKeyLength - 1);
       return FALSE;
     }
