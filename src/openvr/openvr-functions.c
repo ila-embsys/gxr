@@ -47,9 +47,9 @@ _init_fn_table (const char *type, intptr_t *ret)
 
   if (error != EVRInitError_VRInitError_None)
     {
-      g_error ("VR_GetGenericInterface returned error %s: %s\n",
-               VR_GetVRInitErrorAsSymbol (error),
-               VR_GetVRInitErrorAsEnglishDescription (error));
+      g_printerr ("VR_GetGenericInterface returned error %s: %s\n",
+                  VR_GetVRInitErrorAsSymbol (error),
+                  VR_GetVRInitErrorAsEnglishDescription (error));
       return FALSE;
     }
 

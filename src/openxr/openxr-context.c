@@ -918,7 +918,7 @@ _init_runtime (GxrContext *context,
       g_print ("stub: Headless app type is not implemented in OpenXR.\n");
       break;
     default:
-      g_error ("Unknown app type %d\n", type);
+      g_printerr ("Unknown app type %d\n", type);
   }
 
   if (!_check_vk_extension())

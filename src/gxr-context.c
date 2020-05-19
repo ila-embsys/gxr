@@ -147,14 +147,14 @@ _new (GxrAppType  type,
   GxrContext *self = gxr_backend_new_context (backend);
   if (!self)
   {
-    g_error ("Could not init gxr context.\n");
+    g_printerr ("Could not init gxr context.\n");
     return NULL;
   }
 
   if (!_init_runtime (self, type))
     {
       g_object_unref (self);
-      g_error ("Could not init runtime.\n");
+      g_printerr ("Could not init runtime.\n");
       return NULL;
     }
 
@@ -171,7 +171,7 @@ _new (GxrAppType  type,
     {
       g_object_unref (self);
       g_slist_free_full (runtime_instance_ext_list, g_free);
-      g_error ("Could not init gulkan client from instance exts.\n");
+      g_printerr ("Could not init gulkan client from instance exts.\n");
       return NULL;
     }
 
@@ -193,14 +193,14 @@ _new (GxrAppType  type,
   if (!priv->gc)
     {
       g_object_unref (self);
-      g_error ("Could not init gulkan client.\n");
+      g_printerr ("Could not init gulkan client.\n");
       return NULL;
     }
 
   if (!_init_session (self))
     {
       g_object_unref (self);
-      g_error ("Could not init VR session.\n");
+      g_printerr ("Could not init VR session.\n");
       return NULL;
     }
 

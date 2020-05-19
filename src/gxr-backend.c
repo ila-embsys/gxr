@@ -66,7 +66,7 @@ _new_from_api (GxrApi api)
       module_name = "gxr-openxr";
       break;
     default:
-      g_error ("Invalid API provided.");
+      g_printerr ("Invalid API provided.");
       return NULL;
     }
 
