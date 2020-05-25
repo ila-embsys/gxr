@@ -39,13 +39,13 @@ GulkanTexture*
 xrd_scene_model_get_texture (XrdSceneModel *self);
 
 void
-xrd_scene_model_draw (XrdSceneModel     *self,
-                      GxrEye             eye,
-                      VkPipeline         pipeline,
-                      VkCommandBuffer    cmd_buffer,
-                      VkPipelineLayout   pipeline_layout,
-                      graphene_matrix_t *transformation,
-                      graphene_matrix_t *vp);
+xrd_scene_model_render (XrdSceneModel     *self,
+                        GxrEye             eye,
+                        VkPipeline         pipeline,
+                        VkCommandBuffer    cmd_buffer,
+                        VkPipelineLayout   pipeline_layout,
+                        graphene_matrix_t *transformation,
+                        graphene_matrix_t *vp);
 
 G_END_DECLS
 

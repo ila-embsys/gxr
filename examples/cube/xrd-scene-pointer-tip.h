@@ -22,12 +22,12 @@ G_DECLARE_FINAL_TYPE (XrdScenePointerTip, xrd_scene_pointer_tip,
 XrdScenePointerTip *xrd_scene_pointer_tip_new (void);
 
 void
-xrd_scene_pointer_tip_draw (XrdScenePointerTip *self,
-                            GxrEye              eye,
-                            VkPipeline          pipeline,
-                            VkPipelineLayout    pipeline_layout,
-                            VkCommandBuffer     cmd_buffer,
-                            graphene_matrix_t  *vp);
+xrd_scene_pointer_tip_render (XrdScenePointerTip *self,
+                              GxrEye              eye,
+                              VkPipeline          pipeline,
+                              VkPipelineLayout    pipeline_layout,
+                              VkCommandBuffer     cmd_buffer,
+                              graphene_matrix_t  *vp);
 
 G_END_DECLS
 

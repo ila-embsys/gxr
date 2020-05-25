@@ -455,12 +455,12 @@ _update_ubo (XrdScenePointerTip *self,
 }
 
 void
-xrd_scene_pointer_tip_draw (XrdScenePointerTip *self,
-                            GxrEye              eye,
-                            VkPipeline          pipeline,
-                            VkPipelineLayout    pipeline_layout,
-                            VkCommandBuffer     cmd_buffer,
-                            graphene_matrix_t  *vp)
+xrd_scene_pointer_tip_render (XrdScenePointerTip *self,
+                              GxrEye              eye,
+                              VkPipeline          pipeline,
+                              VkPipelineLayout    pipeline_layout,
+                              VkCommandBuffer     cmd_buffer,
+                              graphene_matrix_t  *vp)
 {
   if (!self->texture)
   {

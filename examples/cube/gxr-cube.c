@@ -175,10 +175,10 @@ _render_pointers (Example           *self,
 
       XrdScenePointerTip *scene_tip =
         XRD_SCENE_POINTER_TIP (gxr_controller_get_pointer_tip (controller));
-      xrd_scene_pointer_tip_draw (scene_tip, eye,
-                                  pipelines[PIPELINE_TIP],
-                                  pipeline_layout,
-                                  cmd_buffer, vp);
+      xrd_scene_pointer_tip_render (scene_tip, eye,
+                                    pipelines[PIPELINE_TIP],
+                                    pipeline_layout,
+                                    cmd_buffer, vp);
     }
 }
 
@@ -234,8 +234,8 @@ _render_device (GxrDevice       *device,
   graphene_matrix_t transformation;
   gxr_device_get_transformation_direct (device, &transformation);
 
-  xrd_scene_model_draw (model, eye, pipeline, cmd_buffer, pipeline_layout,
-                        &transformation, vp);
+  xrd_scene_model_render (model, eye, pipeline, cmd_buffer, pipeline_layout,
+                          &transformation, vp);
 }
 
 static void

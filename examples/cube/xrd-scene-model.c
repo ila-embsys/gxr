@@ -148,13 +148,13 @@ _update_ubo (XrdSceneModel     *self,
 }
 
 void
-xrd_scene_model_draw (XrdSceneModel     *self,
-                      GxrEye             eye,
-                      VkPipeline         pipeline,
-                      VkCommandBuffer    cmd_buffer,
-                      VkPipelineLayout   pipeline_layout,
-                      graphene_matrix_t *transformation,
-                      graphene_matrix_t *vp)
+xrd_scene_model_render (XrdSceneModel     *self,
+                        GxrEye             eye,
+                        VkPipeline         pipeline,
+                        VkCommandBuffer    cmd_buffer,
+                        VkPipelineLayout   pipeline_layout,
+                        graphene_matrix_t *transformation,
+                        graphene_matrix_t *vp)
 {
   XrdSceneObject *obj = XRD_SCENE_OBJECT (self);
   if (!xrd_scene_object_is_visible (obj))
