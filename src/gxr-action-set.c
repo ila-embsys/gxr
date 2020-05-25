@@ -147,7 +147,7 @@ gxr_action_set_connect (GxrActionSet *self,
       g_signal_connect (action, "pose-event", callback, data);
       break;
     default:
-      g_printerr ("Uknown action type %d\n", type);
+      g_printerr ("Unknown action type %d\n", type);
       return FALSE;
     }
 
