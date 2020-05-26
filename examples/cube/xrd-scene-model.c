@@ -9,8 +9,6 @@
 
 #include <gxr.h>
 
-#include "xrd-scene-renderer.h"
-
 typedef struct {
   float mvp[16];
 } XrdSceneModelUniformBuffer;
@@ -19,7 +17,7 @@ struct _XrdSceneModel
 {
   XrdSceneObject parent;
 
-  GulkanDevice *device;
+  GulkanClient *gulkan;
 
   GulkanTexture *texture;
   GulkanVertexBuffer *vbo;
@@ -65,14 +63,16 @@ xrd_scene_model_init (XrdSceneModel *self)
 }
 
 XrdSceneModel *
-xrd_scene_model_new (VkDescriptorSetLayout *layout)
+xrd_scene_model_new (VkDescriptorSetLayout *layout, GulkanClient *gulkan)
 {
   XrdSceneModel *self = (XrdSceneModel*) g_object_new (XRD_TYPE_SCENE_MODEL, 0);
+
+  self->gulkan = g_object_ref (gulkan);
 
   XrdSceneObject *obj = XRD_SCENE_OBJECT (self);
 
   VkDeviceSize ub_size = sizeof (XrdSceneModelUniformBuffer);
-  if (!xrd_scene_object_initialize (obj, layout, ub_size))
+  if (!xrd_scene_object_initialize (obj, gulkan, layout, ub_size))
     return FALSE;
 
   return self;
@@ -83,16 +83,18 @@ xrd_scene_model_finalize (GObject *gobject)
 {
   XrdSceneModel *self = XRD_SCENE_MODEL (gobject);
   g_free (self->model_name);
-  g_object_unref (self->vbo);
-  g_object_unref (self->texture);
+  g_clear_object (&self->vbo);
+  g_clear_object (&self->texture);
 
-  XrdSceneRenderer *renderer = xrd_scene_renderer_get_instance ();
-  GulkanClient *gc = xrd_scene_renderer_get_gulkan (renderer);
-  GulkanDevice *device = gulkan_client_get_device (gc);
+  GulkanDevice *device = gulkan_client_get_device (self->gulkan);
 
   if (self->sampler != VK_NULL_HANDLE)
     vkDestroySampler (gulkan_device_get_handle (device),
                       self->sampler, NULL);
+
+  g_clear_object (&self->gulkan);
+
+  G_OBJECT_CLASS (xrd_scene_model_parent_class)->finalize (gobject);
 }
 
 VkSampler

@@ -29,9 +29,8 @@ enum PipelineType
 G_DECLARE_FINAL_TYPE (XrdSceneRenderer, xrd_scene_renderer,
                       XRD, SCENE_RENDERER, GulkanRenderer)
 
-XrdSceneRenderer *xrd_scene_renderer_get_instance (void);
-
-void xrd_scene_renderer_destroy_instance (void);
+XrdSceneRenderer *
+xrd_scene_renderer_new (void);
 
 gboolean
 xrd_scene_renderer_init_vulkan (XrdSceneRenderer *self,

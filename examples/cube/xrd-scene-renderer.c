@@ -165,19 +165,10 @@ xrd_scene_renderer_finalize (GObject *gobject)
   G_OBJECT_CLASS (xrd_scene_renderer_parent_class)->finalize (gobject);
 }
 
-static XrdSceneRenderer *singleton = NULL;
-
-XrdSceneRenderer *xrd_scene_renderer_get_instance (void)
+XrdSceneRenderer *
+xrd_scene_renderer_new (void)
 {
-  if (singleton == NULL)
-    singleton = (XrdSceneRenderer*) g_object_new (XRD_TYPE_SCENE_RENDERER, 0);
-
-  return singleton;
-}
-
-void xrd_scene_renderer_destroy_instance (void)
-{
-  g_clear_object (&singleton);
+  return (XrdSceneRenderer*) g_object_new (XRD_TYPE_SCENE_RENDERER, 0);
 }
 
 static gboolean

@@ -19,7 +19,10 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (XrdScenePointerTip, xrd_scene_pointer_tip,
                       XRD, SCENE_POINTER_TIP, XrdSceneObject)
 
-XrdScenePointerTip *xrd_scene_pointer_tip_new (void);
+XrdScenePointerTip *
+xrd_scene_pointer_tip_new (GulkanClient *gulkan,
+                           VkDescriptorSetLayout *layout,
+                           VkBuffer lights);
 
 void
 xrd_scene_pointer_tip_render (XrdScenePointerTip *self,

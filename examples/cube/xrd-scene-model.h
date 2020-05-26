@@ -22,7 +22,7 @@ G_DECLARE_FINAL_TYPE (XrdSceneModel, xrd_scene_model,
                       XRD, SCENE_MODEL, XrdSceneObject)
 
 XrdSceneModel *
-xrd_scene_model_new (VkDescriptorSetLayout *layout);
+xrd_scene_model_new (VkDescriptorSetLayout *layout, GulkanClient *gulkan);
 
 gboolean
 xrd_scene_model_load (XrdSceneModel *self,

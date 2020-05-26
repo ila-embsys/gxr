@@ -44,8 +44,8 @@ typedef struct Example
 
   gboolean have_projection;
 
+  XrdSceneRenderer *renderer;
   XrdSceneBackground *background;
-
   XrdSceneCube *cube;
 } Example;
 
@@ -82,7 +82,7 @@ _cleanup (Example *self)
 
   g_object_unref (self->background);
 
-  xrd_scene_renderer_destroy_instance ();
+  g_clear_object (&self->renderer);
 
   g_clear_object (&self->context);
 
@@ -109,8 +109,7 @@ _iterate_cb (gpointer _self)
     gxr_context_get_projection (context, eye, self->near, self->far,
                                 &self->mat_projection[eye]);
 
-  XrdSceneRenderer *renderer = xrd_scene_renderer_get_instance ();
-  xrd_scene_renderer_draw (renderer);
+  xrd_scene_renderer_draw (self->renderer);
 
   gxr_context_end_frame (context);
 
@@ -196,11 +195,11 @@ _get_scene_model (Example *self, GxrDevice *device)
   if (!model_name)
       return NULL;
 
-  XrdSceneRenderer *renderer = xrd_scene_renderer_get_instance ();
   VkDescriptorSetLayout *descriptor_set_layout =
-    xrd_scene_renderer_get_descriptor_set_layout (renderer);
+    xrd_scene_renderer_get_descriptor_set_layout (self->renderer);
+  GulkanClient *gulkan = xrd_scene_renderer_get_gulkan (self->renderer);
 
-  XrdSceneModel *sm = xrd_scene_model_new (descriptor_set_layout);
+  XrdSceneModel *sm = xrd_scene_model_new (descriptor_set_layout, gulkan);
   // g_print ("Loading model %s\n", model_name);
   xrd_scene_model_load (sm, self->context, model_name);
 
@@ -210,13 +209,13 @@ _get_scene_model (Example *self, GxrDevice *device)
 }
 
 static void
-_render_device (GxrDevice       *device,
-                uint32_t         eye,
-                VkCommandBuffer  cmd_buffer,
-                VkPipelineLayout pipeline_layout,
-                VkPipeline       pipeline,
+_render_device (GxrDevice         *device,
+                uint32_t           eye,
+                VkCommandBuffer    cmd_buffer,
+                VkPipelineLayout   pipeline_layout,
+                VkPipeline         pipeline,
                 graphene_matrix_t *vp,
-                Example         *self)
+                Example           *self)
 {
   XrdSceneModel *model = _get_scene_model (self, device);
   if (!model)
@@ -242,7 +241,7 @@ static void
 _render_devices (uint32_t           eye,
                  VkCommandBuffer    cmd_buffer,
                  VkPipelineLayout   pipeline_layout,
-                 VkPipeline         *pipelines,
+                 VkPipeline        *pipelines,
                  graphene_matrix_t *vp,
                  Example           *self)
 {
@@ -293,8 +292,7 @@ _update_lights_cb (gpointer _self)
   GxrDeviceManager *dm = gxr_context_get_device_manager (self->context);
   GSList *controllers = gxr_device_manager_get_controllers (dm);
 
-  XrdSceneRenderer *renderer = xrd_scene_renderer_get_instance ();
-  xrd_scene_renderer_update_lights (renderer, controllers);
+  xrd_scene_renderer_update_lights (self->renderer, controllers);
 }
 
 static gboolean
@@ -306,21 +304,19 @@ _init_vulkan (Example          *self,
   if (!xrd_scene_renderer_init_vulkan (renderer, context))
     return FALSE;
 
-  //_init_device_models (self);
-
-  GulkanDevice *device = gulkan_client_get_device (gc);
   VkDescriptorSetLayout *descriptor_set_layout =
     xrd_scene_renderer_get_descriptor_set_layout (renderer);
 
-  self->cube = xrd_scene_cube_new ();
   GulkanRenderPass *render_pass = xrd_scene_renderer_get_render_pass (renderer);
-  xrd_scene_cube_initialize (self->cube, self->context,
-                             GULKAN_RENDERER (renderer), render_pass);
 
+  GxrApi api = gxr_context_get_api (self->context);
+  VkSampleCountFlagBits sample_count = (api == GXR_API_OPENXR) ?
+    VK_SAMPLE_COUNT_1_BIT : VK_SAMPLE_COUNT_4_BIT;
 
-  xrd_scene_background_initialize (self->background,
-                                   device,
-                                   descriptor_set_layout);
+  self->cube = xrd_scene_cube_new (gc, GULKAN_RENDERER (renderer),
+                                   render_pass, sample_count);
+
+  self->background = xrd_scene_background_new (gc, descriptor_set_layout);
 
   xrd_scene_renderer_set_render_cb (renderer, _render_eye_cb, self);
   xrd_scene_renderer_set_update_lights_cb (renderer, _update_lights_cb, self);
@@ -339,21 +335,21 @@ _device_activate_cb (GxrDeviceManager *dm,
 
   g_print ("Controller %lu activated.\n",
            gxr_controller_get_handle (controller));
-  XrdScenePointerTip *pointer_tip = xrd_scene_pointer_tip_new ();
-  gxr_controller_set_pointer_tip (controller, GXR_POINTER_TIP (pointer_tip));
 
-
-  XrdSceneRenderer *renderer = xrd_scene_renderer_get_instance ();
   VkDescriptorSetLayout *descriptor_set_layout =
-    xrd_scene_renderer_get_descriptor_set_layout (renderer);
+    xrd_scene_renderer_get_descriptor_set_layout (self->renderer);
   GulkanClient *client = gxr_context_get_gulkan (self->context);
-  GulkanDevice *device = gulkan_client_get_device (client);
 
-  XrdScenePointer *pointer = xrd_scene_pointer_new ();
-  xrd_scene_pointer_initialize (pointer, device,
-                                descriptor_set_layout);
+  VkBuffer lights =
+    xrd_scene_renderer_get_lights_buffer_handle (self->renderer);
 
+  XrdScenePointer *pointer =
+    xrd_scene_pointer_new (client, descriptor_set_layout);
   gxr_controller_set_pointer (controller, GXR_POINTER (pointer));
+
+  XrdScenePointerTip *pointer_tip =
+    xrd_scene_pointer_tip_new (client, descriptor_set_layout, lights);
+  gxr_controller_set_pointer_tip (controller, GXR_POINTER_TIP (pointer_tip));
 }
 
 static void
@@ -504,7 +500,7 @@ _init_example (Example *self)
   self->context = NULL;
   self->near = 0.05f;
   self->far = 100.0f;
-  self->background = xrd_scene_background_new ();
+  self->background = NULL;
 
   self->render_source = g_timeout_add (1, _iterate_cb, self);
 
@@ -519,8 +515,10 @@ _init_example (Example *self)
                     (GCallback) _device_deactivate_cb, self);
 
   GulkanClient *gc = gxr_context_get_gulkan (self->context);
-  XrdSceneRenderer *renderer = xrd_scene_renderer_get_instance ();
-  if (!_init_vulkan (self, renderer, gc))
+
+  self->renderer = xrd_scene_renderer_new ();
+
+  if (!_init_vulkan (self, self->renderer, gc))
     {
       g_object_unref (self);
       g_error ("Could not init Vulkan.\n");

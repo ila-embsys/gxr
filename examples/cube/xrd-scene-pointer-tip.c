@@ -8,7 +8,6 @@
 #include "xrd-scene-pointer-tip.h"
 
 #include "gxr-pointer-tip.h"
-#include "xrd-scene-renderer.h"
 #include "xrd-scene-object.h"
 
 typedef struct __attribute__((__packed__)) {
@@ -27,6 +26,8 @@ struct _XrdScenePointerTip
 {
   GObject parent;
 
+  GulkanClient *gulkan;
+  VkBuffer lights;
 
   GulkanVertexBuffer *vertex_buffer;
   VkSampler sampler;
@@ -119,23 +120,18 @@ _append_plane (GulkanVertexBuffer *vbo, float aspect_ratio)
 }
 
 static gboolean
-_initialize (XrdScenePointerTip* self)
+_initialize (XrdScenePointerTip* self, VkDescriptorSetLayout *layout)
 {
   XrdSceneObject *obj = XRD_SCENE_OBJECT (self);
-  XrdSceneRenderer *renderer = xrd_scene_renderer_get_instance ();
-  GulkanClient *gc = xrd_scene_renderer_get_gulkan (renderer);
 
-  GulkanDevice *device = gulkan_client_get_device (gc);
+  GulkanDevice *device = gulkan_client_get_device (self->gulkan);
 
   _append_plane (self->vertex_buffer, self->aspect_ratio);
   if (!gulkan_vertex_buffer_alloc_array (self->vertex_buffer, device))
     return FALSE;
 
-  VkDescriptorSetLayout *layout =
-    xrd_scene_renderer_get_descriptor_set_layout (renderer);
-
   VkDeviceSize ubo_size = sizeof (XrdScenePointerTipUniformBuffer);
-  if (!xrd_scene_object_initialize (obj, layout, ubo_size))
+  if (!xrd_scene_object_initialize (obj, self->gulkan, layout, ubo_size))
     return FALSE;
 
   self->shading_buffer =
@@ -164,15 +160,20 @@ _scene_object_set_width_meters (XrdScenePointerTip *self,
 }
 
 XrdScenePointerTip *
-xrd_scene_pointer_tip_new (void)
+xrd_scene_pointer_tip_new (GulkanClient *gulkan,
+                           VkDescriptorSetLayout *layout,
+                           VkBuffer lights)
 {
   XrdScenePointerTip* self =
     (XrdScenePointerTip*) g_object_new (XRD_TYPE_SCENE_POINTER_TIP, 0);
 
+  self->gulkan = g_object_ref (gulkan);
+  self->lights = lights;
+
   self->texture_width = 64;
   self->texture_height = 64;
 
-  _initialize (self);
+  _initialize (self, layout);
 
   gxr_pointer_tip_init_settings (GXR_POINTER_TIP (self), &self->data);
 
@@ -187,15 +188,15 @@ xrd_scene_pointer_tip_finalize (GObject *gobject)
   /* cancels potentially running animation */
   gxr_pointer_tip_set_active (GXR_POINTER_TIP (self), FALSE);
 
-  XrdSceneRenderer *renderer = xrd_scene_renderer_get_instance ();
-  GulkanClient *gc = xrd_scene_renderer_get_gulkan (renderer);
-  VkDevice device = gulkan_client_get_device_handle (gc);
+  VkDevice device = gulkan_client_get_device_handle (self->gulkan);
   vkDestroySampler (device, self->sampler, NULL);
 
   g_object_unref (self->vertex_buffer);
   g_object_unref (self->shading_buffer);
 
   g_object_unref (self->texture);
+
+  g_object_unref (self->gulkan);
 
   G_OBJECT_CLASS (xrd_scene_pointer_tip_parent_class)->finalize (gobject);
 }
@@ -268,10 +269,7 @@ _submit_texture (GxrPointerTip *tip)
 static void
 _update_descriptors (XrdScenePointerTip *self)
 {
-  XrdSceneRenderer *renderer = xrd_scene_renderer_get_instance ();
-  GulkanClient *gc = xrd_scene_renderer_get_gulkan (renderer);
-  VkDevice device = gulkan_client_get_device_handle (gc);
-  VkBuffer lights = xrd_scene_renderer_get_lights_buffer_handle (renderer);
+  VkDevice device = gulkan_client_get_device_handle (self->gulkan);
 
   for (uint32_t eye = 0; eye < 2; eye++)
   {
@@ -330,7 +328,7 @@ _update_descriptors (XrdScenePointerTip *self)
         .descriptorCount = 1,
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         .pBufferInfo = &(VkDescriptorBufferInfo) {
-          .buffer = lights,
+          .buffer = self->lights,
           .offset = 0,
           .range = VK_WHOLE_SIZE
         },
@@ -361,9 +359,7 @@ _set_and_submit_texture (GxrPointerTip *tip, GulkanTexture *texture)
   self->texture_width = extent.width;
   self->texture_height = extent.height;
 
-  XrdSceneRenderer *renderer = xrd_scene_renderer_get_instance ();
-  GulkanClient *gc = xrd_scene_renderer_get_gulkan (renderer);
-  VkDevice device = gulkan_client_get_device_handle (gc);
+  VkDevice device = gulkan_client_get_device_handle (self->gulkan);
 
   float aspect_ratio = (float) extent.width / (float) extent.height;
 
@@ -431,8 +427,8 @@ static GulkanClient*
 _get_gulkan_client (GxrPointerTip *tip)
 {
   (void) tip;
-  XrdSceneRenderer *renderer = xrd_scene_renderer_get_instance ();
-  return xrd_scene_renderer_get_gulkan (renderer);
+  XrdScenePointerTip *self = XRD_SCENE_POINTER_TIP (tip);
+  return self->gulkan;
 }
 
 static void

@@ -50,27 +50,10 @@ xrd_scene_pointer_init (XrdScenePointer *self)
   gxr_pointer_init (GXR_POINTER (self));
 }
 
-XrdScenePointer *
-xrd_scene_pointer_new (void)
-{
-  XrdScenePointer *self =
-    (XrdScenePointer*) g_object_new (XRD_TYPE_SCENE_POINTER, 0);
-  return self;
-}
-
-static void
-xrd_scene_pointer_finalize (GObject *gobject)
-{
-  XrdScenePointer *self = XRD_SCENE_POINTER (gobject);
-  g_object_unref (self->vertex_buffer);
-  G_OBJECT_CLASS (xrd_scene_pointer_parent_class)->finalize (gobject);
-}
-
-
-gboolean
-xrd_scene_pointer_initialize (XrdScenePointer       *self,
-                              GulkanDevice          *device,
-                              VkDescriptorSetLayout *layout)
+static gboolean
+_initialize (XrdScenePointer       *self,
+             GulkanClient          *gulkan,
+             VkDescriptorSetLayout *layout)
 {
   gulkan_vertex_buffer_reset (self->vertex_buffer);
 
@@ -82,8 +65,11 @@ xrd_scene_pointer_initialize (XrdScenePointer       *self,
 
   gulkan_geometry_append_ray (self->vertex_buffer,
                               &start, self->data.length, &identity);
+
+  GulkanDevice *device = gulkan_client_get_device (gulkan);
+
   if (!gulkan_vertex_buffer_alloc_empty (self->vertex_buffer, device,
-                                         GXR_DEVICE_INDEX_MAX))
+    GXR_DEVICE_INDEX_MAX))
     return FALSE;
 
   gulkan_vertex_buffer_map_array (self->vertex_buffer);
@@ -92,12 +78,31 @@ xrd_scene_pointer_initialize (XrdScenePointer       *self,
 
   VkDeviceSize ubo_size = sizeof (XrdScenePointerUniformBuffer);
 
-  if (!xrd_scene_object_initialize (obj, layout, ubo_size))
+  if (!xrd_scene_object_initialize (obj, gulkan, layout, ubo_size))
     return FALSE;
 
   xrd_scene_object_update_descriptors (obj);
 
   return TRUE;
+}
+
+XrdScenePointer *
+xrd_scene_pointer_new (GulkanClient          *gulkan,
+                       VkDescriptorSetLayout *layout)
+{
+  XrdScenePointer *self =
+    (XrdScenePointer*) g_object_new (XRD_TYPE_SCENE_POINTER, 0);
+
+  _initialize (self, gulkan, layout);
+  return self;
+}
+
+static void
+xrd_scene_pointer_finalize (GObject *gobject)
+{
+  XrdScenePointer *self = XRD_SCENE_POINTER (gobject);
+  g_clear_object (&self->vertex_buffer);
+  G_OBJECT_CLASS (xrd_scene_pointer_parent_class)->finalize (gobject);
 }
 
 static void

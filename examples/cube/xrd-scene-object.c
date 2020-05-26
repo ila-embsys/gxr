@@ -15,6 +15,8 @@ typedef struct _XrdSceneObjectPrivate
 {
   GObject parent;
 
+  GulkanClient *gulkan;
+
   GulkanUniformBuffer *uniform_buffers[2];
 
   GulkanDescriptorPool *descriptor_pool;
@@ -54,12 +56,7 @@ xrd_scene_object_init (XrdSceneObject *self)
   priv->scale = 1.0f;
   priv->visible = TRUE;
   priv->initialized = FALSE;
-}
-
-XrdSceneObject *
-xrd_scene_object_new (void)
-{
-  return (XrdSceneObject*) g_object_new (XRD_TYPE_SCENE_OBJECT, 0);
+  priv->gulkan = NULL;
 }
 
 static void
@@ -73,6 +70,10 @@ xrd_scene_object_finalize (GObject *gobject)
   g_object_unref (priv->descriptor_pool);
   for (uint32_t eye = 0; eye < 2; eye++)
     g_object_unref (priv->uniform_buffers[eye]);
+
+  g_clear_object (&priv->gulkan);
+
+  G_OBJECT_CLASS (xrd_scene_object_parent_class)->finalize (gobject);
 }
 
 static void
@@ -135,14 +136,15 @@ xrd_scene_object_set_rotation_euler (XrdSceneObject   *self,
 
 gboolean
 xrd_scene_object_initialize (XrdSceneObject        *self,
+                             GulkanClient          *gulkan,
                              VkDescriptorSetLayout *layout,
                              VkDeviceSize           uniform_buffer_size)
 {
-  XrdSceneRenderer *renderer = xrd_scene_renderer_get_instance ();
-  GulkanClient *gc = xrd_scene_renderer_get_gulkan (renderer);
-  GulkanDevice *device = gulkan_client_get_device (gc);
-  VkDevice vk_device = gulkan_device_get_handle (device);
   XrdSceneObjectPrivate *priv = xrd_scene_object_get_instance_private (self);
+  priv->gulkan = g_object_ref (gulkan);
+
+  GulkanDevice *device = gulkan_client_get_device (gulkan);
+  VkDevice vk_device = gulkan_device_get_handle (device);
 
   /* Create uniform buffer to hold a matrix per eye */
   for (uint32_t eye = 0; eye < 2; eye++)
@@ -196,10 +198,8 @@ xrd_scene_object_update_descriptors_texture (XrdSceneObject *self,
                                              VkSampler       sampler,
                                              VkImageView     image_view)
 {
-  XrdSceneRenderer *renderer = xrd_scene_renderer_get_instance ();
-  GulkanClient *gc = xrd_scene_renderer_get_gulkan (renderer);
-  VkDevice device = gulkan_client_get_device_handle (gc);
   XrdSceneObjectPrivate *priv = xrd_scene_object_get_instance_private (self);
+  VkDevice device = gulkan_client_get_device_handle (priv->gulkan);
 
   for (uint32_t eye = 0; eye < 2; eye++)
     {
@@ -241,10 +241,8 @@ xrd_scene_object_update_descriptors_texture (XrdSceneObject *self,
 void
 xrd_scene_object_update_descriptors (XrdSceneObject *self)
 {
-  XrdSceneRenderer *renderer = xrd_scene_renderer_get_instance ();
-  GulkanClient *gc = xrd_scene_renderer_get_gulkan (renderer);
-  VkDevice device = gulkan_client_get_device_handle (gc);
   XrdSceneObjectPrivate *priv = xrd_scene_object_get_instance_private (self);
+  VkDevice device = gulkan_client_get_device_handle (priv->gulkan);
 
   for (uint32_t eye = 0; eye < 2; eye++)
     {

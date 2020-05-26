@@ -31,8 +31,6 @@ struct _XrdSceneObjectClass
   GObjectClass parent;
 };
 
-XrdSceneObject *xrd_scene_object_new (void);
-
 void
 xrd_scene_object_set_scale (XrdSceneObject *self, float scale);
 
@@ -60,6 +58,7 @@ xrd_scene_object_bind (XrdSceneObject    *self,
 
 gboolean
 xrd_scene_object_initialize (XrdSceneObject        *self,
+                             GulkanClient          *gulkan,
                              VkDescriptorSetLayout *layout,
                              VkDeviceSize           uniform_buffer_size);
 

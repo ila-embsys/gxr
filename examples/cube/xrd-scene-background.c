@@ -38,17 +38,28 @@ xrd_scene_background_init (XrdSceneBackground *self)
   self->vertex_buffer = gulkan_vertex_buffer_new ();
 }
 
+static gboolean
+_initialize (XrdSceneBackground    *self,
+             GulkanClient          *gulkan,
+             VkDescriptorSetLayout *layout);
+
 XrdSceneBackground *
-xrd_scene_background_new (void)
+xrd_scene_background_new (GulkanClient          *gulkan,
+                          VkDescriptorSetLayout *layout)
 {
-  return (XrdSceneBackground*) g_object_new (XRD_TYPE_SCENE_BACKGROUND, 0);
+  XrdSceneBackground *self =
+    (XrdSceneBackground*) g_object_new (XRD_TYPE_SCENE_BACKGROUND, 0);
+
+  _initialize (self, gulkan, layout);
+
+  return self;
 }
 
 static void
 xrd_scene_background_finalize (GObject *gobject)
 {
   XrdSceneBackground *self = XRD_SCENE_BACKGROUND (gobject);
-  g_object_unref (self->vertex_buffer);
+  g_clear_object (&self->vertex_buffer);
   G_OBJECT_CLASS (xrd_scene_background_parent_class)->finalize (gobject);
 }
 
@@ -78,7 +89,7 @@ _append_star (GulkanVertexBuffer *self,
   for (uint32_t i = 0; i < sections; i++)
     gulkan_vertex_buffer_append_with_color (self, &points[i], color);
 
-  g_free(points);
+  g_free (points);
 }
 
 static void
@@ -122,10 +133,10 @@ _append_floor (GulkanVertexBuffer *self,
     _append_circle (self, (float) i, y, 128, color);
 }
 
-gboolean
-xrd_scene_background_initialize (XrdSceneBackground    *self,
-                                 GulkanDevice          *device,
-                                 VkDescriptorSetLayout *layout)
+static gboolean
+_initialize (XrdSceneBackground    *self,
+             GulkanClient          *gulkan,
+             VkDescriptorSetLayout *layout)
 {
   gulkan_vertex_buffer_reset (self->vertex_buffer);
 
@@ -135,6 +146,7 @@ xrd_scene_background_initialize (XrdSceneBackground    *self,
   _append_floor (self->vertex_buffer, 20, 0.0f, &color);
   _append_floor (self->vertex_buffer, 20, 4.0f, &color);
 
+  GulkanDevice *device = gulkan_client_get_device (gulkan);
   if (!gulkan_vertex_buffer_alloc_empty (self->vertex_buffer, device,
                                          GXR_DEVICE_INDEX_MAX))
     return FALSE;
@@ -144,7 +156,7 @@ xrd_scene_background_initialize (XrdSceneBackground    *self,
   XrdSceneObject *obj = XRD_SCENE_OBJECT (self);
 
   VkDeviceSize ub_size = sizeof (XrdSceneBackgroundUniformBuffer);
-  if (!xrd_scene_object_initialize (obj, layout, ub_size))
+  if (!xrd_scene_object_initialize (obj, gulkan, layout, ub_size))
     return FALSE;
 
   xrd_scene_object_update_descriptors (obj);

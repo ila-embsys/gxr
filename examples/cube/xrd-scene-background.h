@@ -21,12 +21,9 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (XrdSceneBackground, xrd_scene_background,
                       XRD, SCENE_BACKGROUND, XrdSceneObject)
 
-XrdSceneBackground *xrd_scene_background_new (void);
-
-gboolean
-xrd_scene_background_initialize (XrdSceneBackground    *self,
-                                 GulkanDevice          *device,
-                                 VkDescriptorSetLayout *layout);
+XrdSceneBackground *
+xrd_scene_background_new (GulkanClient          *gulkan,
+                          VkDescriptorSetLayout *layout);
 
 void
 xrd_scene_background_render (XrdSceneBackground *self,

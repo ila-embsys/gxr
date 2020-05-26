@@ -21,12 +21,9 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (XrdScenePointer, xrd_scene_pointer,
                       XRD, SCENE_POINTER, XrdSceneObject)
 
-XrdScenePointer *xrd_scene_pointer_new (void);
-
-gboolean
-xrd_scene_pointer_initialize (XrdScenePointer       *self,
-                              GulkanDevice          *device,
-                              VkDescriptorSetLayout *layout);
+XrdScenePointer *
+xrd_scene_pointer_new (GulkanClient          *gulkan,
+                       VkDescriptorSetLayout *layout);
 
 void
 xrd_scene_pointer_render (XrdScenePointer   *self,

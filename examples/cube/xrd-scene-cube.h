@@ -20,13 +20,11 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (XrdSceneCube, xrd_scene_cube,
                       XRD, SCENE_CUBE, XrdSceneObject)
 
-XrdSceneCube *xrd_scene_cube_new (void);
-
-gboolean
-xrd_scene_cube_initialize (XrdSceneCube *self,
-                           GxrContext *context,
-                           GulkanRenderer *renderer,
-                           GulkanRenderPass *render_pass);
+XrdSceneCube *
+xrd_scene_cube_new (GulkanClient *gulkan,
+                    GulkanRenderer *renderer,
+                    GulkanRenderPass *render_pass,
+                    VkSampleCountFlagBits sample_count);
 
 void
 xrd_scene_cube_render (XrdSceneCube       *self,

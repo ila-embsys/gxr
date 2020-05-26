@@ -125,8 +125,9 @@ struct _XrdSceneCube
   XrdSceneObject parent;
 
   GulkanVertexBuffer *vb;
-  GxrContext *context;
+  GulkanClient *gulkan;
   GulkanRenderer *renderer;
+  VkSampleCountFlagBits sample_count;
 
   VkDescriptorSetLayout descriptor_set_layout;
 
@@ -155,8 +156,7 @@ _init_pipeline (XrdSceneCube *self,
 {
   const ShaderResources *resources = (const ShaderResources*) data;
 
-  GulkanClient *client = gxr_context_get_gulkan (self->context);
-  VkDevice device = gulkan_client_get_device_handle (client);
+  VkDevice device = gulkan_client_get_device_handle (self->gulkan);
 
   VkPipelineVertexInputStateCreateInfo vi_create_info = {
     .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
@@ -200,11 +200,6 @@ _init_pipeline (XrdSceneCube *self,
     return FALSE;
 
   VkRenderPass pass = gulkan_render_pass_get_handle (render_pass);
-
-
-  GxrApi api = gxr_context_get_api (self->context);
-  VkSampleCountFlagBits sample_count = (api == GXR_API_OPENXR) ?
-    VK_SAMPLE_COUNT_1_BIT : VK_SAMPLE_COUNT_4_BIT;
 
   VkGraphicsPipelineCreateInfo pipeline_info = {
     .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -263,7 +258,7 @@ _init_pipeline (XrdSceneCube *self,
     .pMultisampleState =
       &(VkPipelineMultisampleStateCreateInfo){
         .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-        .rasterizationSamples = sample_count,
+        .rasterizationSamples = self->sample_count,
       },
     .pColorBlendState =
       &(VkPipelineColorBlendStateCreateInfo){
@@ -302,10 +297,10 @@ _init_pipeline_layout (XrdSceneCube *self)
     .pPushConstantRanges = NULL
   };
 
-  GulkanClient *gc = gxr_context_get_gulkan (self->context);
+  VkDevice device = gulkan_client_get_device_handle (self->gulkan);
 
-  VkResult res = vkCreatePipelineLayout (gulkan_client_get_device_handle (gc),
-                                         &info, NULL, &self->pipeline_layout);
+  VkResult res = vkCreatePipelineLayout (device, &info, NULL,
+                                         &self->pipeline_layout);
   vk_check_error ("vkCreatePipelineLayout", res, FALSE);
 
   return TRUE;
@@ -323,8 +318,7 @@ _init_descriptor_set_layout (XrdSceneCube *self)
     },
   };
 
-  GulkanClient *gc = gxr_context_get_gulkan (self->context);
-  GulkanDevice *gulkan_device = gulkan_client_get_device (gc);
+  GulkanDevice *gulkan_device = gulkan_client_get_device (self->gulkan);
 
   VkDevice device = gulkan_device_get_handle (gulkan_device);
 
@@ -342,17 +336,19 @@ _init_descriptor_set_layout (XrdSceneCube *self)
   return TRUE;
 }
 
-gboolean
-xrd_scene_cube_initialize (XrdSceneCube *self,
-                           GxrContext *context,
-                           GulkanRenderer *renderer,
-                           GulkanRenderPass *render_pass)
+static gboolean
+_initialize (XrdSceneCube *self,
+             GulkanClient *gulkan,
+             GulkanRenderer *renderer,
+             GulkanRenderPass *render_pass,
+             VkSampleCountFlagBits sample_count)
 {
-  self->context = context;
-  self->renderer = renderer;
+  self->gulkan = g_object_ref (gulkan);
+  self->renderer = g_object_ref (renderer);
 
-  GulkanClient *gc = gxr_context_get_gulkan (context);
-  GulkanDevice *gulkan_device = gulkan_client_get_device (gc);
+  self->sample_count = sample_count;
+
+  GulkanDevice *gulkan_device = gulkan_client_get_device (gulkan);
 
   self->vb = GULKAN_VERTEX_BUFFER_NEW_FROM_ATTRIBS (gulkan_device, positions,
                                                     colors, normals);
@@ -377,7 +373,8 @@ xrd_scene_cube_initialize (XrdSceneCube *self,
     return FALSE;
 
   VkDeviceSize ubo_size = sizeof (XrdSceneCubeUniformBuffer);
-  if (!xrd_scene_object_initialize (obj, &self->descriptor_set_layout, ubo_size))
+  if (!xrd_scene_object_initialize (obj, gulkan,
+                                    &self->descriptor_set_layout, ubo_size))
     return FALSE;
 
   xrd_scene_object_update_descriptors (obj);
@@ -392,16 +389,24 @@ xrd_scene_cube_init (XrdSceneCube *self)
 }
 
 XrdSceneCube *
-xrd_scene_cube_new (void)
+xrd_scene_cube_new (GulkanClient *gulkan,
+                    GulkanRenderer *renderer,
+                    GulkanRenderPass *render_pass,
+                    VkSampleCountFlagBits sample_count)
 {
-  return (XrdSceneCube*) g_object_new (XRD_TYPE_SCENE_CUBE, 0);
+  XrdSceneCube *self = (XrdSceneCube*) g_object_new (XRD_TYPE_SCENE_CUBE, 0);
+  _initialize (self, gulkan, renderer, render_pass, sample_count);
+  return self;
 }
 
 static void
 xrd_scene_cube_finalize (GObject *gobject)
 {
   XrdSceneCube *self = XRD_SCENE_CUBE (gobject);
-  g_object_unref (self->vb);
+  g_clear_object (&self->vb);
+  g_clear_object (&self->renderer);
+  g_clear_object (&self->gulkan);
+
   G_OBJECT_CLASS (xrd_scene_cube_parent_class)->finalize (gobject);
 }
 
