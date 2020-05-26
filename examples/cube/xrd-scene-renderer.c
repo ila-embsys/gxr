@@ -142,10 +142,10 @@ xrd_scene_renderer_finalize (GObject *gobject)
 
   if (device != VK_NULL_HANDLE)
     {
-      g_object_unref (self->lights_buffer);
+      g_clear_object (&self->lights_buffer);
 
       for (uint32_t eye = 0; eye < 2; eye++)
-        g_object_unref (self->framebuffer[eye]);
+        g_clear_object (&self->framebuffer[eye]);
 
       vkDestroyPipelineLayout (device, self->pipeline_layout, NULL);
       vkDestroyDescriptorSetLayout (device, self->descriptor_set_layout, NULL);
@@ -158,10 +158,10 @@ xrd_scene_renderer_finalize (GObject *gobject)
       vkDestroyPipelineCache (device, self->pipeline_cache, NULL);
 
       if (self->render_pass)
-        g_object_unref (self->render_pass);
+        g_clear_object (&self->render_pass);
     }
 
-  g_object_unref (self->context);
+  g_clear_object (&self->context);
 
   G_OBJECT_CLASS (xrd_scene_renderer_parent_class)->finalize (gobject);
 }
