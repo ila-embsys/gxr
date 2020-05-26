@@ -25,6 +25,8 @@
 typedef struct Example
 {
   GMainLoop *loop;
+  gboolean restart;
+
   GxrContext *context;
 
   guint quit_source;
@@ -80,9 +82,11 @@ _cleanup (Example *self)
 
   g_clear_object (&self->actionset_wm);
 
-  g_object_unref (self->background);
+  g_clear_object (&self->background);
 
   g_clear_object (&self->renderer);
+
+  g_clear_object (&self->cube);
 
   g_clear_object (&self->context);
 
@@ -370,10 +374,12 @@ _action_grab_cb (GxrAction       *action,
                  Example         *self)
 {
   (void) action;
-  (void) self;
   if (event->active && event->changed && event->state)
     {
-      g_print ("Grab action\n");
+      g_print ("Restarting example\n");
+      self->restart = TRUE;
+
+      g_main_loop_quit (self->loop);
     }
   g_free (event);
 }
@@ -536,12 +542,37 @@ _init_example (Example *self)
   return TRUE;
 }
 
+static int
+_run ()
+{
+  gboolean restart = FALSE;
+
+  do {
+    Example self = {
+      .loop = g_main_loop_new (NULL, FALSE),
+      .restart = FALSE
+    };
+
+    if (!_init_example (&self))
+      return 1;
+
+    /* start glib main loop */
+    g_main_loop_run (self.loop);
+
+    restart = self.restart;
+
+    _cleanup (&self);
+
+    g_main_loop_unref (self.loop);
+  } while (restart);
+
+  return 0;
+}
+
 int
 main (void)
 {
-  Example self = {
-    .loop = g_main_loop_new (NULL, FALSE),
-  };
+
 
   GxrContext* gxr_context = gxr_context_new_headless ();
   gboolean scene_available =
@@ -555,16 +586,5 @@ main (void)
       return 1;
     }
 
-  if (!_init_example (&self))
-    return 1;
-
-  /* start glib main loop */
-  g_main_loop_run (self.loop);
-
-  /* don't clean up when quitting during switching */
-  _cleanup (&self);
-
-  g_main_loop_unref (self.loop);
-
-  return 0;
+  return _run ();
 }
