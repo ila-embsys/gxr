@@ -68,9 +68,6 @@ gxr_controller_set_pointer (GxrController *self, GxrPointer *pointer);
 void
 gxr_controller_set_pointer_tip (GxrController *self, GxrPointerTip *tip);
 
-guint64
-gxr_controller_get_handle (GxrController *self);
-
 GxrHoverState *
 gxr_controller_get_hover_state (GxrController *self);
 

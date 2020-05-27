@@ -15,7 +15,6 @@ struct _GxrController
 {
   GxrDevice parent;
 
-  guint64 controller_handle;
   GxrPointer *pointer_ray;
   GxrPointerTip *pointer_tip;
   GxrHoverState hover_state;
@@ -75,7 +74,10 @@ gxr_controller_new (guint64 controller_handle,
 {
   GxrController *controller =
     (GxrController*) g_object_new (GXR_TYPE_CONTROLLER, 0);
-  controller->controller_handle = controller_handle;
+
+  GxrDevice *device = GXR_DEVICE (controller);
+  gxr_device_set_handle (device, controller_handle);
+
   controller->context = context;
 
   gxr_device_set_model_name (GXR_DEVICE (controller), model_name);
@@ -120,12 +122,6 @@ void
 gxr_controller_set_pointer_tip (GxrController *self, GxrPointerTip *tip)
 {
   self->pointer_tip = tip;
-}
-
-guint64
-gxr_controller_get_handle (GxrController *self)
-{
-  return self->controller_handle;
 }
 
 GxrHoverState *

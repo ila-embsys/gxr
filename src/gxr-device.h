@@ -68,6 +68,13 @@ void
 gxr_device_get_transformation_direct (GxrDevice         *self,
                                       graphene_matrix_t *mat);
 
+guint64
+gxr_device_get_handle (GxrDevice *self);
+
+void
+gxr_device_set_handle (GxrDevice *self, guint64 handle);
+
+
 G_END_DECLS
 
 #endif /* GXR_DEVICE_H_ */

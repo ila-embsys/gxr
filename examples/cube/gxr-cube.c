@@ -338,7 +338,7 @@ _device_activate_cb (GxrDeviceManager *dm,
   Example *self = _self;
 
   g_print ("Controller %lu activated.\n",
-           gxr_controller_get_handle (controller));
+           gxr_device_get_handle (GXR_DEVICE (controller)));
 
   VkDescriptorSetLayout *descriptor_set_layout =
     xrd_scene_renderer_get_descriptor_set_layout (self->renderer);

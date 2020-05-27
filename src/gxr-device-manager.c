@@ -20,6 +20,8 @@ struct _GxrDeviceManager
 
   // controllers are also put into a list for easy controller only iteration
   GSList *controllers;
+
+  GMutex device_mutex;
 };
 
 G_DEFINE_TYPE (GxrDeviceManager, gxr_device_manager, G_TYPE_OBJECT)
@@ -62,6 +64,8 @@ gxr_device_manager_init (GxrDeviceManager *self)
   self->devices = g_hash_table_new_full (g_int64_hash, g_int64_equal,
                                          g_free, g_object_unref);
   self->controllers = NULL;
+
+  g_mutex_init (&self->device_mutex);
 }
 
 GxrDeviceManager *
@@ -76,6 +80,7 @@ gxr_device_manager_finalize (GObject *gobject)
   GxrDeviceManager *self = GXR_DEVICE_MANAGER (gobject);
   g_slist_free (self->controllers);
   g_hash_table_unref (self->devices);
+  g_mutex_clear (&self->device_mutex);
 }
 
 static void
@@ -111,6 +116,15 @@ gxr_device_manager_add (GxrDeviceManager *self,
                         guint64           device_id,
                         bool              is_controller)
 {
+  g_mutex_lock (&self->device_mutex);
+
+  if (g_hash_table_lookup (self->devices, &device_id) != NULL)
+    {
+      g_debug ("Device %lu already added\n", device_id);
+      g_mutex_unlock (&self->device_mutex);
+      return FALSE;
+    }
+
   gchar *model_name = gxr_context_get_device_model_name (context,
                                                          (uint32_t) device_id);
 
@@ -133,6 +147,8 @@ gxr_device_manager_add (GxrDeviceManager *self,
 
   _insert_at_key (self->devices, device_id, device);
 
+  g_mutex_unlock (&self->device_mutex);
+
   return TRUE;
 }
 
@@ -140,6 +156,8 @@ void
 gxr_device_manager_remove (GxrDeviceManager *self,
                            guint64           device_id)
 {
+  g_mutex_lock (&self->device_mutex);
+
   GxrDevice *device = g_hash_table_lookup (self->devices, &device_id);
   if (!device)
     {
@@ -155,11 +173,15 @@ gxr_device_manager_remove (GxrDeviceManager *self,
 
   g_hash_table_remove (self->devices, &device_id);
   g_debug ("Destroyed device %lu\n", device_id);
+
+  g_mutex_unlock (&self->device_mutex);
 }
 
 void
 gxr_device_manager_update_poses (GxrDeviceManager *self, GxrPose *poses)
 {
+  g_mutex_lock (&self->device_mutex);
+
   GList *device_keys = g_hash_table_get_keys (self->devices);
   for (GList *l = device_keys; l; l = l->next)
     {
@@ -181,19 +203,31 @@ gxr_device_manager_update_poses (GxrDeviceManager *self, GxrPose *poses)
 
       gxr_device_set_transformation_direct (device, &poses[i].transformation);
     }
+
+  g_mutex_unlock (&self->device_mutex);
 }
 
 GxrDevice *
 gxr_device_manager_get (GxrDeviceManager *self, guint64 device_id)
 {
+  g_mutex_lock (&self->device_mutex);
+
   GxrDevice *d = g_hash_table_lookup (self->devices, &device_id);
+
+  g_mutex_unlock (&self->device_mutex);
+
   return d;
 }
 
 GList *
 gxr_device_manager_get_devices (GxrDeviceManager *self)
 {
+  g_mutex_lock (&self->device_mutex);
+
   GList *devices = g_hash_table_get_values (self->devices);
+
+  g_mutex_unlock (&self->device_mutex);
+
   return devices;
 }
 
@@ -205,8 +239,12 @@ _update_pointer_pose_cb (GxrAction        *action,
   (void) action;
   (void) self;
 
+  g_mutex_lock (&self->device_mutex);
+
   gboolean valid = event->device_connected && event->active && event->valid;
   gxr_controller_update_pointer_pose (event->controller, &event->pose, valid);
+
+  g_mutex_unlock (&self->device_mutex);
 
   g_free (event);
 }
@@ -219,8 +257,12 @@ _update_hand_grip_pose_cb (GxrAction        *action,
   (void) action;
   (void) self;
 
+  g_mutex_lock (&self->device_mutex);
+
   gboolean valid = event->device_connected && event->active && event->valid;
   gxr_controller_update_hand_grip_pose (event->controller, &event->pose, valid);
+
+  g_mutex_unlock (&self->device_mutex);
 
   g_free (event);
 }

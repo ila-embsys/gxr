@@ -252,7 +252,7 @@ _action_poll_digital (OpenVRAction *self)
       GxrController *controller = l->data;
 
       TrackedDeviceIndex_t index =
-        (TrackedDeviceIndex_t) gxr_controller_get_handle (controller);
+        (TrackedDeviceIndex_t) gxr_device_get_handle (GXR_DEVICE (controller));
 
       VRActionHandle_t input_handle = _index_to_device_path (self, index);
 
@@ -318,7 +318,7 @@ _action_poll_digital_from_float (OpenVRAction *self)
       GxrController *controller = l->data;
 
       TrackedDeviceIndex_t index =
-        (TrackedDeviceIndex_t) gxr_controller_get_handle (controller);
+        (TrackedDeviceIndex_t) gxr_device_get_handle (GXR_DEVICE (controller));
       VRInputValueHandle_t input_handle = _index_to_device_path (self, index);
       err = f->input->GetAnalogActionData (self->handle, &data,
                                             sizeof(data), input_handle);
@@ -394,7 +394,7 @@ _action_poll_analog (OpenVRAction *self)
 
 
       TrackedDeviceIndex_t index =
-        (TrackedDeviceIndex_t) gxr_controller_get_handle (controller);
+        (TrackedDeviceIndex_t) gxr_device_get_handle (GXR_DEVICE (controller));
       VRInputValueHandle_t input_handle = _index_to_device_path (self, index);
       err = f->input->GetAnalogActionData (self->handle, &data,
                                            sizeof(data), input_handle);
@@ -495,7 +495,7 @@ _action_poll_pose_secs_from_now (OpenVRAction *self,
       GxrController *controller = l->data;
 
       TrackedDeviceIndex_t index =
-        (TrackedDeviceIndex_t) gxr_controller_get_handle (controller);
+        (TrackedDeviceIndex_t) gxr_device_get_handle (GXR_DEVICE (controller));
       VRInputValueHandle_t input_handle = _index_to_device_path (self, index);
 
       InputPoseActionData_t data;

@@ -136,3 +136,17 @@ gxr_device_get_transformation_direct (GxrDevice         *self,
   GxrDevicePrivate *priv = gxr_device_get_instance_private (self);
   graphene_matrix_init_from_matrix (mat, &priv->transformation);
 }
+
+guint64
+gxr_device_get_handle (GxrDevice *self)
+{
+  GxrDevicePrivate *priv = gxr_device_get_instance_private (self);
+  return priv->device_id;
+}
+
+void
+gxr_device_set_handle (GxrDevice *self, guint64 handle)
+{
+  GxrDevicePrivate *priv = gxr_device_get_instance_private (self);
+  priv->device_id = handle;
+}

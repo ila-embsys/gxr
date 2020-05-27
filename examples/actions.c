@@ -53,13 +53,13 @@ _digital_cb (GxrAction       *action,
   (void) self;
 
   g_print ("DIGITAL (%lu): %d | %d\n",
-           gxr_controller_get_handle(event->controller),
+           gxr_device_get_handle (GXR_DEVICE (event->controller)),
            event->active, event->state);
 
   if (event->changed)
     {
       gxr_action_trigger_haptic (self->haptic, 0.0f ,.2f, 160.f, 1.0f,
-                                 gxr_controller_get_handle(event->controller));
+                                 gxr_device_get_handle (GXR_DEVICE (event->controller)));
     }
 
   g_free (event);
@@ -74,7 +74,7 @@ _hand_pose_cb (GxrAction    *action,
   (void) self;
 
   g_print ("POSE (%lu): %d | %f %f %f | %f %f %f\n",
-           gxr_controller_get_handle(event->controller),
+           gxr_device_get_handle (GXR_DEVICE (event->controller)),
            event->active,
            graphene_vec3_get_x (&event->velocity),
            graphene_vec3_get_y (&event->velocity),

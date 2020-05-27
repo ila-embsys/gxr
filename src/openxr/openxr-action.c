@@ -202,7 +202,8 @@ _action_poll_digital (OpenXRAction *self)
   for (GSList *l = controllers; l; l = l->next)
     {
       GxrController *controller = GXR_CONTROLLER (l->data);
-      guint64 controller_handle = gxr_controller_get_handle (controller);
+      guint64 controller_handle =
+        gxr_device_get_handle (GXR_DEVICE (controller));
       XrPath subaction_path = _handle_to_subaction (self, controller_handle);
 
       XrActionStateGetInfo get_info = {
@@ -261,7 +262,8 @@ _action_poll_digital_from_float (OpenXRAction *self)
   for (GSList *l = controllers; l; l = l->next)
     {
       GxrController *controller = GXR_CONTROLLER (l->data);
-      guint64 controller_handle = gxr_controller_get_handle (controller);
+      guint64 controller_handle =
+        gxr_device_get_handle (GXR_DEVICE (controller));
       XrPath subaction_path = _handle_to_subaction (self, controller_handle);
 
       XrActionStateGetInfo get_info = {
@@ -322,7 +324,8 @@ _action_poll_analog (OpenXRAction *self)
   for (GSList *l = controllers; l; l = l->next)
     {
       GxrController *controller = GXR_CONTROLLER (l->data);
-      guint64 controller_handle = gxr_controller_get_handle (controller);
+      guint64 controller_handle =
+        gxr_device_get_handle (GXR_DEVICE (controller));
       XrPath subaction_path = _handle_to_subaction (self, controller_handle);
 
       XrActionStateGetInfo get_info = {
@@ -367,7 +370,8 @@ _action_poll_vec2f (OpenXRAction *self)
   for (GSList *l = controllers; l; l = l->next)
     {
       GxrController *controller = GXR_CONTROLLER (l->data);
-      guint64 controller_handle = gxr_controller_get_handle (controller);
+      guint64 controller_handle =
+        gxr_device_get_handle (GXR_DEVICE (controller));
       XrPath subaction_path = _handle_to_subaction (self, controller_handle);
 
       XrActionStateGetInfo get_info = {
@@ -438,7 +442,8 @@ _action_poll_pose_secs_from_now (OpenXRAction *self,
   for (GSList *l = controllers; l; l = l->next)
     {
       GxrController *controller = GXR_CONTROLLER (l->data);
-      guint64 controller_handle = gxr_controller_get_handle (controller);
+      guint64 controller_handle =
+        gxr_device_get_handle (GXR_DEVICE (controller));
       XrPath subaction_path = _handle_to_subaction (self, controller_handle);
 
       XrActionStateGetInfo get_info = {
