@@ -57,7 +57,10 @@ struct _OpenXRContext
   gboolean is_runnting;
 
   XrCompositionLayerProjection projection_layer;
-  XrFrameState frame_state;
+
+  volatile XrTime predicted_display_time;
+  volatile XrDuration predicted_display_period;
+
   XrView* views;
 
   int64_t swapchain_format;
@@ -79,6 +82,8 @@ openxr_context_init (OpenXRContext *self)
   self->view_count = 0;
   self->views = NULL;
   self->manifests = NULL;
+  self->predicted_display_time = 0;
+  self->predicted_display_period = 0;
 }
 
 OpenXRContext *
@@ -606,16 +611,21 @@ openxr_context_begin_frame(OpenXRContext* self)
 {
   XrResult result;
 
-  self->frame_state = (XrFrameState){
+  XrFrameState frame_state = {
     .type = XR_TYPE_FRAME_STATE,
+    .next = NULL
   };
   XrFrameWaitInfo frameWaitInfo = {
     .type = XR_TYPE_FRAME_WAIT_INFO,
+    .next = NULL
   };
-  result = xrWaitFrame(self->session, &frameWaitInfo, &self->frame_state);
+  result = xrWaitFrame(self->session, &frameWaitInfo, &frame_state);
   if (!_check_xr_result
       (result, "xrWaitFrame() was not successful, exiting..."))
     return FALSE;
+
+  self->predicted_display_time = frame_state.predictedDisplayTime;
+  self->predicted_display_period = frame_state.predictedDisplayPeriod;
 
   if (!self->is_visible)
     return FALSE;
@@ -623,7 +633,7 @@ openxr_context_begin_frame(OpenXRContext* self)
   // --- Create projection matrices and view matrices for each eye
   XrViewLocateInfo viewLocateInfo = {
     .type = XR_TYPE_VIEW_LOCATE_INFO,
-    .displayTime = self->frame_state.predictedDisplayTime,
+    .displayTime = frame_state.predictedDisplayTime,
     .space = self->local_space,
   };
 
@@ -709,7 +719,7 @@ openxr_context_end_frame(OpenXRContext* self)
   };
   XrFrameEndInfo frame_end_info = {
     .type = XR_TYPE_FRAME_END_INFO,
-    .displayTime = self->frame_state.predictedDisplayTime,
+    .displayTime = self->predicted_display_time,
     .layerCount = 1,
     .layers = projection_layers,
     .environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE,
@@ -855,7 +865,7 @@ _get_head_pose (GxrContext *context, graphene_matrix_t *pose)
   };
 
   XrResult result = xrLocateSpace (self->view_space, self->local_space,
-                                   self->frame_state.predictedDisplayTime,
+                                   self->predicted_display_time,
                                   &space_location);
   _check_xr_result (result, "Failed to locate head space.");
 
@@ -1453,7 +1463,7 @@ _get_device_extensions (GxrContext *self, GulkanClient *gc, GSList **out_list)
 XrTime
 openxr_context_get_predicted_display_time (OpenXRContext *self)
 {
-  return self->frame_state.predictedDisplayTime;
+  return self->predicted_display_time;
 }
 
 static void
