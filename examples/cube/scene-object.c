@@ -1,18 +1,18 @@
 /*
- * xrdesktop
+ * gxr
  * Copyright 2018 Collabora Ltd.
  * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
  * Author: Christoph Haag <christoph.haag@collabora.com>
  * SPDX-License-Identifier: MIT
  */
 
-#include "xrd-scene-object.h"
+#include "scene-object.h"
 #include <gulkan.h>
 
-#include "xrd-scene-renderer.h"
+#include "scene-renderer.h"
 #include "graphene-ext.h"
 
-typedef struct _XrdSceneObjectPrivate
+typedef struct _SceneObjectPrivate
 {
   GObject parent;
 
@@ -32,25 +32,25 @@ typedef struct _XrdSceneObjectPrivate
   gboolean visible;
 
   gboolean initialized;
-} XrdSceneObjectPrivate;
+} SceneObjectPrivate;
 
-G_DEFINE_TYPE_WITH_PRIVATE (XrdSceneObject, xrd_scene_object, G_TYPE_OBJECT)
-
-static void
-xrd_scene_object_finalize (GObject *gobject);
+G_DEFINE_TYPE_WITH_PRIVATE (SceneObject, scene_object, G_TYPE_OBJECT)
 
 static void
-xrd_scene_object_class_init (XrdSceneObjectClass *klass)
+scene_object_finalize (GObject *gobject);
+
+static void
+scene_object_class_init (SceneObjectClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = xrd_scene_object_finalize;
+  object_class->finalize = scene_object_finalize;
 }
 
 static void
-xrd_scene_object_init (XrdSceneObject *self)
+scene_object_init (SceneObject *self)
 {
-  XrdSceneObjectPrivate *priv = xrd_scene_object_get_instance_private (self);
+  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
 
   priv->descriptor_pool = NULL;
   graphene_matrix_init_identity (&priv->model_matrix);
@@ -61,10 +61,10 @@ xrd_scene_object_init (XrdSceneObject *self)
 }
 
 static void
-xrd_scene_object_finalize (GObject *gobject)
+scene_object_finalize (GObject *gobject)
 {
-  XrdSceneObject *self = XRD_SCENE_OBJECT (gobject);
-  XrdSceneObjectPrivate *priv = xrd_scene_object_get_instance_private (self);
+  SceneObject *self = SCENE_OBJECT (gobject);
+  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
   if (!priv->initialized)
     return;
 
@@ -74,13 +74,13 @@ xrd_scene_object_finalize (GObject *gobject)
 
   g_clear_object (&priv->gulkan);
 
-  G_OBJECT_CLASS (xrd_scene_object_parent_class)->finalize (gobject);
+  G_OBJECT_CLASS (scene_object_parent_class)->finalize (gobject);
 }
 
 static void
-_update_model_matrix (XrdSceneObject *self)
+_update_model_matrix (SceneObject *self)
 {
-  XrdSceneObjectPrivate *priv = xrd_scene_object_get_instance_private (self);
+  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
   graphene_matrix_init_scale (&priv->model_matrix,
                               priv->scale, priv->scale, priv->scale);
   graphene_matrix_rotate_quaternion (&priv->model_matrix, &priv->orientation);
@@ -90,58 +90,58 @@ _update_model_matrix (XrdSceneObject *self)
 
 
 void
-xrd_scene_object_bind (XrdSceneObject    *self,
-                       GxrEye             eye,
-                       VkCommandBuffer    cmd_buffer,
-                       VkPipelineLayout   pipeline_layout)
+scene_object_bind (SceneObject         *self,
+                       GxrEye           eye,
+                       VkCommandBuffer  cmd_buffer,
+                       VkPipelineLayout pipeline_layout)
 {
-  XrdSceneObjectPrivate *priv = xrd_scene_object_get_instance_private (self);
+  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
   vkCmdBindDescriptorSets (
     cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1,
    &priv->descriptor_sets[eye], 0, NULL);
 }
 
 void
-xrd_scene_object_set_scale (XrdSceneObject *self, float scale)
+scene_object_set_scale (SceneObject *self, float scale)
 {
-  XrdSceneObjectPrivate *priv = xrd_scene_object_get_instance_private (self);
+  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
   priv->scale = scale;
   _update_model_matrix (self);
 }
 
 void
-xrd_scene_object_set_position (XrdSceneObject     *self,
-                               graphene_point3d_t *position)
+scene_object_set_position (SceneObject        *self,
+                           graphene_point3d_t *position)
 {
-  XrdSceneObjectPrivate *priv = xrd_scene_object_get_instance_private (self);
+  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
   graphene_point3d_init_from_point (&priv->position, position);
   _update_model_matrix (self);
 }
 
 void
-xrd_scene_object_get_position (XrdSceneObject     *self,
-                               graphene_point3d_t *position)
+scene_object_get_position (SceneObject        *self,
+                           graphene_point3d_t *position)
 {
-  XrdSceneObjectPrivate *priv = xrd_scene_object_get_instance_private (self);
+  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
   graphene_point3d_init_from_point (position, &priv->position);
 }
 
 void
-xrd_scene_object_set_rotation_euler (XrdSceneObject   *self,
-                                     graphene_euler_t *euler)
+scene_object_set_rotation_euler (SceneObject      *self,
+                                 graphene_euler_t *euler)
 {
-  XrdSceneObjectPrivate *priv = xrd_scene_object_get_instance_private (self);
+  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
   graphene_quaternion_init_from_euler (&priv->orientation, euler);
   _update_model_matrix (self);
 }
 
 gboolean
-xrd_scene_object_initialize (XrdSceneObject        *self,
-                             GulkanClient          *gulkan,
-                             VkDescriptorSetLayout *layout,
-                             VkDeviceSize           uniform_buffer_size)
+scene_object_initialize (SceneObject           *self,
+                         GulkanClient          *gulkan,
+                         VkDescriptorSetLayout *layout,
+                         VkDeviceSize           uniform_buffer_size)
 {
-  XrdSceneObjectPrivate *priv = xrd_scene_object_get_instance_private (self);
+  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
   priv->gulkan = g_object_ref (gulkan);
 
   GulkanDevice *device = gulkan_client_get_device (gulkan);
@@ -195,11 +195,11 @@ xrd_scene_object_initialize (XrdSceneObject        *self,
 }
 
 void
-xrd_scene_object_update_descriptors_texture (XrdSceneObject *self,
-                                             VkSampler       sampler,
-                                             VkImageView     image_view)
+scene_object_update_descriptors_texture (SceneObject *self,
+                                         VkSampler    sampler,
+                                         VkImageView  image_view)
 {
-  XrdSceneObjectPrivate *priv = xrd_scene_object_get_instance_private (self);
+  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
   VkDevice device = gulkan_client_get_device_handle (priv->gulkan);
 
   for (uint32_t eye = 0; eye < 2; eye++)
@@ -240,9 +240,9 @@ xrd_scene_object_update_descriptors_texture (XrdSceneObject *self,
 }
 
 void
-xrd_scene_object_update_descriptors (XrdSceneObject *self)
+scene_object_update_descriptors (SceneObject *self)
 {
-  XrdSceneObjectPrivate *priv = xrd_scene_object_get_instance_private (self);
+  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
   VkDevice device = gulkan_client_get_device_handle (priv->gulkan);
 
   for (uint32_t eye = 0; eye < 2; eye++)
@@ -269,10 +269,10 @@ xrd_scene_object_update_descriptors (XrdSceneObject *self)
 }
 
 void
-xrd_scene_object_set_transformation (XrdSceneObject    *self,
-                                     graphene_matrix_t *mat)
+scene_object_set_transformation (SceneObject       *self,
+                                 graphene_matrix_t *mat)
 {
-  XrdSceneObjectPrivate *priv = xrd_scene_object_get_instance_private (self);
+  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
   graphene_ext_matrix_get_rotation_quaternion (mat, &priv->orientation);
   graphene_ext_matrix_get_translation_point3d (mat, &priv->position);
 
@@ -288,25 +288,25 @@ xrd_scene_object_set_transformation (XrdSceneObject    *self,
  */
 
 void
-xrd_scene_object_set_transformation_direct (XrdSceneObject    *self,
-                                            graphene_matrix_t *mat)
+scene_object_set_transformation_direct (SceneObject       *self,
+                                        graphene_matrix_t *mat)
 {
-  XrdSceneObjectPrivate *priv = xrd_scene_object_get_instance_private (self);
+  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
   graphene_matrix_init_from_matrix (&priv->model_matrix, mat);
 }
 
 void
-xrd_scene_object_get_transformation (XrdSceneObject    *self,
-                                     graphene_matrix_t *transformation)
+scene_object_get_transformation (SceneObject       *self,
+                                 graphene_matrix_t *transformation)
 {
-  XrdSceneObjectPrivate *priv = xrd_scene_object_get_instance_private (self);
+  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
   graphene_matrix_init_from_matrix (transformation, &priv->model_matrix);
 }
 
 graphene_matrix_t
-xrd_scene_object_get_transformation_no_scale (XrdSceneObject *self)
+scene_object_get_transformation_no_scale (SceneObject *self)
 {
-  XrdSceneObjectPrivate *priv = xrd_scene_object_get_instance_private (self);
+  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
 
   graphene_matrix_t mat;
   graphene_matrix_init_identity (&mat);
@@ -316,52 +316,52 @@ xrd_scene_object_get_transformation_no_scale (XrdSceneObject *self)
 }
 
 gboolean
-xrd_scene_object_is_visible (XrdSceneObject *self)
+scene_object_is_visible (SceneObject *self)
 {
-  XrdSceneObjectPrivate *priv = xrd_scene_object_get_instance_private (self);
+  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
   return priv->visible;
 }
 
 void
-xrd_scene_object_show (XrdSceneObject *self)
+scene_object_show (SceneObject *self)
 {
-  XrdSceneObjectPrivate *priv = xrd_scene_object_get_instance_private (self);
+  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
   priv->visible = TRUE;
 }
 
 void
-xrd_scene_object_hide (XrdSceneObject *self)
+scene_object_hide (SceneObject *self)
 {
-  XrdSceneObjectPrivate *priv = xrd_scene_object_get_instance_private (self);
+  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
   priv->visible = FALSE;
 }
 
 GulkanUniformBuffer *
-xrd_scene_object_get_ubo (XrdSceneObject *self, uint32_t eye)
+scene_object_get_ubo (SceneObject *self, uint32_t eye)
 {
-  XrdSceneObjectPrivate *priv = xrd_scene_object_get_instance_private (self);
+  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
   return priv->uniform_buffers[eye];
 }
 
 VkBuffer
-xrd_scene_object_get_transformation_buffer (XrdSceneObject *self, uint32_t eye)
+scene_object_get_transformation_buffer (SceneObject *self, uint32_t eye)
 {
-  XrdSceneObjectPrivate *priv = xrd_scene_object_get_instance_private (self);
+  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
   return gulkan_uniform_buffer_get_handle (priv->uniform_buffers[eye]);
 }
 
 VkDescriptorSet
-xrd_scene_object_get_descriptor_set (XrdSceneObject *self, uint32_t eye)
+scene_object_get_descriptor_set (SceneObject *self, uint32_t eye)
 {
-  XrdSceneObjectPrivate *priv = xrd_scene_object_get_instance_private (self);
+  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
   return priv->descriptor_sets[eye];
 }
 
 void
-xrd_scene_object_update_ubo (XrdSceneObject *self,
-                             GxrEye          eye,
-                             gpointer        uniform_buffer)
+scene_object_update_ubo (SceneObject *self,
+                             GxrEye   eye,
+                             gpointer uniform_buffer)
 {
-  XrdSceneObjectPrivate *priv = xrd_scene_object_get_instance_private (self);
+  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
   gulkan_uniform_buffer_update (priv->uniform_buffers[eye], uniform_buffer);
 }

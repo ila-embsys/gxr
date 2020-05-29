@@ -1,12 +1,12 @@
 /*
- * xrdesktop
+ * gxr
  * Copyright 2019 Collabora Ltd.
  * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
  * Author: Christoph Haag <christoph.haag@collabora.com>
  * SPDX-License-Identifier: MIT
  */
 
-#include "xrd-scene-renderer.h"
+#include "scene-renderer.h"
 
 #include <graphene.h>
 
@@ -14,8 +14,8 @@
 #include <gxr.h>
 
 #include "gxr-controller.h"
-#include "xrd-scene-pointer-tip.h"
-#include "xrd-scene-object.h"
+#include "scene-pointer-tip.h"
+#include "scene-object.h"
 
 #include "graphene-ext.h"
 
@@ -43,20 +43,20 @@ static void _init_renderdoc ()
 typedef struct {
   graphene_point3d_t position;
   graphene_point_t   uv;
-} XrdSceneVertex;
+} SceneVertex;
 
 typedef struct {
   float position[4];
   float color[3];
   float radius;
-} XrdSceneLight;
+} SceneLight;
 
 typedef struct {
-  XrdSceneLight lights[2];
+  SceneLight lights[2];
   int active_lights;
-} XrdSceneLights;
+} SceneLights;
 
-struct _XrdSceneRenderer
+struct _SceneRenderer
 {
   GulkanRenderer parent;
 
@@ -74,7 +74,7 @@ struct _XrdSceneRenderer
 
   gpointer scene_client;
 
-  XrdSceneLights lights;
+  SceneLights lights;
   GulkanUniformBuffer *lights_buffer;
 
   GxrContext *context;
@@ -89,20 +89,20 @@ struct _XrdSceneRenderer
   void (*update_lights) (gpointer data);
 };
 
-G_DEFINE_TYPE (XrdSceneRenderer, xrd_scene_renderer, GULKAN_TYPE_RENDERER)
+G_DEFINE_TYPE (SceneRenderer, scene_renderer, GULKAN_TYPE_RENDERER)
 
 static void
-xrd_scene_renderer_finalize (GObject *gobject);
+scene_renderer_finalize (GObject *gobject);
 
 static void
-xrd_scene_renderer_class_init (XrdSceneRendererClass *klass)
+scene_renderer_class_init (SceneRendererClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
-  object_class->finalize = xrd_scene_renderer_finalize;
+  object_class->finalize = scene_renderer_finalize;
 }
 
 static void
-xrd_scene_renderer_init (XrdSceneRenderer *self)
+scene_renderer_init (SceneRenderer *self)
 {
   self->render_scale = 1.0f;
   self->render_eye = NULL;
@@ -130,9 +130,9 @@ xrd_scene_renderer_init (XrdSceneRenderer *self)
 }
 
 static void
-xrd_scene_renderer_finalize (GObject *gobject)
+scene_renderer_finalize (GObject *gobject)
 {
-  XrdSceneRenderer *self = XRD_SCENE_RENDERER (gobject);
+  SceneRenderer *self = SCENE_RENDERER (gobject);
 
   GulkanClient *gc = gxr_context_get_gulkan (self->context);
 
@@ -163,17 +163,17 @@ xrd_scene_renderer_finalize (GObject *gobject)
 
   g_clear_object (&self->context);
 
-  G_OBJECT_CLASS (xrd_scene_renderer_parent_class)->finalize (gobject);
+  G_OBJECT_CLASS (scene_renderer_parent_class)->finalize (gobject);
 }
 
-XrdSceneRenderer *
-xrd_scene_renderer_new (void)
+SceneRenderer *
+scene_renderer_new (void)
 {
-  return (XrdSceneRenderer*) g_object_new (XRD_TYPE_SCENE_RENDERER, 0);
+  return (SceneRenderer*) g_object_new (SCENE_TYPE_RENDERER, 0);
 }
 
 static gboolean
-_init_framebuffers (XrdSceneRenderer *self)
+_init_framebuffers (SceneRenderer *self)
 {
   VkExtent2D extent;
   gxr_context_get_render_dimensions (self->context, &extent);
@@ -191,7 +191,7 @@ _init_framebuffers (XrdSceneRenderer *self)
 }
 
 static gboolean
-_init_shaders (XrdSceneRenderer *self)
+_init_shaders (SceneRenderer *self)
 {
   const char *shader_names[PIPELINE_COUNT] = {
     "window", "window", "pointer", "pointer", "pointer", "device_model"
@@ -214,7 +214,7 @@ _init_shaders (XrdSceneRenderer *self)
 
 /* Create a descriptor set layout compatible with all shaders. */
 static gboolean
-_init_descriptor_layout (XrdSceneRenderer *self)
+_init_descriptor_layout (SceneRenderer *self)
 {
   VkDescriptorSetLayoutCreateInfo info = {
     .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
@@ -262,7 +262,7 @@ _init_descriptor_layout (XrdSceneRenderer *self)
 }
 
 static gboolean
-_init_pipeline_layout (XrdSceneRenderer *self)
+_init_pipeline_layout (SceneRenderer *self)
 {
   VkPipelineLayoutCreateInfo info = {
     .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
@@ -282,7 +282,7 @@ _init_pipeline_layout (XrdSceneRenderer *self)
 }
 
 static gboolean
-_init_pipeline_cache (XrdSceneRenderer *self)
+_init_pipeline_cache (SceneRenderer *self)
 {
   VkPipelineCacheCreateInfo info = {
     .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO
@@ -308,16 +308,16 @@ typedef struct __attribute__((__packed__)) {
 } XrdPipelineConfig;
 
 static gboolean
-_init_graphics_pipelines (XrdSceneRenderer *self)
+_init_graphics_pipelines (SceneRenderer *self)
 {
   XrdPipelineConfig config[PIPELINE_COUNT] = {
     // PIPELINE_WINDOWS
     {
       .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-      .stride = sizeof (XrdSceneVertex),
+      .stride = sizeof (SceneVertex),
       .attribs = (VkVertexInputAttributeDescription []) {
         {0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0},
-        {1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof (XrdSceneVertex, uv)},
+        {1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof (SceneVertex, uv)},
       },
       .attrib_count = 2,
       .depth_stencil_state = &(VkPipelineDepthStencilStateCreateInfo) {
@@ -341,10 +341,10 @@ _init_graphics_pipelines (XrdSceneRenderer *self)
     // PIPELINE_TIP
     {
       .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-      .stride = sizeof (XrdSceneVertex),
+      .stride = sizeof (SceneVertex),
       .attribs = (VkVertexInputAttributeDescription []) {
         {0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0},
-        {1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof (XrdSceneVertex, uv)},
+        {1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof (SceneVertex, uv)},
       },
       .attrib_count = 2,
       .depth_stencil_state = &(VkPipelineDepthStencilStateCreateInfo) {
@@ -561,8 +561,8 @@ _init_graphics_pipelines (XrdSceneRenderer *self)
 }
 
 gboolean
-xrd_scene_renderer_init_vulkan (XrdSceneRenderer *self,
-                                GxrContext       *context)
+scene_renderer_init_vulkan (SceneRenderer *self,
+                            GxrContext    *context)
 {
   if (self->context)
     {
@@ -592,7 +592,7 @@ xrd_scene_renderer_init_vulkan (XrdSceneRenderer *self,
   GulkanDevice *device = gulkan_client_get_device (gc);
 
   self->lights_buffer =
-    gulkan_uniform_buffer_new (device, sizeof (XrdSceneLights));
+    gulkan_uniform_buffer_new (device, sizeof (SceneLights));
 
   if (!self->lights_buffer)
     return FALSE;
@@ -610,13 +610,13 @@ xrd_scene_renderer_init_vulkan (XrdSceneRenderer *self,
 }
 
 VkDescriptorSetLayout *
-xrd_scene_renderer_get_descriptor_set_layout (XrdSceneRenderer *self)
+scene_renderer_get_descriptor_set_layout (SceneRenderer *self)
 {
   return &self->descriptor_set_layout;
 }
 
 static void
-_render_stereo (XrdSceneRenderer *self, VkCommandBuffer cmd_buffer)
+_render_stereo (SceneRenderer *self, VkCommandBuffer cmd_buffer)
 {
   VkExtent2D extent = gulkan_renderer_get_extent (GULKAN_RENDERER (self));
 
@@ -653,8 +653,8 @@ _render_stereo (XrdSceneRenderer *self, VkCommandBuffer cmd_buffer)
 }
 
 void
-xrd_scene_renderer_update_lights (XrdSceneRenderer  *self,
-                                  GSList            *controllers)
+scene_renderer_update_lights (SceneRenderer *self,
+                              GSList        *controllers)
 {
   self->lights.active_lights = (int) g_slist_length (controllers);
   if (self->lights.active_lights > 2)
@@ -668,11 +668,11 @@ xrd_scene_renderer_update_lights (XrdSceneRenderer  *self,
       GxrController *controller =
         GXR_CONTROLLER (g_slist_nth_data (controllers, (guint) i));
 
-      XrdScenePointerTip *scene_tip =
-        XRD_SCENE_POINTER_TIP (gxr_controller_get_pointer_tip (controller));
+      ScenePointerTip *scene_tip =
+        SCENE_POINTER_TIP (gxr_controller_get_pointer_tip (controller));
 
       graphene_point3d_t tip_position;
-      xrd_scene_object_get_position (XRD_SCENE_OBJECT (scene_tip), &tip_position);
+      scene_object_get_position (SCENE_OBJECT (scene_tip), &tip_position);
 
       self->lights.lights[i].position[0] = tip_position.x;
       self->lights.lights[i].position[1] = tip_position.y;
@@ -684,7 +684,7 @@ xrd_scene_renderer_update_lights (XrdSceneRenderer  *self,
 }
 
 static void
-_draw (XrdSceneRenderer *self)
+_draw (SceneRenderer *self)
 {
 #if defined(RENDERDOC)
   if (rdoc_api) rdoc_api->StartFrameCapture(NULL, NULL);
@@ -715,7 +715,7 @@ _draw (XrdSceneRenderer *self)
 }
 
 gboolean
-xrd_scene_renderer_draw (XrdSceneRenderer *self)
+scene_renderer_draw (SceneRenderer *self)
 {
   _draw (self);
 
@@ -729,41 +729,41 @@ xrd_scene_renderer_draw (XrdSceneRenderer *self)
 }
 
 void
-xrd_scene_renderer_set_render_cb (XrdSceneRenderer *self,
-                                  void (*render_eye) (uint32_t         eye,
-                                                      VkCommandBuffer  cmd_buffer,
-                                                      VkPipelineLayout pipeline_layout,
-                                                      VkPipeline      *pipelines,
-                                                      gpointer         data),
-                                  gpointer scene_client)
+scene_renderer_set_render_cb (SceneRenderer *self,
+                              void (*render_eye) (uint32_t         eye,
+                                                  VkCommandBuffer  cmd_buffer,
+                                                  VkPipelineLayout pipeline_layout,
+                                                  VkPipeline      *pipelines,
+                                                  gpointer         data),
+                              gpointer scene_client)
 {
   self->render_eye = render_eye;
   self->scene_client = scene_client;
 }
 
 void
-xrd_scene_renderer_set_update_lights_cb (XrdSceneRenderer *self,
-                                         void (*update_lights) (gpointer data),
-                                         gpointer scene_client)
+scene_renderer_set_update_lights_cb (SceneRenderer *self,
+                                     void (*update_lights) (gpointer data),
+                                     gpointer scene_client)
 {
   self->update_lights = update_lights;
   self->scene_client = scene_client;
 }
 
 VkBuffer
-xrd_scene_renderer_get_lights_buffer_handle (XrdSceneRenderer *self)
+scene_renderer_get_lights_buffer_handle (SceneRenderer *self)
 {
   return gulkan_uniform_buffer_get_handle (self->lights_buffer);
 }
 
 GulkanClient *
-xrd_scene_renderer_get_gulkan (XrdSceneRenderer *self)
+scene_renderer_get_gulkan (SceneRenderer *self)
 {
   return gxr_context_get_gulkan (self->context);
 }
 
 GulkanRenderPass *
-xrd_scene_renderer_get_render_pass (XrdSceneRenderer *self)
+scene_renderer_get_render_pass (SceneRenderer *self)
 {
   return self->render_pass;
 }

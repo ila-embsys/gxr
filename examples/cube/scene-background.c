@@ -1,54 +1,54 @@
 /*
- * xrdesktop
+ * gxr
  * Copyright 2018 Collabora Ltd.
  * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
  * SPDX-License-Identifier: MIT
  */
 
-#include "xrd-scene-background.h"
+#include "scene-background.h"
 #include <gulkan.h>
 #include "graphene-ext.h"
 
 typedef struct __attribute__((__packed__)) {
   float mvp[16];
-} XrdSceneBackgroundUniformBuffer;
+} SceneBackgroundUniformBuffer;
 
-struct _XrdSceneBackground
+struct _SceneBackground
 {
-  XrdSceneObject parent;
+  SceneObject parent;
   GulkanVertexBuffer *vertex_buffer;
 };
 
-G_DEFINE_TYPE (XrdSceneBackground, xrd_scene_background, XRD_TYPE_SCENE_OBJECT)
+G_DEFINE_TYPE (SceneBackground, scene_background, SCENE_TYPE_OBJECT)
 
 static void
-xrd_scene_background_finalize (GObject *gobject);
+scene_background_finalize (GObject *gobject);
 
 static void
-xrd_scene_background_class_init (XrdSceneBackgroundClass *klass)
+scene_background_class_init (SceneBackgroundClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = xrd_scene_background_finalize;
+  object_class->finalize = scene_background_finalize;
 }
 
 static void
-xrd_scene_background_init (XrdSceneBackground *self)
+scene_background_init (SceneBackground *self)
 {
   self->vertex_buffer = gulkan_vertex_buffer_new ();
 }
 
 static gboolean
-_initialize (XrdSceneBackground    *self,
+_initialize (SceneBackground       *self,
              GulkanClient          *gulkan,
              VkDescriptorSetLayout *layout);
 
-XrdSceneBackground *
-xrd_scene_background_new (GulkanClient          *gulkan,
-                          VkDescriptorSetLayout *layout)
+SceneBackground *
+scene_background_new (GulkanClient          *gulkan,
+                      VkDescriptorSetLayout *layout)
 {
-  XrdSceneBackground *self =
-    (XrdSceneBackground*) g_object_new (XRD_TYPE_SCENE_BACKGROUND, 0);
+  SceneBackground *self =
+    (SceneBackground*) g_object_new (SCENE_TYPE_BACKGROUND, 0);
 
   _initialize (self, gulkan, layout);
 
@@ -56,11 +56,11 @@ xrd_scene_background_new (GulkanClient          *gulkan,
 }
 
 static void
-xrd_scene_background_finalize (GObject *gobject)
+scene_background_finalize (GObject *gobject)
 {
-  XrdSceneBackground *self = XRD_SCENE_BACKGROUND (gobject);
+  SceneBackground *self = SCENE_BACKGROUND (gobject);
   g_clear_object (&self->vertex_buffer);
-  G_OBJECT_CLASS (xrd_scene_background_parent_class)->finalize (gobject);
+  G_OBJECT_CLASS (scene_background_parent_class)->finalize (gobject);
 }
 
 static void
@@ -134,7 +134,7 @@ _append_floor (GulkanVertexBuffer *self,
 }
 
 static gboolean
-_initialize (XrdSceneBackground    *self,
+_initialize (SceneBackground       *self,
              GulkanClient          *gulkan,
              VkDescriptorSetLayout *layout)
 {
@@ -153,26 +153,26 @@ _initialize (XrdSceneBackground    *self,
 
   gulkan_vertex_buffer_map_array (self->vertex_buffer);
 
-  XrdSceneObject *obj = XRD_SCENE_OBJECT (self);
+  SceneObject *obj = SCENE_OBJECT (self);
 
-  VkDeviceSize ub_size = sizeof (XrdSceneBackgroundUniformBuffer);
-  if (!xrd_scene_object_initialize (obj, gulkan, layout, ub_size))
+  VkDeviceSize ub_size = sizeof (SceneBackgroundUniformBuffer);
+  if (!scene_object_initialize (obj, gulkan, layout, ub_size))
     return FALSE;
 
-  xrd_scene_object_update_descriptors (obj);
+  scene_object_update_descriptors (obj);
 
   return TRUE;
 }
 
 static void
-_update_ubo (XrdSceneBackground *self,
-             GxrEye              eye,
-             graphene_matrix_t  *vp)
+_update_ubo (SceneBackground   *self,
+             GxrEye             eye,
+             graphene_matrix_t *vp)
 {
-  XrdSceneBackgroundUniformBuffer ub;
+  SceneBackgroundUniformBuffer ub;
 
   graphene_matrix_t m_matrix;
-  xrd_scene_object_get_transformation (XRD_SCENE_OBJECT (self), &m_matrix);
+  scene_object_get_transformation (SCENE_OBJECT (self), &m_matrix);
 
   graphene_matrix_t mvp_matrix;
   graphene_matrix_multiply (&m_matrix, vp, &mvp_matrix);
@@ -182,28 +182,28 @@ _update_ubo (XrdSceneBackground *self,
   for (int i = 0; i < 16; i++)
     ub.mvp[i] = mvp[i];
 
-  xrd_scene_object_update_ubo (XRD_SCENE_OBJECT (self), eye, &ub);
+  scene_object_update_ubo (SCENE_OBJECT (self), eye, &ub);
 }
 
 void
-xrd_scene_background_render (XrdSceneBackground *self,
-                             GxrEye              eye,
-                             VkPipeline          pipeline,
-                             VkPipelineLayout    pipeline_layout,
-                             VkCommandBuffer     cmd_buffer,
-                             graphene_matrix_t  *vp)
+scene_background_render (SceneBackground   *self,
+                         GxrEye             eye,
+                         VkPipeline         pipeline,
+                         VkPipelineLayout   pipeline_layout,
+                         VkCommandBuffer    cmd_buffer,
+                         graphene_matrix_t *vp)
 {
   if (!gulkan_vertex_buffer_is_initialized (self->vertex_buffer))
     return;
 
-  XrdSceneObject *obj = XRD_SCENE_OBJECT (self);
-  if (!xrd_scene_object_is_visible (obj))
+  SceneObject *obj = SCENE_OBJECT (self);
+  if (!scene_object_is_visible (obj))
     return;
 
   vkCmdBindPipeline (cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
   _update_ubo (self, eye, vp);
 
-  xrd_scene_object_bind (obj, eye, cmd_buffer, pipeline_layout);
+  scene_object_bind (obj, eye, cmd_buffer, pipeline_layout);
   gulkan_vertex_buffer_draw (self->vertex_buffer, cmd_buffer);
 }

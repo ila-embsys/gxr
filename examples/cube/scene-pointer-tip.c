@@ -1,29 +1,29 @@
 /*
- * xrdesktop
+ * gxr
  * Copyright 2019 Collabora Ltd.
  * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
  * Author: Christoph Haag <christoph.haag@collabora.com>
  * SPDX-License-Identifier: MIT
  */
 
-#include "xrd-scene-pointer-tip.h"
+#include "scene-pointer-tip.h"
 
 #include "gxr-pointer-tip.h"
-#include "xrd-scene-object.h"
+#include "scene-object.h"
 
 typedef struct __attribute__((__packed__)) {
   float mvp[16];
   float mv[16];
   float m[16];
   bool receive_light;
-} XrdScenePointerTipUniformBuffer;
+} ScenePointerTipUniformBuffer;
 
 typedef struct __attribute__((__packed__)) {
   float color[4];
   bool flip_y;
-} XrdWindowUniformBuffer;
+} WindowUniformBuffer;
 
-struct _XrdScenePointerTip
+struct _ScenePointerTip
 {
   GObject parent;
 
@@ -39,7 +39,7 @@ struct _XrdScenePointerTip
 
   /* separate ubo used in fragment shader */
   GulkanUniformBuffer *shading_buffer;
-  XrdWindowUniformBuffer shading_buffer_data;
+  WindowUniformBuffer shading_buffer_data;
 
   GulkanTexture *texture;
   uint32_t texture_width;
@@ -53,26 +53,26 @@ struct _XrdScenePointerTip
 };
 
 static void
-xrd_scene_pointer_tip_interface_init (GxrPointerTipInterface *iface);
+scene_pointer_tip_interface_init (GxrPointerTipInterface *iface);
 
-G_DEFINE_TYPE_WITH_CODE (XrdScenePointerTip, xrd_scene_pointer_tip,
-                         XRD_TYPE_SCENE_OBJECT,
+G_DEFINE_TYPE_WITH_CODE (ScenePointerTip, scene_pointer_tip,
+                         SCENE_TYPE_OBJECT,
                          G_IMPLEMENT_INTERFACE (GXR_TYPE_POINTER_TIP,
-                                                xrd_scene_pointer_tip_interface_init))
+                                                scene_pointer_tip_interface_init))
 
 static void
-xrd_scene_pointer_tip_finalize (GObject *gobject);
+scene_pointer_tip_finalize (GObject *gobject);
 
 static void
-xrd_scene_pointer_tip_class_init (XrdScenePointerTipClass *klass)
+scene_pointer_tip_class_init (ScenePointerTipClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = xrd_scene_pointer_tip_finalize;
+  object_class->finalize = scene_pointer_tip_finalize;
 }
 
 static void
-xrd_scene_pointer_tip_init (XrdScenePointerTip *self)
+scene_pointer_tip_init (ScenePointerTip *self)
 {
   self->data.active = FALSE;
   self->data.animation = NULL;
@@ -94,7 +94,7 @@ xrd_scene_pointer_tip_init (XrdScenePointerTip *self)
 }
 
 static void
-_set_color (XrdScenePointerTip    *self,
+_set_color (ScenePointerTip       *self,
             const graphene_vec3_t *color)
 {
   graphene_vec3_init_from_vec3 (&self->color, color);
@@ -124,9 +124,9 @@ _append_plane (GulkanVertexBuffer *vbo, float aspect_ratio)
 }
 
 static gboolean
-_initialize (XrdScenePointerTip* self, VkDescriptorSetLayout *layout)
+_initialize (ScenePointerTip* self, VkDescriptorSetLayout *layout)
 {
-  XrdSceneObject *obj = XRD_SCENE_OBJECT (self);
+  SceneObject *obj = SCENE_OBJECT (self);
 
   GulkanDevice *device = gulkan_client_get_device (self->gulkan);
 
@@ -134,12 +134,12 @@ _initialize (XrdScenePointerTip* self, VkDescriptorSetLayout *layout)
   if (!gulkan_vertex_buffer_alloc_array (self->vertex_buffer, device))
     return FALSE;
 
-  VkDeviceSize ubo_size = sizeof (XrdScenePointerTipUniformBuffer);
-  if (!xrd_scene_object_initialize (obj, self->gulkan, layout, ubo_size))
+  VkDeviceSize ubo_size = sizeof (ScenePointerTipUniformBuffer);
+  if (!scene_object_initialize (obj, self->gulkan, layout, ubo_size))
     return FALSE;
 
   self->shading_buffer =
-    gulkan_uniform_buffer_new (device, sizeof (XrdWindowUniformBuffer));
+    gulkan_uniform_buffer_new (device, sizeof (WindowUniformBuffer));
   if (!self->shading_buffer)
     return FALSE;
 
@@ -151,8 +151,8 @@ _initialize (XrdScenePointerTip* self, VkDescriptorSetLayout *layout)
 }
 
 static void
-_scene_object_set_width_meters (XrdScenePointerTip *self,
-                                float           width_meters)
+_scene_object_set_width_meters (ScenePointerTip *self,
+                                float            width_meters)
 {
   float height_meters = width_meters / self->aspect_ratio;
 
@@ -160,16 +160,16 @@ _scene_object_set_width_meters (XrdScenePointerTip *self,
   self->initial_height_meter = height_meters;
   self->scale = 1.0;
 
-  xrd_scene_object_set_scale (XRD_SCENE_OBJECT (self), height_meters);
+  scene_object_set_scale (SCENE_OBJECT (self), height_meters);
 }
 
-XrdScenePointerTip *
-xrd_scene_pointer_tip_new (GulkanClient *gulkan,
-                           VkDescriptorSetLayout *layout,
-                           VkBuffer lights)
+ScenePointerTip *
+scene_pointer_tip_new (GulkanClient          *gulkan,
+                       VkDescriptorSetLayout *layout,
+                       VkBuffer               lights)
 {
-  XrdScenePointerTip* self =
-    (XrdScenePointerTip*) g_object_new (XRD_TYPE_SCENE_POINTER_TIP, 0);
+  ScenePointerTip* self =
+    (ScenePointerTip*) g_object_new (SCENE_TYPE_POINTER_TIP, 0);
 
   self->gulkan = g_object_ref (gulkan);
   self->lights = lights;
@@ -185,9 +185,9 @@ xrd_scene_pointer_tip_new (GulkanClient *gulkan,
 }
 
 static void
-xrd_scene_pointer_tip_finalize (GObject *gobject)
+scene_pointer_tip_finalize (GObject *gobject)
 {
-  XrdScenePointerTip *self = XRD_SCENE_POINTER_TIP (gobject);
+  ScenePointerTip *self = SCENE_POINTER_TIP (gobject);
 
   /* cancels potentially running animation */
   gxr_pointer_tip_set_active (GXR_POINTER_TIP (self), FALSE);
@@ -202,24 +202,24 @@ xrd_scene_pointer_tip_finalize (GObject *gobject)
 
   g_object_unref (self->gulkan);
 
-  G_OBJECT_CLASS (xrd_scene_pointer_tip_parent_class)->finalize (gobject);
+  G_OBJECT_CLASS (scene_pointer_tip_parent_class)->finalize (gobject);
 }
 
 static void
 _set_transformation (GxrPointerTip     *tip,
                      graphene_matrix_t *matrix)
 {
-  XrdScenePointerTip *self = XRD_SCENE_POINTER_TIP (tip);
-  xrd_scene_object_set_transformation (XRD_SCENE_OBJECT (self), matrix);
+  ScenePointerTip *self = SCENE_POINTER_TIP (tip);
+  scene_object_set_transformation (SCENE_OBJECT (self), matrix);
 }
 
 static void
 _get_transformation (GxrPointerTip     *tip,
                      graphene_matrix_t *matrix)
 {
-  XrdScenePointerTip *self = XRD_SCENE_POINTER_TIP (tip);
+  ScenePointerTip *self = SCENE_POINTER_TIP (tip);
   graphene_matrix_t transformation;
-  xrd_scene_object_get_transformation (XRD_SCENE_OBJECT (self),
+  scene_object_get_transformation (SCENE_OBJECT (self),
                                        &transformation);
   graphene_matrix_init_from_matrix (matrix, &transformation);
 }
@@ -228,39 +228,39 @@ _get_transformation (GxrPointerTip     *tip,
 static void
 _show (GxrPointerTip *tip)
 {
-  XrdScenePointerTip *self = XRD_SCENE_POINTER_TIP (tip);
-  XrdSceneObject *obj = XRD_SCENE_OBJECT (self);
-  xrd_scene_object_show (obj);
+  ScenePointerTip *self = SCENE_POINTER_TIP (tip);
+  SceneObject *obj = SCENE_OBJECT (self);
+  scene_object_show (obj);
 }
 
 static void
 _hide (GxrPointerTip *tip)
 {
-  XrdScenePointerTip *self = XRD_SCENE_POINTER_TIP (tip);
-  XrdSceneObject *obj = XRD_SCENE_OBJECT (self);
-  xrd_scene_object_hide (obj);
+  ScenePointerTip *self = SCENE_POINTER_TIP (tip);
+  SceneObject *obj = SCENE_OBJECT (self);
+  scene_object_hide (obj);
 }
 
 static gboolean
 _is_visible (GxrPointerTip *tip)
 {
-  XrdScenePointerTip *self = XRD_SCENE_POINTER_TIP (tip);
-  XrdSceneObject *obj = XRD_SCENE_OBJECT (self);
-  return xrd_scene_object_is_visible (obj);
+  ScenePointerTip *self = SCENE_POINTER_TIP (tip);
+  SceneObject *obj = SCENE_OBJECT (self);
+  return scene_object_is_visible (obj);
 }
 
 static void
 _set_width_meters (GxrPointerTip *tip,
                    float          meters)
 {
-  XrdScenePointerTip *self = XRD_SCENE_POINTER_TIP (tip);
+  ScenePointerTip *self = SCENE_POINTER_TIP (tip);
   _scene_object_set_width_meters (self, meters);
 }
 
 static GulkanTexture*
 _get_texture (GxrPointerTip *tip)
 {
-  XrdScenePointerTip *self = XRD_SCENE_POINTER_TIP (tip);
+  ScenePointerTip *self = SCENE_POINTER_TIP (tip);
   return self->texture;
 }
 
@@ -271,18 +271,18 @@ _submit_texture (GxrPointerTip *tip)
 }
 
 static void
-_update_descriptors (XrdScenePointerTip *self)
+_update_descriptors (ScenePointerTip *self)
 {
   VkDevice device = gulkan_client_get_device_handle (self->gulkan);
 
   for (uint32_t eye = 0; eye < 2; eye++)
   {
     VkBuffer transformation_buffer =
-    xrd_scene_object_get_transformation_buffer (XRD_SCENE_OBJECT (self),
+    scene_object_get_transformation_buffer (SCENE_OBJECT (self),
                                                 eye);
 
     VkDescriptorSet descriptor_set =
-    xrd_scene_object_get_descriptor_set (XRD_SCENE_OBJECT (self), eye);
+    scene_object_get_descriptor_set (SCENE_OBJECT (self), eye);
 
     VkWriteDescriptorSet *write_descriptor_sets = (VkWriteDescriptorSet []) {
       {
@@ -347,7 +347,7 @@ _update_descriptors (XrdScenePointerTip *self)
 static void
 _set_and_submit_texture (GxrPointerTip *tip, GulkanTexture *texture)
 {
-  XrdScenePointerTip *self = XRD_SCENE_POINTER_TIP (tip);
+  ScenePointerTip *self = SCENE_POINTER_TIP (tip);
   if (texture == self->texture)
     {
       g_debug ("Texture %p was already set on tip %p.\n",
@@ -423,7 +423,7 @@ _set_and_submit_texture (GxrPointerTip *tip, GulkanTexture *texture)
 static GxrPointerTipData*
 _get_data (GxrPointerTip *tip)
 {
-  XrdScenePointerTip *self = XRD_SCENE_POINTER_TIP (tip);
+  ScenePointerTip *self = SCENE_POINTER_TIP (tip);
   return &self->data;
 }
 
@@ -431,21 +431,21 @@ static GulkanClient*
 _get_gulkan_client (GxrPointerTip *tip)
 {
   (void) tip;
-  XrdScenePointerTip *self = XRD_SCENE_POINTER_TIP (tip);
+  ScenePointerTip *self = SCENE_POINTER_TIP (tip);
   return self->gulkan;
 }
 
 static void
-_update_ubo (XrdScenePointerTip *self,
-             GxrEye              eye,
-             graphene_matrix_t  *vp)
+_update_ubo (ScenePointerTip   *self,
+             GxrEye             eye,
+             graphene_matrix_t *vp)
 {
-  XrdScenePointerTipUniformBuffer ub;
+  ScenePointerTipUniformBuffer ub;
 
   ub.receive_light = FALSE;
 
   graphene_matrix_t m_matrix;
-  xrd_scene_object_get_transformation (XRD_SCENE_OBJECT (self), &m_matrix);
+  scene_object_get_transformation (SCENE_OBJECT (self), &m_matrix);
 
   graphene_matrix_t mvp_matrix;
   graphene_matrix_multiply (&m_matrix, vp, &mvp_matrix);
@@ -455,16 +455,16 @@ _update_ubo (XrdScenePointerTip *self,
   for (int i = 0; i < 16; i++)
     ub.mvp[i] = mvp[i];
 
-  xrd_scene_object_update_ubo (XRD_SCENE_OBJECT (self), eye, &ub);
+  scene_object_update_ubo (SCENE_OBJECT (self), eye, &ub);
 }
 
 void
-xrd_scene_pointer_tip_render (XrdScenePointerTip *self,
-                              GxrEye              eye,
-                              VkPipeline          pipeline,
-                              VkPipelineLayout    pipeline_layout,
-                              VkCommandBuffer     cmd_buffer,
-                              graphene_matrix_t  *vp)
+scene_pointer_tip_render (ScenePointerTip   *self,
+                          GxrEye             eye,
+                          VkPipeline         pipeline,
+                          VkPipelineLayout   pipeline_layout,
+                          VkCommandBuffer    cmd_buffer,
+                          graphene_matrix_t *vp)
 {
   if (!self->texture)
   {
@@ -472,20 +472,20 @@ xrd_scene_pointer_tip_render (XrdScenePointerTip *self,
     return;
   }
 
-  XrdSceneObject *obj = XRD_SCENE_OBJECT (self);
-  if (!xrd_scene_object_is_visible (obj))
+  SceneObject *obj = SCENE_OBJECT (self);
+  if (!scene_object_is_visible (obj))
     return;
 
   vkCmdBindPipeline (cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
   _update_ubo (self, eye, vp);
 
-  xrd_scene_object_bind (obj, eye, cmd_buffer, pipeline_layout);
+  scene_object_bind (obj, eye, cmd_buffer, pipeline_layout);
   gulkan_vertex_buffer_draw (self->vertex_buffer, cmd_buffer);
 }
 
 static void
-xrd_scene_pointer_tip_interface_init (GxrPointerTipInterface *iface)
+scene_pointer_tip_interface_init (GxrPointerTipInterface *iface)
 {
   iface->set_transformation = _set_transformation;
   iface->get_transformation = _get_transformation;

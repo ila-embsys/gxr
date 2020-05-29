@@ -1,12 +1,12 @@
 /*
- * xrdesktop
+ * gxr
  * Copyright 2018 Collabora Ltd.
  * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
  * Author: Christoph Haag <christoph.haag@collabora.com>
  * SPDX-License-Identifier: MIT
  */
 
-#include "xrd-scene-pointer.h"
+#include "scene-pointer.h"
 
 #include <gulkan.h>
 
@@ -15,36 +15,36 @@
 
 typedef struct __attribute__((__packed__)) {
   float mvp[16];
-} XrdScenePointerUniformBuffer;
+} ScenePointerUniformBuffer;
 
 static void
-xrd_scene_pointer_interface_init (GxrPointerInterface *iface);
+scene_pointer_interface_init (GxrPointerInterface *iface);
 
-struct _XrdScenePointer
+struct _ScenePointer
 {
-  XrdSceneObject parent;
+  SceneObject parent;
   GulkanVertexBuffer *vertex_buffer;
 
   GxrPointerData data;
 };
 
-G_DEFINE_TYPE_WITH_CODE (XrdScenePointer, xrd_scene_pointer, XRD_TYPE_SCENE_OBJECT,
+G_DEFINE_TYPE_WITH_CODE (ScenePointer, scene_pointer, SCENE_TYPE_OBJECT,
                          G_IMPLEMENT_INTERFACE (GXR_TYPE_POINTER,
-                                                xrd_scene_pointer_interface_init))
+                                                scene_pointer_interface_init))
 
 static void
-xrd_scene_pointer_finalize (GObject *gobject);
+scene_pointer_finalize (GObject *gobject);
 
 static void
-xrd_scene_pointer_class_init (XrdScenePointerClass *klass)
+scene_pointer_class_init (ScenePointerClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = xrd_scene_pointer_finalize;
+  object_class->finalize = scene_pointer_finalize;
 }
 
 static void
-xrd_scene_pointer_init (XrdScenePointer *self)
+scene_pointer_init (ScenePointer *self)
 {
   self->vertex_buffer = gulkan_vertex_buffer_new ();
 
@@ -52,7 +52,7 @@ xrd_scene_pointer_init (XrdScenePointer *self)
 }
 
 static gboolean
-_initialize (XrdScenePointer       *self,
+_initialize (ScenePointer          *self,
              GulkanClient          *gulkan,
              VkDescriptorSetLayout *layout)
 {
@@ -75,46 +75,46 @@ _initialize (XrdScenePointer       *self,
 
   gulkan_vertex_buffer_map_array (self->vertex_buffer);
 
-  XrdSceneObject *obj = XRD_SCENE_OBJECT (self);
+  SceneObject *obj = SCENE_OBJECT (self);
 
-  VkDeviceSize ubo_size = sizeof (XrdScenePointerUniformBuffer);
+  VkDeviceSize ubo_size = sizeof (ScenePointerUniformBuffer);
 
-  if (!xrd_scene_object_initialize (obj, gulkan, layout, ubo_size))
+  if (!scene_object_initialize (obj, gulkan, layout, ubo_size))
     return FALSE;
 
-  xrd_scene_object_update_descriptors (obj);
+  scene_object_update_descriptors (obj);
 
   return TRUE;
 }
 
-XrdScenePointer *
-xrd_scene_pointer_new (GulkanClient          *gulkan,
-                       VkDescriptorSetLayout *layout)
+ScenePointer *
+scene_pointer_new (GulkanClient          *gulkan,
+                   VkDescriptorSetLayout *layout)
 {
-  XrdScenePointer *self =
-    (XrdScenePointer*) g_object_new (XRD_TYPE_SCENE_POINTER, 0);
+  ScenePointer *self =
+    (ScenePointer*) g_object_new (SCENE_TYPE_POINTER, 0);
 
   _initialize (self, gulkan, layout);
   return self;
 }
 
 static void
-xrd_scene_pointer_finalize (GObject *gobject)
+scene_pointer_finalize (GObject *gobject)
 {
-  XrdScenePointer *self = XRD_SCENE_POINTER (gobject);
+  ScenePointer *self = SCENE_POINTER (gobject);
   g_clear_object (&self->vertex_buffer);
-  G_OBJECT_CLASS (xrd_scene_pointer_parent_class)->finalize (gobject);
+  G_OBJECT_CLASS (scene_pointer_parent_class)->finalize (gobject);
 }
 
 static void
-_update_ubo (XrdScenePointer   *self,
+_update_ubo (ScenePointer      *self,
              GxrEye             eye,
              graphene_matrix_t *vp)
 {
-  XrdScenePointerUniformBuffer ub;
+  ScenePointerUniformBuffer ub;
 
   graphene_matrix_t m_matrix;
-  xrd_scene_object_get_transformation (XRD_SCENE_OBJECT (self), &m_matrix);
+  scene_object_get_transformation (SCENE_OBJECT (self), &m_matrix);
 
   graphene_matrix_t mvp_matrix;
   graphene_matrix_multiply (&m_matrix, vp, &mvp_matrix);
@@ -124,29 +124,29 @@ _update_ubo (XrdScenePointer   *self,
   for (int i = 0; i < 16; i++)
     ub.mvp[i] = mvp[i];
 
-  xrd_scene_object_update_ubo (XRD_SCENE_OBJECT (self), eye, &ub);
+  scene_object_update_ubo (SCENE_OBJECT (self), eye, &ub);
 }
 
 void
-xrd_scene_pointer_render (XrdScenePointer   *self,
-                          GxrEye             eye,
-                          VkPipeline         pipeline,
-                          VkPipelineLayout   pipeline_layout,
-                          VkCommandBuffer    cmd_buffer,
-                          graphene_matrix_t *vp)
+scene_pointer_render (ScenePointer      *self,
+                      GxrEye             eye,
+                      VkPipeline         pipeline,
+                      VkPipelineLayout   pipeline_layout,
+                      VkCommandBuffer    cmd_buffer,
+                      graphene_matrix_t *vp)
 {
   if (!gulkan_vertex_buffer_is_initialized (self->vertex_buffer))
     return;
 
-  XrdSceneObject *obj = XRD_SCENE_OBJECT (self);
-  if (!xrd_scene_object_is_visible (obj))
+  SceneObject *obj = SCENE_OBJECT (self);
+  if (!scene_object_is_visible (obj))
     return;
 
   _update_ubo (self, eye, vp);
 
   vkCmdBindPipeline (cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-  xrd_scene_object_bind (obj, eye, cmd_buffer, pipeline_layout);
+  scene_object_bind (obj, eye, cmd_buffer, pipeline_layout);
   gulkan_vertex_buffer_draw (self->vertex_buffer, cmd_buffer);
 }
 
@@ -154,16 +154,16 @@ static void
 _move (GxrPointer        *pointer,
        graphene_matrix_t *transform)
 {
-  XrdScenePointer *self = XRD_SCENE_POINTER (pointer);
-  XrdSceneObject *obj = XRD_SCENE_OBJECT (self);
-  xrd_scene_object_set_transformation_direct (obj, transform);
+  ScenePointer *self = SCENE_POINTER (pointer);
+  SceneObject *obj = SCENE_OBJECT (self);
+  scene_object_set_transformation_direct (obj, transform);
 }
 
 static void
 _set_length (GxrPointer *pointer,
              float       length)
 {
-  XrdScenePointer *self = XRD_SCENE_POINTER (pointer);
+  ScenePointer *self = SCENE_POINTER (pointer);
   gulkan_vertex_buffer_reset (self->vertex_buffer);
 
   graphene_matrix_t identity;
@@ -179,7 +179,7 @@ _set_length (GxrPointer *pointer,
 static GxrPointerData*
 _get_data (GxrPointer *pointer)
 {
-  XrdScenePointer *self = XRD_SCENE_POINTER (pointer);
+  ScenePointer *self = SCENE_POINTER (pointer);
   return &self->data;
 }
 
@@ -187,37 +187,36 @@ static void
 _set_transformation (GxrPointer        *pointer,
                      graphene_matrix_t *matrix)
 {
-  XrdScenePointer *self = XRD_SCENE_POINTER (pointer);
-  xrd_scene_object_set_transformation (XRD_SCENE_OBJECT (self), matrix);
+  ScenePointer *self = SCENE_POINTER (pointer);
+  scene_object_set_transformation (SCENE_OBJECT (self), matrix);
 }
 
 static void
 _get_transformation (GxrPointer        *pointer,
                      graphene_matrix_t *matrix)
 {
-  XrdScenePointer *self = XRD_SCENE_POINTER (pointer);
+  ScenePointer *self = SCENE_POINTER (pointer);
   graphene_matrix_t transformation;
-  xrd_scene_object_get_transformation (XRD_SCENE_OBJECT (self),
-                                       &transformation);
+  scene_object_get_transformation (SCENE_OBJECT (self), &transformation);
   graphene_matrix_init_from_matrix (matrix, &transformation);
 }
 
 static void
 _show (GxrPointer *pointer)
 {
-  XrdScenePointer *self = XRD_SCENE_POINTER (pointer);
-  xrd_scene_object_show (XRD_SCENE_OBJECT (self));
+  ScenePointer *self = SCENE_POINTER (pointer);
+  scene_object_show (SCENE_OBJECT (self));
 }
 
 static void
 _hide (GxrPointer *pointer)
 {
-  XrdScenePointer *self = XRD_SCENE_POINTER (pointer);
-  xrd_scene_object_hide (XRD_SCENE_OBJECT (self));
+  ScenePointer *self = SCENE_POINTER (pointer);
+  scene_object_hide (SCENE_OBJECT (self));
 }
 
 static void
-xrd_scene_pointer_interface_init (GxrPointerInterface *iface)
+scene_pointer_interface_init (GxrPointerInterface *iface)
 {
   iface->move = _move;
   iface->set_length = _set_length;

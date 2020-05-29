@@ -14,13 +14,13 @@
 #include "gxr-pointer-tip.h"
 #include "gxr-controller.h"
 
-#include "xrd-scene-pointer.h"
-#include "xrd-scene-pointer-tip.h"
-#include "xrd-scene-renderer.h"
+#include "scene-pointer.h"
+#include "scene-pointer-tip.h"
+#include "scene-renderer.h"
 #include "gxr-device-manager.h"
-#include "xrd-scene-background.h"
-#include "xrd-scene-cube.h"
-#include "xrd-scene-model.h"
+#include "scene-background.h"
+#include "scene-cube.h"
+#include "scene-model.h"
 
 typedef struct Example
 {
@@ -46,9 +46,9 @@ typedef struct Example
 
   gboolean have_projection;
 
-  XrdSceneRenderer *renderer;
-  XrdSceneBackground *background;
-  XrdSceneCube *cube;
+  SceneRenderer *renderer;
+  SceneBackground *background;
+  SceneCube *cube;
 } Example;
 
 static gboolean
@@ -113,7 +113,7 @@ _iterate_cb (gpointer _self)
     gxr_context_get_projection (context, eye, self->near, self->far,
                                 &self->mat_projection[eye]);
 
-  xrd_scene_renderer_draw (self->renderer);
+  scene_renderer_draw (self->renderer);
 
   gxr_context_end_frame (context);
 
@@ -169,30 +169,30 @@ _render_pointers (Example           *self,
           continue;
         }
 
-      XrdScenePointer *pointer =
-        XRD_SCENE_POINTER (gxr_controller_get_pointer (controller));
+      ScenePointer *pointer =
+        SCENE_POINTER (gxr_controller_get_pointer (controller));
 
-      xrd_scene_pointer_render (pointer, eye,
+      scene_pointer_render (pointer, eye,
                                 pipelines[PIPELINE_POINTER],
                                 pipeline_layout, cmd_buffer, vp);
 
-      XrdScenePointerTip *scene_tip =
-        XRD_SCENE_POINTER_TIP (gxr_controller_get_pointer_tip (controller));
-      xrd_scene_pointer_tip_render (scene_tip, eye,
+      ScenePointerTip *scene_tip =
+        SCENE_POINTER_TIP (gxr_controller_get_pointer_tip (controller));
+      scene_pointer_tip_render (scene_tip, eye,
                                     pipelines[PIPELINE_TIP],
                                     pipeline_layout,
                                     cmd_buffer, vp);
     }
 }
 
-static XrdSceneModel *
+static SceneModel *
 _get_scene_model (Example *self, GxrDevice *device)
 {
   GxrModel *model = gxr_device_get_model (device);
   if (model)
     {
       // g_print ("Using model %s\n", gxr_model_get_name (model));
-      return XRD_SCENE_MODEL (model);
+      return SCENE_MODEL (model);
     }
 
   gchar *model_name = gxr_device_get_model_name (device);
@@ -200,12 +200,12 @@ _get_scene_model (Example *self, GxrDevice *device)
       return NULL;
 
   VkDescriptorSetLayout *descriptor_set_layout =
-    xrd_scene_renderer_get_descriptor_set_layout (self->renderer);
-  GulkanClient *gulkan = xrd_scene_renderer_get_gulkan (self->renderer);
+    scene_renderer_get_descriptor_set_layout (self->renderer);
+  GulkanClient *gulkan = scene_renderer_get_gulkan (self->renderer);
 
-  XrdSceneModel *sm = xrd_scene_model_new (descriptor_set_layout, gulkan);
+  SceneModel *sm = scene_model_new (descriptor_set_layout, gulkan);
   // g_print ("Loading model %s\n", model_name);
-  xrd_scene_model_load (sm, self->context, model_name);
+  scene_model_load (sm, self->context, model_name);
 
   gxr_device_set_model (device, GXR_MODEL (sm));
 
@@ -221,7 +221,7 @@ _render_device (GxrDevice         *device,
                 graphene_matrix_t *vp,
                 Example           *self)
 {
-  XrdSceneModel *model = _get_scene_model (self, device);
+  SceneModel *model = _get_scene_model (self, device);
   if (!model)
     {
       // g_print ("Device has no model\n");
@@ -237,7 +237,7 @@ _render_device (GxrDevice         *device,
   graphene_matrix_t transformation;
   gxr_device_get_transformation_direct (device, &transformation);
 
-  xrd_scene_model_render (model, eye, pipeline, cmd_buffer, pipeline_layout,
+  scene_model_render (model, eye, pipeline, cmd_buffer, pipeline_layout,
                           &transformation, vp);
 }
 
@@ -272,7 +272,7 @@ _render_eye_cb (uint32_t         eye,
   graphene_matrix_multiply (&self->mat_view[eye],
                             &self->mat_projection[eye], &vp);
 
-  xrd_scene_background_render (self->background, eye,
+  scene_background_render (self->background, eye,
                                pipelines[PIPELINE_BACKGROUND],
                                pipeline_layout, cmd_buffer, &vp);
 
@@ -280,7 +280,7 @@ _render_eye_cb (uint32_t         eye,
 
   _render_pointers (self, eye, cmd_buffer, pipelines, pipeline_layout, &vp);
 
-  xrd_scene_cube_render (self->cube, eye, cmd_buffer, &self->mat_view[eye],
+  scene_cube_render (self->cube, eye, cmd_buffer, &self->mat_view[eye],
                          &self->mat_projection[eye]);
 }
 
@@ -296,34 +296,34 @@ _update_lights_cb (gpointer _self)
   GxrDeviceManager *dm = gxr_context_get_device_manager (self->context);
   GSList *controllers = gxr_device_manager_get_controllers (dm);
 
-  xrd_scene_renderer_update_lights (self->renderer, controllers);
+  scene_renderer_update_lights (self->renderer, controllers);
 }
 
 static gboolean
-_init_vulkan (Example          *self,
-              XrdSceneRenderer *renderer,
-              GulkanClient     *gc)
+_init_vulkan (Example       *self,
+              SceneRenderer *renderer,
+              GulkanClient  *gc)
 {
   GxrContext *context = self->context;
-  if (!xrd_scene_renderer_init_vulkan (renderer, context))
+  if (!scene_renderer_init_vulkan (renderer, context))
     return FALSE;
 
   VkDescriptorSetLayout *descriptor_set_layout =
-    xrd_scene_renderer_get_descriptor_set_layout (renderer);
+    scene_renderer_get_descriptor_set_layout (renderer);
 
-  GulkanRenderPass *render_pass = xrd_scene_renderer_get_render_pass (renderer);
+  GulkanRenderPass *render_pass = scene_renderer_get_render_pass (renderer);
 
   GxrApi api = gxr_context_get_api (self->context);
   VkSampleCountFlagBits sample_count = (api == GXR_API_OPENXR) ?
     VK_SAMPLE_COUNT_1_BIT : VK_SAMPLE_COUNT_4_BIT;
 
-  self->cube = xrd_scene_cube_new (gc, GULKAN_RENDERER (renderer),
+  self->cube = scene_cube_new (gc, GULKAN_RENDERER (renderer),
                                    render_pass, sample_count);
 
-  self->background = xrd_scene_background_new (gc, descriptor_set_layout);
+  self->background = scene_background_new (gc, descriptor_set_layout);
 
-  xrd_scene_renderer_set_render_cb (renderer, _render_eye_cb, self);
-  xrd_scene_renderer_set_update_lights_cb (renderer, _update_lights_cb, self);
+  scene_renderer_set_render_cb (renderer, _render_eye_cb, self);
+  scene_renderer_set_update_lights_cb (renderer, _update_lights_cb, self);
 
   return TRUE;
 }
@@ -341,18 +341,18 @@ _device_activate_cb (GxrDeviceManager *dm,
            gxr_device_get_handle (GXR_DEVICE (controller)));
 
   VkDescriptorSetLayout *descriptor_set_layout =
-    xrd_scene_renderer_get_descriptor_set_layout (self->renderer);
+    scene_renderer_get_descriptor_set_layout (self->renderer);
   GulkanClient *client = gxr_context_get_gulkan (self->context);
 
   VkBuffer lights =
-    xrd_scene_renderer_get_lights_buffer_handle (self->renderer);
+    scene_renderer_get_lights_buffer_handle (self->renderer);
 
-  XrdScenePointer *pointer =
-    xrd_scene_pointer_new (client, descriptor_set_layout);
+  ScenePointer *pointer =
+    scene_pointer_new (client, descriptor_set_layout);
   gxr_controller_set_pointer (controller, GXR_POINTER (pointer));
 
-  XrdScenePointerTip *pointer_tip =
-    xrd_scene_pointer_tip_new (client, descriptor_set_layout, lights);
+  ScenePointerTip *pointer_tip =
+    scene_pointer_tip_new (client, descriptor_set_layout, lights);
   gxr_controller_set_pointer_tip (controller, GXR_POINTER_TIP (pointer_tip));
 }
 
@@ -522,7 +522,7 @@ _init_example (Example *self)
 
   GulkanClient *gc = gxr_context_get_gulkan (self->context);
 
-  self->renderer = xrd_scene_renderer_new ();
+  self->renderer = scene_renderer_new ();
 
   if (!_init_vulkan (self, self->renderer, gc))
     {

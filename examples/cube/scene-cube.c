@@ -1,5 +1,5 @@
 /*
- * xrdesktop
+ * gxr
  * Copyright 2018 Collabora Ltd.
  * Author: Christoph Haag <christoph.haag@collabora.com>
  * Author: Lubosz Sarnecki <lubosz.sarnecki@collabora.com>
@@ -8,13 +8,13 @@
 
 #include <gulkan.h>
 #include "graphene-ext.h"
-#include "xrd-scene-cube.h"
+#include "scene-cube.h"
 
 typedef struct __attribute__((__packed__)) {
   float mv_matrix[16];
   float mvp_matrix[16];
   float normal_matrix[12];
-} XrdSceneCubeUniformBuffer;
+} SceneCubeUniformBuffer;
 
 typedef struct {
   const gchar *vert;
@@ -120,9 +120,9 @@ static const float normals[] = {
   +0.0f, +1.0f, +0.0f  // down
 };
 
-struct _XrdSceneCube
+struct _SceneCube
 {
-  XrdSceneObject parent;
+  SceneObject parent;
 
   GulkanVertexBuffer *vb;
   GulkanClient *gulkan;
@@ -136,23 +136,23 @@ struct _XrdSceneCube
   VkPipelineLayout pipeline_layout;
 };
 
-G_DEFINE_TYPE (XrdSceneCube, xrd_scene_cube, XRD_TYPE_SCENE_OBJECT)
+G_DEFINE_TYPE (SceneCube, scene_cube, SCENE_TYPE_OBJECT)
 
 static void
-xrd_scene_cube_finalize (GObject *gobject);
+scene_cube_finalize (GObject *gobject);
 
 static void
-xrd_scene_cube_class_init (XrdSceneCubeClass *klass)
+scene_cube_class_init (SceneCubeClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = xrd_scene_cube_finalize;
+  object_class->finalize = scene_cube_finalize;
 }
 
 static gboolean
-_init_pipeline (XrdSceneCube *self,
+_init_pipeline (SceneCube        *self,
                 GulkanRenderPass *render_pass,
-                gconstpointer  data)
+                gconstpointer      data)
 {
   const ShaderResources *resources = (const ShaderResources*) data;
 
@@ -287,7 +287,7 @@ _init_pipeline (XrdSceneCube *self,
 }
 
 static gboolean
-_init_pipeline_layout (XrdSceneCube *self)
+_init_pipeline_layout (SceneCube *self)
 {
   VkPipelineLayoutCreateInfo info = {
     .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
@@ -307,7 +307,7 @@ _init_pipeline_layout (XrdSceneCube *self)
 }
 
 static gboolean
-_init_descriptor_set_layout (XrdSceneCube *self)
+_init_descriptor_set_layout (SceneCube *self)
 {
   VkDescriptorSetLayoutBinding bindings[] = {
     {
@@ -337,7 +337,7 @@ _init_descriptor_set_layout (XrdSceneCube *self)
 }
 
 static gboolean
-_initialize (XrdSceneCube *self,
+_initialize (SceneCube *self,
              GulkanClient *gulkan,
              GulkanRenderer *renderer,
              GulkanRenderPass *render_pass,
@@ -361,7 +361,7 @@ _initialize (XrdSceneCube *self,
     "/shaders/cube.frag.spv"
   };
 
-  XrdSceneObject *obj = XRD_SCENE_OBJECT (self);
+  SceneObject *obj = SCENE_OBJECT (self);
 
   if (!_init_descriptor_set_layout (self))
     return FALSE;
@@ -372,54 +372,54 @@ _initialize (XrdSceneCube *self,
   if (!_init_pipeline (self, render_pass, (gconstpointer) &resources))
     return FALSE;
 
-  VkDeviceSize ubo_size = sizeof (XrdSceneCubeUniformBuffer);
-  if (!xrd_scene_object_initialize (obj, gulkan,
-                                    &self->descriptor_set_layout, ubo_size))
+  VkDeviceSize ubo_size = sizeof (SceneCubeUniformBuffer);
+  if (!scene_object_initialize (obj, gulkan,
+                                &self->descriptor_set_layout, ubo_size))
     return FALSE;
 
-  xrd_scene_object_update_descriptors (obj);
+  scene_object_update_descriptors (obj);
 
   return TRUE;
 }
 
 static void
-xrd_scene_cube_init (XrdSceneCube *self)
+scene_cube_init (SceneCube *self)
 {
   (void) self;
 }
 
-XrdSceneCube *
-xrd_scene_cube_new (GulkanClient *gulkan,
-                    GulkanRenderer *renderer,
-                    GulkanRenderPass *render_pass,
-                    VkSampleCountFlagBits sample_count)
+SceneCube *
+scene_cube_new (GulkanClient         *gulkan,
+                GulkanRenderer       *renderer,
+                GulkanRenderPass     *render_pass,
+                VkSampleCountFlagBits sample_count)
 {
-  XrdSceneCube *self = (XrdSceneCube*) g_object_new (XRD_TYPE_SCENE_CUBE, 0);
+  SceneCube *self = (SceneCube*) g_object_new (SCENE_TYPE_CUBE, 0);
   _initialize (self, gulkan, renderer, render_pass, sample_count);
   return self;
 }
 
 static void
-xrd_scene_cube_finalize (GObject *gobject)
+scene_cube_finalize (GObject *gobject)
 {
-  XrdSceneCube *self = XRD_SCENE_CUBE (gobject);
+  SceneCube *self = SCENE_CUBE (gobject);
   g_clear_object (&self->vb);
   g_clear_object (&self->renderer);
   g_clear_object (&self->gulkan);
 
-  G_OBJECT_CLASS (xrd_scene_cube_parent_class)->finalize (gobject);
+  G_OBJECT_CLASS (scene_cube_parent_class)->finalize (gobject);
 }
 
 static void
-_update_ubo (XrdSceneCube      *self,
+_update_ubo (SceneCube         *self,
              GxrEye             eye,
              graphene_matrix_t *view,
              graphene_matrix_t *projection)
 {
-  XrdSceneCubeUniformBuffer ub;
+  SceneCubeUniformBuffer ub;
 
   graphene_matrix_t m_matrix;
-  xrd_scene_object_get_transformation (XRD_SCENE_OBJECT (self), &m_matrix);
+  scene_object_get_transformation (SCENE_OBJECT (self), &m_matrix);
 
   graphene_matrix_t mv_matrix;
   graphene_matrix_multiply (&m_matrix, view, &mv_matrix);
@@ -440,11 +440,11 @@ _update_ubo (XrdSceneCube      *self,
   /* The mat3 normalMatrix is laid out as 3 vec4s. */
   memcpy (ub.normal_matrix, ub.mv_matrix, sizeof ub.normal_matrix);
 
-  xrd_scene_object_update_ubo (XRD_SCENE_OBJECT (self), eye, &ub);
+  scene_object_update_ubo (SCENE_OBJECT (self), eye, &ub);
 }
 
 static void
-_set_transformation (XrdSceneCube *self)
+_set_transformation (SceneCube *self)
 {
   graphene_matrix_t m_matrix;
   graphene_matrix_init_identity (&m_matrix);
@@ -459,15 +459,15 @@ _set_transformation (XrdSceneCube *self)
   graphene_point3d_t pos = { 0.0f, 0.0f, -6.0f };
   graphene_matrix_translate (&m_matrix, &pos);
 
-  xrd_scene_object_set_transformation (XRD_SCENE_OBJECT (self), &m_matrix);
+  scene_object_set_transformation (SCENE_OBJECT (self), &m_matrix);
 }
 
 void
-xrd_scene_cube_render (XrdSceneCube       *self,
-                       GxrEye              eye,
-                       VkCommandBuffer     cmd_buffer,
-                       graphene_matrix_t  *view,
-                       graphene_matrix_t  *projection)
+scene_cube_render (SceneCube             *self,
+                       GxrEye             eye,
+                       VkCommandBuffer    cmd_buffer,
+                       graphene_matrix_t *view,
+                       graphene_matrix_t *projection)
 {
   if (!gulkan_vertex_buffer_is_initialized (self->vb))
     {
@@ -475,8 +475,8 @@ xrd_scene_cube_render (XrdSceneCube       *self,
       return;
     }
 
-  XrdSceneObject *obj = XRD_SCENE_OBJECT (self);
-  if (!xrd_scene_object_is_visible (obj))
+  SceneObject *obj = SCENE_OBJECT (self);
+  if (!scene_object_is_visible (obj))
     {
       // g_debug ("Cube not visible\n");
       return;
@@ -488,10 +488,10 @@ xrd_scene_cube_render (XrdSceneCube       *self,
   vkCmdBindPipeline (cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                      self->pipeline);
   /* TODO: would be nice if update_mvp matrix would fully update our ubo
-   * xrd_scene_object_update_mvp_matrix (obj, eye, vp); */
+   * scene_object_update_mvp_matrix (obj, eye, vp); */
   _update_ubo (self, eye, view, projection);
 
-  xrd_scene_object_bind (obj, eye, cmd_buffer, self->pipeline_layout);
+  scene_object_bind (obj, eye, cmd_buffer, self->pipeline_layout);
 
   gulkan_vertex_buffer_bind_with_offsets (self->vb, cmd_buffer);
   vkCmdDraw (cmd_buffer, 4, 1, 0, 0);
