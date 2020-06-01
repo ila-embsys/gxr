@@ -172,6 +172,28 @@ gxr_pointer_tip_get_data (GxrPointerTip *self);
 GulkanClient*
 gxr_pointer_tip_get_gulkan_client (GxrPointerTip *self);
 
+
+void
+gxr_pointer_tip_update_texture_resolution (GxrPointerTip *self,
+                                           int            width,
+                                           int            height);
+
+void
+gxr_pointer_tip_update_color (GxrPointerTip      *self,
+                              gboolean            active_color,
+                              graphene_point3d_t *color);
+
+void
+gxr_pointer_tip_update_pulse_alpha (GxrPointerTip *self,
+                                    double         alpha);
+
+void
+gxr_pointer_tip_update_keep_apparent_size (GxrPointerTip *self,
+                                           gboolean       keep_apparent_size);
+void
+gxr_pointer_tip_update_width_meters (GxrPointerTip *self,
+                                     float          width);
+
 G_END_DECLS
 
 #endif /* GXR_POINTER_TIP_H_ */

@@ -167,10 +167,16 @@ void
 gxr_pointer_show (GxrPointer *self)
 {
   GxrPointerInterface* iface = GXR_POINTER_GET_IFACE (self);
+  GxrPointerData *data = gxr_pointer_get_data (self);
+
+  if (!data->render_ray)
+    {
+      return;
+    }
+
   if (iface->show)
     iface->show (self);
 
-  GxrPointerData *data = gxr_pointer_get_data (self);
   data->visible = TRUE;
 }
 
@@ -189,5 +195,22 @@ gboolean
 gxr_pointer_is_visible (GxrPointer *self)
 {
   GxrPointerData *data = gxr_pointer_get_data (self);
+
+  if (!data->render_ray)
+    return FALSE;
+
   return data->visible;
+}
+
+void
+gxr_pointer_update_render_ray (GxrPointer *self, gboolean render_ray)
+{
+  GxrPointerData *data = gxr_pointer_get_data (self);
+
+  data->render_ray = render_ray;
+
+  if (!data->visible && render_ray)
+    gxr_pointer_show (self);
+  else if (data->visible && !render_ray)
+    gxr_pointer_hide (self);
 }

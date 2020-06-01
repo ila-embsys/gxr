@@ -21,11 +21,11 @@ G_BEGIN_DECLS
 G_DECLARE_INTERFACE (GxrPointer, gxr_pointer, GXR, POINTER, GObject)
 
 typedef struct {
-  GxrPointer *self;
   float start_offset;
   float length;
   float default_length;
   gboolean visible;
+  gboolean render_ray;
 } GxrPointerData;
 
 struct _GxrPointerInterface
@@ -111,6 +111,8 @@ gxr_pointer_hide (GxrPointer *self);
 gboolean
 gxr_pointer_is_visible (GxrPointer *self);
 
+void
+gxr_pointer_update_render_ray (GxrPointer *self, gboolean render_ray);
 
 G_END_DECLS
 

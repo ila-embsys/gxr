@@ -414,3 +414,68 @@ gxr_pointer_tip_update_apparent_size (GxrPointerTip *self,
 
   gxr_pointer_tip_set_width_meters (self, w);
 }
+
+void
+gxr_pointer_tip_update_texture_resolution (GxrPointerTip *self,
+                                           int            width,
+                                           int            height)
+{
+  GxrPointerTipData *data = gxr_pointer_tip_get_data (self);
+  GxrPointerTipSettings *s = &data->settings;
+  s->texture_width = width;
+  s->texture_height = height;
+
+  _init_texture (data->tip);
+}
+
+void
+gxr_pointer_tip_update_color (GxrPointerTip      *self,
+                              gboolean            active_color,
+                              graphene_point3d_t *color)
+
+{
+  GxrPointerTipData *data = gxr_pointer_tip_get_data (self);
+  GxrPointerTipSettings *s = &data->settings;
+
+  if (active_color)
+    graphene_point3d_init_from_point (&s->active_color, color);
+  else
+    graphene_point3d_init_from_point (&s->passive_color, color);
+
+  if ((!data->active && !active_color) || (data->active && active_color))
+    {
+      _cancel_animation (data);
+      _update_texture (data->tip);
+    }
+}
+
+void
+gxr_pointer_tip_update_pulse_alpha (GxrPointerTip *self,
+                                    double         alpha)
+{
+  GxrPointerTipData *data = gxr_pointer_tip_get_data (self);
+  GxrPointerTipSettings *s = &data->settings;
+  s->pulse_alpha = alpha;
+}
+
+void
+gxr_pointer_tip_update_keep_apparent_size (GxrPointerTip *self,
+                                           gboolean       keep_apparent_size)
+{
+  GxrPointerTipData *data = gxr_pointer_tip_get_data (self);
+  GxrPointerTipSettings *s = &data->settings;
+
+  s->keep_apparent_size = keep_apparent_size;
+  gxr_pointer_tip_set_width_meters (data->tip, s->width_meters);
+}
+
+void
+gxr_pointer_tip_update_width_meters (GxrPointerTip *self,
+                                     float          width)
+{
+  GxrPointerTipData *data = gxr_pointer_tip_get_data (self);
+  GxrPointerTipSettings *s = &data->settings;
+
+  s->width_meters = width * GXR_TIP_VIEWPORT_SCALE;
+  gxr_pointer_tip_set_width_meters (data->tip, s->width_meters);
+}
