@@ -689,7 +689,7 @@ openxr_context_aquire_swapchain(OpenXRContext* self,
 
   self->projection_views[i].pose = self->views[i].pose;
   self->projection_views[i].fov = self->views[i].fov;
-  self->projection_views[i].subImage.imageArrayIndex = *buffer_index;
+  self->projection_views[i].subImage.imageArrayIndex = 0;
 
   return TRUE;
 }
