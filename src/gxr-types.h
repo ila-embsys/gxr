@@ -19,7 +19,7 @@
 
 #include "gxr-enums.h"
 
-struct GxrController;
+struct _GxrController;
 typedef struct _GxrController GxrController;
 
 /**
