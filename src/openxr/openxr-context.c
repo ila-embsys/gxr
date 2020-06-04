@@ -30,6 +30,8 @@
 #include "gxr-io.h"
 #include "gxr-manifest.h"
 
+#include "gxr-version.h"
+
 #define NUM_CONTROLLERS 2
 
 struct _OpenXRContext
@@ -225,10 +227,10 @@ _create_instance(OpenXRContext* self)
     .enabledExtensionNames = enabledExtensions,
     .enabledApiLayerCount = 0,
     .applicationInfo = {
-      .applicationName = "xrgears",
-      .engineName = "xrgears",
+      .applicationName = "gxr",
+      .engineName = "gxr",
       .applicationVersion = 1,
-      .engineVersion = 1,
+      .engineVersion = GXR_VERSION_HEX,
       .apiVersion = XR_CURRENT_API_VERSION,
     },
   };
