@@ -1227,7 +1227,8 @@ _get_view (GxrContext *context,
 }
 
 static gboolean
-_begin_frame (GxrContext *context)
+_begin_frame (GxrContext *context,
+              GxrPose    *poses)
 {
   OpenXRContext *self = OPENXR_CONTEXT (context);
 
@@ -1245,19 +1246,22 @@ _begin_frame (GxrContext *context)
       }
   }
 
-  return TRUE;
-}
-
-static gboolean
-_end_frame (GxrContext *context,
-            GxrPose *poses)
-{
-  /* TODO: device model rendering not implemented in OpenXR */
+  /* TODO: update poses, so GxrContext can update them for DeviceManager.
+   * device poses are used for device model rendering, which is not in the
+   * OpenXR spec yet.
+   * Interaction is done using aim and grip pose actions instead.
+   */
   for (int i = 0; i < GXR_DEVICE_INDEX_MAX; i++)
     {
       poses[i].is_valid = FALSE;
     }
 
+  return TRUE;
+}
+
+static gboolean
+_end_frame (GxrContext *context)
+{
   OpenXRContext *self = OPENXR_CONTEXT (context);
   for (uint32_t i = 0; i < 2; i++)
   if (!openxr_context_release_swapchain(self, i)) {

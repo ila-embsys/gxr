@@ -581,15 +581,8 @@ _get_view (GxrContext *context,
 }
 
 static gboolean
-_begin_frame (GxrContext *context)
-{
-  (void) context;
-  return TRUE;
-}
-
-static gboolean
-_end_frame (GxrContext *context,
-            GxrPose *poses)
+_begin_frame (GxrContext *context,
+              GxrPose    *poses)
 {
   OpenVRContext *self = OPENVR_CONTEXT (context);
   openvr_compositor_wait_get_poses (poses, GXR_DEVICE_INDEX_MAX);
@@ -615,7 +608,13 @@ _end_frame (GxrContext *context,
           gxr_device_manager_add (dm, context, i, is_controller);
         }
     }
+  return TRUE;
+}
 
+static gboolean
+_end_frame (GxrContext *context)
+{
+  (void) context;
   return TRUE;
 }
 

@@ -94,11 +94,11 @@ struct _GxrContextClass
                graphene_matrix_t *mat);
 
   gboolean
-  (*begin_frame) (GxrContext *self);
+  (*begin_frame) (GxrContext *self,
+                  GxrPose    *poses);
 
   gboolean
-  (*end_frame) (GxrContext *self,
-                GxrPose *poses);
+  (*end_frame) (GxrContext *self);
 
   void
   (*acknowledge_quit) (GxrContext *self);

@@ -506,7 +506,15 @@ gxr_context_begin_frame (GxrContext *self)
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->begin_frame == NULL)
     return FALSE;
-  return klass->begin_frame (self);
+
+  GxrPose poses[GXR_DEVICE_INDEX_MAX];
+
+  gboolean res = klass->begin_frame (self, poses);
+
+  GxrDeviceManager *dm = gxr_context_get_device_manager (self);
+  gxr_device_manager_update_poses (dm, poses);
+
+  return res;
 }
 
 gboolean
@@ -516,11 +524,7 @@ gxr_context_end_frame (GxrContext *self)
   if (klass->end_frame == NULL)
     return FALSE;
 
-  GxrPose poses[GXR_DEVICE_INDEX_MAX];
-  gboolean res = klass->end_frame (self, poses);
-
-  GxrDeviceManager *dm = gxr_context_get_device_manager (self);
-  gxr_device_manager_update_poses (dm, poses);
+  gboolean res = klass->end_frame (self);
 
   return res;
 }
