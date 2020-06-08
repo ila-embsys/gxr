@@ -142,6 +142,8 @@ gxr_device_manager_add (GxrDeviceManager *self,
   g_debug ("Created device for %lu, model %s, is controller: %d\n",
            device_id, model_name, is_controller);
 
+  g_free (model_name);
+
   if (is_controller)
     self->controllers = g_slist_append (self->controllers, device);
 
