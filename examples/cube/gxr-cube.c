@@ -120,20 +120,21 @@ static GxrContext *
 _create_gxr_context ()
 {
   GSList *instance_ext_list =
-  gulkan_client_get_external_memory_instance_extensions ();
+    gulkan_client_get_external_memory_instance_extensions ();
 
   GSList *device_ext_list =
-  gulkan_client_get_external_memory_device_extensions ();
+    gulkan_client_get_external_memory_device_extensions ();
 
-  device_ext_list = g_slist_append (device_ext_list,
-                                    VK_KHR_MAINTENANCE1_EXTENSION_NAME);
+  device_ext_list =
+    g_slist_append (device_ext_list,
+                    g_strdup (VK_KHR_MAINTENANCE1_EXTENSION_NAME));
 
   GxrContext *context = gxr_context_new_from_vulkan_extensions (GXR_APP_SCENE,
                                                                 instance_ext_list,
                                                                 device_ext_list);
 
-  g_slist_free (instance_ext_list);
-  g_slist_free (device_ext_list);
+  g_slist_free_full (instance_ext_list, g_free);
+  g_slist_free_full (device_ext_list, g_free);
   return context;
 }
 
