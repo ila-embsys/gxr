@@ -204,6 +204,8 @@ gxr_device_manager_update_poses (GxrDeviceManager *self, GxrPose *poses)
       gxr_device_set_transformation_direct (device, &poses[i].transformation);
     }
 
+  g_list_free (device_keys);
+
   g_mutex_unlock (&self->device_mutex);
 }
 
