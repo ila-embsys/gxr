@@ -78,9 +78,13 @@ _url_to_name (char *url, char *name)
 {
   char *basename = g_path_get_basename (url);
   if (g_strcmp0 (basename, ".") == 0)
-    return FALSE;
+    {
+      g_free (basename);
+      return FALSE;
+    }
 
   strncpy (name, basename, XR_MAX_ACTION_NAME_SIZE - 1);
+  g_free (basename);
   return TRUE;
 }
 
