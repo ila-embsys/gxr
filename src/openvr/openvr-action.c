@@ -164,6 +164,7 @@ _index_to_device_path (OpenVRAction *self, TrackedDeviceIndex_t index)
     {
       g_printerr ("GetActionOrigins for %s failed, retrying later...\n",
                   gxr_action_get_url (GXR_ACTION (self)));
+      g_free (origin_handles);
       return INVALID_DEVICE_PATH;
     }
 
@@ -186,8 +187,13 @@ _index_to_device_path (OpenVRAction *self, TrackedDeviceIndex_t index)
         }
 
       if (origin_info.trackedDeviceIndex == index)
-        return origin_info.devicePath;
+        {
+          g_free (origin_handles);
+          return origin_info.devicePath;
+        }
     }
+
+  g_free (origin_handles);
   return INVALID_DEVICE_PATH;
 }
 
