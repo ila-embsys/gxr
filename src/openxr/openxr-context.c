@@ -573,11 +573,11 @@ _create_swapchains(OpenXRContext* self)
     }
   }
 
-  self->images = malloc(sizeof(XrSwapchainImageVulkanKHR*) * self->view_count);
-  for (uint32_t i = 0; i < self->view_count; i++) {
+  self->images =
+    g_malloc (sizeof(XrSwapchainImageVulkanKHR*) * self->view_count);
+  for (uint32_t i = 0; i < self->view_count; i++)
     self->images[i] =
-      malloc(sizeof(XrSwapchainImageVulkanKHR) * maxSwapchainLength);
-  }
+      g_malloc (sizeof(XrSwapchainImageVulkanKHR) * maxSwapchainLength);
 
   for (uint32_t i = 0; i < self->view_count; i++) {
     result = xrEnumerateSwapchainImages(
@@ -755,6 +755,10 @@ openxr_context_cleanup(OpenXRContext* self)
   g_free (self->configuration_views);
 
   g_free (self->views);
+
+  for (uint32_t i = 0; i < self->view_count; i++)
+    g_free (self->images[i]);
+  g_free (self->images);
 }
 
 static void
