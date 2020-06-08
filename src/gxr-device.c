@@ -64,6 +64,10 @@ gxr_device_finalize (GObject *gobject)
   GxrDevice *self = GXR_DEVICE (gobject);
   GxrDevicePrivate *priv = gxr_device_get_instance_private (self);
   g_free (priv->model_name);
+
+  if (priv->model)
+    g_object_unref (priv->model);
+
   G_OBJECT_CLASS (gxr_device_parent_class)->finalize (gobject);
 }
 
@@ -98,14 +102,18 @@ void
 gxr_device_set_model_name (GxrDevice *self, gchar *model_name)
 {
   GxrDevicePrivate *priv = gxr_device_get_instance_private (self);
+  if (priv->model_name)
+    g_free (priv->model_name);
   priv->model_name = g_strdup (model_name);
 }
 
-
+/* takes ownership */
 void
 gxr_device_set_model (GxrDevice *self, GxrModel *model)
 {
   GxrDevicePrivate *priv = gxr_device_get_instance_private (self);
+  if (priv->model)
+    g_object_unref (priv->model);
   priv->model = model;
 }
 
