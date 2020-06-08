@@ -61,6 +61,10 @@ gxr_io_write_resource_to_file (const gchar *res_base_path,
                                G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE),
                             NULL, &error);
 
+  g_object_unref (output_stream);
+  g_object_unref (res_input_stream);
+  g_object_unref (out_file);
+
   if (error != NULL)
     {
       g_printerr ("Unable to write to output stream: %s\n", error->message);
@@ -74,7 +78,6 @@ gxr_io_write_resource_to_file (const gchar *res_base_path,
       return FALSE;
     }
 
-  g_object_unref (out_file);
 
   return TRUE;
 }
