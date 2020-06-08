@@ -40,6 +40,10 @@ typedef struct Example
 
   guint poll_runtime_event_source_id;
 
+  gulong device_activate_signal;
+  gulong device_deactivate_signal;
+  guint sigint_signal;
+
   graphene_matrix_t mat_view[2];
   graphene_matrix_t mat_projection[2];
 
@@ -75,6 +79,12 @@ _cleanup (Example *self)
   if (self->poll_input_source_id > 0)
     g_source_remove (self->poll_input_source_id);
   self->poll_input_source_id = 0;
+
+  GxrDeviceManager *dm = gxr_context_get_device_manager (self->context);
+  g_signal_handler_disconnect(dm, self->device_activate_signal);
+  g_signal_handler_disconnect(dm, self->device_deactivate_signal);
+
+  g_source_remove (self->sigint_signal);
 
   g_clear_object (&self->actionset);
 
@@ -572,19 +582,23 @@ _init_example (Example *self)
   self->far = 100.0f;
   self->background = NULL;
   self->cube_grabbed = NULL;
+  self->device_activate_signal = 0;
+  self->device_deactivate_signal = 0;
   graphene_matrix_init_identity (&self->pointer_pose);
 
   self->render_source = g_timeout_add (1, _iterate_cb, self);
 
-  g_unix_signal_add (SIGINT, _sigint_cb, self);
-
+  self->sigint_signal =
+    g_unix_signal_add (SIGINT, _sigint_cb, self);
 
   self->context = _create_gxr_context ();
   GxrDeviceManager *dm = gxr_context_get_device_manager (self->context);
-  g_signal_connect (dm, "device-activate-event",
-                    (GCallback) _device_activate_cb, self);
-  g_signal_connect (dm, "device-deactivate-event",
-                    (GCallback) _device_deactivate_cb, self);
+  self->device_activate_signal =
+    g_signal_connect (dm, "device-activate-event",
+                      (GCallback) _device_activate_cb, self);
+  self->device_deactivate_signal =
+    g_signal_connect (dm, "device-deactivate-event",
+                      (GCallback) _device_deactivate_cb, self);
 
   GulkanClient *gc = gxr_context_get_gulkan (self->context);
 
