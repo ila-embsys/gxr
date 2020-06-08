@@ -27,6 +27,9 @@ typedef struct Example
   GMainLoop *loop;
   gboolean restart;
 
+  GxrController *cube_grabbed;
+  graphene_matrix_t pointer_pose;
+
   GxrContext *context;
 
   guint render_source;
@@ -253,6 +256,24 @@ _render_devices (uint32_t           eye,
 }
 
 static void
+_cube_set_position (Example *example)
+{
+  if (!example->cube_grabbed)
+    return;
+
+  graphene_matrix_t pointer_pose;
+  gxr_controller_get_pointer_pose (example->cube_grabbed, &pointer_pose);
+
+  GxrPointer *pointer = gxr_controller_get_pointer (example->cube_grabbed);
+  float distance = gxr_pointer_get_default_length (pointer);
+
+  graphene_point3d_t p = { .x = .0f, .y = .0f, .z = - distance };
+  graphene_matrix_transform_point3d (&pointer_pose, &p, &p);
+
+  scene_cube_override_position (example->cube, &p);
+}
+
+static void
 _render_eye_cb (uint32_t         eye,
                 VkCommandBuffer  cmd_buffer,
                 VkPipelineLayout pipeline_layout,
@@ -273,6 +294,7 @@ _render_eye_cb (uint32_t         eye,
 
   _render_pointers (self, eye, cmd_buffer, pipelines, pipeline_layout, &vp);
 
+  _cube_set_position (self);
   scene_cube_render (self->cube, eye, cmd_buffer, &self->mat_view[eye],
                          &self->mat_projection[eye]);
 }
@@ -362,9 +384,9 @@ _device_deactivate_cb (GxrDeviceManager *dm,
 }
 
 static void
-_action_grab_cb (GxrAction       *action,
-                 GxrDigitalEvent *event,
-                 Example         *self)
+_action_restart_cb (GxrAction       *action,
+                    GxrDigitalEvent *event,
+                    Example         *self)
 {
   (void) action;
   if (event->active && event->changed && event->state)
@@ -377,15 +399,63 @@ _action_grab_cb (GxrAction       *action,
   g_free (event);
 }
 
+static void
+_action_quit_cb (GxrAction       *action,
+                 GxrDigitalEvent *event,
+                 Example         *self)
+{
+  (void) action;
+  if (event->active && event->changed && event->state)
+    {
+      g_print ("Quitting example\n");
+      self->restart = FALSE;
+
+      g_main_loop_quit (self->loop);
+    }
+  g_free (event);
+}
+
+static void
+_action_grab_cb (GxrAction       *action,
+                 GxrDigitalEvent *event,
+                 Example         *self)
+{
+  (void) action;
+  if (event->active && event->changed && event->state)
+    {
+      if (self->cube_grabbed == NULL)
+        {
+          g_print ("Grabbing cube\n");
+          self->cube_grabbed = event->controller;
+        }
+    }
+  else if (event->active && event->changed && !event->state)
+    {
+      g_print ("Ungrabbing cube\n");
+      self->cube_grabbed = NULL;
+    }
+  g_free (event);
+}
+
 static GxrActionSet *
 _create_wm_action_set (Example *self)
 {
   GxrActionSet *set = gxr_action_set_new_from_url (self->context,
                                                    "/actions/wm");
 
+
+  gxr_action_set_connect (set, self->context, GXR_ACTION_DIGITAL,
+                          "/actions/wm/in/show_keyboard",
+                          (GCallback) _action_restart_cb, self);
+
   gxr_action_set_connect (set, self->context, GXR_ACTION_DIGITAL,
                           "/actions/wm/in/grab_window",
                           (GCallback) _action_grab_cb, self);
+
+  gxr_action_set_connect (set, self->context, GXR_ACTION_DIGITAL,
+                          "/actions/wm/in/menu",
+                          (GCallback) _action_quit_cb, self);
+
 
   GxrDeviceManager *dm = gxr_context_get_device_manager (self->context);
 
@@ -500,6 +570,8 @@ _init_example (Example *self)
   self->near = 0.05f;
   self->far = 100.0f;
   self->background = NULL;
+  self->cube_grabbed = NULL;
+  graphene_matrix_init_identity (&self->pointer_pose);
 
   self->render_source = g_timeout_add (1, _iterate_cb, self);
 
@@ -543,7 +615,7 @@ _run ()
   do {
     Example self = {
       .loop = g_main_loop_new (NULL, FALSE),
-      .restart = FALSE
+      .restart = FALSE,
     };
 
     if (!_init_example (&self))

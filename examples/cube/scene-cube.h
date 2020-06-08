@@ -34,6 +34,13 @@ scene_cube_render (SceneCube          *self,
                    graphene_matrix_t  *view,
                    graphene_matrix_t  *projection);
 
+void
+scene_cube_override_position (SceneCube          *self,
+                              graphene_point3d_t *position);
+
+void
+scene_cube_resume_default_position (SceneCube *self);
+
 G_END_DECLS
 
 #endif /* SCENE_CUBE_H_ */

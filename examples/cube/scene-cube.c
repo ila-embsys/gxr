@@ -134,9 +134,17 @@ struct _SceneCube
   VkPipeline pipeline;
 
   VkPipelineLayout pipeline_layout;
+
+  graphene_point3d_t pos;
 };
 
 G_DEFINE_TYPE (SceneCube, scene_cube, SCENE_TYPE_OBJECT)
+
+static void
+_set_default_position (SceneCube *self)
+{
+  self->pos = (graphene_point3d_t){ 0.0f, 0.0f, -6.0f };
+}
 
 static void
 scene_cube_finalize (GObject *gobject);
@@ -379,6 +387,8 @@ _initialize (SceneCube *self,
 
   scene_object_update_descriptors (obj);
 
+  _set_default_position (self);
+
   return TRUE;
 }
 
@@ -456,8 +466,7 @@ _set_transformation (SceneCube *self)
   graphene_matrix_rotate_y (&m_matrix, 45.0f - (0.5f * (float) t));
   graphene_matrix_rotate_z (&m_matrix, 10.0f + (0.15f * (float) t));
 
-  graphene_point3d_t pos = { 0.0f, 0.0f, -6.0f };
-  graphene_matrix_translate (&m_matrix, &pos);
+  graphene_matrix_translate (&m_matrix, &self->pos);
 
   scene_object_set_transformation (SCENE_OBJECT (self), &m_matrix);
 }
@@ -500,4 +509,17 @@ scene_cube_render (SceneCube             *self,
   vkCmdDraw (cmd_buffer, 4, 1, 12, 0);
   vkCmdDraw (cmd_buffer, 4, 1, 16, 0);
   vkCmdDraw (cmd_buffer, 4, 1, 20, 0);
+}
+
+void
+scene_cube_override_position (SceneCube          *self,
+                              graphene_point3d_t *position)
+{
+  self->pos = *position;
+}
+
+void
+scene_cube_resume_default_position (SceneCube *self)
+{
+  _set_default_position (self);
 }
