@@ -339,6 +339,11 @@ _set_up_views(OpenXRContext* self)
   result = xrEnumerateViewConfigurationViews(self->instance, self->system_id,
                                              self->view_config_type, 0,
                                              &self->view_count, NULL);
+
+  self->views = g_malloc (sizeof(XrView) * self->view_count);
+  for (uint32_t i = 0; i < self->view_count; i++)
+    self->views[i].type = XR_TYPE_VIEW;
+
   if (!_check_xr_result
       (result, "Failed to get view configuration view count!"))
     return FALSE;
@@ -639,11 +644,6 @@ openxr_context_begin_frame(OpenXRContext* self)
     .space = self->local_space,
   };
 
-  self->views = malloc(sizeof(XrView) * self->view_count);
-  for (uint32_t i = 0; i < self->view_count; i++) {
-    self->views[i].type = XR_TYPE_VIEW;
-  }
-
   XrViewState viewState = {
     .type = XR_TYPE_VIEW_STATE,
   };
@@ -730,9 +730,6 @@ openxr_context_end_frame(OpenXRContext* self)
   if (!_check_xr_result (result, "failed to end frame!"))
     return FALSE;
 
-  free(self->views);
-  self->views = NULL;
-
   return TRUE;
 }
 
@@ -756,6 +753,8 @@ openxr_context_cleanup(OpenXRContext* self)
     xrDestroyInstance(self->instance);
 
   g_free (self->configuration_views);
+
+  g_free (self->views);
 }
 
 static void
