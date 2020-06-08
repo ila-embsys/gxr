@@ -89,15 +89,14 @@ static void
 gxr_controller_finalize (GObject *gobject)
 {
   GxrController *self = GXR_CONTROLLER (gobject);
-  /* interface does not have finalize
   if (self->pointer_ray)
     g_object_unref (self->pointer_ray);
   if (self->pointer_tip)
     g_object_unref (self->pointer_tip);
 
   g_debug ("Destroyed pointer ray, pointer tip, controller\n");
-  */
-  (void) self;
+
+  G_OBJECT_CLASS (gxr_controller_parent_class)->finalize (gobject);
 }
 
 GxrPointer *
