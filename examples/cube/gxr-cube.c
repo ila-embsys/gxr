@@ -29,11 +29,10 @@ typedef struct Example
 
   GxrContext *context;
 
-  guint quit_source;
   guint render_source;
   bool shutdown;
 
-  GxrActionSet *actionset_wm;
+  GxrActionSet *actionset;
   guint poll_input_source_id;
 
   guint poll_runtime_event_source_id;
@@ -43,8 +42,6 @@ typedef struct Example
 
   float near;
   float far;
-
-  gboolean have_projection;
 
   SceneRenderer *renderer;
   SceneBackground *background;
@@ -68,10 +65,6 @@ _cleanup (Example *self)
     g_source_remove (self->render_source);
   self->render_source = 0;
 
-  if (self->quit_source > 0)
-    g_source_remove (self->quit_source);
-  self->quit_source = 0;
-
   if (self->poll_runtime_event_source_id > 0)
     g_source_remove (self->poll_runtime_event_source_id);
   self->poll_runtime_event_source_id = 0;
@@ -80,7 +73,7 @@ _cleanup (Example *self)
     g_source_remove (self->poll_input_source_id);
   self->poll_input_source_id = 0;
 
-  g_clear_object (&self->actionset_wm);
+  g_clear_object (&self->actionset);
 
   g_clear_object (&self->background);
 
@@ -424,13 +417,13 @@ _poll_input_events (Example *self)
     return FALSE;
   }
 
-  if (self->actionset_wm == NULL)
+  if (self->actionset == NULL)
     {
       g_printerr ("Error: Action Set not created!\n");
       return TRUE;
     }
 
-  if (!gxr_action_sets_poll (&self->actionset_wm, 1))
+  if (!gxr_action_sets_poll (&self->actionset, 1))
     {
       g_printerr ("Error polling actions\n");
       self->poll_input_source_id = 0;
@@ -474,8 +467,8 @@ _init_input_callbacks (Example *self)
         }
     }
 
-  self->actionset_wm = _create_wm_action_set (self);
-  gxr_action_sets_attach_bindings (&self->actionset_wm, self->context, 1);
+  self->actionset = _create_wm_action_set (self);
+  gxr_action_sets_attach_bindings (&self->actionset, self->context, 1);
 
   self->poll_input_source_id =
     g_timeout_add (3, (GSourceFunc) _poll_input_events, self);
@@ -502,7 +495,7 @@ _init_example (Example *self)
 
   self->poll_runtime_event_source_id = 0;
   self->poll_input_source_id = 0;
-  self->actionset_wm = NULL;
+  self->actionset = NULL;
   self->context = NULL;
   self->near = 0.05f;
   self->far = 100.0f;
