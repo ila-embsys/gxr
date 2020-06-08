@@ -754,6 +754,8 @@ openxr_context_cleanup(OpenXRContext* self)
     xrDestroySession(self->session);
   if (self->instance)
     xrDestroyInstance(self->instance);
+
+  g_free (self->configuration_views);
 }
 
 static void
