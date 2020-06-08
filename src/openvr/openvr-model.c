@@ -54,7 +54,9 @@ _load_openvr_mesh (RenderModel_t **model,
 
   do
     {
-      error = f->model->LoadRenderModel_Async ((char *) g_strdup (name), model);
+      char *name_cpy = g_strdup (name);
+      error = f->model->LoadRenderModel_Async (name_cpy, model);
+      g_free (name_cpy);
       /* Treat async loading synchronously.. */
       g_usleep (1000);
     }
