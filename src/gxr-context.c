@@ -596,7 +596,7 @@ gxr_context_get_device_model_name (GxrContext *self, uint32_t i)
 {
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->get_device_model_name == NULL)
-    return (gchar*) g_malloc (1);
+    return NULL;
   return klass->get_device_model_name (self, i);
 }
 
