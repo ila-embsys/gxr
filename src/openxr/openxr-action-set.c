@@ -270,6 +270,7 @@ _suggest_for_interaction_profile (GxrActionSet **sets, uint32_t count,
           g_string_free (full_path, TRUE);
         }
     }
+  g_list_free (action_list);
 
   g_debug ("Suggesting %d component bindings\n", num_suggestion);
   XrPath profile_path;
