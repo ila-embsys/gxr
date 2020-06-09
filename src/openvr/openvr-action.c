@@ -82,6 +82,7 @@ openvr_action_update_controllers (OpenVRAction *self)
       g_debug ("GetActionOrigins for %s failed, retrying later...\n",
                gxr_action_get_url (GXR_ACTION (self)));
       self->controller_update_required = TRUE;
+      g_free (origin_handles);
       return;
     }
 
@@ -105,6 +106,7 @@ openvr_action_update_controllers (OpenVRAction *self)
         {
           g_printerr ("GetOriginTrackedDeviceInfo for %s failed\n",
                       gxr_action_get_url (GXR_ACTION (self)));
+          g_free (origin_handles);
           return;
         }
 
