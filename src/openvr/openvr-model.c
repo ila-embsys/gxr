@@ -130,6 +130,7 @@ _load_texture (GulkanTexture            **texture,
                                     VK_FORMAT_R8G8B8A8_UNORM,
                                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                                     TRUE);
+  g_object_unref (pixbuf);
 
   guint mip_levels = gulkan_texture_get_mip_levels (*texture);
 
