@@ -42,9 +42,6 @@ static guint overlay_signals[LAST_SIGNAL] = { 0 };
 static void
 _finalize (GObject *gobject)
 {
-  GxrOverlay *self = GXR_OVERLAY (gobject);
-  GxrOverlayPrivate *priv = gxr_overlay_get_instance_private (self);
-  g_object_unref (priv->context);
   G_OBJECT_CLASS (gxr_overlay_parent_class)->finalize (gobject);
 }
 
@@ -122,7 +119,6 @@ gxr_overlay_new (GxrContext *context, gchar* key)
 {
   GxrOverlay *self = gxr_context_new_overlay (context, key);
   GxrOverlayPrivate *priv = gxr_overlay_get_instance_private (self);
-  g_object_ref (context);
   priv->context = context;
   return self;
 }
