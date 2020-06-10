@@ -49,10 +49,18 @@ openvr_context_init (OpenVRContext *self)
 static void
 openvr_context_finalize (GObject *gobject)
 {
+  GulkanClient *gulkan = gxr_context_get_gulkan (GXR_CONTEXT (gobject));
+
+  /* do gxr context finalization first, because openvr context must be alive for
+   * the gxr context to destroy the device manager */
+  G_OBJECT_CLASS (openvr_context_parent_class)->finalize (gobject);
+
   VR_ShutdownInternal();
   if (functions)
     g_clear_object (&functions);
-  G_OBJECT_CLASS (openvr_context_parent_class)->finalize (gobject);
+
+  if (gulkan)
+    g_object_unref (gulkan);
 }
 
 OpenVRContext *

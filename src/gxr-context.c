@@ -297,8 +297,8 @@ gxr_context_finalize (GObject *gobject)
   if (priv->device_manager != NULL)
     g_clear_object (&priv->device_manager);
 
-  if (priv->gc != NULL)
-    g_object_unref (priv->gc);
+  /* child classes MUST destroy gulkan after this destructor finishes */
+
   G_OBJECT_CLASS (gxr_context_parent_class)->finalize (gobject);
 }
 

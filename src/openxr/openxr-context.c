@@ -767,7 +767,13 @@ openxr_context_finalize (GObject *gobject)
   OpenXRContext *self = OPENXR_CONTEXT (gobject);
   openxr_context_cleanup (self);
   g_slist_free_full (self->manifests, g_object_unref);
+
+  GulkanClient *gulkan = gxr_context_get_gulkan (GXR_CONTEXT (gobject));
+
   G_OBJECT_CLASS (openxr_context_parent_class)->finalize (gobject);
+
+  if (gulkan)
+    g_object_unref (gulkan);
 }
 
 XrSwapchainImageVulkanKHR**
