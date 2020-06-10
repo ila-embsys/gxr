@@ -45,13 +45,18 @@ struct _OpenXRContext
   XrSystemId system_id;
   XrViewConfigurationType view_config_type;
 
+  /* One array per eye */
   XrSwapchain* swapchains;
+  XrSwapchainImageVulkanKHR** images;
+  /* last acquired swapchain image index */
+  uint32_t buffer_index;
+
+
   XrCompositionLayerProjectionView* projection_views;
   XrViewConfigurationView* configuration_views;
 
   XrGraphicsBindingVulkanKHR graphics_binding;
 
-  XrSwapchainImageVulkanKHR** images;
 
   uint32_t view_count;
 
@@ -112,7 +117,7 @@ xr_result_to_string(XrResult result)
 static gboolean
 _check_xr_result (XrResult result, const char* format, ...)
 {
-  if (XR_SUCCEEDED(result))
+  if (XR_SUCCEEDED (result))
     return TRUE;
 
   const char *resultString = xr_result_to_string (result);
@@ -134,16 +139,18 @@ _check_xr_result (XrResult result, const char* format, ...)
 }
 
 static gboolean
-_is_extension_supported (char* name, XrExtensionProperties* props, uint32_t count)
+_is_extension_supported (char                  *name,
+                         XrExtensionProperties *props,
+                         uint32_t               count)
 {
   for (uint32_t i = 0; i < count; i++)
-    if (!strcmp(name, props[i].extensionName))
+    if (!strcmp (name, props[i].extensionName))
       return TRUE;
   return FALSE;
 }
 
 static gboolean
-_check_vk_extension()
+_check_vk_extension (void)
 {
   XrResult result;
   uint32_t instanceExtensionCount = 0;
@@ -151,7 +158,7 @@ _check_vk_extension()
     NULL, 0, &instanceExtensionCount, NULL);
 
   if (!_check_xr_result (result,
-                 "Failed to enumerate number of instance extension properties"))
+      "Failed to enumerate number of instance extension properties"))
     return FALSE;
 
   XrExtensionProperties *instanceExtensionProperties =
@@ -161,60 +168,29 @@ _check_vk_extension()
       .type = XR_TYPE_EXTENSION_PROPERTIES,
     };
 
-  result = xrEnumerateInstanceExtensionProperties(NULL, instanceExtensionCount,
-                                                  &instanceExtensionCount,
-                                                  instanceExtensionProperties);
+  result = xrEnumerateInstanceExtensionProperties (NULL, instanceExtensionCount,
+                                                   &instanceExtensionCount,
+                                                   instanceExtensionProperties);
   if (!_check_xr_result (result, "Failed to enumerate extension properties"))
     return FALSE;
 
   result =
     _is_extension_supported (XR_KHR_VULKAN_ENABLE_EXTENSION_NAME,
-                           instanceExtensionProperties, instanceExtensionCount);
+                             instanceExtensionProperties,
+                             instanceExtensionCount);
 
   g_free (instanceExtensionProperties);
 
-  if (!_check_xr_result
-      (result,
-                 "Runtime does not support required instance extension %s\n",
-                 XR_KHR_VULKAN_ENABLE_EXTENSION_NAME))
+  if (!_check_xr_result (result,
+      "Runtime does not support required instance extension %s\n",
+       XR_KHR_VULKAN_ENABLE_EXTENSION_NAME))
     return FALSE;
 
   return TRUE;
 }
 
 static gboolean
-_enumerate_api_layers()
-{
-  uint32_t apiLayerCount;
-  xrEnumerateApiLayerProperties(0, &apiLayerCount, NULL);
-
-  XrApiLayerProperties *apiLayerProperties =
-    g_malloc (sizeof (XrApiLayerProperties) * apiLayerCount);
-  memset(apiLayerProperties, 0, apiLayerCount * sizeof(XrApiLayerProperties));
-
-  for (uint32_t i = 0; i < apiLayerCount; i++) {
-    apiLayerProperties[i].type = XR_TYPE_API_LAYER_PROPERTIES;
-  }
-  xrEnumerateApiLayerProperties(apiLayerCount, &apiLayerCount,
-                                apiLayerProperties);
-
-  for (uint32_t i = 0; i < apiLayerCount; i++) {
-    if (strcmp(apiLayerProperties->layerName, "XR_APILAYER_LUNARG_api_dump") ==
-        0) {
-      g_print("XR_APILAYER_LUNARG_api_dump supported.\n");
-    } else if (strcmp(apiLayerProperties->layerName,
-                      "XR_APILAYER_LUNARG_core_validation") == 0) {
-      g_print("XR_APILAYER_LUNARG_core_validation supported.\n");
-    }
-  }
-
-  g_free (apiLayerProperties);
-
-  return TRUE;
-}
-
-static gboolean
-_create_instance(OpenXRContext* self)
+_create_instance (OpenXRContext* self)
 {
   const char* const enabledExtensions[] = {
     XR_KHR_VULKAN_ENABLE_EXTENSION_NAME
@@ -236,7 +212,7 @@ _create_instance(OpenXRContext* self)
   };
 
   XrResult result;
-  result = xrCreateInstance(&instanceCreateInfo, &self->instance);
+  result = xrCreateInstance (&instanceCreateInfo, &self->instance);
   if (!_check_xr_result (result, "Failed to create XR instance."))
     return FALSE;
 
@@ -244,24 +220,24 @@ _create_instance(OpenXRContext* self)
 }
 
 static gboolean
-_create_system(OpenXRContext* self)
+_create_system (OpenXRContext* self)
 {
   XrPath vrConfigName;
   XrResult result;
-  result = xrStringToPath(self->instance, viewport_config_name, &vrConfigName);
+  result = xrStringToPath (self->instance, viewport_config_name, &vrConfigName);
   _check_xr_result (result, "failed to get viewport configuration name");
 
-  g_print("Got vrconfig %lu\n", vrConfigName);
+  g_debug ("Got vrconfig %lu\n", vrConfigName);
 
   XrSystemGetInfo systemGetInfo = {
     .type = XR_TYPE_SYSTEM_GET_INFO,
     .formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY,
   };
 
-  result = xrGetSystem(self->instance, &systemGetInfo, &self->system_id);
-  if (!_check_xr_result
-      (result, "Failed to get system for %s viewport configuration.",
-                 viewport_config_name))
+  result = xrGetSystem (self->instance, &systemGetInfo, &self->system_id);
+  if (!_check_xr_result (result,
+      "Failed to get system for %s viewport configuration.",
+      viewport_config_name))
     return FALSE;
 
   XrSystemProperties systemProperties = {
@@ -271,7 +247,7 @@ _create_system(OpenXRContext* self)
   };
 
   result =
-    xrGetSystemProperties(self->instance, self->system_id, &systemProperties);
+    xrGetSystemProperties (self->instance, self->system_id, &systemProperties);
   if (!_check_xr_result (result, "Failed to get System properties"))
     return FALSE;
 
@@ -279,12 +255,12 @@ _create_system(OpenXRContext* self)
 }
 
 static gboolean
-_set_up_views(OpenXRContext* self)
+_set_up_views (OpenXRContext* self)
 {
   uint32_t viewConfigurationCount;
   XrResult result;
-  result = xrEnumerateViewConfigurations(self->instance, self->system_id, 0,
-                                         &viewConfigurationCount, NULL);
+  result = xrEnumerateViewConfigurations (self->instance, self->system_id, 0,
+                                          &viewConfigurationCount, NULL);
   if (!_check_xr_result (result, "Failed to get view configuration count"))
     return FALSE;
 
@@ -297,55 +273,51 @@ _set_up_views(OpenXRContext* self)
     return FALSE;
 
   self->view_config_type = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
-  XrViewConfigurationType optionalSecondaryViewConfigType =
-    XR_VIEW_CONFIGURATION_TYPE_PRIMARY_MONO;
 
   /* if struct (more specifically .type) is still 0 after searching, then
    we have not found the config. This way we don't need to set a bool
    found to TRUE. */
   XrViewConfigurationProperties requiredViewConfigProperties = { 0 };
-  XrViewConfigurationProperties secondaryViewConfigProperties = { 0 };
 
-  for (uint32_t i = 0; i < viewConfigurationCount; ++i) {
-    XrViewConfigurationProperties properties = {
-      .type = XR_TYPE_VIEW_CONFIGURATION_PROPERTIES,
-    };
+  for (uint32_t i = 0; i < viewConfigurationCount; ++i)
+    {
+      XrViewConfigurationProperties properties = {
+        .type = XR_TYPE_VIEW_CONFIGURATION_PROPERTIES,
+      };
 
-    result = xrGetViewConfigurationProperties(
-      self->instance, self->system_id, viewConfigurations[i], &properties);
-    if (!_check_xr_result
-	  (result, "Failed to get view configuration info %d!", i))
-      return FALSE;
+      result = xrGetViewConfigurationProperties ( self->instance,
+                                                  self->system_id,
+                                                  viewConfigurations[i],
+                                                  &properties);
+      if (!_check_xr_result (result,
+          "Failed to get view configuration info %d!", i))
+        return FALSE;
 
-    if (viewConfigurations[i] == self->view_config_type &&
-        properties.viewConfigurationType == self->view_config_type) {
-      requiredViewConfigProperties = properties;
-    } else if (viewConfigurations[i] == optionalSecondaryViewConfigType &&
-               properties.viewConfigurationType ==
-                 optionalSecondaryViewConfigType) {
-      secondaryViewConfigProperties = properties;
+      if (viewConfigurations[i] == self->view_config_type &&
+          properties.viewConfigurationType == self->view_config_type)
+        requiredViewConfigProperties = properties;
     }
-  }
 
   g_free (viewConfigurations);
 
   if (requiredViewConfigProperties.type !=
-      XR_TYPE_VIEW_CONFIGURATION_PROPERTIES) {
-    g_print("Couldn't get required VR View Configuration %s from Runtime!\n",
-              viewport_config_name);
-    return FALSE;
-  }
+      XR_TYPE_VIEW_CONFIGURATION_PROPERTIES)
+    {
+      g_print("Couldn't get required VR View Configuration %s from Runtime!\n",
+                viewport_config_name);
+      return FALSE;
+    }
 
-  result = xrEnumerateViewConfigurationViews(self->instance, self->system_id,
-                                             self->view_config_type, 0,
-                                             &self->view_count, NULL);
+  result = xrEnumerateViewConfigurationViews (self->instance, self->system_id,
+                                              self->view_config_type, 0,
+                                              &self->view_count, NULL);
 
   self->views = g_malloc (sizeof(XrView) * self->view_count);
   for (uint32_t i = 0; i < self->view_count; i++)
     self->views[i].type = XR_TYPE_VIEW;
 
-  if (!_check_xr_result
-      (result, "Failed to get view configuration view count!"))
+  if (!_check_xr_result (result,
+      "Failed to get view configuration view count!"))
     return FALSE;
 
   self->configuration_views =
@@ -358,66 +330,44 @@ _set_up_views(OpenXRContext* self)
       (result, "Failed to enumerate view configuration views!"))
     return FALSE;
 
-  uint32_t secondaryViewConfigurationViewCount = 0;
-  if (secondaryViewConfigProperties.type ==
-      XR_TYPE_VIEW_CONFIGURATION_PROPERTIES) {
-
-    result = xrEnumerateViewConfigurationViews(
-      self->instance, self->system_id, optionalSecondaryViewConfigType, 0,
-      &secondaryViewConfigurationViewCount, NULL);
-    if (!_check_xr_result
-	  (result, "Failed to get view configuration view count!"))
-      return FALSE;
-  }
-
-  if (secondaryViewConfigProperties.type ==
-      XR_TYPE_VIEW_CONFIGURATION_PROPERTIES) {
-    result = xrEnumerateViewConfigurationViews(
-      self->instance, self->system_id, optionalSecondaryViewConfigType,
-      secondaryViewConfigurationViewCount, &secondaryViewConfigurationViewCount,
-      self->configuration_views);
-    if (!_check_xr_result
-	  (result, "Failed to enumerate view configuration views!"))
-      return FALSE;
-  }
-
   return TRUE;
 }
 
 static gboolean
-_check_graphics_api_support(OpenXRContext* self)
+_check_graphics_api_support (OpenXRContext* self)
 {
   XrGraphicsRequirementsVulkanKHR vk_reqs = {
     .type = XR_TYPE_GRAPHICS_REQUIREMENTS_VULKAN_KHR,
   };
   PFN_xrGetVulkanGraphicsRequirementsKHR GetVulkanGraphicsRequirements = NULL;
-  XrResult result = xrGetInstanceProcAddr(
-    self->instance, "xrGetVulkanGraphicsRequirementsKHR",
-    (PFN_xrVoidFunction*)(&GetVulkanGraphicsRequirements));
-  if (!_check_xr_result
-      (result, "Failed to retrieve OpenXR Vulkan function pointer!"))
+  XrResult result =
+    xrGetInstanceProcAddr(self->instance, "xrGetVulkanGraphicsRequirementsKHR",
+      (PFN_xrVoidFunction*)(&GetVulkanGraphicsRequirements));
+  if (!_check_xr_result (result,
+      "Failed to retrieve OpenXR Vulkan function pointer!"))
     return FALSE;
 
   result =
-    GetVulkanGraphicsRequirements(self->instance, self->system_id, &vk_reqs);
-  if (!_check_xr_result
-      (result, "Failed to get Vulkan graphics requirements!"))
+    GetVulkanGraphicsRequirements (self->instance, self->system_id, &vk_reqs);
+  if (!_check_xr_result (result,
+      "Failed to get Vulkan graphics requirements!"))
     return FALSE;
 
-  XrVersion desired_version = XR_MAKE_VERSION(1, 0, 0);
+  XrVersion desired_version = XR_MAKE_VERSION (1, 0, 0);
   if (desired_version > vk_reqs.maxApiVersionSupported ||
-      desired_version < vk_reqs.minApiVersionSupported) {
-    g_printerr("Runtime does not support requested Vulkan version.\n");
-    g_printerr("desired_version %lu\n", desired_version);
-    g_printerr("minApiVersionSupported %lu\n", vk_reqs.minApiVersionSupported);
-    g_printerr("maxApiVersionSupported %lu\n", vk_reqs.maxApiVersionSupported);
-    return FALSE;
-  }
+      desired_version < vk_reqs.minApiVersionSupported)
+    {
+      g_printerr ("Runtime does not support requested Vulkan version.\n");
+      g_printerr ("desired_version %lu\n", desired_version);
+      g_printerr ("minApiVersionSupported %lu\n", vk_reqs.minApiVersionSupported);
+      g_printerr ("maxApiVersionSupported %lu\n", vk_reqs.maxApiVersionSupported);
+      return FALSE;
+    }
   return TRUE;
 }
 
 static gboolean
-_create_session(OpenXRContext* self)
+_create_session (OpenXRContext* self)
 {
   XrSessionCreateInfo session_create_info = {
     .type = XR_TYPE_SESSION_CREATE_INFO,
@@ -426,7 +376,7 @@ _create_session(OpenXRContext* self)
   };
 
   XrResult result =
-    xrCreateSession(self->instance, &session_create_info, &self->session);
+    xrCreateSession (self->instance, &session_create_info, &self->session);
   if (!_check_xr_result (result, "Failed to create session"))
     return FALSE;
   return TRUE;
@@ -434,8 +384,8 @@ _create_session(OpenXRContext* self)
 
 static gboolean
 _is_space_supported (XrReferenceSpaceType *spaces,
-                     uint32_t count,
-                     XrReferenceSpaceType type)
+                     uint32_t              count,
+                     XrReferenceSpaceType  type)
 {
   for (uint32_t i = 0; i < count; i++)
     if (spaces[i] == type)
@@ -493,7 +443,7 @@ _check_supported_spaces (OpenXRContext* self)
 }
 
 static gboolean
-_begin_session(OpenXRContext* self)
+_begin_session (OpenXRContext* self)
 {
   XrSessionBeginInfo sessionBeginInfo = {
     .type = XR_TYPE_SESSION_BEGIN_INFO,
@@ -507,93 +457,81 @@ _begin_session(OpenXRContext* self)
 }
 
 static gboolean
-_create_swapchains(OpenXRContext* self)
+_create_swapchains (OpenXRContext* self)
 {
   XrResult result;
   uint32_t swapchainFormatCount;
   result =
-    xrEnumerateSwapchainFormats(self->session, 0, &swapchainFormatCount, NULL);
-  if (!_check_xr_result
-      (result, "Failed to get number of supported swapchain formats"))
+    xrEnumerateSwapchainFormats (self->session, 0, &swapchainFormatCount, NULL);
+  if (!_check_xr_result (result,
+      "Failed to get number of supported swapchain formats"))
     return FALSE;
 
   int64_t *swapchainFormats =
     g_malloc (sizeof (int64_t) * swapchainFormatCount);
-  result = xrEnumerateSwapchainFormats(self->session, swapchainFormatCount,
-                                       &swapchainFormatCount, swapchainFormats);
+  result = xrEnumerateSwapchainFormats (self->session, swapchainFormatCount,
+                                        &swapchainFormatCount, swapchainFormats);
   if (!_check_xr_result (result, "Failed to enumerate swapchain formats"))
     return FALSE;
 
-  /* First create swapchains and query the length for each swapchain. */
-  self->swapchains = malloc(sizeof(XrSwapchain) * self->view_count);
-
-  uint32_t *swapchainLength = g_malloc (sizeof (uint32_t) * self->view_count);
-
+  /* TODO: properly choose a format */
   self->swapchain_format = swapchainFormats[0];
 
-  for (uint32_t i = 0; i < self->view_count; i++) {
-    XrSwapchainCreateInfo swapchainCreateInfo = {
-      .type = XR_TYPE_SWAPCHAIN_CREATE_INFO,
-      .usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT |
-                    XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT,
-      .createFlags = 0,
-      // just use the first enumerated format
-      .format = swapchainFormats[0],
-      .sampleCount = 1,
-      .width = self->configuration_views[i].recommendedImageRectWidth,
-      .height = self->configuration_views[i].recommendedImageRectHeight,
-      .faceCount = 1,
-      .arraySize = 1,
-      .mipCount = 1,
-    };
 
-    g_print("Swapchain %d dimensions: %dx%d\n", i,
-            self->configuration_views[i].recommendedImageRectWidth,
-            self->configuration_views[i].recommendedImageRectHeight);
+  self->swapchains = g_malloc (sizeof (XrSwapchain) * self->view_count);
+  self->images =
+    g_malloc (sizeof (XrSwapchainImageVulkanKHR*) * self->view_count);
 
-    result = xrCreateSwapchain(self->session, &swapchainCreateInfo,
-                               &self->swapchains[i]);
-    if (!_check_xr_result (result, "Failed to create swapchain %d!", i))
-      return FALSE;
+  for (uint32_t i = 0; i < self->view_count; i++)
+    {
+      XrSwapchainCreateInfo swapchainCreateInfo = {
+        .type = XR_TYPE_SWAPCHAIN_CREATE_INFO,
+        .usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT |
+                      XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT,
+        .createFlags = 0,
+        // just use the first enumerated format
+        .format = self->swapchain_format,
+        .sampleCount = 1,
+        .width = self->configuration_views[i].recommendedImageRectWidth,
+        .height = self->configuration_views[i].recommendedImageRectHeight,
+        .faceCount = 1,
+        .arraySize = 1,
+        .mipCount = 1,
+      };
 
-    result = xrEnumerateSwapchainImages(self->swapchains[i], 0,
-                                        &swapchainLength[i], NULL);
-    if (!_check_xr_result (result, "Failed to enumerate swapchains"))
-      return FALSE;
-  }
+      g_debug ("Swapchain %d dimensions: %dx%d\n", i,
+               self->configuration_views[i].recommendedImageRectWidth,
+               self->configuration_views[i].recommendedImageRectHeight);
+
+      result = xrCreateSwapchain (self->session, &swapchainCreateInfo,
+                                  &self->swapchains[i]);
+      if (!_check_xr_result (result, "Failed to create swapchain %d!", i))
+        return FALSE;
+
+      uint32_t swapchain_length = 0;
+      result = xrEnumerateSwapchainImages (self->swapchains[i], 0,
+                                           &swapchain_length, NULL);
+      if (!_check_xr_result (result, "Failed to enumerate swapchains"))
+        return FALSE;
+
+
+      self->images[i] =
+        g_malloc (sizeof(XrSwapchainImageVulkanKHR) * swapchain_length);
+
+      result = xrEnumerateSwapchainImages(
+        self->swapchains[i], swapchain_length, &swapchain_length,
+        (XrSwapchainImageBaseHeader*)self->images[i]);
+      if (!_check_xr_result (result, "Failed to enumerate swapchains"))
+        return FALSE;
+    }
 
   g_free (swapchainFormats);
-
-  // most likely all swapchains have the same length, but let's not fail
-  // if they are not
-  uint32_t maxSwapchainLength = 0;
-  for (uint32_t i = 0; i < self->view_count; i++) {
-    if (swapchainLength[i] > maxSwapchainLength) {
-      maxSwapchainLength = swapchainLength[i];
-    }
-  }
-
-  self->images =
-    g_malloc (sizeof(XrSwapchainImageVulkanKHR*) * self->view_count);
-  for (uint32_t i = 0; i < self->view_count; i++)
-    self->images[i] =
-      g_malloc (sizeof(XrSwapchainImageVulkanKHR) * maxSwapchainLength);
-
-  for (uint32_t i = 0; i < self->view_count; i++) {
-    result = xrEnumerateSwapchainImages(
-      self->swapchains[i], swapchainLength[i], &swapchainLength[i],
-      (XrSwapchainImageBaseHeader*)self->images[i]);
-    if (!_check_xr_result (result, "Failed to enumerate swapchains"))
-      return FALSE;
-  }
-
-  g_free (swapchainLength);
 
   return TRUE;
 }
 
 static void
-_create_projection_views(OpenXRContext* self)
+_create_projection_views (OpenXRContext* self)
 {
   self->projection_views =
     malloc(sizeof(XrCompositionLayerProjectionView) * self->view_count);
@@ -614,7 +552,7 @@ _create_projection_views(OpenXRContext* self)
 }
 
 gboolean
-openxr_context_begin_frame(OpenXRContext* self)
+openxr_context_begin_frame (OpenXRContext* self)
 {
   XrResult result;
 
@@ -626,7 +564,7 @@ openxr_context_begin_frame(OpenXRContext* self)
     .type = XR_TYPE_FRAME_WAIT_INFO,
     .next = NULL
   };
-  result = xrWaitFrame(self->session, &frameWaitInfo, &frame_state);
+  result = xrWaitFrame (self->session, &frameWaitInfo, &frame_state);
   if (!_check_xr_result
       (result, "xrWaitFrame() was not successful, exiting..."))
     return FALSE;
@@ -648,8 +586,8 @@ openxr_context_begin_frame(OpenXRContext* self)
     .type = XR_TYPE_VIEW_STATE,
   };
   uint32_t viewCountOutput;
-  result = xrLocateViews(self->session, &viewLocateInfo, &viewState,
-                         self->view_count, &viewCountOutput, self->views);
+  result = xrLocateViews (self->session, &viewLocateInfo, &viewState,
+                          self->view_count, &viewCountOutput, self->views);
   if (!_check_xr_result (result, "Could not locate views"))
     return FALSE;
 
@@ -658,7 +596,7 @@ openxr_context_begin_frame(OpenXRContext* self)
     .type = XR_TYPE_FRAME_BEGIN_INFO,
   };
 
-  result = xrBeginFrame(self->session, &frameBeginInfo);
+  result = xrBeginFrame (self->session, &frameBeginInfo);
   if (!_check_xr_result (result, "failed to begin frame!"))
     return FALSE;
 
@@ -666,9 +604,9 @@ openxr_context_begin_frame(OpenXRContext* self)
 }
 
 gboolean
-openxr_context_aquire_swapchain(OpenXRContext* self,
-                                uint32_t i,
-                                uint32_t* buffer_index)
+openxr_context_aquire_swapchain (OpenXRContext* self,
+                                 uint32_t i,
+                                 uint32_t *buffer_index)
 {
   XrResult result;
 
@@ -676,8 +614,8 @@ openxr_context_aquire_swapchain(OpenXRContext* self,
     .type = XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO,
   };
 
-  result = xrAcquireSwapchainImage(self->swapchains[i],
-                                   &swapchainImageAcquireInfo, buffer_index);
+  result = xrAcquireSwapchainImage (self->swapchains[i],
+                                    &swapchainImageAcquireInfo, buffer_index);
   if (!_check_xr_result (result, "failed to acquire swapchain image!"))
     return FALSE;
 
@@ -685,7 +623,7 @@ openxr_context_aquire_swapchain(OpenXRContext* self,
     .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
     .timeout = INT64_MAX,
   };
-  result = xrWaitSwapchainImage(self->swapchains[i], &swapchainImageWaitInfo);
+  result = xrWaitSwapchainImage (self->swapchains[i], &swapchainImageWaitInfo);
   if (!_check_xr_result (result, "failed to wait for swapchain image!"))
     return FALSE;
 
@@ -697,14 +635,14 @@ openxr_context_aquire_swapchain(OpenXRContext* self,
 }
 
 gboolean
-openxr_context_release_swapchain(OpenXRContext* self,
-                                 uint32_t eye)
+openxr_context_release_swapchain (OpenXRContext * self,
+                                  uint32_t eye)
 {
   XrSwapchainImageReleaseInfo swapchainImageReleaseInfo = {
     .type = XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO,
   };
   XrResult result =
-    xrReleaseSwapchainImage(self->swapchains[eye], &swapchainImageReleaseInfo);
+    xrReleaseSwapchainImage (self->swapchains[eye], &swapchainImageReleaseInfo);
   if (!_check_xr_result (result, "failed to release swapchain image!"))
     return FALSE;
 
@@ -712,12 +650,12 @@ openxr_context_release_swapchain(OpenXRContext* self,
 }
 
 gboolean
-openxr_context_end_frame(OpenXRContext* self)
+openxr_context_end_frame (OpenXRContext *self)
 {
   XrResult result;
 
   const XrCompositionLayerBaseHeader* const projection_layers[1] = {
-    (const XrCompositionLayerBaseHeader* const) & self->projection_layer
+    (const XrCompositionLayerBaseHeader* const) &self->projection_layer
   };
   XrFrameEndInfo frame_end_info = {
     .type = XR_TYPE_FRAME_END_INFO,
@@ -726,7 +664,7 @@ openxr_context_end_frame(OpenXRContext* self)
     .layers = projection_layers,
     .environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE,
   };
-  result = xrEndFrame(self->session, &frame_end_info);
+  result = xrEndFrame (self->session, &frame_end_info);
   if (!_check_xr_result (result, "failed to end frame!"))
     return FALSE;
 
@@ -734,23 +672,23 @@ openxr_context_end_frame(OpenXRContext* self)
 }
 
 void
-openxr_context_cleanup(OpenXRContext* self)
+openxr_context_cleanup (OpenXRContext *self)
 {
   if (!self->swapchains)
     {
       for (uint32_t i = 0; i < self->view_count; i++) {
-        xrDestroySwapchain(self->swapchains[i]);
+        xrDestroySwapchain (self->swapchains[i]);
       }
     }
 
   if (self->swapchains)
-    free(self->swapchains);
+    g_free (self->swapchains);
   if (self->local_space)
-    xrDestroySpace(self->local_space);
+    xrDestroySpace (self->local_space);
   if (self->session)
-    xrDestroySession(self->session);
+    xrDestroySession (self->session);
   if (self->instance)
-    xrDestroyInstance(self->instance);
+    xrDestroyInstance (self->instance);
 
   g_free (self->configuration_views);
 
@@ -777,24 +715,24 @@ openxr_context_finalize (GObject *gobject)
 }
 
 XrSwapchainImageVulkanKHR**
-openxr_context_get_images(OpenXRContext *self)
+openxr_context_get_images (OpenXRContext *self)
 {
   return self->images;
 }
 
 void
 openxr_context_get_swapchain_dimensions (OpenXRContext *self,
-                                         uint32_t i,
-                                         VkExtent2D *extent)
+                                         uint32_t       i,
+                                         VkExtent2D    *extent)
 {
   extent->width = self->configuration_views[i].recommendedImageRectWidth;
   extent->height = self->configuration_views[i].recommendedImageRectHeight;
 }
 
 static void
-_get_projection_matrix_from_fov (const XrFovf fov,
-                                 const float near_z,
-                                 const float far_z,
+_get_projection_matrix_from_fov (const XrFovf       fov,
+                                 const float        near_z,
+                                 const float        far_z,
                                  graphene_matrix_t *mat)
 {
   const float tan_left = tanf(fov.angleLeft);
@@ -823,7 +761,7 @@ _get_projection_matrix_from_fov (const XrFovf fov,
 }
 
 static void
-_get_view_matrix_from_pose (XrPosef *pose,
+_get_view_matrix_from_pose (XrPosef           *pose,
                             graphene_matrix_t *mat)
 {
   graphene_quaternion_t q;
@@ -849,8 +787,8 @@ _get_view_matrix_from_pose (XrPosef *pose,
 }
 
 void
-openxr_context_get_position (OpenXRContext *self,
-                             uint32_t i,
+openxr_context_get_position (OpenXRContext   *self,
+                             uint32_t         i,
                              graphene_vec4_t *v)
 {
   graphene_vec4_init (v,
@@ -945,9 +883,6 @@ _init_runtime (GxrContext *context,
   }
 
   if (!_check_vk_extension())
-    return FALSE;
-
-  if (!_enumerate_api_layers())
     return FALSE;
 
   if (!_create_instance(self))
@@ -1134,8 +1069,8 @@ _init_framebuffers (GxrContext           *context,
                     GulkanRenderPass    **render_pass)
 {
   OpenXRContext *self = OPENXR_CONTEXT (context);
-  XrSwapchainImageVulkanKHR** images = openxr_context_get_images(self);
-  VkFormat format = openxr_context_get_swapchain_format(self);
+  XrSwapchainImageVulkanKHR** images = openxr_context_get_images (self);
+  VkFormat format = openxr_context_get_swapchain_format (self);
 
   GulkanClient *gc = gxr_context_get_gulkan (context);
   GulkanDevice *device = gulkan_client_get_device (gc);
@@ -1158,7 +1093,7 @@ _init_framebuffers (GxrContext           *context,
                                                        format);
       if (!framebuffers[eye])
         {
-          g_printerr("Could not initialize frambuffer.");
+          g_printerr ("Could not initialize frambuffer.");
           return FALSE;
         }
   }
@@ -1243,14 +1178,13 @@ _begin_frame (GxrContext *context,
 {
   OpenXRContext *self = OPENXR_CONTEXT (context);
 
-  if (!openxr_context_begin_frame(self)) {
+  if (!openxr_context_begin_frame (self)) {
     g_printerr ("Could not begin XR frame.\n");
     return FALSE;
   }
 
   for (uint32_t i = 0; i < 2; i++) {
-    uint32_t buffer_index;
-    if (!openxr_context_aquire_swapchain (self, i, &buffer_index))
+    if (!openxr_context_aquire_swapchain (self, i, &self->buffer_index))
       {
         g_printerr ("Could not aquire xr swapchain\n");
         return FALSE;
@@ -1275,12 +1209,12 @@ _end_frame (GxrContext *context)
 {
   OpenXRContext *self = OPENXR_CONTEXT (context);
   for (uint32_t i = 0; i < 2; i++)
-  if (!openxr_context_release_swapchain(self, i)) {
-      g_printerr("Could not release xr swapchain\n");
+  if (!openxr_context_release_swapchain (self, i)) {
+      g_printerr ("Could not release xr swapchain\n");
       return FALSE;
   }
 
-  if (!openxr_context_end_frame(self)) {
+  if (!openxr_context_end_frame (self)) {
     g_printerr ("Could not end xr frame\n");
   }
 
