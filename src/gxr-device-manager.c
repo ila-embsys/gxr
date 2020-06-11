@@ -16,7 +16,7 @@ struct _GxrDeviceManager
 {
   GObject parent;
 
-  GHashTable *devices; // int -> XrdSceneDevice
+  GHashTable *devices; // gint64 -> XrdSceneDevice
 
   // controllers are also put into a list for easy controller only iteration
   GSList *controllers;
@@ -86,8 +86,8 @@ gxr_device_manager_finalize (GObject *gobject)
 static void
 _insert_at_key (GHashTable *table, guint64 key, gpointer value)
 {
-  gint *keyp = g_new0 (gint, 1);
-  *keyp = (gint) key;
+  guint64 *keyp = g_new0 (guint64, 1);
+  *keyp = key;
   g_hash_table_insert (table, keyp, value);
 }
 
