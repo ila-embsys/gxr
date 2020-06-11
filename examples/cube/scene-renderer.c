@@ -69,7 +69,6 @@ struct _SceneRenderer
   VkPipelineLayout pipeline_layout;
   VkPipelineCache pipeline_cache;
 
-  GulkanFrameBuffer *framebuffer[2];
   GulkanRenderPass *render_pass;
 
   gpointer scene_client;
@@ -144,9 +143,6 @@ scene_renderer_finalize (GObject *gobject)
     {
       g_clear_object (&self->lights_buffer);
 
-      for (uint32_t eye = 0; eye < 2; eye++)
-        g_clear_object (&self->framebuffer[eye]);
-
       vkDestroyPipelineLayout (device, self->pipeline_layout, NULL);
       vkDestroyDescriptorSetLayout (device, self->descriptor_set_layout, NULL);
       for (uint32_t i = 0; i < PIPELINE_COUNT; i++)
@@ -184,7 +180,7 @@ _init_framebuffers (SceneRenderer *self)
   gulkan_renderer_set_extent (GULKAN_RENDERER (self), extent);
 
   if (!gxr_context_init_framebuffers (self->context, extent, self->sample_count,
-                                      self->framebuffer, &self->render_pass))
+                                      &self->render_pass))
     return FALSE;
 
   return TRUE;
@@ -639,13 +635,27 @@ _render_stereo (SceneRenderer *self, VkCommandBuffer cmd_buffer)
     .float32 = { 0.0f, 0.0f, 0.0f, 1.0f },
   };
 
-  for (uint32_t eye = 0; eye < 2; eye++)
+  uint32_t view_count = gxr_context_get_view_count (self->context);
+  for (uint32_t view = 0; view < view_count; view++)
     {
+      /* TOOD: adjust code to support rendering more than 2 views */
+      if (view >= 2)
+        break;
+
+      GulkanFrameBuffer *framebuffer =
+        gxr_context_get_acquired_framebuffer (self->context, view);
+
+      if (!GULKAN_IS_FRAME_BUFFER (framebuffer))
+        {
+          g_printerr ("framebuffer invalid for view %d\n", view);
+          continue;
+        }
+
       gulkan_render_pass_begin (self->render_pass, extent, black,
-                                self->framebuffer[eye], cmd_buffer);
+                                framebuffer, cmd_buffer);
 
       if (self->render_eye)
-        self->render_eye (eye, cmd_buffer, self->pipeline_layout,
+        self->render_eye (view, cmd_buffer, self->pipeline_layout,
                           self->pipelines, self->scene_client);
 
       vkCmdEndRenderPass (cmd_buffer);
@@ -719,10 +729,7 @@ scene_renderer_draw (SceneRenderer *self)
 {
   _draw (self);
 
-  VkExtent2D extent = gulkan_renderer_get_extent (GULKAN_RENDERER (self));
-
-  if (!gxr_context_submit_framebuffers (self->context, self->framebuffer,
-                                        extent, self->sample_count))
+  if (!gxr_context_submit_framebuffers (self->context))
     return FALSE;
 
   return TRUE;

@@ -63,14 +63,10 @@ struct _GxrContextClass
   (*init_framebuffers) (GxrContext           *self,
                         VkExtent2D            extent,
                         VkSampleCountFlagBits sample_count,
-                        GulkanFrameBuffer    *framebuffers[2],
                         GulkanRenderPass    **render_pass);
 
   gboolean
-  (*submit_framebuffers) (GxrContext           *self,
-                          GulkanFrameBuffer    *framebuffers[2],
-                          VkExtent2D            extent,
-                          VkSampleCountFlagBits sample_count);
+  (*submit_framebuffers) (GxrContext *self);
 
   uint32_t
   (*get_model_vertex_stride) (GxrContext *self);
@@ -159,6 +155,12 @@ struct _GxrContextClass
   (*get_device_extensions) (GxrContext   *self,
                             GulkanClient *gc,
                             GSList      **out_list);
+
+  uint32_t
+  (*get_view_count) (GxrContext *self);
+
+  GulkanFrameBuffer *
+  (*get_acquired_framebuffer) (GxrContext *self, uint32_t view);
 };
 
 GxrContext *gxr_context_new (GxrAppType type);
@@ -202,14 +204,10 @@ gboolean
 gxr_context_init_framebuffers (GxrContext           *self,
                                VkExtent2D            extent,
                                VkSampleCountFlagBits sample_count,
-                               GulkanFrameBuffer    *framebuffers[2],
                                GulkanRenderPass    **render_pass);
 
 gboolean
-gxr_context_submit_framebuffers (GxrContext           *self,
-                                 GulkanFrameBuffer    *framebuffers[2],
-                                 VkExtent2D            extent,
-                                 VkSampleCountFlagBits sample_count);
+gxr_context_submit_framebuffers (GxrContext           *self);
 
 void
 gxr_context_poll_event (GxrContext *self);
@@ -298,6 +296,12 @@ struct _GxrDeviceManager;
 
 struct _GxrDeviceManager *
 gxr_context_get_device_manager (GxrContext *self);
+
+uint32_t
+gxr_context_get_view_count (GxrContext *self);
+
+GulkanFrameBuffer *
+gxr_context_get_acquired_framebuffer (GxrContext *self, uint32_t view);
 
 G_END_DECLS
 

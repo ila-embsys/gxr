@@ -592,6 +592,9 @@ _init_example (Example *self)
     g_unix_signal_add (SIGINT, _sigint_cb, self);
 
   self->context = _create_gxr_context ();
+  if (!self->context)
+    return FALSE;
+
   GxrDeviceManager *dm = gxr_context_get_device_manager (self->context);
   self->device_activate_signal =
     g_signal_connect (dm, "device-activate-event",

@@ -18,7 +18,6 @@ typedef struct _GxrContextPrivate
   GxrApi api;
 
   GxrDeviceManager *device_manager;
-
 } GxrContextPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (GxrContext, gxr_context, G_TYPE_OBJECT)
@@ -427,26 +426,21 @@ gboolean
 gxr_context_init_framebuffers (GxrContext           *self,
                                VkExtent2D            extent,
                                VkSampleCountFlagBits sample_count,
-                               GulkanFrameBuffer    *framebuffers[2],
                                GulkanRenderPass    **render_pass)
 {
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->init_framebuffers == NULL)
     return FALSE;
-  return klass->init_framebuffers (self, extent, sample_count,
-                                   framebuffers, render_pass);
+  return klass->init_framebuffers (self, extent, sample_count, render_pass);
 }
 
 gboolean
-gxr_context_submit_framebuffers (GxrContext           *self,
-                                 GulkanFrameBuffer    *framebuffers[2],
-                                 VkExtent2D            extent,
-                                 VkSampleCountFlagBits sample_count)
+gxr_context_submit_framebuffers (GxrContext *self)
 {
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->submit_framebuffers == NULL)
     return FALSE;
-  return klass->submit_framebuffers (self, framebuffers, extent, sample_count);
+  return klass->submit_framebuffers (self);
 }
 
 uint32_t
@@ -697,4 +691,22 @@ gxr_context_get_device_manager (GxrContext *self)
 {
   GxrContextPrivate *priv = gxr_context_get_instance_private (self);
   return priv->device_manager;
+}
+
+uint32_t
+gxr_context_get_view_count (GxrContext *self)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->get_view_count == NULL)
+    return FALSE;
+  return klass->get_view_count (self);
+}
+
+GulkanFrameBuffer *
+gxr_context_get_acquired_framebuffer (GxrContext *self, uint32_t view)
+{
+  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
+  if (klass->get_acquired_framebuffer == NULL)
+    return FALSE;
+  return klass->get_acquired_framebuffer (self, view);
 }

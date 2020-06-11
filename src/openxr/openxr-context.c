@@ -46,11 +46,17 @@ struct _OpenXRContext
   XrViewConfigurationType view_config_type;
 
   /* One array per eye */
-  XrSwapchain* swapchains;
-  XrSwapchainImageVulkanKHR** images;
+  XrSwapchain *swapchains;
+  XrSwapchainImageVulkanKHR **images;
   /* last acquired swapchain image index */
   uint32_t buffer_index;
+  /* for each view */
+  uint32_t *swapchain_length;
 
+  /* 1 framebuffer for each swapchain image, for each swapchain (1 per view) */
+  GulkanFrameBuffer  ***framebuffer;
+  VkExtent2D            framebuffer_extent;
+  VkSampleCountFlagBits framebuffer_sample_count;
 
   XrCompositionLayerProjectionView* projection_views;
   XrViewConfigurationView* configuration_views;
@@ -91,6 +97,8 @@ openxr_context_init (OpenXRContext *self)
   self->manifests = NULL;
   self->predicted_display_time = 0;
   self->predicted_display_period = 0;
+  self->framebuffer = NULL;
+  self->images = NULL;
 }
 
 OpenXRContext *
@@ -472,7 +480,10 @@ _create_swapchains (OpenXRContext* self)
   result = xrEnumerateSwapchainFormats (self->session, swapchainFormatCount,
                                         &swapchainFormatCount, swapchainFormats);
   if (!_check_xr_result (result, "Failed to enumerate swapchain formats"))
-    return FALSE;
+    {
+      g_free (swapchainFormats);
+      return FALSE;
+    }
 
   /* TODO: properly choose a format */
   self->swapchain_format = swapchainFormats[0];
@@ -481,9 +492,13 @@ _create_swapchains (OpenXRContext* self)
   self->swapchains = g_malloc (sizeof (XrSwapchain) * self->view_count);
   self->images =
     g_malloc (sizeof (XrSwapchainImageVulkanKHR*) * self->view_count);
+  self->swapchain_length = g_malloc (sizeof (uint32_t) * self->view_count);
 
   for (uint32_t i = 0; i < self->view_count; i++)
     {
+      /* make sure we don't clean up uninitialized pointer on failure */
+      self->images[i] = NULL;
+
       XrSwapchainCreateInfo swapchainCreateInfo = {
         .type = XR_TYPE_SWAPCHAIN_CREATE_INFO,
         .usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT |
@@ -506,23 +521,32 @@ _create_swapchains (OpenXRContext* self)
       result = xrCreateSwapchain (self->session, &swapchainCreateInfo,
                                   &self->swapchains[i]);
       if (!_check_xr_result (result, "Failed to create swapchain %d!", i))
-        return FALSE;
+        {
+          g_free (swapchainFormats);
+          return FALSE;
+        }
 
-      uint32_t swapchain_length = 0;
       result = xrEnumerateSwapchainImages (self->swapchains[i], 0,
-                                           &swapchain_length, NULL);
+                                           &self->swapchain_length[i], NULL);
       if (!_check_xr_result (result, "Failed to enumerate swapchains"))
-        return FALSE;
+        {
+          g_free (swapchainFormats);
+          return FALSE;
+        }
 
 
       self->images[i] =
-        g_malloc (sizeof(XrSwapchainImageVulkanKHR) * swapchain_length);
+        g_malloc (sizeof(XrSwapchainImageVulkanKHR) * self->swapchain_length[i]);
 
       result = xrEnumerateSwapchainImages(
-        self->swapchains[i], swapchain_length, &swapchain_length,
+        self->swapchains[i], self->swapchain_length[i],
+        &self->swapchain_length[i],
         (XrSwapchainImageBaseHeader*)self->images[i]);
       if (!_check_xr_result (result, "Failed to enumerate swapchains"))
-        return FALSE;
+        {
+          g_free (swapchainFormats);
+          return FALSE;
+        }
     }
 
   g_free (swapchainFormats);
@@ -693,10 +717,33 @@ openxr_context_cleanup (OpenXRContext *self)
   g_free (self->configuration_views);
 
   g_free (self->views);
+  g_free (self->projection_views);
 
-  for (uint32_t i = 0; i < self->view_count; i++)
-    g_free (self->images[i]);
-  g_free (self->images);
+  if (self->framebuffer)
+    {
+      for (uint32_t view = 0; view < self->view_count; view++)
+        {
+          for (uint32_t i = 0; i < self->swapchain_length[view]; i++)
+            {
+              if (GULKAN_IS_FRAME_BUFFER (self->framebuffer[view][i]))
+                g_object_unref (self->framebuffer[view][i]);
+              else
+                g_printerr ("Failed to release framebuffer %d for view %d\n",
+                            i, view);
+            }
+          g_free (self->framebuffer[view]);
+        }
+      g_free (self->framebuffer);
+    }
+
+  g_free (self->swapchain_length);
+
+  if (self->images)
+    {
+      for (uint32_t i = 0; i < self->view_count; i++)
+        g_free (self->images[i]);
+      g_free (self->images);
+    }
 }
 
 static void
@@ -1065,15 +1112,16 @@ static gboolean
 _init_framebuffers (GxrContext           *context,
                     VkExtent2D            extent,
                     VkSampleCountFlagBits sample_count,
-                    GulkanFrameBuffer    *framebuffers[2],
                     GulkanRenderPass    **render_pass)
 {
   OpenXRContext *self = OPENXR_CONTEXT (context);
-  XrSwapchainImageVulkanKHR** images = openxr_context_get_images (self);
   VkFormat format = openxr_context_get_swapchain_format (self);
 
   GulkanClient *gc = gxr_context_get_gulkan (context);
   GulkanDevice *device = gulkan_client_get_device (gc);
+
+  self->framebuffer_extent = extent;
+  self->framebuffer_sample_count = sample_count;
 
   *render_pass =
     gulkan_render_pass_new (device, sample_count, format,
@@ -1084,33 +1132,39 @@ _init_framebuffers (GxrContext           *context,
       return FALSE;
     }
 
-  for (uint32_t eye = 0; eye < 2; eye++)
+  self->framebuffer = g_malloc (sizeof (GulkanFrameBuffer*) * self->view_count);
+  for (uint32_t view = 0; view < self->view_count; view++)
     {
-      framebuffers[eye] =
-        gulkan_frame_buffer_new_from_image_with_depth (device, *render_pass,
-                                                       images[eye][0].image,
-                                                       extent, sample_count,
-                                                       format);
-      if (!framebuffers[eye])
+      g_debug ("Creating %d framebuffers for view %d\n",
+               self->swapchain_length[view], view);
+
+      self->framebuffer[view] =
+        g_malloc (sizeof (GulkanFrameBuffer*) * self->swapchain_length[view]);
+      for (uint32_t i = 0; i < self->swapchain_length[view]; i++)
         {
-          g_printerr ("Could not initialize frambuffer.");
-          return FALSE;
+
+          self->framebuffer[view][i] =
+            gulkan_frame_buffer_new_from_image_with_depth (device, *render_pass,
+                                                           self->images[view][i].image,
+                                                           extent, sample_count,
+                                                           format);
+
+          if (!GULKAN_IS_FRAME_BUFFER (self->framebuffer[view][i]))
+            {
+              g_printerr ("Could not initialize frambuffer.");
+              return FALSE;
+            }
         }
   }
+
   return TRUE;
 }
 
 /* Not required in OpenXR */
 static gboolean
-_submit_framebuffers (GxrContext           *self,
-                      GulkanFrameBuffer    *framebuffers[2],
-                      VkExtent2D            extent,
-                      VkSampleCountFlagBits sample_count)
+_submit_framebuffers (GxrContext           *self)
 {
   (void) self;
-  (void) framebuffers;
-  (void) extent;
-  (void) sample_count;
   return TRUE;
 }
 
@@ -1421,6 +1475,22 @@ openxr_context_get_predicted_display_time (OpenXRContext *self)
   return self->predicted_display_time;
 }
 
+static uint32_t
+_get_view_count (GxrContext *context)
+{
+  OpenXRContext *self = OPENXR_CONTEXT (context);
+  return self->view_count;
+}
+
+static GulkanFrameBuffer *
+_get_acquired_framebuffer (GxrContext *context, uint32_t view)
+{
+  OpenXRContext *self = OPENXR_CONTEXT (context);
+  GulkanFrameBuffer *fb =
+    GULKAN_FRAME_BUFFER (self->framebuffer[view][self->buffer_index]);
+  return fb;
+}
+
 static void
 openxr_context_class_init (OpenXRContextClass *klass)
 {
@@ -1460,4 +1530,6 @@ openxr_context_class_init (OpenXRContextClass *klass)
   gxr_context_class->request_quit = _request_quit;
   gxr_context_class->get_instance_extensions = _get_instance_extensions;
   gxr_context_class->get_device_extensions = _get_device_extensions;
+  gxr_context_class->get_view_count = _get_view_count;
+  gxr_context_class->get_acquired_framebuffer = _get_acquired_framebuffer;
 }

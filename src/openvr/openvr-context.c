@@ -33,6 +33,11 @@ struct _OpenVRContext
 
   graphene_matrix_t last_mat_head_pose;
   graphene_matrix_t mat_eye_pos[2];
+
+  /* 1 framebuffer per eye */
+  GulkanFrameBuffer    *framebuffer[2];
+  VkExtent2D            framebuffer_extent;
+  VkSampleCountFlagBits framebuffer_sample_count;
 };
 
 G_DEFINE_TYPE (OpenVRContext, openvr_context, GXR_TYPE_CONTEXT)
@@ -58,6 +63,10 @@ openvr_context_finalize (GObject *gobject)
   VR_ShutdownInternal();
   if (functions)
     g_clear_object (&functions);
+
+  OpenVRContext *self = OPENVR_CONTEXT (gobject);
+  for (uint32_t i = 0; i < 2; i++)
+    g_clear_object (&self->framebuffer[i]);
 
   if (gulkan)
     g_object_unref (gulkan);
@@ -495,11 +504,14 @@ static gboolean
 _init_framebuffers (GxrContext           *context,
                     VkExtent2D            extent,
                     VkSampleCountFlagBits sample_count,
-                    GulkanFrameBuffer    *framebuffers[2],
                     GulkanRenderPass    **render_pass)
 {
+  OpenVRContext *self = OPENVR_CONTEXT (context);
   GulkanClient *gc = gxr_context_get_gulkan (context);
   GulkanDevice *device = gulkan_client_get_device (gc);
+
+  self->framebuffer_extent = extent;
+  self->framebuffer_sample_count = sample_count;
 
   *render_pass =
     gulkan_render_pass_new (device, sample_count,
@@ -513,11 +525,12 @@ _init_framebuffers (GxrContext           *context,
 
   for (uint32_t eye = 0; eye < 2; eye++)
     {
-      framebuffers[eye] = gulkan_frame_buffer_new (device, *render_pass,
-                                                   extent, sample_count,
-                                                   VK_FORMAT_R8G8B8A8_UNORM,
-                                                   TRUE);
-      if (!framebuffers[eye])
+      /* only one framebuffer per eye on openvr */
+      self->framebuffer[eye] = gulkan_frame_buffer_new (device, *render_pass,
+                                                        extent, sample_count,
+                                                        VK_FORMAT_R8G8B8A8_UNORM,
+                                                        TRUE);
+      if (!self->framebuffer[eye])
         return FALSE;
     }
 
@@ -525,22 +538,23 @@ _init_framebuffers (GxrContext           *context,
 }
 
 static gboolean
-_submit_framebuffers (GxrContext           *context,
-                      GulkanFrameBuffer    *framebuffers[2],
-                      VkExtent2D            extent,
-                      VkSampleCountFlagBits sample_count)
+_submit_framebuffers (GxrContext *context)
 {
+  OpenVRContext *self = OPENVR_CONTEXT (context);
   GulkanClient *gc = gxr_context_get_gulkan (context);
 
+  /* only one framebuffer per eye on openvr */
   VkImage left =
-    gulkan_frame_buffer_get_color_image (framebuffers[GXR_EYE_LEFT]);
+    gulkan_frame_buffer_get_color_image (self->framebuffer[GXR_EYE_LEFT]);
 
   VkImage right =
-    gulkan_frame_buffer_get_color_image (framebuffers[GXR_EYE_RIGHT]);
+    gulkan_frame_buffer_get_color_image (self->framebuffer[GXR_EYE_RIGHT]);
 
-  if (!openvr_compositor_submit (gc, extent.width, extent.height,
+  if (!openvr_compositor_submit (gc,
+                                 self->framebuffer_extent.width,
+                                 self->framebuffer_extent.height,
                                  VK_FORMAT_R8G8B8A8_UNORM,
-                                 sample_count, left, right))
+                                 self->framebuffer_sample_count, left, right))
     return FALSE;
 
   return TRUE;
@@ -833,6 +847,21 @@ _get_device_extensions (GxrContext   *self,
   return TRUE;
 }
 
+static uint32_t
+_get_view_count (GxrContext *context)
+{
+  (void) context;
+  /* OpenvR only knows stereo configurations */
+  return 2;
+}
+
+static GulkanFrameBuffer *
+_get_acquired_framebuffer (GxrContext *context, uint32_t view)
+{
+  OpenVRContext *self = OPENVR_CONTEXT (context);
+  return self->framebuffer[view];
+}
+
 static void
 openvr_context_class_init (OpenVRContextClass *klass)
 {
@@ -872,4 +901,6 @@ openvr_context_class_init (OpenVRContextClass *klass)
   gxr_context_class->request_quit = _request_quit;
   gxr_context_class->get_instance_extensions = _get_instance_extensions;
   gxr_context_class->get_device_extensions = _get_device_extensions;
+  gxr_context_class->get_view_count = _get_view_count;
+  gxr_context_class->get_acquired_framebuffer = _get_acquired_framebuffer;
 }
