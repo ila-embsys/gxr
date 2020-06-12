@@ -494,7 +494,8 @@ _action_poll_pose_secs_from_now (OpenXRAction *self,
       spaceLocationValid = _space_location_valid (&space_location);
 
       /*
-      g_print("Polled space %s %d, %f %f %f\n", self->url, spaceLocationValid,
+      g_print("Polled space %s active %d  valid %d, %f %f %f\n", self->url,
+              value.isActive, spaceLocationValid,
               space_location.pose.position.x,
               space_location.pose.position.y,
               space_location.pose.position.z
@@ -502,13 +503,13 @@ _action_poll_pose_secs_from_now (OpenXRAction *self,
       */
 
       GxrPoseEvent *event = g_malloc (sizeof (GxrPoseEvent));
-      event->active = (gboolean)value.isActive;
+      event->active = value.isActive == XR_TRUE;
       event->controller = controller;
       _get_model_matrix_from_pose(&space_location.pose, &event->pose);
       graphene_vec3_init (&event->velocity, 0, 0, 0);
       graphene_vec3_init (&event->angular_velocity, 0, 0, 0);
       event->valid = spaceLocationValid;
-      event->device_connected = TRUE;
+      event->device_connected = event->active;
 
       gxr_action_emit_pose (GXR_ACTION (self), event);
     }
