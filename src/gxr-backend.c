@@ -83,6 +83,7 @@ _new_from_api (GxrApi api)
                   "The '%s' module is missing in '%s'.\n"
                   "Contact your package maintainer.\n",
                   module_path, module_name, BACKEND_DIR);
+      g_free (module_path);
       return NULL;
     }
 
@@ -90,8 +91,11 @@ _new_from_api (GxrApi api)
   if (!self->module)
     {
       g_printerr ("Unable to load '%s' module.\n", module_name);
+      g_free (module_path);
       return NULL;
     }
+
+  g_free (module_path);
 
   if (!g_module_symbol (self->module, func_name,
                         (gpointer*) &self->context_new))
