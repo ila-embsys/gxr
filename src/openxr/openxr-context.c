@@ -66,8 +66,9 @@ struct _OpenXRContext
 
   uint32_t view_count;
 
-  gboolean is_visible;
-  gboolean is_runnting;
+  XrSessionState session_state;
+  gboolean should_render;
+  gboolean is_stopping;
 
   XrCompositionLayerProjection projection_layer;
 
@@ -593,10 +594,14 @@ openxr_context_begin_frame (OpenXRContext* self)
       (result, "xrWaitFrame() was not successful, exiting..."))
     return FALSE;
 
+  self->should_render = frame_state.shouldRender == XR_TRUE;
+
   self->predicted_display_time = frame_state.predictedDisplayTime;
   self->predicted_display_period = frame_state.predictedDisplayPeriod;
 
-  if (!self->is_visible)
+  if (self->session_state == XR_SESSION_STATE_EXITING ||
+      self->session_state == XR_SESSION_STATE_LOSS_PENDING ||
+      self->session_state == XR_SESSION_STATE_STOPPING)
     return FALSE;
 
   // --- Create projection matrices and view matrices for each eye
@@ -986,8 +991,9 @@ _init_session (GxrContext *context)
 
   _create_projection_views(self);
 
-  self->is_visible = TRUE;
-  self->is_runnting = TRUE;
+  self->session_state = XR_SESSION_STATE_UNKNOWN;
+  self->should_render = FALSE;
+  self->is_stopping = FALSE;
 
   self->projection_layer = (XrCompositionLayerProjection){
     .type = XR_TYPE_COMPOSITION_LAYER_PROJECTION,
@@ -1016,17 +1022,33 @@ _poll_event (GxrContext *context)
     {
       switch (runtimeEvent.type)
       {
+        case XR_TYPE_EVENT_DATA_EVENTS_LOST:
+        {
+          /* We didnt poll enough */
+          g_printerr ("Event: Events lost\n");
+        } break;
+        case XR_TYPE_EVENT_DATA_MAIN_SESSION_VISIBILITY_CHANGED_EXTX:
+        {
+          g_debug ("Event: STUB: Session visibility changed\n");
+        } break;
+        case XR_TYPE_EVENT_DATA_PERF_SETTINGS_EXT:
+        {
+          g_debug ("Event: STUB: perf settings\n");
+        } break;
+        case XR_TYPE_EVENT_DATA_VISIBILITY_MASK_CHANGED_KHR:
+        {
+          g_debug ("Event: STUB: visibility mask changed\n");
+        } break;
         case XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED:
         {
           XrEventDataSessionStateChanged* event =
             (XrEventDataSessionStateChanged*)&runtimeEvent;
-          XrSessionState state = event->state;
-          self->is_visible = event->state <= XR_SESSION_STATE_FOCUSED;
-          g_debug ("EVENT: session state changed to %d. Visible: %d\n",
-                  state, self->is_visible);
+
+          self->session_state = event->state;
+          g_debug ("EVENT: session state changed to %d\n", event->state);
           if (event->state >= XR_SESSION_STATE_STOPPING)
             {
-              self->is_runnting = FALSE;
+              self->is_stopping = TRUE;
 
               GxrQuitEvent *quit_event = g_malloc (sizeof (GxrQuitEvent));
               quit_event->reason = GXR_QUIT_SHUTDOWN;
@@ -1489,6 +1511,12 @@ _get_acquired_framebuffer (GxrContext *context, uint32_t view)
   GulkanFrameBuffer *fb =
     GULKAN_FRAME_BUFFER (self->framebuffer[view][self->buffer_index]);
   return fb;
+}
+
+XrSessionState
+openxr_context_get_session_state (OpenXRContext *self)
+{
+  return self->session_state;
 }
 
 static void

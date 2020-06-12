@@ -16,6 +16,7 @@ struct _OpenXRActionSet
 {
   GxrActionSet parent;
 
+  OpenXRContext *context;
   XrInstance instance;
   XrSession session;
 
@@ -63,6 +64,7 @@ openxr_action_set_new (OpenXRContext *context)
 
   self->instance = openxr_context_get_openxr_instance (context);
   self->session = openxr_context_get_openxr_session (context);
+  self->context = context;
 
   return self;
 }
@@ -136,7 +138,17 @@ static gboolean
 _update (GxrActionSet **sets, uint32_t count)
 {
   if (count == 0)
-    return FALSE;
+    return TRUE;
+
+  /* All actionsets must be attached to the same session */
+  XrInstance instance = OPENXR_ACTION_SET (sets[0])->instance;
+  XrSession session = OPENXR_ACTION_SET (sets[0])->session;
+
+  XrSessionState state =
+    openxr_context_get_session_state (OPENXR_ACTION_SET (sets[0])->context);
+  /* just pretend no input happens when we're not focused */
+  if (state != XR_SESSION_STATE_FOCUSED)
+    return TRUE;
 
   XrActiveActionSet *active_action_sets = g_malloc (sizeof (XrActiveActionSet) * count);
   for (uint32_t i = 0; i < count; i++)
@@ -152,17 +164,22 @@ _update (GxrActionSet **sets, uint32_t count)
     .activeActionSets = active_action_sets
   };
 
-  /* All actionsets must be attached to the same session */
-  OpenXRActionSet *self = OPENXR_ACTION_SET (sets[0]);
 
-  XrResult result = xrSyncActions (self->session, &syncInfo);
+  XrResult result = xrSyncActions (session, &syncInfo);
 
   g_free (active_action_sets);
+
+  if (result == XR_SESSION_NOT_FOCUSED)
+    {
+      /* xrSyncActions can be called before reading the session state change */
+      g_debug ("SyncActions while session not focused\n");
+      return TRUE;
+    }
 
   if (result != XR_SUCCESS)
     {
       g_printerr ("ERROR: SyncActions: ");
-      _printerr_xr_result (self->instance, result);
+      _printerr_xr_result (instance, result);
       return FALSE;
     }
 
