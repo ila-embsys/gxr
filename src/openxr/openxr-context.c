@@ -79,9 +79,6 @@ struct _OpenXRContext
 
   int64_t swapchain_format;
 
-  XrPath handPaths[NUM_CONTROLLERS];
-  XrSpace handSpaces[NUM_CONTROLLERS];
-
   GSList *manifests;
 };
 
@@ -134,7 +131,7 @@ _check_xr_result (XrResult result, const char* format, ...)
   unsigned long format_len = strlen (format);
   unsigned long result_len = strlen (resultString);
 
-  unsigned long size = format_len + result_len + 4;
+  unsigned long size = format_len + result_len + 5;
   // + " []\n"
 
   char *formatRes = g_alloca (size);
@@ -1073,6 +1070,41 @@ _poll_event (GxrContext *context)
         case XR_TYPE_EVENT_DATA_INTERACTION_PROFILE_CHANGED:
         {
           g_print ("Event: STUB: interaction profile changed\n");
+
+          XrInteractionProfileState state = {
+            .type = XR_TYPE_INTERACTION_PROFILE_STATE
+          };
+
+          XrPath hand_paths[2];
+          xrStringToPath(self->instance, "/user/hand/left", &hand_paths[0]);
+          xrStringToPath(self->instance, "/user/hand/right", &hand_paths[1]);
+          for (int i = 0; i < NUM_CONTROLLERS; i++)
+            {
+              XrResult res =
+                xrGetCurrentInteractionProfile (self->session,
+                                                hand_paths[i],
+                                                &state);
+              if (!_check_xr_result (res,
+                "Failed to get interaction profile for %d", i))
+                continue;
+
+              XrPath prof = state.interactionProfile;
+
+              uint32_t strl;
+              char profile_str[XR_MAX_PATH_LENGTH];
+              res =
+                xrPathToString (self->instance, prof, XR_MAX_PATH_LENGTH,
+                                &strl, profile_str);
+                if (!_check_xr_result (res,
+                  "Failed to get interaction profile path str for %s",
+                  i == 0 ? "/user/hand/left" : "/user/hand/right"))
+                  continue;
+
+              g_debug ("Event: Interaction profile changed for %s: %s\n",
+                       i == 0 ? "/user/hand/left" : "/user/hand/right",
+                       profile_str);
+            }
+
           break;
         }
         case XR_TYPE_EVENT_DATA_REFERENCE_SPACE_CHANGE_PENDING:
