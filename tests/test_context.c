@@ -14,7 +14,7 @@
 static void
 _test_scene_available (void)
 {
-  GxrContext* gxr_context = gxr_context_new_headless ();
+  GxrContext* gxr_context = gxr_context_new_headless ("Test Context", 1);
   gboolean scene_available =
     !gxr_context_is_another_scene_running (gxr_context);
   g_print ("Scene available: %d\n", scene_available);
@@ -36,7 +36,7 @@ gxr_api_string (GxrApi v)
 static void
 _test_init_context (GxrAppType type)
 {
-  GxrContext *context = gxr_context_new (type);
+  GxrContext *context = gxr_context_new (type, "Test Context", 1);
   g_assert_nonnull (context);
 
   GxrApi api = gxr_context_get_api (context);
@@ -61,7 +61,7 @@ _system_quit_cb (GxrContext   *context,
 static void
 _test_quit_event (GxrAppType type)
 {
-  GxrContext *context = gxr_context_new (type);
+  GxrContext *context = gxr_context_new (type, "Test Context", 1);
   g_assert_nonnull (context);
 
   gboolean quit_completed = FALSE;

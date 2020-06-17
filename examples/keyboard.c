@@ -272,7 +272,7 @@ main (int argc, char *argv[])
     .size_y = 600,
     .text_cursor = 0,
     .texture = NULL,
-    .context = gxr_context_new (GXR_APP_OVERLAY)
+    .context = gxr_context_new (GXR_APP_OVERLAY, "Keyboard Example", 1)
   };
 
   if (!gxr_context_load_action_manifest (

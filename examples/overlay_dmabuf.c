@@ -145,7 +145,7 @@ main ()
 
   dma_buf_fill (map, width, height, stride);
 
-  GxrContext *context = gxr_context_new (GXR_APP_OVERLAY);
+  GxrContext *context = gxr_context_new (GXR_APP_OVERLAY, "Overlay Dma-Buf", 1);
 
   GulkanClient *client = gxr_context_get_gulkan (context);
 

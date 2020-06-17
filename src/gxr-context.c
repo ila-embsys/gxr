@@ -91,12 +91,15 @@ gxr_context_class_init (GxrContextClass *klass)
 }
 
 static gboolean
-_init_runtime (GxrContext *self, GxrAppType type)
+_init_runtime (GxrContext *self,
+               GxrAppType  type,
+               char       *app_name,
+               uint32_t    app_version)
 {
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->init_runtime == NULL)
     return FALSE;
-  return klass->init_runtime (self, type);
+  return klass->init_runtime (self, type, app_name, app_version);
 }
 
 static gboolean
@@ -122,8 +125,10 @@ _add_missing (GSList **target, GSList *source)
 static GxrContext *
 _new (GxrAppType  type,
       GxrApi      api,
-      GSList *instance_ext_list,
-      GSList *device_ext_list)
+      GSList     *instance_ext_list,
+      GSList     *device_ext_list,
+      char       *app_name,
+      uint32_t    app_version)
 {
   GxrBackend *backend = gxr_backend_get_instance (api);
   if (!backend)
@@ -139,7 +144,7 @@ _new (GxrAppType  type,
     return NULL;
   }
 
-  if (!_init_runtime (self, type))
+  if (!_init_runtime (self, type, app_name, app_version))
     {
       g_object_unref (self);
       g_printerr ("Could not init runtime.\n");
@@ -217,45 +222,60 @@ _get_api_from_env ()
   return parsed_api;
 }
 
-GxrContext *gxr_context_new (GxrAppType type)
+GxrContext *gxr_context_new (GxrAppType type,
+                             char      *app_name,
+                             uint32_t   app_version)
 {
-  return gxr_context_new_from_api (type, _get_api_from_env ());
+  return gxr_context_new_from_api (type, _get_api_from_env (),
+                                   app_name, app_version);
 }
 
 GxrContext *gxr_context_new_from_vulkan_extensions (GxrAppType type,
                                                     GSList *instance_ext_list,
-                                                    GSList *device_ext_list)
+                                                    GSList *device_ext_list,
+                                                    char       *app_name,
+                                                    uint32_t    app_version)
 {
   return gxr_context_new_full (type, _get_api_from_env (),
-                               instance_ext_list, device_ext_list);
+                               instance_ext_list, device_ext_list,
+                               app_name, app_version);
 }
 
 GxrContext *gxr_context_new_full (GxrAppType type,
                                   GxrApi     api,
                                   GSList    *instance_ext_list,
-                                  GSList    *device_ext_list)
+                                  GSList    *device_ext_list,
+                                  char      *app_name,
+                                  uint32_t   app_version)
 {
   /* Override with API from env */
   GxrApi api_env = _parse_api_from_env ();
   if (api_env != GXR_API_NONE)
     api = api_env;
 
-  return _new (type, api, instance_ext_list, device_ext_list);
+  return _new (type, api, instance_ext_list, device_ext_list,
+               app_name, app_version);
 }
 
 GxrContext *
 gxr_context_new_from_api (GxrAppType type,
-                          GxrApi     api)
+                          GxrApi     api,
+                          char      *app_name,
+                          uint32_t   app_version)
 {
-  return gxr_context_new_full (type, api, NULL, NULL);
+  return gxr_context_new_full (type, api, NULL, NULL, app_name, app_version);
 }
 
-GxrContext *gxr_context_new_headless (void)
+GxrContext *gxr_context_new_headless (char    *app_name,
+                                      uint32_t app_version)
 {
-  return gxr_context_new_headless_from_api (_get_api_from_env ());
+  GxrApi api = _get_api_from_env ();
+  return gxr_context_new_headless_from_api (api, app_name, app_version);
 }
 
-GxrContext *gxr_context_new_headless_from_api (GxrApi api)
+GxrContext *gxr_context_new_headless_from_api (GxrApi   api,
+                                               char    *app_name,
+                                               uint32_t app_version)
 {
   /* Override with API from env */
   GxrApi api_env = _parse_api_from_env ();
@@ -270,7 +290,7 @@ GxrContext *gxr_context_new_headless_from_api (GxrApi api)
     }
 
   GxrContext *self = gxr_backend_new_context (backend);
-  if (!_init_runtime (self, GXR_APP_HEADLESS))
+  if (!_init_runtime (self, GXR_APP_HEADLESS, app_name, app_version))
     {
       g_print ("Could not init VR runtime.\n");
       return NULL;

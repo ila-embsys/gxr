@@ -207,7 +207,9 @@ main ()
 
   context = gxr_context_new_from_vulkan_extensions (GXR_APP_OVERLAY,
                                                     instance_ext_list,
-                                                    device_ext_list);
+                                                    device_ext_list,
+                                                    "Overlay External Memory",
+                                                    1);
   g_slist_free (instance_ext_list);
   g_slist_free (device_ext_list);
 

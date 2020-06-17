@@ -175,7 +175,7 @@ main (int argc, char *argv[])
 
   gtk_widget_show_all (window);
 
-  context = gxr_context_new (GXR_APP_OVERLAY);
+  context = gxr_context_new (GXR_APP_OVERLAY, "Overlay GTK", 1);
   GxrOverlay *overlay = gxr_overlay_new_width (context, "gxr.example.gtk", 1.0);
   gxr_overlay_show (overlay);
   graphene_point3d_t position = { .x = 0.f, .y = 1.2f, .z = -1.f };

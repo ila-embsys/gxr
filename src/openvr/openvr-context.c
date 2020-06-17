@@ -445,8 +445,16 @@ _get_head_pose (GxrContext *context, graphene_matrix_t *pose)
 }
 
 static gboolean
-_init_runtime (GxrContext *context, GxrAppType type)
+_init_runtime (GxrContext *context,
+               GxrAppType  type,
+               char       *app_name,
+               uint32_t    app_version)
 {
+  /* create application manifest?
+   * https://github.com/ValveSoftware/openvr/issues/530 */
+  (void) app_name;
+  (void) app_version;
+
   OpenVRContext *self = OPENVR_CONTEXT (context);
   if (!openvr_context_is_installed ())
   {

@@ -141,7 +141,8 @@ _create_gxr_context ()
 
   GxrContext *context = gxr_context_new_from_vulkan_extensions (GXR_APP_SCENE,
                                                                 instance_ext_list,
-                                                                device_ext_list);
+                                                                device_ext_list,
+                                                                "GXR Cube", 1);
 
   g_slist_free_full (instance_ext_list, g_free);
   g_slist_free_full (device_ext_list, g_free);
@@ -655,9 +656,7 @@ _run ()
 int
 main (void)
 {
-
-
-  GxrContext* gxr_context = gxr_context_new_headless ();
+  GxrContext* gxr_context = gxr_context_new_headless ("GXR Cube", 1);
   gboolean scene_available =
     !gxr_context_is_another_scene_running (gxr_context);
   g_object_unref (gxr_context);

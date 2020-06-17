@@ -106,7 +106,7 @@ test_cat_overlay ()
 
   loop = g_main_loop_new (NULL, FALSE);
 
-  GxrContext *context = gxr_context_new (GXR_APP_OVERLAY);
+  GxrContext *context = gxr_context_new (GXR_APP_OVERLAY, "Overlay Cairo", 1);
   GulkanClient *gc = gxr_context_get_gulkan (context);
 
   texture = gulkan_texture_new_from_cairo_surface (gc, surface,

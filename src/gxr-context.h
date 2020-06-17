@@ -54,7 +54,10 @@ struct _GxrContextClass
   (*show_keyboard) (GxrContext *self);
 
   gboolean
-  (*init_runtime) (GxrContext *self, GxrAppType type);
+  (*init_runtime) (GxrContext *self,
+                   GxrAppType  type,
+                   char       *app_name,
+                   uint32_t    app_version);
 
   gboolean
   (*init_session) (GxrContext *self);
@@ -163,24 +166,35 @@ struct _GxrContextClass
   (*get_acquired_framebuffer) (GxrContext *self, uint32_t view);
 };
 
-GxrContext *gxr_context_new (GxrAppType type);
+GxrContext *gxr_context_new (GxrAppType  type,
+                             char       *app_name,
+                             uint32_t    app_version);
 
 GxrContext *
 gxr_context_new_from_api (GxrAppType type,
-                          GxrApi backend);
+                          GxrApi     backend,
+                          char      *app_name,
+                          uint32_t   app_version);
 
 GxrContext *gxr_context_new_from_vulkan_extensions (GxrAppType type,
                                                     GSList *instance_ext_list,
-                                                    GSList *device_ext_list);
+                                                    GSList *device_ext_list,
+                                                    char       *app_name,
+                                                    uint32_t    app_version);
 
-GxrContext *gxr_context_new_headless (void);
+GxrContext *gxr_context_new_headless (char    *app_name,
+                                      uint32_t app_version);
 
-GxrContext *gxr_context_new_headless_from_api (GxrApi api);
+GxrContext *gxr_context_new_headless_from_api (GxrApi   api,
+                                               char    *app_name,
+                                               uint32_t app_version);
 
 GxrContext *gxr_context_new_full (GxrAppType type,
                                   GxrApi     api,
                                   GSList    *instance_ext_list,
-                                  GSList    *device_ext_list);
+                                  GSList    *device_ext_list,
+                                  char       *app_name,
+                                  uint32_t    app_version);
 
 GxrApi
 gxr_context_get_api (GxrContext *self);

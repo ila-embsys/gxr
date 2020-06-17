@@ -186,7 +186,7 @@ main ()
 {
   GMainLoop *loop = g_main_loop_new (NULL, FALSE);
 
-  context = gxr_context_new (GXR_APP_OVERLAY);
+  context = gxr_context_new (GXR_APP_OVERLAY, "Overlay Mesa Dma-Buf", 1);
   pixbuf = load_gdk_pixbuf ();
   if (pixbuf == NULL)
     return -1;

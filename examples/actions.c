@@ -106,7 +106,7 @@ main ()
 {
   Example self = {
     .loop = g_main_loop_new (NULL, FALSE),
-    .context = gxr_context_new (GXR_APP_OVERLAY)
+    .context = gxr_context_new (GXR_APP_OVERLAY, "Actions Example", 1)
   };
 
   if (!gxr_context_load_action_manifest (

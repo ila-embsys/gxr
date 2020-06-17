@@ -343,7 +343,8 @@ main (int argc, char *argv[])
     }
 */
 
-  GxrContext *context = gxr_context_new (GXR_APP_OVERLAY);
+  GxrContext *context =
+    gxr_context_new (GXR_APP_OVERLAY, "X11 Keyboard Synth", 1);
 
   gxr_context_show_keyboard (GXR_CONTEXT (context));
 

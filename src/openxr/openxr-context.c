@@ -196,7 +196,7 @@ _check_vk_extension (void)
 }
 
 static gboolean
-_create_instance (OpenXRContext* self)
+_create_instance (OpenXRContext* self, char *app_name, uint32_t app_version)
 {
   const char* const enabledExtensions[] = {
     XR_KHR_VULKAN_ENABLE_EXTENSION_NAME
@@ -209,13 +209,15 @@ _create_instance (OpenXRContext* self)
     .enabledExtensionNames = enabledExtensions,
     .enabledApiLayerCount = 0,
     .applicationInfo = {
-      .applicationName = "gxr",
+      .applicationVersion = app_version,
       .engineName = "gxr",
-      .applicationVersion = 1,
       .engineVersion = GXR_VERSION_HEX,
       .apiVersion = XR_CURRENT_API_VERSION,
     },
   };
+
+  strncpy(instanceCreateInfo.applicationInfo.applicationName,
+          app_name, XR_MAX_APPLICATION_NAME_SIZE);
 
   XrResult result;
   result = xrCreateInstance (&instanceCreateInfo, &self->instance);
@@ -916,7 +918,9 @@ _get_frustum_angles (GxrContext *context, GxrEye eye,
 
 static gboolean
 _init_runtime (GxrContext *context,
-               GxrAppType type)
+               GxrAppType  type,
+               char       *app_name,
+               uint32_t    app_version)
 {
   OpenXRContext *self = OPENXR_CONTEXT (context);
   switch (type)
@@ -936,7 +940,7 @@ _init_runtime (GxrContext *context,
   if (!_check_vk_extension())
     return FALSE;
 
-  if (!_create_instance(self))
+  if (!_create_instance(self, app_name, app_version))
     return FALSE;
 
   if (!_create_system(self))

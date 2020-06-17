@@ -140,7 +140,7 @@ int main () {
   Example ex = {
     .loop = g_main_loop_new (NULL, FALSE),
     .tex_count = 0,
-    .context = gxr_context_new (GXR_APP_OVERLAY)
+    .context = gxr_context_new (GXR_APP_OVERLAY, "Overlay Multi Stresstest", 1)
   };
 
   ExampleOverlayNum nums[OVERLAY_NUM];
