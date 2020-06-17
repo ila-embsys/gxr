@@ -48,8 +48,8 @@ struct _OpenXRContext
   /* One array per eye */
   XrSwapchain *swapchains;
   XrSwapchainImageVulkanKHR **images;
-  /* last acquired swapchain image index */
-  uint32_t buffer_index;
+  /* last acquired swapchain image index per swapchain */
+  uint32_t *buffer_index;
   /* for each view */
   uint32_t *swapchain_length;
 
@@ -746,6 +746,8 @@ openxr_context_cleanup (OpenXRContext *self)
         g_free (self->images[i]);
       g_free (self->images);
     }
+
+  g_free (self->buffer_index);
 }
 
 static void
@@ -987,6 +989,8 @@ _init_session (GxrContext *context)
   g_print("Created swapchains.\n");
 
   _create_projection_views(self);
+
+  self->buffer_index = g_malloc (sizeof (uint32_t) * self->view_count);
 
   self->session_state = XR_SESSION_STATE_UNKNOWN;
   self->should_render = FALSE;
@@ -1292,7 +1296,7 @@ _begin_frame (GxrContext *context,
   }
 
   for (uint32_t i = 0; i < 2; i++) {
-    if (!openxr_context_aquire_swapchain (self, i, &self->buffer_index))
+    if (!openxr_context_aquire_swapchain (self, i, &self->buffer_index[i]))
       {
         g_printerr ("Could not aquire xr swapchain\n");
         return FALSE;
@@ -1541,7 +1545,7 @@ _get_acquired_framebuffer (GxrContext *context, uint32_t view)
 {
   OpenXRContext *self = OPENXR_CONTEXT (context);
   GulkanFrameBuffer *fb =
-    GULKAN_FRAME_BUFFER (self->framebuffer[view][self->buffer_index]);
+    GULKAN_FRAME_BUFFER (self->framebuffer[view][self->buffer_index[view]]);
   return fb;
 }
 
