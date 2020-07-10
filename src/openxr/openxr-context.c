@@ -485,6 +485,12 @@ _create_swapchains (OpenXRContext* self)
       return FALSE;
     }
 
+  g_debug("Supported swapchain formats:");
+  for (uint32_t i = 0; i < swapchainFormatCount; i++)
+    {
+      g_debug("%s", vk_format_string (swapchainFormats[i]));
+    }
+
   /* TODO: properly choose a format */
   self->swapchain_format = swapchainFormats[0];
 
