@@ -858,6 +858,31 @@ _get_view_matrix_from_pose (XrPosef           *pose,
   graphene_matrix_inverse (&view, mat);
 }
 
+static void
+_get_model_matrix_from_pose (XrPosef           *pose,
+                             graphene_matrix_t *mat)
+{
+  graphene_quaternion_t q;
+  graphene_quaternion_init (&q,
+                            pose->orientation.x, pose->orientation.y,
+                            pose->orientation.z, pose->orientation.w);
+
+  graphene_matrix_t rotation;
+  graphene_matrix_init_identity (&rotation);
+  graphene_matrix_rotate_quaternion (&rotation, &q);
+
+  graphene_point3d_t position = {
+    pose->position.x,
+    pose->position.y,
+    pose->position.z
+  };
+
+  graphene_matrix_t translation;
+  graphene_matrix_init_translate (&translation, &position);
+
+  graphene_matrix_multiply (&rotation, &translation, mat);
+}
+
 void
 openxr_context_get_position (OpenXRContext   *self,
                              uint32_t         i,
@@ -900,7 +925,7 @@ _get_head_pose (GxrContext *context, graphene_matrix_t *pose)
       return FALSE;
     }
 
-  _get_view_matrix_from_pose(&space_location.pose, pose);
+  _get_model_matrix_from_pose (&space_location.pose, pose);
   return TRUE;
 }
 
@@ -924,15 +949,21 @@ _is_input_available ()
   return TRUE;
 }
 
+#define PI 3.1415926535f
+#define RAD_TO_DEG(x) ( (x) * 360.0f / ( 2.0f * PI ) )
+
 static void
 _get_frustum_angles (GxrContext *context, GxrEye eye,
                      float *left, float *right,
                      float *top, float *bottom)
 {
-  (void) context;
-  (void) eye;
-  *left = 1; *right = 1; *top = 1; *bottom = 1;
-  g_warning ("_get_frustum_angles not implemented in OpenXR.\n");
+  OpenXRContext *self = OPENXR_CONTEXT (context);
+  *left = RAD_TO_DEG (self->views[eye].fov.angleLeft);
+  *right = RAD_TO_DEG (self->views[eye].fov.angleRight);
+  *top = RAD_TO_DEG (self->views[eye].fov.angleUp);
+  *bottom = RAD_TO_DEG (self->views[eye].fov.angleDown);
+
+  // g_debug ("Fov angles L %f R %f T %f B %f", *left, *right, *top, *bottom);
 }
 
 static gboolean
