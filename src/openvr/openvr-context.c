@@ -523,7 +523,7 @@ _init_framebuffers (GxrContext           *context,
 
   *render_pass =
     gulkan_render_pass_new (device, sample_count,
-                            VK_FORMAT_R8G8B8A8_UNORM,
+                            VK_FORMAT_R8G8B8A8_SRGB,
                             VK_IMAGE_LAYOUT_GENERAL, TRUE);
   if (!*render_pass)
     {
@@ -536,7 +536,7 @@ _init_framebuffers (GxrContext           *context,
       /* only one framebuffer per eye on openvr */
       self->framebuffer[eye] = gulkan_frame_buffer_new (device, *render_pass,
                                                         extent, sample_count,
-                                                        VK_FORMAT_R8G8B8A8_UNORM,
+                                                        VK_FORMAT_R8G8B8A8_SRGB,
                                                         TRUE);
       if (!self->framebuffer[eye])
         return FALSE;
@@ -561,7 +561,7 @@ _submit_framebuffers (GxrContext *context)
   if (!openvr_compositor_submit (gc,
                                  self->framebuffer_extent.width,
                                  self->framebuffer_extent.height,
-                                 VK_FORMAT_R8G8B8A8_UNORM,
+                                 VK_FORMAT_R8G8B8A8_SRGB,
                                  self->framebuffer_sample_count, left, right))
     return FALSE;
 
