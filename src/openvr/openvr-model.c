@@ -127,7 +127,7 @@ _load_texture (GulkanTexture            **texture,
 
   *texture =
     gulkan_texture_new_from_pixbuf (gc, pixbuf,
-                                    VK_FORMAT_R8G8B8A8_UNORM,
+                                    VK_FORMAT_R8G8B8A8_SRGB,
                                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                                     TRUE);
   g_object_unref (pixbuf);
