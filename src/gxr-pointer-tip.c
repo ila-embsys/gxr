@@ -169,7 +169,7 @@ _init_texture (GxrPointerTip *self)
 
   GulkanTexture *texture =
     gulkan_texture_new_from_pixbuf (client, pixbuf,
-                                    VK_FORMAT_R8G8B8A8_UNORM,
+                                    VK_FORMAT_R8G8B8A8_SRGB,
                                     data->upload_layout,
                                     false);
   g_object_unref (pixbuf);
