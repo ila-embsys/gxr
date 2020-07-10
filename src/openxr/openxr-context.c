@@ -487,7 +487,7 @@ _create_swapchains (OpenXRContext* self)
 
   g_debug("Supported swapchain formats:");
   for (uint32_t i = 0; i < swapchainFormatCount; i++)
-    g_debug("%s", vk_format_string (swapchainFormats[i]));
+    g_debug("%s", vk_format_string ((VkFormat) swapchainFormats[i]));
 
   self->swapchain_format = VK_FORMAT_R8G8B8A8_SRGB;
   gboolean format_found = false;
@@ -501,8 +501,9 @@ _create_swapchains (OpenXRContext* self)
   if (!format_found)
     {
       g_warning ("Requested %s, but runtime doesn't support it.",
-                 vk_format_string(self->swapchain_format));
-      g_warning ("Using %s instead.", vk_format_string(swapchainFormats[0]));
+                 vk_format_string((VkFormat) self->swapchain_format));
+      g_warning ("Using %s instead.",
+                 vk_format_string((VkFormat) swapchainFormats[0]));
       self->swapchain_format = swapchainFormats[0];
     }
 
