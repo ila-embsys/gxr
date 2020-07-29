@@ -40,7 +40,8 @@ struct _OpenXRContext
 
   XrInstance instance;
   XrSession session;
-  XrSpace local_space;
+  XrReferenceSpaceType play_space_type;
+  XrSpace play_space;
   XrSpace view_space;
   XrSystemId system_id;
   XrViewConfigurationType view_config_type;
@@ -421,6 +422,17 @@ _check_supported_spaces (OpenXRContext* self)
     return FALSE;
   }
 
+  if (_is_space_supported (spaces, count, XR_REFERENCE_SPACE_TYPE_STAGE))
+    {
+      self->play_space_type = XR_REFERENCE_SPACE_TYPE_STAGE;
+      g_debug ("Stage space supported.");
+    }
+  else
+    {
+      self->play_space_type = XR_REFERENCE_SPACE_TYPE_LOCAL;
+      g_debug ("Stage space not supported, fall back to local space!");
+    }
+
   if (!_is_space_supported (spaces, count, XR_REFERENCE_SPACE_TYPE_VIEW)) {
     g_print ("XR_REFERENCE_SPACE_TYPE_VIEW unsupported.\n");
     return FALSE;
@@ -428,17 +440,23 @@ _check_supported_spaces (OpenXRContext* self)
 
   g_free (spaces);
 
-  XrPosef identity = {
+   XrPosef space_pose = {
     .orientation = { .x = 0, .y = 0, .z = 0, .w = 1.0 },
     .position = { .x = 0, .y = 0, .z = 0 },
   };
 
+  if (self->play_space_type == XR_REFERENCE_SPACE_TYPE_LOCAL)
+    {
+      space_pose.position.y = -1.6f;
+      g_debug ("Using local space with %f y offset", space_pose.position.y);
+    }
+
   XrReferenceSpaceCreateInfo info = {
     .type = XR_TYPE_REFERENCE_SPACE_CREATE_INFO,
-    .referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL,
-    .poseInReferenceSpace = identity,
+    .referenceSpaceType = self->play_space_type,
+    .poseInReferenceSpace = space_pose,
   };
-  result = xrCreateReferenceSpace(self->session, &info, &self->local_space);
+  result = xrCreateReferenceSpace(self->session, &info, &self->play_space);
   if (!_check_xr_result (result, "Failed to create local space."))
     return FALSE;
 
@@ -626,7 +644,7 @@ openxr_context_begin_frame (OpenXRContext* self)
   XrViewLocateInfo viewLocateInfo = {
     .type = XR_TYPE_VIEW_LOCATE_INFO,
     .displayTime = frame_state.predictedDisplayTime,
-    .space = self->local_space,
+    .space = self->play_space,
   };
 
   XrViewState viewState = {
@@ -730,8 +748,8 @@ openxr_context_cleanup (OpenXRContext *self)
 
   if (self->swapchains)
     g_free (self->swapchains);
-  if (self->local_space)
-    xrDestroySpace (self->local_space);
+  if (self->play_space)
+    xrDestroySpace (self->play_space);
   if (self->session)
     xrDestroySession (self->session);
   if (self->instance)
@@ -912,7 +930,7 @@ _get_head_pose (GxrContext *context, graphene_matrix_t *pose)
     .next = NULL
   };
 
-  XrResult result = xrLocateSpace (self->view_space, self->local_space,
+  XrResult result = xrLocateSpace (self->view_space, self->play_space,
                                    self->predicted_display_time,
                                   &space_location);
   _check_xr_result (result, "Failed to locate head space.");
@@ -1053,7 +1071,7 @@ _init_session (GxrContext *context)
   self->projection_layer = (XrCompositionLayerProjection){
     .type = XR_TYPE_COMPOSITION_LAYER_PROJECTION,
     .layerFlags = 0,
-    .space = self->local_space,
+    .space = self->play_space,
     .viewCount = self->view_count,
     .views = self->projection_views,
   };
@@ -1217,7 +1235,7 @@ openxr_context_get_openxr_session (OpenXRContext *self)
 XrSpace
 openxr_context_get_tracked_space (OpenXRContext *self)
 {
-  return self->local_space;
+  return self->play_space;
 }
 
 static gboolean
