@@ -1148,34 +1148,43 @@ _poll_event (GxrContext *context)
             .type = XR_TYPE_INTERACTION_PROFILE_STATE
           };
 
+          char *hand_str[2] = { "/user/hand/left", "/user/hand/right" };
           XrPath hand_paths[2];
-          xrStringToPath(self->instance, "/user/hand/left", &hand_paths[0]);
-          xrStringToPath(self->instance, "/user/hand/right", &hand_paths[1]);
+          xrStringToPath(self->instance, hand_str[0], &hand_paths[0]);
+          xrStringToPath(self->instance, hand_str[1], &hand_paths[1]);
           for (int i = 0; i < NUM_CONTROLLERS; i++)
             {
+
+
               XrResult res =
                 xrGetCurrentInteractionProfile (self->session,
                                                 hand_paths[i],
                                                 &state);
               if (!_check_xr_result (res,
-                "Failed to get interaction profile for %d", i))
+                "Failed to get interaction profile for %s", hand_str[i]))
                 continue;
 
               XrPath prof = state.interactionProfile;
 
+              if (prof == XR_NULL_PATH)
+                {
+                  // perhaps no controller is present
+                  g_debug ("Event: Interaction profile on %s: [none]",
+                           hand_str[i]);
+                  continue;
+                }
+
               uint32_t strl;
               char profile_str[XR_MAX_PATH_LENGTH];
-              res =
-                xrPathToString (self->instance, prof, XR_MAX_PATH_LENGTH,
-                                &strl, profile_str);
-                if (!_check_xr_result (res,
-                  "Failed to get interaction profile path str for %s",
-                  i == 0 ? "/user/hand/left" : "/user/hand/right"))
-                  continue;
+              res = xrPathToString (self->instance, prof, XR_MAX_PATH_LENGTH,
+                                    &strl, profile_str);
+              if (!_check_xr_result (res,
+                "Failed to get interaction profile path str for %s",
+                hand_str[i]))
+                continue;
 
-              g_debug ("Event: Interaction profile changed for %s: %s\n",
-                       i == 0 ? "/user/hand/left" : "/user/hand/right",
-                       profile_str);
+              g_debug ("Event: Interaction profile on %s: %s",
+                       hand_str[i], profile_str);
             }
 
           break;
