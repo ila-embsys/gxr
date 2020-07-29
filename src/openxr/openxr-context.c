@@ -121,6 +121,7 @@ xr_result_to_string(XrResult result)
   }
 }
 
+#define BUF_LEN 1024
 static gboolean
 _check_xr_result (XrResult result, const char* format, ...)
 {
@@ -129,19 +130,15 @@ _check_xr_result (XrResult result, const char* format, ...)
 
   const char *resultString = xr_result_to_string (result);
 
-  unsigned long format_len = strlen (format);
-  unsigned long result_len = strlen (resultString);
-
-  unsigned long size = format_len + result_len + 5;
-  // + " []\n"
-
-  char *formatRes = g_alloca (size);
-  snprintf (formatRes, size, "%s [%s]\n", format, resultString);
+  char buf[BUF_LEN] = {0};
+  g_snprintf(buf, BUF_LEN, "[%s] ", resultString);
 
   va_list args;
   va_start (args, format);
-  vprintf (formatRes, args);
+  g_vsnprintf (buf, BUF_LEN - strlen (buf), "[%s]", args);
   va_end (args);
+
+  g_warning("%s", buf);
   return FALSE;
 }
 
