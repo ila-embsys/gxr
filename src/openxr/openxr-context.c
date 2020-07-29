@@ -490,11 +490,11 @@ _create_swapchains (OpenXRContext* self)
     g_debug("%s", vk_format_string ((VkFormat) swapchainFormats[i]));
 
   self->swapchain_format = VK_FORMAT_R8G8B8A8_SRGB;
-  gboolean format_found = false;
+  gboolean format_found = FALSE;
   for (uint32_t i = 0; i < swapchainFormatCount; i++)
     if (swapchainFormats[i] == self->swapchain_format)
       {
-        format_found = true;
+        format_found = TRUE;
         break;
       }
 
