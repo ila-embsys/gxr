@@ -460,9 +460,12 @@ _create_wm_action_set (Example *self)
                           "/actions/wm/in/show_keyboard",
                           (GCallback) _action_restart_cb, self);
 
-  gxr_action_set_connect (set, self->context, GXR_ACTION_DIGITAL,
-                          "/actions/wm/in/grab_window",
-                          (GCallback) _action_grab_cb, self);
+  gxr_action_set_connect_digital_from_float (set, self->context,
+                                             "/actions/wm/in/grab_window",
+                                             0.25f,
+                                             "/actions/wm/out/haptic",
+                                             (GCallback) _action_grab_cb,
+                                             self);
 
   gxr_action_set_connect (set, self->context, GXR_ACTION_DIGITAL,
                           "/actions/wm/in/menu",
@@ -524,10 +527,7 @@ _init_input_callbacks (Example *self)
         self->context,
         "xrdesktop.openvr",
         "/res/bindings/openvr",
-        "actions.json",
-        "bindings_vive_controller.json",
-        "bindings_knuckles_controller.json",
-        NULL))
+        "actions.json"))
         {
           g_print ("Failed to load action bindings!\n");
           return;
@@ -539,10 +539,7 @@ _init_input_callbacks (Example *self)
         self->context,
         "xrdesktop.openxr",
         "/res/bindings/openxr",
-        "actions.json",
-        "bindings_khronos_simple_controller.json",
-        "bindings_valve_index_controller.json",
-        NULL))
+        "actions.json"))
         {
           g_print ("Failed to load action bindings!\n");
           return;

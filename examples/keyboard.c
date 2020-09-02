@@ -279,10 +279,7 @@ main (int argc, char *argv[])
       self.context,
       "gxr",
       "/res/bindings",
-      "actions.json",
-      "bindings_vive_controller.json",
-      "bindings_knuckles_controller.json",
-      NULL))
+      "actions.json"))
     return -1;
 
   self.action_set = gxr_action_set_new_from_url (self.context, "/actions/wm");

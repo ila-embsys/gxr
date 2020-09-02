@@ -27,6 +27,8 @@
 #include "gxr-io.h"
 #include "gxr-controller.h"
 
+#include "gxr-manifest.h"
+
 struct _OpenVRContext
 {
   GxrContext parent;
@@ -716,9 +718,7 @@ static gboolean
 _load_action_manifest (GxrContext *self,
                        const char *cache_name,
                        const char *resource_path,
-                       const char *manifest_name,
-                       const char *first_binding,
-                       va_list     args)
+                       const char *manifest_name)
 {
   (void) self;
   /* Create cache directory if needed */
@@ -730,6 +730,24 @@ _load_action_manifest (GxrContext *self,
       return FALSE;
     }
 
+  GError *error;
+  GString *actions_res_path = g_string_new ("");
+  g_string_printf (actions_res_path, "%s/%s", resource_path, manifest_name);
+
+  /* stream can not be reset/reused, has to be recreated */
+  GInputStream *actions_res_input_stream =
+  g_resources_open_stream (actions_res_path->str,
+                           G_RESOURCE_LOOKUP_FLAGS_NONE,
+                           &error);
+
+  // only load actions manifest to extract bindings filenames
+  GxrManifest *manifest = gxr_manifest_new ();
+  if (!gxr_manifest_load_actions (manifest, actions_res_input_stream))
+    {
+      g_printerr ("Failed to load action manifest\n");
+      return FALSE;
+    }
+
   /* Cache actions manifest */
   GString *actions_path = g_string_new ("");
   if (!gxr_io_write_resource_to_file (resource_path,
@@ -738,22 +756,26 @@ _load_action_manifest (GxrContext *self,
     actions_path))
     return FALSE;
 
-  const char* current = first_binding;
-  while (current != NULL)
+
+  GSList *binding_filenames = gxr_manifest_get_binding_filenames (manifest);
+  for (GSList *l = binding_filenames; l; l = l->next)
     {
+      gchar *binding_filename = l->data;
       GString *bindings_path = g_string_new ("");
+      g_debug ("Caching file %s", binding_filename);
       if (!gxr_io_write_resource_to_file (resource_path,
                                           cache_path->str,
-                                          current,
+                                          binding_filename,
                                           bindings_path))
         return FALSE;
-
-      g_string_free (bindings_path, TRUE);
-
-      current = va_arg (args, const char*);
     }
 
   g_string_free (cache_path, TRUE);
+
+  g_object_unref (actions_res_input_stream);
+  g_string_free (actions_res_path, TRUE);
+
+  g_object_unref (manifest);
 
   if (!_load_manifest (actions_path->str))
     return FALSE;

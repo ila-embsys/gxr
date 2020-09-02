@@ -81,7 +81,7 @@ struct _OpenXRContext
 
   int64_t swapchain_format;
 
-  GSList *manifests;
+  GxrManifest *manifest;
 };
 
 G_DEFINE_TYPE (OpenXRContext, openxr_context, GXR_TYPE_CONTEXT)
@@ -94,7 +94,7 @@ openxr_context_init (OpenXRContext *self)
 {
   self->view_count = 0;
   self->views = NULL;
-  self->manifests = NULL;
+  self->manifest = NULL;
   self->predicted_display_time = 0;
   self->predicted_display_period = 0;
   self->framebuffer = NULL;
@@ -796,7 +796,8 @@ openxr_context_finalize (GObject *gobject)
 {
   OpenXRContext *self = OPENXR_CONTEXT (gobject);
   openxr_context_cleanup (self);
-  g_slist_free_full (self->manifests, g_object_unref);
+
+  g_clear_object (&self->manifest);
 
   GulkanClient *gulkan = gxr_context_get_gulkan (GXR_CONTEXT (gobject));
 
@@ -940,7 +941,7 @@ _get_head_pose (GxrContext *context, graphene_matrix_t *pose)
   gboolean valid = _space_location_valid (&space_location);
   if (!valid)
     {
-      g_printerr ("Could not get valid head pose.\n");
+      g_printerr ("_get_head_pose: Head pose not valid\n");
       graphene_matrix_init_identity (pose);
       return FALSE;
     }
@@ -1535,9 +1536,7 @@ static gboolean
 _load_action_manifest (GxrContext *self,
                        const char *cache_name,
                        const char *resource_path,
-                       const char *manifest_name,
-                       const char *first_binding,
-                       va_list     args)
+                       const char *manifest_name)
 {
   (void) self;
   (void) cache_name;
@@ -1546,48 +1545,29 @@ _load_action_manifest (GxrContext *self,
   GString *actions_res_path = g_string_new ("");
   g_string_printf (actions_res_path, "%s/%s", resource_path, manifest_name);
 
-  const char* current = first_binding;
+  /* stream can not be reset/reused, has to be recreated */
+  GInputStream *actions_res_input_stream =
+  g_resources_open_stream (actions_res_path->str,
+                            G_RESOURCE_LOOKUP_FLAGS_NONE,
+                            &error);
 
-  while (current != NULL)
+  OpenXRContext *octx = OPENXR_CONTEXT (self);
+  octx->manifest = gxr_manifest_new ();
+  if (!gxr_manifest_load_actions (octx->manifest, actions_res_input_stream))
     {
-      /* stream can not be reset/reused, has to be recreated */
-      GInputStream *actions_res_input_stream =
-      g_resources_open_stream (actions_res_path->str,
-                               G_RESOURCE_LOOKUP_FLAGS_NONE,
-                               &error);
-
-      GString *bindings_res_path = g_string_new ("");
-      g_string_printf (bindings_res_path, "%s/%s", resource_path, current);
-      GInputStream * bindings_res_input_stream =
-      g_resources_open_stream (bindings_res_path->str,
-                               G_RESOURCE_LOOKUP_FLAGS_NONE,
-                               &error);
-
-
-      g_debug ("Loading %s with %s\n", actions_res_path->str,
-               bindings_res_path->str);
-      GxrManifest *manifest = gxr_manifest_new ();
-      gxr_manifest_load (manifest,
-                         actions_res_input_stream, bindings_res_input_stream);
-
-      g_debug ("Loaded manifest for interaction profile %s\n",
-               gxr_manifest_get_interaction_profile (manifest));
-
-      OpenXRContext *octx = OPENXR_CONTEXT (self);
-      octx->manifests = g_slist_append (octx->manifests, manifest);
-
-      current = va_arg (args, const char*);
-
-      g_string_free (bindings_res_path, TRUE);
-      g_object_unref (bindings_res_input_stream);
-      g_object_unref (actions_res_input_stream);
+      g_printerr ("Failed to load action manifest\n");
+      return FALSE;
     }
 
-  va_end (args);
+  if (!gxr_manifest_load_bindings (octx->manifest, resource_path))
+    {
+      g_printerr ("Failed to load action binding manifests\n");
+      return FALSE;
+    }
 
+  g_object_unref (actions_res_input_stream);
   g_string_free (actions_res_path, TRUE);
-
-  g_debug ("Loaded action manifests\n");
+  g_debug ("Loaded action manifest");
 
   return TRUE;
 }
@@ -1610,10 +1590,10 @@ _new_overlay (GxrContext *self, gchar* key)
   return GXR_OVERLAY (openxr_overlay_new ());
 }
 
-GSList *
-openxr_context_get_manifests (OpenXRContext *self)
+GxrManifest *
+openxr_context_get_manifest (OpenXRContext *self)
 {
-  return self->manifests;
+  return self->manifest;
 }
 
 static void

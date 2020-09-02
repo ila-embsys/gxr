@@ -219,58 +219,58 @@ _find_openxr_action_from_url (GxrActionSet **sets, uint32_t count, gchar *url)
             return action;
         }
     }
-  g_debug ("Did not find action %s\n", url);
+  g_debug ("Skipping action %s not connected by application", url);
   return NULL;
+}
+
+static uint32_t
+_count_input_paths (GxrBindingManifest *binding_manifest)
+{
+  uint32_t num = 0;
+  for (GSList *l = binding_manifest->gxr_bindings; l; l = l->next)
+    {
+      GxrBinding *binding = l->data;
+      num += g_slist_length (binding->input_paths);
+    }
+  return num;
 }
 
 static gboolean
 _suggest_for_interaction_profile (GxrActionSet **sets, uint32_t count,
                                   XrInstance instance,
-                                  GxrManifest *manifest)
+                                  GxrBindingManifest *binding_manifest)
 {
-  GHashTable *actions = gxr_manifest_get_hash_table (manifest);
+  uint32_t num_bindings = _count_input_paths (binding_manifest);
 
-  GList *action_list = g_hash_table_get_keys (actions);
-
-  uint32_t num_inputs = (uint32_t) gxr_manifest_get_num_inputs (manifest);
   XrActionSuggestedBinding *suggested_bindings =
-    g_malloc (sizeof (XrActionSuggestedBinding) * (unsigned long) num_inputs);
+    g_malloc (sizeof (XrActionSuggestedBinding) * (unsigned long) num_bindings);
 
   uint32_t num_suggestion = 0;
-  for (GList *l = action_list; l != NULL; l = l->next)
+  for (GSList *l = binding_manifest->gxr_bindings; l != NULL; l = l->next)
     {
-
-      OpenXRAction *action = _find_openxr_action_from_url (sets, count, l->data);
+      GxrBinding *binding = l->data;
+      gchar *action_url = binding->action->name;
+      OpenXRAction *action =
+        _find_openxr_action_from_url (sets, count, action_url);
       if (!action)
         continue;
 
       XrAction handle = openxr_action_get_handle (action);
       char *url = openxr_action_get_url (action);
 
-      GxrBinding *binding = g_hash_table_lookup (actions, l->data);
+      g_debug ("Action %s has %d inputs",
+               url, g_slist_length (binding->input_paths));
 
-
-      g_debug ("Action %s %d inputs\n",
-               url, g_list_length (binding->input_paths));
-
-      for (GList *m = binding->input_paths; m; m = m->next)
+      for (GSList *m = binding->input_paths; m; m = m->next)
         {
-
-          /* shouldn't happen, but sanity test is good */
-          if (num_suggestion > num_inputs)
-            {
-              g_printerr ("Manifest parsed input count %d was too low!\n",
-                          num_inputs);
-              return FALSE;
-            }
-
           GxrBindingPath *input_path = m->data;
 
           gchar *component_str = _component_to_str (input_path->component);
 
           GString *full_path = g_string_new ("");
           if (component_str)
-            g_string_printf (full_path, "%s/%s", input_path->path, component_str);
+            g_string_printf (full_path, "%s/%s",
+                             input_path->path, component_str);
           else
             g_string_append (full_path, input_path->path);
 
@@ -287,12 +287,11 @@ _suggest_for_interaction_profile (GxrActionSet **sets, uint32_t count,
           g_string_free (full_path, TRUE);
         }
     }
-  g_list_free (action_list);
 
-  g_debug ("Suggesting %d component bindings\n", num_suggestion);
+  g_debug ("Suggested %d/%d bindings!", num_suggestion, num_bindings);
   XrPath profile_path;
   xrStringToPath (instance,
-                  gxr_manifest_get_interaction_profile (manifest),
+                  binding_manifest->interaction_profile,
                   &profile_path);
 
   const XrInteractionProfileSuggestedBinding suggestion_info = {
@@ -311,7 +310,7 @@ _suggest_for_interaction_profile (GxrActionSet **sets, uint32_t count,
       char buffer[XR_MAX_RESULT_STRING_SIZE];
       xrResultToString(instance, result, buffer);
       g_printerr ("ERROR: Suggesting actions for profile %s: %s\n",
-                  gxr_manifest_get_interaction_profile (manifest), buffer);
+                  binding_manifest->interaction_profile, buffer);
       return FALSE;
     }
 
@@ -321,22 +320,22 @@ _suggest_for_interaction_profile (GxrActionSet **sets, uint32_t count,
 static gboolean
 _attach_bindings (GxrActionSet **sets, GxrContext *context, uint32_t count)
 {
-  GSList *manifests = openxr_context_get_manifests (OPENXR_CONTEXT (context));
-  if (g_slist_length (manifests) == 0)
-    {
-      g_printerr ("Attaching Action Sets, but no manifests are loaded\n");
-      return FALSE;
-    }
+  GxrManifest *manifest =
+    openxr_context_get_manifest (OPENXR_CONTEXT (context));
+  GSList *binding_manifests = gxr_manifest_get_binding_manifests (manifest);
 
-  for (GSList *l = manifests; l; l = l->next)
+  for (GSList *l = binding_manifests; l; l = l->next)
     {
-      GxrManifest *manifest = GXR_MANIFEST (l->data);
+      GxrBindingManifest *binding_manifest = l->data;
 
       XrInstance instance = OPENXR_ACTION_SET (sets[0])->instance;
 
-      g_debug ("Suggesting for profile %s\n",
-               gxr_manifest_get_interaction_profile (manifest));
-      _suggest_for_interaction_profile (sets, count, instance, manifest);
+      g_debug ("===");
+      g_debug ("Suggesting for profile %s",
+               binding_manifest->interaction_profile);
+
+      _suggest_for_interaction_profile (sets, count, instance,
+                                        binding_manifest);
     }
 
   XrActionSet *handles = g_malloc (sizeof (XrActionSet) * count);

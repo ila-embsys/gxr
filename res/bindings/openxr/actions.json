@@ -2,21 +2,25 @@
   "default_bindings":[
     {
       "controller_type":"khronos_simple",
-      "binding_url":"bindings_khronos_simple.json"
+      "binding_url":"bindings_khronos_simple_controller.json"
     },
     {
       "controller_type":"mnd_psmv",
-      "binding_url":"bindings_mnd_psmv.json"
+      "binding_url":"bindings_mnd_psmv_controller.json"
     },
     {
       "controller_type": "index",
-      "binding_url": "bindings_valve_index.json"
+      "binding_url": "bindings_valve_index_controller.json"
+    },
+    {
+      "controller_type": "htcvive",
+      "binding_url": "bindings_htc_vive_controller.json"
     }
   ],
   "actions":[
     {
       "name":"/actions/wm/in/grab_window",
-      "type":"boolean"
+      "type":"vector1"
     },
     {
       "name":"/actions/wm/in/reset_orientation",

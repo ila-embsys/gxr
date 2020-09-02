@@ -135,9 +135,7 @@ struct _GxrContextClass
   (*load_action_manifest) (GxrContext *self,
                            const char *cache_name,
                            const char *resource_path,
-                           const char *manifest_name,
-                           const char *first_binding,
-                           va_list     args);
+                           const char *manifest_name);
 
   GxrAction *
   (*new_action_from_type_url) (GxrContext   *context,
@@ -288,9 +286,7 @@ gboolean
 gxr_context_load_action_manifest (GxrContext *self,
                                   const char *cache_name,
                                   const char *resource_path,
-                                  const char *manifest_name,
-                                  const char *first_binding,
-                                  ...);
+                                  const char *manifest_name);
 
 void
 gxr_context_request_quit (GxrContext *self);

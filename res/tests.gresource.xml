@@ -11,6 +11,7 @@
 
     <file>bindings/openxr/actions.json</file>
     <file>bindings/openxr/bindings_khronos_simple_controller.json</file>
+    <file>bindings/openxr/bindings_htc_vive_controller.json</file>
     <file>bindings/openxr/bindings_valve_index_controller.json</file>
   </gresource>
 </gresources>

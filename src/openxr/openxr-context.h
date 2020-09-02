@@ -21,6 +21,7 @@
 #include <openxr/openxr_platform.h>
 
 #include "gxr-context.h"
+#include "gxr-manifest.h"
 
 G_BEGIN_DECLS
 
@@ -72,8 +73,8 @@ openxr_context_get_openxr_session (OpenXRContext *self);
 XrSpace
 openxr_context_get_tracked_space (OpenXRContext *self);
 
-GSList *
-openxr_context_get_manifests (OpenXRContext *self);
+GxrManifest *
+openxr_context_get_manifest (OpenXRContext *self);
 
 XrTime
 openxr_context_get_predicted_display_time (OpenXRContext *self);

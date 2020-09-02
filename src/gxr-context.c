@@ -556,25 +556,17 @@ gboolean
 gxr_context_load_action_manifest (GxrContext *self,
                                   const char *cache_name,
                                   const char *resource_path,
-                                  const char *manifest_name,
-                                  const char *first_binding,
-                                  ...)
+                                  const char *manifest_name)
 {
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->load_action_manifest == NULL)
     return FALSE;
 
-  va_list args;
-  va_start (args, first_binding);
-
   gboolean ret = klass->load_action_manifest (self,
                                               cache_name,
                                               resource_path,
-                                              manifest_name,
-                                              first_binding,
-                                              args);
+                                              manifest_name);
 
-  va_end (args);
   return ret;
 }
 

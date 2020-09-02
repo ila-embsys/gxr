@@ -12,7 +12,7 @@
    "actions":[
       {
          "name":"/actions/wm/in/grab_window",
-         "type":"boolean"
+         "type":"vector1"
       },
       {
          "name":"/actions/wm/in/reset_orientation",
@@ -52,6 +52,10 @@
       },
       {
          "name":"/actions/mouse_synth/in/right_click",
+         "type":"boolean"
+      },
+      {
+         "name":"/actions/mouse_synth/in/middle_click",
          "type":"boolean"
       },
       {

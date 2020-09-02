@@ -5,8 +5,8 @@
          "binding_url":"example_model_bindings_vive_controller.json"
       },
       {
-        "controller_type":"knuckles",
-        "binding_url":"example_model_bindings_vive_controller.json"
+        "controller_type": "knuckles",
+        "binding_url": "example_model_bindings_vive_controller.json"
       }
    ],
    "actions":[

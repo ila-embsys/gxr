@@ -24,10 +24,7 @@ _test_load_action_manifest ()
       context,
       "xrdesktop.openvr",
       "/res/bindings/openvr",
-      "actions.json",
-      "bindings_vive_controller.json",
-      "bindings_knuckles_controller.json",
-      NULL))
+      "actions.json"))
     {
       g_print ("Failed to load action bindings!\n");
       return;
@@ -40,10 +37,7 @@ _test_load_action_manifest ()
         context,
         "xrdesktop.openxr",
         "/res/bindings/openxr",
-        "actions.json",
-        "bindings_khronos_simple_controller.json",
-        "bindings_valve_index_controller.json",
-        NULL))
+        "actions.json"))
       {
         g_print ("Failed to load action bindings!\n");
         return;

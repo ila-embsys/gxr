@@ -77,16 +77,33 @@ typedef enum
 
 typedef struct
 {
+  gchar *name;
+  GxrBindingType type;
+} GxrActionManifestEntry;
+
+typedef struct
+{
   GxrBindingComponent component;
   gchar *path;
+  GxrBindingMode mode;
 } GxrBindingPath;
 
 typedef struct
 {
-  GxrBindingType type;
-  GList *input_paths;
-  GxrBindingMode mode;
+  GxrActionManifestEntry *action;
+  GSList *input_paths;
 } GxrBinding;
+
+typedef struct
+{
+  gchar *filename;
+
+  /* list of GxrBinding */
+  GSList *gxr_bindings;
+
+  /* Only set for OpenXR manifest */
+  gchar *interaction_profile;
+} GxrBindingManifest;
 
 G_BEGIN_DECLS
 
@@ -96,18 +113,18 @@ G_DECLARE_FINAL_TYPE (GxrManifest, gxr_manifest, GXR, MANIFEST, GObject)
 GxrManifest *gxr_manifest_new (void);
 
 gboolean
-gxr_manifest_load (GxrManifest *self,
-                   GInputStream *action_stream,
-                   GInputStream *binding_stream);
+gxr_manifest_load_actions (GxrManifest  *self,
+                           GInputStream *action_stream);
 
-gchar *
-gxr_manifest_get_interaction_profile (GxrManifest *self);
+gboolean
+gxr_manifest_load_bindings (GxrManifest *self, const char *resource_path);
 
-GHashTable *
-gxr_manifest_get_hash_table (GxrManifest *self);
+GSList *
+gxr_manifest_get_binding_filenames (GxrManifest *self);
 
-int
-gxr_manifest_get_num_inputs (GxrManifest *self);
+/* GxrBindingManifest */
+GSList *
+gxr_manifest_get_binding_manifests (GxrManifest *manifest);
 
 G_END_DECLS
 
