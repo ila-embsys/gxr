@@ -67,7 +67,7 @@ struct _GxrContext
 
   int64_t swapchain_format;
 
-  GSList *manifests;
+  GxrManifest *manifest;
 };
 
 G_DEFINE_TYPE (GxrContext, gxr_context, G_TYPE_OBJECT)
@@ -818,7 +818,7 @@ gxr_context_init (GxrContext *self)
   self->device_manager = gxr_device_manager_new ();
   self->view_count = 0;
   self->views = NULL;
-  self->manifests = NULL;
+  self->manifest = NULL;
   self->predicted_display_time = 0;
   self->predicted_display_period = 0;
   self->framebuffer = NULL;
@@ -884,7 +884,7 @@ gxr_context_finalize (GObject *gobject)
   GxrContext *self = GXR_CONTEXT (gobject);
 
   _cleanup (self);
-  g_slist_free_full (self->manifests, g_object_unref);
+  g_clear_object (&self->manifest);
 
   GulkanClient *gulkan = gxr_context_get_gulkan (GXR_CONTEXT (gobject));
 
@@ -1502,64 +1502,45 @@ gboolean
 gxr_context_load_action_manifest (GxrContext *self,
                                   const char *cache_name,
                                   const char *resource_path,
-                                  const char *manifest_name,
-                                  const char *first_binding,
-                                  ...)
+                                  const char *manifest_name)
 {
   (void) self;
   (void) cache_name;
 
-  GError *error;
+  GError *error = NULL;
   GString *actions_res_path = g_string_new ("");
   g_string_printf (actions_res_path, "%s/%s", resource_path, manifest_name);
 
-  const char* current = first_binding;
-
-  va_list args;
-  va_start (args, first_binding);
-
-  while (current != NULL)
+  /* stream can not be reset/reused, has to be recreated */
+  GInputStream *actions_res_input_stream =
+  g_resources_open_stream (actions_res_path->str,
+                           G_RESOURCE_LOOKUP_FLAGS_NONE,
+                           &error);
+  if (error)
     {
-      /* stream can not be reset/reused, has to be recreated */
-      GInputStream *actions_res_input_stream =
-      g_resources_open_stream (actions_res_path->str,
-                               G_RESOURCE_LOOKUP_FLAGS_NONE,
-                               &error);
-
-      GString *bindings_res_path = g_string_new ("");
-      g_string_printf (bindings_res_path, "%s/%s", resource_path, current);
-      GInputStream * bindings_res_input_stream =
-      g_resources_open_stream (bindings_res_path->str,
-                               G_RESOURCE_LOOKUP_FLAGS_NONE,
-                               &error);
-
-
-      g_debug ("Loading %s with %s\n", actions_res_path->str,
-               bindings_res_path->str);
-      GxrManifest *manifest = gxr_manifest_new ();
-      gxr_manifest_load (manifest,
-                         actions_res_input_stream, bindings_res_input_stream);
-
-      g_debug ("Loaded manifest for interaction profile %s\n",
-               gxr_manifest_get_interaction_profile (manifest));
-
-      self->manifests = g_slist_append (self->manifests, manifest);
-
-      current = va_arg (args, const char*);
-
-      g_string_free (bindings_res_path, TRUE);
-      g_object_unref (bindings_res_input_stream);
-      g_object_unref (actions_res_input_stream);
+      g_print ("Unable to open stream: %s\n", error->message);
+      g_error_free (error);
+      return FALSE;
     }
 
-  va_end (args);
+  self->manifest = gxr_manifest_new ();
+  if (!gxr_manifest_load_actions (self->manifest, actions_res_input_stream))
+  {
+    g_printerr ("Failed to load action manifest\n");
+    return FALSE;
+  }
 
+  if (!gxr_manifest_load_bindings (self->manifest, resource_path))
+  {
+    g_printerr ("Failed to load action binding manifests\n");
+    return FALSE;
+  }
+
+  g_object_unref (actions_res_input_stream);
   g_string_free (actions_res_path, TRUE);
-
-  g_debug ("Loaded action manifests\n");
+  g_debug ("Loaded action manifest");
 
   return TRUE;
-
 }
 
 void
@@ -1675,10 +1656,10 @@ gxr_context_get_session_state (GxrContext *self)
   return self->session_state;
 }
 
-GSList *
-gxr_context_get_manifests (GxrContext *self)
+GxrManifest *
+gxr_context_get_manifest (GxrContext *self)
 {
-  return self->manifests;
+  return self->manifest;
 }
 
 XrTime

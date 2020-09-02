@@ -28,6 +28,7 @@
 #include "gxr-types.h"
 #include "gxr-action-set.h"
 #include "gxr-device-manager.h"
+#include "gxr-manifest.h"
 
 G_BEGIN_DECLS
 
@@ -124,9 +125,7 @@ gboolean
 gxr_context_load_action_manifest (GxrContext *self,
                                   const char *cache_name,
                                   const char *resource_path,
-                                  const char *manifest_name,
-                                  const char *first_binding,
-                                  ...);
+                                  const char *manifest_name);
 
 void
 gxr_context_request_quit (GxrContext *self);
@@ -190,8 +189,8 @@ gxr_context_get_openxr_session (GxrContext *self);
 XrSpace
 gxr_context_get_tracked_space (GxrContext *self);
 
-GSList *
-gxr_context_get_manifests (GxrContext *self);
+GxrManifest *
+gxr_context_get_manifest (GxrContext *self);
 
 XrTime
 gxr_context_get_predicted_display_time (GxrContext *self);

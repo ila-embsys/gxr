@@ -113,10 +113,7 @@ main ()
         self.context,
         "gxr",
         "/res/bindings",
-        "actions.json",
-        "bindings_vive_controller.json",
-        "bindings_knuckles_controller.json",
-        NULL))
+        "actions.json"))
     {
       g_print ("Failed to load action bindings!\n");
       return 1;

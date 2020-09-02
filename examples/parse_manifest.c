@@ -12,7 +12,7 @@ main ()
 {
   GError *error = NULL;
   GInputStream *actions_stream =
-    g_resources_open_stream ("/res/bindings/actions.json",
+    g_resources_open_stream ("/res/bindings/openxr/actions.json",
                              G_RESOURCE_LOOKUP_FLAGS_NONE,
                              &error);
     if (error)
@@ -21,21 +21,10 @@ main ()
         g_error_free (error);
         return 1;
       }
-
-    GInputStream *bindings_stream =
-      g_resources_open_stream ("/res/bindings/bindings_knuckles_controller.json",
-                               G_RESOURCE_LOOKUP_FLAGS_NONE,
-                               &error);
-      if (error)
-      {
-        g_print ("Unable to load binding resource: %s\n", error->message);
-        g_error_free (error);
-        return 1;
-      }
-
-
   GxrManifest *manifest = gxr_manifest_new ();
-  gxr_manifest_load (manifest, actions_stream, bindings_stream);
+  gxr_manifest_load_actions (manifest, actions_stream);
+
+  gxr_manifest_load_bindings (manifest, "/res/bindings/openxr");
 
   g_object_unref (actions_stream);
 

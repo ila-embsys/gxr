@@ -22,14 +22,14 @@
           }
         }
       ],
-      "pose": [
+      "poses": [
         {
           "path": "/user/hand/left/input/aim/pose",
           "output": "/actions/wm/in/hand_pose"
         },
         {
           "path": "/user/hand/left/input/grip/pose",
-          "output": "/actions/wm/in/hand_pose"
+          "output": "/actions/wm/in/hand_pose_hand_grip"
         },
 
         {
@@ -38,17 +38,17 @@
         },
         {
           "path": "/user/hand/right/input/grip/pose",
-          "output": "/actions/wm/in/hand_pose"
+          "output": "/actions/wm/in/hand_pose_hand_grip"
         }
       ],
       "haptics": [
         {
-          "path": "/user/hand/left/input/grip/pose",
+          "path": "/user/hand/left/output/haptic",
           "output": "/actions/wm/out/haptic"
         },
 
         {
-          "path": "/user/hand/right/input/grip/pose",
+          "path": "/user/hand/right/output/haptic",
           "output": "/actions/wm/out/haptic"
         }
       ]
