@@ -82,6 +82,8 @@ struct _OpenXRContext
   int64_t swapchain_format;
 
   GxrManifest *manifest;
+
+  bool keyboard_active;
 };
 
 G_DEFINE_TYPE (OpenXRContext, openxr_context, GXR_TYPE_CONTEXT)
@@ -99,6 +101,7 @@ openxr_context_init (OpenXRContext *self)
   self->predicted_display_period = 0;
   self->framebuffer = NULL;
   self->images = NULL;
+  self->keyboard_active = FALSE;
 }
 
 OpenXRContext *
@@ -1256,13 +1259,18 @@ _poll_event (GxrContext *context)
       g_printerr ("Failed to poll events!\n");
       return;
     }
+
+  g_print ("Stub: close keyboard\n");
+  if (self->keyboard_active)
+    gxr_context_emit_keyboard_close (context);
 }
 
 static void
 _show_keyboard (GxrContext *context)
 {
-  (void) context;
   g_print ("Stub: show OpenXR keyboard\n");
+  OpenXRContext *self = OPENXR_CONTEXT (context);
+  self->keyboard_active = TRUE;
 }
 
 XrInstance
