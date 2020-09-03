@@ -415,6 +415,9 @@ gxr_manifest_load_bindings (GxrManifest *self, const char *resource_path)
       if (error)
         {
           g_printerr ("skipping %s: %s\n", binding_filename, error->message);
+          g_error_free (error);
+          g_string_free (bindings_res_path, TRUE);
+          g_object_unref (bindings_res_input_stream);
           continue;
         }
 
@@ -483,12 +486,13 @@ gxr_manifest_finalize (GObject *gobject)
         {
           GxrBinding *binding = m->data;
           for (GSList *n = binding->input_paths; n; n = n->next)
-          {
-            GxrBindingPath *binding_path = n->data;
-            g_free (binding_path->path);
-          }
+            {
+              GxrBindingPath *binding_path = n->data;
+              g_free (binding_path->path);
+            }
           g_slist_free_full (binding->input_paths, g_free);
         }
+      g_slist_free_full (binding_manifest->gxr_bindings, g_free);
       g_free (binding_manifest->interaction_profile);
       g_free (binding_manifest->filename);
     }
