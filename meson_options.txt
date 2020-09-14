@@ -24,3 +24,9 @@ option('examples',
   value: true,
   description: 'Build the examples'
 )
+
+option('tests',
+  type: 'boolean',
+  value: true,
+  description: 'Build the tests'
+)
