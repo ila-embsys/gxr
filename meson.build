@@ -138,7 +138,10 @@ egl_dep = dependency('egl', required : false)
 subdir('src')
 subdir('res')
 subdir('tests')
-subdir('examples')
+
+if get_option('examples')
+    subdir('examples')
+endif
 
 if get_option('api_doc')
     subdir('doc')

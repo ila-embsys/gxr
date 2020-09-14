@@ -18,3 +18,9 @@ option('cube_renderdoc',
 )
 
 option('introspection', type : 'boolean', value : false)
+
+option('examples',
+  type: 'boolean',
+  value: true,
+  description: 'Build the examples'
+)
