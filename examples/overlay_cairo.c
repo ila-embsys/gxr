@@ -126,6 +126,9 @@ test_cat_overlay ()
   if (!gxr_overlay_show (overlay))
     return -1;
 
+  graphene_point3d_t position = { .x = 0.f, .y = 1.2f, .z = -2.f };
+  gxr_overlay_set_translation (overlay, &position);
+
   gxr_overlay_submit_texture (overlay, texture);
 
   g_signal_connect (overlay, "button-press-event", (GCallback) _press_cb, loop);

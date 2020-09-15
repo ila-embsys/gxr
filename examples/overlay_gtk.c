@@ -180,7 +180,7 @@ main (int argc, char *argv[])
   context = gxr_context_new (GXR_APP_OVERLAY, "Overlay GTK", 1);
   GxrOverlay *overlay = gxr_overlay_new_width (context, "gxr.example.gtk", 1.0);
   gxr_overlay_show (overlay);
-  graphene_point3d_t position = { .x = 0.f, .y = 1.2f, .z = -1.f };
+  graphene_point3d_t position = { .x = 0.f, .y = 1.2f, .z = -2.f };
   gxr_overlay_set_translation (overlay, &position);
 
   if (overlay == NULL)
