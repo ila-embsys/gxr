@@ -45,7 +45,9 @@ _damage_cb (GtkWidget *widget, GdkEventExpose *event, GxrOverlay *overlay)
       texture = gulkan_texture_new_from_pixbuf (client, pixbuf,
                                                 VK_FORMAT_R8G8B8A8_UNORM,
                                                 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                                                TRUE);
+                                                FALSE);
+    else
+      gulkan_texture_upload_pixbuf (texture, pixbuf, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
     gxr_overlay_submit_texture (overlay, texture);
 
