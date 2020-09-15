@@ -15,16 +15,15 @@
 #define HEIGHT 1000
 #define STRIDE (WIDTH * 4)
 
-static struct timespec last_time;
+static gint64 last_time;
 static unsigned frames_without_time_update = 60;
 static gchar fps_str [50];
 
 static void
-update_fps (struct timespec* now)
+update_fps (gint64 now)
 {
-  struct timespec diff;
-  gxr_time_substract (now, &last_time, &diff);
-  double diff_s = gxr_time_to_double_secs (&diff);
+  gint64 diff = now - last_time;
+  double diff_s = (double)diff / SEC_IN_USEC_D;
   double diff_ms = diff_s * SEC_IN_MSEC_D;
   double fps = SEC_IN_MSEC_D / diff_ms;
   g_sprintf (fps_str, "FPS %.2f (%.2fms)", fps, diff_ms);
@@ -34,14 +33,8 @@ update_fps (struct timespec* now)
 static cairo_surface_t*
 create_cairo_surface (unsigned char *image)
 {
-  struct timespec now;
-  if (clock_gettime (CLOCK_REALTIME, &now) != 0)
-  {
-    g_printerr ("Could not read system clock\n");
-    return NULL;
-  }
-
-  double now_secs = gxr_time_to_double_secs (&now);
+  gint64 now = g_get_monotonic_time ();
+  double now_secs = (double) now / SEC_IN_USEC_D;
 
   cairo_surface_t *surface =
     cairo_image_surface_create_for_data (image,
@@ -58,12 +51,11 @@ create_cairo_surface (unsigned char *image)
   draw_rotated_quad (cr, WIDTH, now_secs);
 
   if (frames_without_time_update > 60)
-    update_fps (&now);
+    update_fps (now);
   else
     frames_without_time_update++;
 
-  last_time.tv_sec = now.tv_sec;
-  last_time.tv_nsec = now.tv_nsec;
+  last_time = now;
 
   draw_fps (cr, WIDTH, fps_str);
 

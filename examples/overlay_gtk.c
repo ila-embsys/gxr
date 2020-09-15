@@ -73,7 +73,7 @@ struct Labels
 {
   GtkWidget *time_label;
   GtkWidget *fps_label;
-  struct timespec last_time;
+  gint64 last_time;
 };
 
 static gboolean
@@ -81,33 +81,25 @@ _draw_cb (GtkWidget *widget, cairo_t *cr, struct Labels* labels)
 {
   (void) widget;
   (void) cr;
-  struct timespec now;
-  if (clock_gettime (CLOCK_REALTIME, &now) != 0)
-  {
-    fprintf (stderr, "Could not read system clock\n");
-    return 0;
-  }
+  gint64 now = g_get_monotonic_time ();
 
-  struct timespec diff;
-  gxr_time_substract (&now, &labels->last_time, &diff);
+  gint64 diff = now - labels->last_time;
 
-  double diff_s = gxr_time_to_double_secs (&diff);
+  double diff_s = (double)diff / SEC_IN_USEC_D;
   double diff_ms = diff_s * SEC_IN_MSEC_D;
   double fps = SEC_IN_MSEC_D / diff_ms;
 
   gchar time_str [50];
   gchar fps_str [50];
 
-  g_sprintf (time_str, "<span font=\"24\">%.2ld:%.9ld</span>",
-             now.tv_sec, now.tv_nsec);
+  g_sprintf (time_str, "<span font=\"24\">%.2ld</span>", now);
 
   g_sprintf (fps_str, "FPS %.2f (%.2fms)", fps, diff_ms);
 
   gtk_label_set_markup (GTK_LABEL (labels->time_label), time_str);
   gtk_label_set_text (GTK_LABEL (labels->fps_label), fps_str);
 
-  labels->last_time.tv_sec = now.tv_sec;
-  labels->last_time.tv_nsec = now.tv_nsec;
+  labels->last_time = now;
 
   return FALSE;
 }
@@ -155,11 +147,7 @@ main (int argc, char *argv[])
 
   struct Labels labels;
 
-  if (clock_gettime (CLOCK_REALTIME, &labels.last_time) != 0)
-  {
-    fprintf (stderr, "Could not read system clock\n");
-    return 0;
-  }
+  labels.last_time = g_get_monotonic_time ();
 
   labels.time_label = gtk_label_new ("");
   labels.fps_label = gtk_label_new ("");

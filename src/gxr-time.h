@@ -16,19 +16,9 @@
 #include <glib.h>
 
 #define SEC_IN_MSEC_D 1000.0
+#define SEC_IN_USEC_D 1000000.0
 #define SEC_IN_NSEC_L 1000000000L
 #define SEC_IN_NSEC_D 1000000000.0
-
-void
-gxr_time_substract (struct timespec* a,
-                    struct timespec* b,
-                    struct timespec* out);
-
-double
-gxr_time_to_double_secs (struct timespec* time);
-
-void
-gxr_time_float_secs_to_timespec (float in, struct timespec* out);
 
 guint32
 gxr_time_age_secs_to_monotonic_msecs (float age);
