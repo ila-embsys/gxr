@@ -69,6 +69,7 @@ struct _OpenXRContext
 
   XrSessionState session_state;
   gboolean should_render;
+  gboolean have_valid_pose;
   gboolean is_stopping;
 
   XrCompositionLayerProjection projection_layer;
@@ -662,6 +663,10 @@ openxr_context_begin_frame (OpenXRContext* self)
   if (!_check_xr_result (result, "failed to begin frame!"))
     return FALSE;
 
+  self->have_valid_pose =
+   (viewState.viewStateFlags & XR_VIEW_STATE_ORIENTATION_VALID_BIT) != 0 &&
+   (viewState.viewStateFlags & XR_VIEW_STATE_POSITION_VALID_BIT) != 0;
+
   return TRUE;
 }
 
@@ -722,8 +727,8 @@ openxr_context_end_frame (OpenXRContext *self)
   XrFrameEndInfo frame_end_info = {
     .type = XR_TYPE_FRAME_END_INFO,
     .displayTime = self->predicted_display_time,
-    .layerCount = 1,
-    .layers = projection_layers,
+    .layerCount = self->have_valid_pose ? 1 : 0,
+    .layers = self->have_valid_pose ? projection_layers : NULL,
     .environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE,
   };
   result = xrEndFrame (self->session, &frame_end_info);
@@ -1063,6 +1068,7 @@ _init_session (GxrContext *context)
 
   self->session_state = XR_SESSION_STATE_UNKNOWN;
   self->should_render = FALSE;
+  self->have_valid_pose = FALSE;
   self->is_stopping = FALSE;
 
   self->projection_layer = (XrCompositionLayerProjection){
