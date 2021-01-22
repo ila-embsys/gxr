@@ -413,6 +413,12 @@ static void
 scene_cube_finalize (GObject *gobject)
 {
   SceneCube *self = SCENE_CUBE (gobject);
+
+  VkDevice device = gulkan_client_get_device_handle (self->gulkan);
+  vkDestroyPipelineLayout (device, self->pipeline_layout, NULL);
+  vkDestroyDescriptorSetLayout (device, self->descriptor_set_layout, NULL);
+  vkDestroyPipeline (device, self->pipeline, NULL);
+
   g_clear_object (&self->vb);
   g_clear_object (&self->renderer);
   g_clear_object (&self->gulkan);
