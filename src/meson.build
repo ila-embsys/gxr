@@ -91,33 +91,6 @@ gxr_lib = shared_library(api_path,
   c_args : ['-DGXR_COMPILATION']
 )
 
-if 'openvr' in backends
-  openvr_lib = shared_module('gxr-openvr',
-    [
-      'openvr/openvr-system.c',
-      'openvr/openvr-compositor.c',
-      'openvr/openvr-context.c',
-      'openvr/openvr-action.c',
-      'openvr/openvr-action-set.c',
-      'openvr/openvr-model.c',
-      'openvr/openvr-math.c',
-      'openvr/openvr-functions.c'
-    ],
-    dependencies: gxr_deps + [
-      openvr_dep,
-      stdcpp_dep,
-      dl_dep
-    ],
-    include_directories: gxr_inc,
-    c_args : ['-DGXR_COMPILATION'],
-    link_with: gxr_lib,
-    install_dir: backend_install_dir,
-    install: true,
-    build_rpath : openvr_dep.get_pkgconfig_variable('libdir'),
-    install_rpath : openvr_dep.get_pkgconfig_variable('libdir')
-  )
-endif
-
 if 'openxr' in backends
   openxr_lib = shared_module('gxr-openxr',
     [

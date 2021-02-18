@@ -64,20 +64,7 @@ backends = []
 
 ## Optional
 if 'auto' in config_backends
-  config_backends += [ 'openvr', 'openxr' ]
-endif
-
-if 'openvr' in config_backends
-  openvr_dep = dependency('openvr', version: '>= 1.4.18', required: false)
-  if openvr_dep.found()
-    backends += 'openvr'
-  else
-    if 'auto' in config_backends
-      message('OpenVR dep not found, disabling OpenVR backend')
-    else
-      error('OpenVR backend enabled, but not found.')
-    endif
-  endif
+  config_backends += [ 'openxr' ]
 endif
 
 if 'openxr' in config_backends
@@ -105,21 +92,7 @@ endif
 
 message('Enabled backends: ' + ', '.join(backends))
 
-if 'openvr' in backends
-  openvr_version_str_list = openvr_dep.version().split('.')
-  config_h.set('OPENVR_VERSION_MAJOR', openvr_version_str_list[0].to_int())
-  config_h.set('OPENVR_VERSION_MINOR', openvr_version_str_list[1].to_int())
-  config_h.set('OPENVR_VERSION_MICRO', openvr_version_str_list[2].to_int())
-
-  # For a statically linked libopenvr_api we also need to link to the
-  # Standard C++ library and the implementation of dlopen()
-  stdcpp_dep = c.find_library('stdc++')
-  dl_dep = c.find_library('dl')
-endif
-
-if 'openvr' in backends
-  config_h.set('GXR_DEFAULT_API', 'GXR_API_OPENVR')
-elif 'openxr' in backends
+if 'openxr' in backends
   config_h.set('GXR_DEFAULT_API', 'GXR_API_OPENXR')
 else
   config_h.set('GXR_DEFAULT_API', 'GXR_API_NONE')
