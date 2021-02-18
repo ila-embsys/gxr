@@ -116,7 +116,7 @@ install_headers(gxr_headers, subdir: api_path)
 
 pkg = import('pkgconfig')
 
-pkg_requires = ['gulkan-' + api_version, 'gdk-3.0']
+pkg_requires = ['gulkan-0.15', 'gdk-3.0']
 pkg.generate(
   description: 'GLib abtration for XR APIs.',
     libraries: gxr_lib,
