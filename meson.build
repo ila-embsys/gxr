@@ -125,16 +125,6 @@ else
   config_h.set('GXR_DEFAULT_API', 'GXR_API_NONE')
 endif
 
-gtk3_dep = dependency('gtk+-3.0', version: '>= 3.22', required : false)
-x11_dep = dependency('x11', required : false)
-xtst_dep = dependency('xtst', required : false)
-cairo_dep = dependency('cairo', required : false)
-libdrm_dep = dependency('libdrm', required : false)
-libdrm_amdgpu_dep = dependency('libdrm_amdgpu', required : false)
-glew_dep = dependency('glew', required : false)
-glfw_dep = dependency('glfw3', required : false)
-egl_dep = dependency('egl', required : false)
-
 subdir('src')
 subdir('res')
 
