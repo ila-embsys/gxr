@@ -725,10 +725,6 @@ gboolean
 scene_renderer_draw (SceneRenderer *self)
 {
   _draw (self);
-
-  if (!gxr_context_submit_framebuffers (self->context))
-    return FALSE;
-
   return TRUE;
 }
 

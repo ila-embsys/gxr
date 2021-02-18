@@ -14,8 +14,6 @@
 #include "gxr-action-set.h"
 #include "gxr-controller.h"
 #include "gxr-context-private.h"
-#include "openxr/openxr-context.h"
-
 
 // TODO: Do not hardcode this
 #define NUM_HANDS 2
@@ -118,9 +116,9 @@ gxr_action_new (GxrContext *context)
 
   /* TODO: Handle this more nicely */
   self->context = context;
-  self->instance = openxr_context_get_openxr_instance (OPENXR_CONTEXT(context));
-  self->session = openxr_context_get_openxr_session (OPENXR_CONTEXT(context));
-  self->tracked_space = openxr_context_get_tracked_space (OPENXR_CONTEXT(context));
+  self->instance = gxr_context_get_openxr_instance (context);
+  self->session = gxr_context_get_openxr_session (context);
+  self->tracked_space = gxr_context_get_tracked_space (context);
 
   xrStringToPath(self->instance, "/user/hand/left", &self->hand_paths[0]);
   xrStringToPath(self->instance, "/user/hand/right", &self->hand_paths[1]);
@@ -533,8 +531,7 @@ _action_poll_pose_secs_from_now (GxrAction *self,
       };
 
       /* TODO: secs from now ignored, API not appropriate for OpenXR */
-      XrTime time = openxr_context_get_predicted_display_time (
-        OPENXR_CONTEXT (self->context));
+      XrTime time = gxr_context_get_predicted_display_time (self->context);
 
 
       XrSpace hand_space = self->hand_spaces[controller_handle];

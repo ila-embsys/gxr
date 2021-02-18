@@ -156,10 +156,6 @@ _render_pointers (Example           *self,
                   VkPipelineLayout   pipeline_layout,
                   graphene_matrix_t *vp)
 {
-  GxrContext *context = self->context;
-  if (!gxr_context_is_input_available (context))
-    return;
-
   GxrDeviceManager *dm = gxr_context_get_device_manager (self->context);
   GSList *controllers = gxr_device_manager_get_controllers (dm);
 

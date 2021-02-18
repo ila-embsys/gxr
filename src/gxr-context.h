@@ -17,6 +17,13 @@
 #include <stdint.h>
 #include <gulkan.h>
 
+#include <vulkan/vulkan.h>
+
+#define XR_USE_PLATFORM_XLIB 1
+#define XR_USE_GRAPHICS_API_VULKAN 1
+#include <openxr/openxr.h>
+#include <openxr/openxr_platform.h>
+
 #include "gxr-enums.h"
 #include "gxr-types.h"
 #include "gxr-action-set.h"
@@ -25,131 +32,11 @@
 G_BEGIN_DECLS
 
 #define GXR_TYPE_CONTEXT gxr_context_get_type()
-G_DECLARE_DERIVABLE_TYPE (GxrContext, gxr_context, GXR, CONTEXT, GObject)
+G_DECLARE_FINAL_TYPE (GxrContext, gxr_context, GXR, CONTEXT, GObject)
 
 struct _GxrContextClass
 {
   GObjectClass parent;
-
-  gboolean
-  (*get_head_pose) (GxrContext *self, graphene_matrix_t *pose);
-
-  void
-  (*get_frustum_angles) (GxrContext *self, GxrEye eye,
-                         float *left, float *right,
-                         float *top, float *bottom);
-
-  gboolean
-  (*is_input_available) (GxrContext *self);
-
-  void
-  (*get_render_dimensions) (GxrContext *context,
-                            VkExtent2D *extent);
-
-  void
-  (*poll_event) (GxrContext *self);
-
-  void
-  (*show_keyboard) (GxrContext *self);
-
-  gboolean
-  (*init_runtime) (GxrContext *self,
-                   char       *app_name,
-                   uint32_t    app_version);
-
-  gboolean
-  (*init_session) (GxrContext *self);
-
-  gboolean
-  (*init_framebuffers) (GxrContext           *self,
-                        VkExtent2D            extent,
-                        VkSampleCountFlagBits sample_count,
-                        GulkanRenderPass    **render_pass);
-
-  gboolean
-  (*submit_framebuffers) (GxrContext *self);
-
-  uint32_t
-  (*get_model_vertex_stride) (GxrContext *self);
-
-  uint32_t
-  (*get_model_normal_offset) (GxrContext *self);
-
-  uint32_t
-  (*get_model_uv_offset) (GxrContext *self);
-
-  void
-  (*get_projection) (GxrContext *self,
-                     GxrEye eye,
-                     float near,
-                     float far,
-                     graphene_matrix_t *mat);
-
-  void
-  (*get_view) (GxrContext *self,
-               GxrEye eye,
-               graphene_matrix_t *mat);
-
-  gboolean
-  (*begin_frame) (GxrContext *self,
-                  GxrPose    *poses);
-
-  gboolean
-  (*end_frame) (GxrContext *self);
-
-  void
-  (*acknowledge_quit) (GxrContext *self);
-
-  gboolean
-  (*is_tracked_device_connected) (GxrContext *self, uint32_t i);
-
-  gboolean
-  (*device_is_controller) (GxrContext *self, uint32_t i);
-
-  gchar*
-  (*get_device_model_name) (GxrContext *self, uint32_t i);
-
-  gboolean
-  (*load_model) (GxrContext         *self,
-                 GulkanVertexBuffer *vbo,
-                 GulkanTexture     **texture,
-                 VkSampler          *sampler,
-                 const char         *model_name);
-
-  gboolean
-  (*is_another_scene_running) (GxrContext *self);
-
-  void
-  (*set_keyboard_transform) (GxrContext        *self,
-                             graphene_matrix_t *transform);
-
-  GSList *
-  (*get_model_list) (GxrContext *self);
-
-  gboolean
-  (*load_action_manifest) (GxrContext *self,
-                           const char *cache_name,
-                           const char *resource_path,
-                           const char *manifest_name,
-                           const char *first_binding,
-                           va_list     args);
-
-  void
-  (*request_quit) (GxrContext *self);
-
-  gboolean
-  (*get_instance_extensions) (GxrContext *self, GSList **out_list);
-
-  gboolean
-  (*get_device_extensions) (GxrContext   *self,
-                            GulkanClient *gc,
-                            GSList      **out_list);
-
-  uint32_t
-  (*get_view_count) (GxrContext *self);
-
-  GulkanFrameBuffer *
-  (*get_acquired_framebuffer) (GxrContext *self, uint32_t view);
 };
 
 GxrContext *gxr_context_new (char       *app_name,
@@ -168,9 +55,6 @@ gxr_context_get_frustum_angles (GxrContext *self, GxrEye eye,
                                 float *left, float *right,
                                 float *top, float *bottom);
 
-gboolean
-gxr_context_is_input_available (GxrContext *self);
-
 void
 gxr_context_get_render_dimensions (GxrContext *self,
                                    VkExtent2D *extent);
@@ -181,14 +65,8 @@ gxr_context_init_framebuffers (GxrContext           *self,
                                VkSampleCountFlagBits sample_count,
                                GulkanRenderPass    **render_pass);
 
-gboolean
-gxr_context_submit_framebuffers (GxrContext           *self);
-
 void
 gxr_context_poll_event (GxrContext *self);
-
-void
-gxr_context_show_keyboard (GxrContext *self);
 
 uint32_t
 gxr_context_get_model_vertex_stride (GxrContext *self);
@@ -235,9 +113,6 @@ gxr_context_load_model (GxrContext         *self,
                         VkSampler          *sampler,
                         const char         *model_name);
 
-gboolean
-gxr_context_is_another_scene_running (GxrContext *self);
-
 void
 gxr_context_set_keyboard_transform (GxrContext        *self,
                                     graphene_matrix_t *transform);
@@ -277,6 +152,52 @@ gxr_context_get_view_count (GxrContext *self);
 
 GulkanFrameBuffer *
 gxr_context_get_acquired_framebuffer (GxrContext *self, uint32_t view);
+
+
+void
+gxr_context_cleanup(GxrContext *self);
+
+gboolean
+gxr_context_aquire_swapchain(GxrContext *self, uint32_t i,
+                             uint32_t *buffer_index);
+
+gboolean
+gxr_context_release_swapchain(GxrContext *self,
+                              uint32_t eye);
+
+XrSwapchainImageVulkanKHR**
+gxr_context_get_images(GxrContext *self);
+
+void
+gxr_context_get_swapchain_dimensions (GxrContext *self,
+                                      uint32_t i,
+                                      VkExtent2D *extent);
+
+void
+gxr_context_get_position (GxrContext *self,
+                             uint32_t i,
+                             graphene_vec4_t *v);
+
+VkFormat
+gxr_context_get_swapchain_format (GxrContext *self);
+
+XrInstance
+gxr_context_get_openxr_instance (GxrContext *self);
+
+XrSession
+gxr_context_get_openxr_session (GxrContext *self);
+
+XrSpace
+gxr_context_get_tracked_space (GxrContext *self);
+
+GSList *
+gxr_context_get_manifests (GxrContext *self);
+
+XrTime
+gxr_context_get_predicted_display_time (GxrContext *self);
+
+XrSessionState
+gxr_context_get_session_state (GxrContext *self);
 
 G_END_DECLS
 

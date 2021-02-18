@@ -594,10 +594,6 @@ _iterate_cb (gpointer _self)
 
   gulkan_queue_submit (queue, cmd_buffer);
   gulkan_queue_free_cmd_buffer (queue, cmd_buffer);
-
-  if (!gxr_context_submit_framebuffers (self->context))
-    return FALSE;
-
   gxr_context_end_frame (self->context);
 
   return TRUE;

@@ -15,8 +15,7 @@ gxr_sources = [
   'graphene-ext.c',
   'gxr-device-manager.c',
   'gxr-device.c',
-  'gxr-model.c',
-  'openxr/openxr-context.c',
+  'gxr-model.c'
 ]
 
 gxr_headers = [

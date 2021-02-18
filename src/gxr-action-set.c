@@ -9,7 +9,6 @@
 #include "gxr-action.h"
 #include "gxr-context-private.h"
 #include "gxr-manifest.h"
-#include "openxr/openxr-context.h"
 
 struct _GxrActionSet
 {
@@ -52,8 +51,8 @@ gxr_action_set_new (GxrContext *context)
   GxrActionSet *self =
     (GxrActionSet*) g_object_new (GXR_TYPE_ACTION_SET, 0);
 
-  self->instance = openxr_context_get_openxr_instance (OPENXR_CONTEXT(context));
-  self->session = openxr_context_get_openxr_session (OPENXR_CONTEXT(context));
+  self->instance = gxr_context_get_openxr_instance (context);
+  self->session = gxr_context_get_openxr_session (context);
   self->context = context;
 
   return self;
@@ -131,11 +130,11 @@ _update (GxrActionSet **sets, uint32_t count)
     return TRUE;
 
   /* All actionsets must be attached to the same session */
-  XrInstance instance = GXR_ACTION_SET (sets[0])->instance;
-  XrSession session = GXR_ACTION_SET (sets[0])->session;
+  XrInstance instance = sets[0]->instance;
+  XrSession session = sets[0]->session;
 
   XrSessionState state =
-    openxr_context_get_session_state (OPENXR_CONTEXT (GXR_ACTION_SET (sets[0])->context));
+    gxr_context_get_session_state (sets[0]->context);
   /* just pretend no input happens when we're not focused */
   if (state != XR_SESSION_STATE_FOCUSED)
     return TRUE;
@@ -143,7 +142,7 @@ _update (GxrActionSet **sets, uint32_t count)
   XrActiveActionSet *active_action_sets = g_malloc (sizeof (XrActiveActionSet) * count);
   for (uint32_t i = 0; i < count; i++)
     {
-      GxrActionSet *self = GXR_ACTION_SET (sets[i]);
+      GxrActionSet *self = sets[i];
       active_action_sets[i].actionSet = self->handle;
       active_action_sets[i].subactionPath = XR_NULL_PATH;
     }
@@ -435,7 +434,7 @@ gxr_action_sets_attach_bindings (GxrActionSet **sets,
                                  GxrContext *context,
                                  uint32_t count)
 {
-  GSList *manifests = openxr_context_get_manifests (OPENXR_CONTEXT (context));
+  GSList *manifests = gxr_context_get_manifests (context);
   if (g_slist_length (manifests) == 0)
     {
       g_printerr ("Attaching Action Sets, but no manifests are loaded\n");
