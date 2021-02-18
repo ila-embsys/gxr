@@ -59,44 +59,9 @@ gdk_dep = dependency('gdk-3.0', version: '>= 3.22')
 gmodule_dep = dependency('gmodule-2.0')
 json_glib_dep = dependency('json-glib-1.0')
 
-config_backends = get_option('backends')
-backends = []
-
-## Optional
-if 'auto' in config_backends
-  config_backends += [ 'openxr' ]
-endif
-
-if 'openxr' in config_backends
-  openxr_dep = dependency('openxr', required: false)
-
-  if openxr_dep.found()
-    backends += 'openxr'
-  else
-    missing_deps = []
-    if not openxr_dep.found()
-      missing_deps += 'openxr'
-    endif
-
-    if 'auto' in config_backends
-      message('Deps ' + ', '.join(missing_deps) + ' not found, disabling OpenXR backend')
-    else
-      error('OpenXR backend enabled, but deps ' + ', '.join(missing_deps) + ' not found.')
-    endif
-  endif
-endif
-
-if backends.length() == 0
-  warning('Gxr will be built without back ends!')
-endif
-
-message('Enabled backends: ' + ', '.join(backends))
-
-if 'openxr' in backends
-  config_h.set('GXR_DEFAULT_API', 'GXR_API_OPENXR')
-else
-  config_h.set('GXR_DEFAULT_API', 'GXR_API_NONE')
-endif
+backends = ['openxr']
+openxr_dep = dependency('openxr')
+config_h.set('GXR_DEFAULT_API', 'GXR_API_OPENXR')
 
 subdir('src')
 subdir('res')

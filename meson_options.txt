@@ -4,13 +4,6 @@ option('api_doc',
   description: 'Build API documentation using GTK-Doc'
 )
 
-option('backends',
-  type: 'array',
-  choices: [ 'auto', 'openvr', 'openxr' ],
-  value: [ 'auto' ],
-  description: 'XR runtime backends to build'
-)
-
 option('cube_renderdoc',
        type: 'boolean',
        value: false,

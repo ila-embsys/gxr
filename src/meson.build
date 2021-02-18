@@ -91,21 +91,19 @@ gxr_lib = shared_library(api_path,
   c_args : ['-DGXR_COMPILATION']
 )
 
-if 'openxr' in backends
-  openxr_lib = shared_module('gxr-openxr',
-    [
-      'openxr/openxr-context.c',
-      'openxr/openxr-action.c',
-      'openxr/openxr-action-set.c'
-    ],
-    dependencies: gxr_deps + [openxr_dep],
-    include_directories: gxr_inc,
-    c_args : ['-DGXR_COMPILATION'],
-    link_with: gxr_lib,
-    install_dir: backend_install_dir,
-    install: true,
-  )
-endif
+openxr_lib = shared_module('gxr-openxr',
+  [
+    'openxr/openxr-context.c',
+    'openxr/openxr-action.c',
+    'openxr/openxr-action-set.c'
+  ],
+  dependencies: gxr_deps + [openxr_dep],
+  include_directories: gxr_inc,
+  c_args : ['-DGXR_COMPILATION'],
+  link_with: gxr_lib,
+  install_dir: backend_install_dir,
+  install: true,
+)
 
 gxr_dep = declare_dependency(
   sources: [],
