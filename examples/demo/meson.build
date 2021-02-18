@@ -1,7 +1,7 @@
 subdir('shaders')
 
 cube_sources = [
-  'gxr-cube.c',
+  'gxr-demo.c',
   'scene-background.c',
   'scene-model.c',
   'scene-object.c',
@@ -24,7 +24,7 @@ if renderdoc
 endif
 
 executable(
-  'gxr-cube', cube_sources,
+  'gxr-demo', cube_sources,
   c_args: c_args,
   dependencies: deps,
   link_with: gxr_lib,

@@ -103,4 +103,4 @@ if glew_dep.found() and glfw_dep.found() and egl_dep.found()
     install: false)
 endif
 
-subdir('cube')
+subdir('demo')
