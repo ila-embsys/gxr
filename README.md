@@ -1,7 +1,7 @@
 gxr
 ===
 
-A GLib XR library utilizing the OpenXR and OpenVR APIs.
+A GLib OpenXR library.
 
 ## Build
 
@@ -23,16 +23,9 @@ $ ninja -C build gxr-doc
 
 ## Run
 
-#### Run the cube locally
+#### Run the demo locally
 ```
-$ GXR_BACKEND_DIR=build/src/ GXR_API=openxr ./build/examples/cube/gxr-cube
-```
-
-#### Run the overlay examples (OpenVR only)
-```
-$ GXR_BACKEND_DIR=build/src/ GXR_API=openvr ./build/examples/overlay_pixbuf
-$ GXR_BACKEND_DIR=build/src/ GXR_API=openvr ./build/examples/overlay_cairo_vulkan_animation
-$ GXR_BACKEND_DIR=build/src/ GXR_API=openvr ./build/examples/overlay_pixbuf_vulkan_multi
+$ ./build/examples/demo/gxr-demo
 ```
 
 #### Run the tests
