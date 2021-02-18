@@ -14,7 +14,6 @@
 
 #define GXR_INSIDE
 
-#include "gxr-config.h"
 #include "gxr-version.h"
 #include "gxr-enums.h"
 #include "gxr-types.h"
@@ -24,7 +23,6 @@
 #include "gxr-action-set.h"
 #include "gxr-io.h"
 #include "gxr-manifest.h"
-#include "gxr-backend.h"
 #include "gxr-controller.h"
 #include "gxr-pointer.h"
 #include "gxr-pointer-tip.h"

@@ -59,6 +59,5 @@ main ()
 {
   _test_init_context ();
   _test_quit_event ();
-  gxr_backend_shutdown ();
   return 0;
 }

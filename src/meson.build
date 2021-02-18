@@ -8,7 +8,6 @@ gxr_sources = [
   'gxr-action.c',
   'gxr-action-set.c',
   'gxr-io.c',
-  'gxr-backend.c',
   'gxr-manifest.c',
   'gxr-controller.c',
   'gxr-pointer.c',
@@ -31,7 +30,6 @@ gxr_headers = [
   'gxr-action.h',
   'gxr-action-set.h',
   'gxr-io.h',
-  'gxr-backend.h',
   'gxr-manifest.h',
   'gxr-controller.h',
   'gxr-pointer.h',
@@ -52,20 +50,6 @@ version_conf.set('VERSION', meson.project_version())
 version_conf.set('MAJOR_VERSION', MAJOR_VERSION)
 version_conf.set('MINOR_VERSION', MINOR_VERSION)
 version_conf.set('MICRO_VERSION', MICRO_VERSION)
-
-backend_install_dir = join_paths(get_option('libdir'),
-                                 'gxr-' + api_version,
-                                 'backends')
-
-backend_config_dir = join_paths(get_option('prefix'), backend_install_dir)
-
-config_h.set('BACKEND_DIR', '"@0@"'.format(backend_config_dir))
-
-configure_file(
-  output: 'gxr-config.h',
-  configuration: config_h,
-  install_dir: join_paths(get_option('includedir'), api_path)
-)
 
 configure_file(
   input: 'gxr-version.h.in',

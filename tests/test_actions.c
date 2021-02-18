@@ -38,6 +38,5 @@ int
 main ()
 {
   _test_load_action_manifest ();
-  gxr_backend_shutdown ();
   return 0;
 }

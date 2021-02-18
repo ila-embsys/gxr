@@ -6,10 +6,9 @@
  */
 
 #include "gxr-context-private.h"
-#include "gxr-config.h"
-#include "gxr-backend-private.h"
 #include "gxr-controller.h"
 #include "gxr-device-manager.h"
+#include "openxr/openxr-context.h"
 
 typedef struct _GxrContextPrivate
 {
@@ -126,14 +125,7 @@ _new (GSList     *instance_ext_list,
       char       *app_name,
       uint32_t    app_version)
 {
-  GxrBackend *backend = gxr_backend_get_instance ();
-  if (!backend)
-    {
-      g_print ("Failed to load backend\n");
-      return NULL;
-    }
-
-  GxrContext *self = gxr_backend_new_context (backend);
+  GxrContext *self = GXR_CONTEXT(openxr_context_new ());
   if (!self)
   {
     g_printerr ("Could not init gxr context.\n");
