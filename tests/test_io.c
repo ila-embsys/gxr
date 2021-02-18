@@ -10,7 +10,7 @@
 #include "gxr.h"
 
 #define CACHE_DIR "gxr"
-#define RES_BASE_PATH "/res/bindings/openvr"
+#define RES_BASE_PATH "/res/bindings/openxr"
 
 static gboolean
 _cache_bindings (GString *actions_path)
@@ -29,7 +29,7 @@ _cache_bindings (GString *actions_path)
 
   GString *bindings_path = g_string_new ("");
   if (!gxr_io_write_resource_to_file (RES_BASE_PATH, cache_path->str,
-                                      "bindings_vive_controller.json",
+                                      "bindings_valve_index_controller.json",
                                       bindings_path))
     return FALSE;
 
