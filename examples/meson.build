@@ -104,3 +104,4 @@ if glew_dep.found() and glfw_dep.found() and egl_dep.found()
 endif
 
 subdir('demo')
+subdir('cube')
