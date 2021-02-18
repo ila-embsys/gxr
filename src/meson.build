@@ -16,7 +16,10 @@ gxr_sources = [
   'graphene-ext.c',
   'gxr-device-manager.c',
   'gxr-device.c',
-  'gxr-model.c'
+  'gxr-model.c',
+  'openxr/openxr-context.c',
+  'openxr/openxr-action.c',
+  'openxr/openxr-action-set.c'
 ]
 
 gxr_headers = [
@@ -76,7 +79,8 @@ gxr_deps = [
   gdk_dep,
   m_dep,
   gmodule_dep,
-  json_glib_dep
+  json_glib_dep,
+  openxr_dep
 ]
 
 gxr_inc = include_directories('.')
@@ -89,20 +93,6 @@ gxr_lib = shared_library(api_path,
   include_directories: gxr_inc,
   install: true,
   c_args : ['-DGXR_COMPILATION']
-)
-
-openxr_lib = shared_module('gxr-openxr',
-  [
-    'openxr/openxr-context.c',
-    'openxr/openxr-action.c',
-    'openxr/openxr-action-set.c'
-  ],
-  dependencies: gxr_deps + [openxr_dep],
-  include_directories: gxr_inc,
-  c_args : ['-DGXR_COMPILATION'],
-  link_with: gxr_lib,
-  install_dir: backend_install_dir,
-  install: true,
 )
 
 gxr_dep = declare_dependency(
