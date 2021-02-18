@@ -10,4 +10,4 @@ executable(
   dependencies: gxr_deps,
   link_with: gxr_lib,
   include_directories: gxr_inc,
-  install: true)
+  install: false)
