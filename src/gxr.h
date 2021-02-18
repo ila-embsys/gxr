@@ -23,7 +23,6 @@
 #include "gxr-action.h"
 #include "gxr-action-set.h"
 #include "gxr-io.h"
-#include "gxr-overlay.h"
 #include "gxr-manifest.h"
 #include "gxr-backend.h"
 #include "gxr-controller.h"

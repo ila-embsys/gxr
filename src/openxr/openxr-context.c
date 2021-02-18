@@ -24,7 +24,6 @@
 #include "gxr-types.h"
 #include "gxr-context-private.h"
 
-#include "openxr-overlay.h"
 #include "openxr-action.h"
 
 #include "gxr-io.h"
@@ -1570,14 +1569,6 @@ _new_action_from_type_url (GxrContext   *self,
                                                       action_set, type, url));
 }
 
-static GxrOverlay *
-_new_overlay (GxrContext *self, gchar* key)
-{
-  (void) self;
-  (void) key;
-  return GXR_OVERLAY (openxr_overlay_new ());
-}
-
 GSList *
 openxr_context_get_manifests (OpenXRContext *self)
 {
@@ -1674,7 +1665,6 @@ openxr_context_class_init (OpenXRContextClass *klass)
   gxr_context_class->new_action_set_from_url = _new_action_set_from_url;
   gxr_context_class->load_action_manifest = _load_action_manifest;
   gxr_context_class->new_action_from_type_url = _new_action_from_type_url;
-  gxr_context_class->new_overlay = _new_overlay;
   gxr_context_class->request_quit = _request_quit;
   gxr_context_class->get_instance_extensions = _get_instance_extensions;
   gxr_context_class->get_device_extensions = _get_device_extensions;

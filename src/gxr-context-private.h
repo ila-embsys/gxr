@@ -13,9 +13,6 @@
 G_BEGIN_DECLS
 
 /* Methods exposed through other Gxr classes */
-GxrOverlay *
-gxr_context_new_overlay (GxrContext *self, gchar* key);
-
 GxrAction *
 gxr_context_new_action_from_type_url (GxrContext   *self,
                                       GxrActionSet *action_set,

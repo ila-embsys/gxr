@@ -20,7 +20,6 @@
 #include "gxr-enums.h"
 #include "gxr-types.h"
 #include "gxr-action-set.h"
-#include "gxr-overlay.h"
 #include "gxr-device-manager.h"
 
 G_BEGIN_DECLS
@@ -144,9 +143,6 @@ struct _GxrContextClass
                                GxrActionSet *action_set,
                                GxrActionType type,
                                char          *url);
-
-  GxrOverlay *
-  (*new_overlay) (GxrContext *self, gchar* key);
 
   void
   (*request_quit) (GxrContext *self);

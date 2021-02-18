@@ -8,7 +8,6 @@ gxr_sources = [
   'gxr-action.c',
   'gxr-action-set.c',
   'gxr-io.c',
-  'gxr-overlay.c',
   'gxr-backend.c',
   'gxr-manifest.c',
   'gxr-controller.c',
@@ -29,7 +28,6 @@ gxr_headers = [
   'gxr-action.h',
   'gxr-action-set.h',
   'gxr-io.h',
-  'gxr-overlay.h',
   'gxr-backend.h',
   'gxr-manifest.h',
   'gxr-controller.h',
@@ -97,7 +95,6 @@ if 'openvr' in backends
   openvr_lib = shared_module('gxr-openvr',
     [
       'openvr/openvr-system.c',
-      'openvr/openvr-overlay.c',
       'openvr/openvr-compositor.c',
       'openvr/openvr-context.c',
       'openvr/openvr-action.c',
@@ -126,8 +123,7 @@ if 'openxr' in backends
     [
       'openxr/openxr-context.c',
       'openxr/openxr-action.c',
-      'openxr/openxr-action-set.c',
-      'openxr/openxr-overlay.c'
+      'openxr/openxr-action-set.c'
     ],
     dependencies: gxr_deps + [openxr_dep],
     include_directories: gxr_inc,

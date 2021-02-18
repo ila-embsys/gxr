@@ -667,15 +667,6 @@ gxr_context_new_action_from_type_url (GxrContext   *self,
   return klass->new_action_from_type_url (self, action_set, type, url);
 }
 
-GxrOverlay *
-gxr_context_new_overlay (GxrContext *self, gchar* key)
-{
-  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
-  if (klass->new_overlay == NULL)
-    return FALSE;
-  return klass->new_overlay (self, key);
-}
-
 GSList *
 gxr_context_get_model_list (GxrContext *self)
 {

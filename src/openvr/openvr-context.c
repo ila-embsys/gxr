@@ -17,7 +17,6 @@
 #include "gxr-context-private.h"
 
 #include "openvr-math.h"
-#include "openvr-overlay.h"
 #include "openvr-compositor.h"
 #include "openvr-system.h"
 #include "openvr-model.h"
@@ -772,13 +771,6 @@ _new_action_from_type_url (GxrContext   *context,
   return GXR_ACTION (openvr_action_new_from_type_url (context, action_set, type, url));
 }
 
-static GxrOverlay *
-_new_overlay (GxrContext *self, gchar* key)
-{
-  (void) self;
-  return GXR_OVERLAY (openvr_overlay_new (key));
-}
-
 static void
 _request_quit (GxrContext *context)
 {
@@ -905,7 +897,6 @@ openvr_context_class_init (OpenVRContextClass *klass)
   gxr_context_class->new_action_set_from_url = _new_action_set_from_url;
   gxr_context_class->load_action_manifest = _load_action_manifest;
   gxr_context_class->new_action_from_type_url = _new_action_from_type_url;
-  gxr_context_class->new_overlay = _new_overlay;
   gxr_context_class->request_quit = _request_quit;
   gxr_context_class->get_instance_extensions = _get_instance_extensions;
   gxr_context_class->get_device_extensions = _get_device_extensions;
