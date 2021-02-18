@@ -9,29 +9,11 @@
 #include <gulkan.h>
 #include "gxr.h"
 
-#define ENUM_TO_STR(r) case r: return #r
-
-static const gchar*
-gxr_api_string (GxrApi v)
-{
-  switch (v)
-    {
-      ENUM_TO_STR(GXR_API_OPENXR);
-      ENUM_TO_STR(GXR_API_OPENVR);
-      default:
-        return "UNKNOWN API";
-    }
-}
-
 static void
 _test_init_context ()
 {
   GxrContext *context = gxr_context_new ("Test Context", 1);
   g_assert_nonnull (context);
-
-  GxrApi api = gxr_context_get_api (context);
-  g_print ("Using API: %s\n", gxr_api_string (api));
-
   g_object_unref (context);
 }
 

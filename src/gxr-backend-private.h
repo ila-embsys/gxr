@@ -18,7 +18,7 @@ G_BEGIN_DECLS
 typedef struct _GxrContext GxrContext;
 
 GxrBackend *
-gxr_backend_get_instance (GxrApi api);
+gxr_backend_get_instance ();
 
 GxrContext *
 gxr_backend_new_context (GxrBackend *self);

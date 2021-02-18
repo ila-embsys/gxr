@@ -164,24 +164,10 @@ struct _GxrContextClass
 GxrContext *gxr_context_new (char       *app_name,
                              uint32_t    app_version);
 
-GxrContext *
-gxr_context_new_from_api (GxrApi     backend,
-                          char      *app_name,
-                          uint32_t   app_version);
-
 GxrContext *gxr_context_new_from_vulkan_extensions (GSList *instance_ext_list,
                                                     GSList *device_ext_list,
                                                     char       *app_name,
                                                     uint32_t    app_version);
-
-GxrContext *gxr_context_new_full (GxrApi     api,
-                                  GSList    *instance_ext_list,
-                                  GSList    *device_ext_list,
-                                  char       *app_name,
-                                  uint32_t    app_version);
-
-GxrApi
-gxr_context_get_api (GxrContext *self);
 
 gboolean
 gxr_context_get_head_pose (GxrContext *self, graphene_matrix_t *pose);

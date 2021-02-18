@@ -45,21 +45,6 @@ typedef enum {
 } GxrEye;
 
 /**
- * GxrApi:
- * @GXR_API_OPENVR: Use OpenVR.
- * @GXR_API_OPENXR: Use OpenXR.
- * @GXR_API_NONE: No API specified.
- *
- * Type of API backend to use.
- *
- **/
-typedef enum {
-  GXR_API_OPENVR,
-  GXR_API_OPENXR,
-  GXR_API_NONE
-} GxrApi;
-
-/**
  * GxrActionType:
  * @GXR_ACTION_DIGITAL: A digital action.
  * @GXR_ACTION_DIGITAL_FROM_FLOAT: A digital action constructed from float thresholds.

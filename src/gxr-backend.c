@@ -17,7 +17,6 @@ struct _GxrBackend
 {
   GObject parent;
   GModule *module;
-  GxrApi api;
   GxrContext *(*context_new) (void);
 };
 
@@ -37,7 +36,7 @@ gxr_backend_class_init (GxrBackendClass *klass)
 }
 
 static GxrBackend *
-_new_from_api (GxrApi api)
+_new_from_api ()
 {
   gboolean supported = g_module_supported();
   if (!supported)
@@ -47,28 +46,13 @@ _new_from_api (GxrApi api)
     }
 
   GxrBackend *self = (GxrBackend*) g_object_new (GXR_TYPE_BACKEND, 0);
-  self->api = api;
 
   const gchar *plugin_dir = g_getenv ("GXR_BACKEND_DIR");
   if (!plugin_dir || !*plugin_dir)
     plugin_dir = BACKEND_DIR;
 
-  gchar *func_name = NULL;
-  gchar *module_name = NULL;
-  switch (api)
-    {
-    case GXR_API_OPENVR:
-      func_name = "openvr_context_new";
-      module_name = "gxr-openvr";
-      break;
-    case GXR_API_OPENXR:
-      func_name = "openxr_context_new";
-      module_name = "gxr-openxr";
-      break;
-    default:
-      g_printerr ("Invalid API provided.");
-      return NULL;
-    }
+  gchar *func_name = "openxr_context_new";
+  gchar *module_name = "gxr-openxr";
 
   g_debug ("Load module %s from path %s\n", module_name, plugin_dir);
   gchar *module_path = g_module_build_path (plugin_dir, module_name);
@@ -109,10 +93,10 @@ _new_from_api (GxrApi api)
 }
 
 GxrBackend *
-gxr_backend_get_instance (GxrApi api)
+gxr_backend_get_instance ()
 {
   if (backend == NULL)
-    backend = _new_from_api (api);
+    backend = _new_from_api ();
   return backend;
 }
 
@@ -131,9 +115,7 @@ gxr_backend_init (GxrBackend *self)
 GxrContext *
 gxr_backend_new_context (GxrBackend *self)
 {
-  GxrContext *context = self->context_new();
-  gxr_context_set_api (context, self->api);
-  return context;
+  return self->context_new();
 }
 
 static void

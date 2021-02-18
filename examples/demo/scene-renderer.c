@@ -572,10 +572,7 @@ scene_renderer_init_vulkan (SceneRenderer *self,
   gulkan_renderer_set_client (GULKAN_RENDERER (self),
                               gxr_context_get_gulkan (context));
 
-  if (gxr_context_get_api (context) == GXR_API_OPENVR)
-    self->sample_count = VK_SAMPLE_COUNT_4_BIT;
-  else
-    self->sample_count = VK_SAMPLE_COUNT_1_BIT;
+  self->sample_count = VK_SAMPLE_COUNT_1_BIT;
 
   if (!_init_framebuffers (self))
     return FALSE;

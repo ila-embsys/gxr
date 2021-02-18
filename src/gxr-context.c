@@ -15,7 +15,6 @@ typedef struct _GxrContextPrivate
 {
   GObject parent;
   GulkanClient *gc;
-  GxrApi api;
 
   GxrDeviceManager *device_manager;
 } GxrContextPrivate;
@@ -122,16 +121,15 @@ _add_missing (GSList **target, GSList *source)
 }
 
 static GxrContext *
-_new (GxrApi      api,
-      GSList     *instance_ext_list,
+_new (GSList     *instance_ext_list,
       GSList     *device_ext_list,
       char       *app_name,
       uint32_t    app_version)
 {
-  GxrBackend *backend = gxr_backend_get_instance (api);
+  GxrBackend *backend = gxr_backend_get_instance ();
   if (!backend)
     {
-      g_print ("Failed to load backend %d\n", api);
+      g_print ("Failed to load backend\n");
       return NULL;
     }
 
@@ -198,33 +196,10 @@ _new (GxrApi      api,
   return self;
 }
 
-static GxrApi
-_parse_api_from_env ()
-{
-  const gchar *api_env = g_getenv ("GXR_API");
-  if (g_strcmp0 (api_env, "openxr") == 0)
-    return GXR_API_OPENXR;
-  else if (g_strcmp0 (api_env, "openvr") == 0)
-    return GXR_API_OPENVR;
-  else
-    return GXR_API_NONE;
-}
-
-static GxrApi
-_get_api_from_env ()
-{
-  GxrApi parsed_api = _parse_api_from_env ();
-  if (parsed_api == GXR_API_NONE)
-    return GXR_DEFAULT_API;
-
-  return parsed_api;
-}
-
 GxrContext *gxr_context_new (char      *app_name,
                              uint32_t   app_version)
 {
-  return gxr_context_new_from_api (_get_api_from_env (),
-                                   app_name, app_version);
+  return gxr_context_new_from_vulkan_extensions (NULL, NULL, app_name, app_version);
 }
 
 GxrContext *gxr_context_new_from_vulkan_extensions (GSList *instance_ext_list,
@@ -232,39 +207,14 @@ GxrContext *gxr_context_new_from_vulkan_extensions (GSList *instance_ext_list,
                                                     char       *app_name,
                                                     uint32_t    app_version)
 {
-  return gxr_context_new_full (_get_api_from_env (),
-                               instance_ext_list, device_ext_list,
-                               app_name, app_version);
-}
-
-GxrContext *gxr_context_new_full (GxrApi     api,
-                                  GSList    *instance_ext_list,
-                                  GSList    *device_ext_list,
-                                  char      *app_name,
-                                  uint32_t   app_version)
-{
-  /* Override with API from env */
-  GxrApi api_env = _parse_api_from_env ();
-  if (api_env != GXR_API_NONE)
-    api = api_env;
-
-  return _new (api, instance_ext_list, device_ext_list,
+  return _new (instance_ext_list, device_ext_list,
                app_name, app_version);
-}
-
-GxrContext *
-gxr_context_new_from_api (GxrApi     api,
-                          char      *app_name,
-                          uint32_t   app_version)
-{
-  return gxr_context_new_full (api, NULL, NULL, app_name, app_version);
 }
 
 static void
 gxr_context_init (GxrContext *self)
 {
   GxrContextPrivate *priv = gxr_context_get_instance_private (self);
-  priv->api = GXR_API_NONE;
   priv->gc = NULL;
   priv->device_manager = gxr_device_manager_new ();
 }
@@ -283,25 +233,11 @@ gxr_context_finalize (GObject *gobject)
   G_OBJECT_CLASS (gxr_context_parent_class)->finalize (gobject);
 }
 
-GxrApi
-gxr_context_get_api (GxrContext *self)
-{
-  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
-  return priv->api;
-}
-
 GulkanClient*
 gxr_context_get_gulkan (GxrContext *self)
 {
   GxrContextPrivate *priv = gxr_context_get_instance_private (self);
   return priv->gc;
-}
-
-void
-gxr_context_set_api (GxrContext *self, GxrApi api)
-{
-  GxrContextPrivate *priv = gxr_context_get_instance_private (self);
-  priv->api = api;
 }
 
 gboolean

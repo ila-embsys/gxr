@@ -339,9 +339,7 @@ _init_vulkan (Example       *self,
 
   GulkanRenderPass *render_pass = scene_renderer_get_render_pass (renderer);
 
-  GxrApi api = gxr_context_get_api (self->context);
-  VkSampleCountFlagBits sample_count = (api == GXR_API_OPENXR) ?
-    VK_SAMPLE_COUNT_1_BIT : VK_SAMPLE_COUNT_4_BIT;
+  VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT;
 
   self->cube = scene_cube_new (gc, GULKAN_RENDERER (renderer),
                                    render_pass, sample_count);
@@ -517,35 +515,17 @@ _poll_input_events (Example *self)
 static void
 _init_input_callbacks (Example *self)
 {
-  if (gxr_context_get_api (self->context) == GXR_API_OPENVR)
+  if (!gxr_context_load_action_manifest (
+    self->context,
+    "xrdesktop.openxr",
+    "/res/bindings/openxr",
+    "actions.json",
+    "bindings_khronos_simple_controller.json",
+    "bindings_valve_index_controller.json",
+    NULL))
     {
-      if (!gxr_context_load_action_manifest (
-        self->context,
-        "xrdesktop.openvr",
-        "/res/bindings/openvr",
-        "actions.json",
-        "bindings_vive_controller.json",
-        "bindings_knuckles_controller.json",
-        NULL))
-        {
-          g_print ("Failed to load action bindings!\n");
-          return;
-        }
-    }
-  else
-    {
-      if (!gxr_context_load_action_manifest (
-        self->context,
-        "xrdesktop.openxr",
-        "/res/bindings/openxr",
-        "actions.json",
-        "bindings_khronos_simple_controller.json",
-        "bindings_valve_index_controller.json",
-        NULL))
-        {
-          g_print ("Failed to load action bindings!\n");
-          return;
-        }
+      g_print ("Failed to load action bindings!\n");
+      return;
     }
 
   self->actionset = _create_wm_action_set (self);
