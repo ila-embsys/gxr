@@ -1,5 +1,5 @@
 so_version = 0
-api_version = '0.15'
+api_version = '0.16'
 api_path = 'gxr-' + api_version
 
 gxr_sources = [
