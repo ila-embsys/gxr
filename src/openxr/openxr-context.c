@@ -996,9 +996,6 @@ _init_runtime (GxrContext *context,
   {
     case GXR_APP_SCENE:
       break;
-    case GXR_APP_HEADLESS:
-      g_print ("stub: Headless app type is not implemented in OpenXR.\n");
-      break;
     default:
       g_printerr ("Unknown app type %d\n", type);
   }
@@ -1012,14 +1009,11 @@ _init_runtime (GxrContext *context,
   if (!_create_system(self))
     return FALSE;
 
-  if (type != GXR_APP_HEADLESS)
-    {
-      if (!_set_up_views(self))
-        return FALSE;
+  if (!_set_up_views(self))
+    return FALSE;
 
-      if (!_check_graphics_api_support(self))
-        return FALSE;
-    }
+  if (!_check_graphics_api_support(self))
+    return FALSE;
 
   return TRUE;
 }

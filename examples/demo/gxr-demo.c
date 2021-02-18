@@ -626,8 +626,8 @@ _init_example (Example *self)
   return TRUE;
 }
 
-static int
-_run ()
+int
+main (void)
 {
   gboolean restart = FALSE;
 
@@ -651,22 +651,4 @@ _run ()
   } while (restart);
 
   return 0;
-}
-
-int
-main (void)
-{
-  GxrContext* gxr_context = gxr_context_new_headless ("GXR Cube", 1);
-  gboolean scene_available =
-    !gxr_context_is_another_scene_running (gxr_context);
-  g_object_unref (gxr_context);
-
-  if (!scene_available)
-    {
-      g_error ("Cannot start in scene mode, because another "
-                "scene app is already running\n");
-      return 1;
-    }
-
-  return _run ();
 }

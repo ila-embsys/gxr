@@ -178,13 +178,6 @@ GxrContext *gxr_context_new_from_vulkan_extensions (GxrAppType type,
                                                     char       *app_name,
                                                     uint32_t    app_version);
 
-GxrContext *gxr_context_new_headless (char    *app_name,
-                                      uint32_t app_version);
-
-GxrContext *gxr_context_new_headless_from_api (GxrApi   api,
-                                               char    *app_name,
-                                               uint32_t app_version);
-
 GxrContext *gxr_context_new_full (GxrAppType type,
                                   GxrApi     api,
                                   GSList    *instance_ext_list,

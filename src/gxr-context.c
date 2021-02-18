@@ -266,38 +266,6 @@ gxr_context_new_from_api (GxrAppType type,
   return gxr_context_new_full (type, api, NULL, NULL, app_name, app_version);
 }
 
-GxrContext *gxr_context_new_headless (char    *app_name,
-                                      uint32_t app_version)
-{
-  GxrApi api = _get_api_from_env ();
-  return gxr_context_new_headless_from_api (api, app_name, app_version);
-}
-
-GxrContext *gxr_context_new_headless_from_api (GxrApi   api,
-                                               char    *app_name,
-                                               uint32_t app_version)
-{
-  /* Override with API from env */
-  GxrApi api_env = _parse_api_from_env ();
-  if (api_env != GXR_API_NONE)
-    api = api_env;
-
-  GxrBackend *backend = gxr_backend_get_instance (api);
-  if (!backend)
-    {
-      g_print ("Failed to load backend %d\n", api);
-      return NULL;
-    }
-
-  GxrContext *self = gxr_backend_new_context (backend);
-  if (!_init_runtime (self, GXR_APP_HEADLESS, app_name, app_version))
-    {
-      g_print ("Could not init VR runtime.\n");
-      return NULL;
-    }
-  return self;
-}
-
 static void
 gxr_context_init (GxrContext *self)
 {

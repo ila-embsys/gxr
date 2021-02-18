@@ -27,7 +27,6 @@
  **/
 typedef enum {
   GXR_APP_SCENE = 0,
-  GXR_APP_HEADLESS
 } GxrAppType;
 
 /**
