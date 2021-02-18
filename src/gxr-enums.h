@@ -17,19 +17,6 @@
 #define GXR_MODEL_NAME_MAX 32768
 
 /**
- * GxrAppType:
- * @GXR_APP_SCENE: Scene application. Renders stereo viewports for the whole scene.
- * @GXR_APP_OVERLAY: Overlay application. Renders mono buffers to overlays.
- * @GXR_APP_HEADLESS: Background application. Does not render anything.
- *
- * Type of Gxr application.
- *
- **/
-typedef enum {
-  GXR_APP_SCENE = 0,
-} GxrAppType;
-
-/**
  * GxrQuitReason:
  * @GXR_QUIT_SHUTDOWN: Runtime is shutting down.
  * @GXR_QUIT_APPLICATION_TRANSITION: A new scene application wants the focus.

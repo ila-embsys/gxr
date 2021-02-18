@@ -12,7 +12,7 @@
 static void
 _test_load_action_manifest ()
 {
-  GxrContext *context = gxr_context_new (GXR_APP_SCENE, "Test Actions", 1);
+  GxrContext *context = gxr_context_new ("Test Actions", 1);
   g_assert_nonnull (context);
 
   GulkanClient *gc = gulkan_client_new ();

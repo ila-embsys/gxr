@@ -987,18 +987,10 @@ _get_frustum_angles (GxrContext *context, GxrEye eye,
 
 static gboolean
 _init_runtime (GxrContext *context,
-               GxrAppType  type,
                char       *app_name,
                uint32_t    app_version)
 {
   OpenXRContext *self = OPENXR_CONTEXT (context);
-  switch (type)
-  {
-    case GXR_APP_SCENE:
-      break;
-    default:
-      g_printerr ("Unknown app type %d\n", type);
-  }
 
   if (!_check_vk_extension())
     return FALSE;

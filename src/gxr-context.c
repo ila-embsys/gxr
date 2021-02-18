@@ -92,14 +92,13 @@ gxr_context_class_init (GxrContextClass *klass)
 
 static gboolean
 _init_runtime (GxrContext *self,
-               GxrAppType  type,
                char       *app_name,
                uint32_t    app_version)
 {
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->init_runtime == NULL)
     return FALSE;
-  return klass->init_runtime (self, type, app_name, app_version);
+  return klass->init_runtime (self, app_name, app_version);
 }
 
 static gboolean
@@ -123,8 +122,7 @@ _add_missing (GSList **target, GSList *source)
 }
 
 static GxrContext *
-_new (GxrAppType  type,
-      GxrApi      api,
+_new (GxrApi      api,
       GSList     *instance_ext_list,
       GSList     *device_ext_list,
       char       *app_name,
@@ -144,7 +142,7 @@ _new (GxrAppType  type,
     return NULL;
   }
 
-  if (!_init_runtime (self, type, app_name, app_version))
+  if (!_init_runtime (self, app_name, app_version))
     {
       g_object_unref (self);
       g_printerr ("Could not init runtime.\n");
@@ -222,27 +220,24 @@ _get_api_from_env ()
   return parsed_api;
 }
 
-GxrContext *gxr_context_new (GxrAppType type,
-                             char      *app_name,
+GxrContext *gxr_context_new (char      *app_name,
                              uint32_t   app_version)
 {
-  return gxr_context_new_from_api (type, _get_api_from_env (),
+  return gxr_context_new_from_api (_get_api_from_env (),
                                    app_name, app_version);
 }
 
-GxrContext *gxr_context_new_from_vulkan_extensions (GxrAppType type,
-                                                    GSList *instance_ext_list,
+GxrContext *gxr_context_new_from_vulkan_extensions (GSList *instance_ext_list,
                                                     GSList *device_ext_list,
                                                     char       *app_name,
                                                     uint32_t    app_version)
 {
-  return gxr_context_new_full (type, _get_api_from_env (),
+  return gxr_context_new_full (_get_api_from_env (),
                                instance_ext_list, device_ext_list,
                                app_name, app_version);
 }
 
-GxrContext *gxr_context_new_full (GxrAppType type,
-                                  GxrApi     api,
+GxrContext *gxr_context_new_full (GxrApi     api,
                                   GSList    *instance_ext_list,
                                   GSList    *device_ext_list,
                                   char      *app_name,
@@ -253,17 +248,16 @@ GxrContext *gxr_context_new_full (GxrAppType type,
   if (api_env != GXR_API_NONE)
     api = api_env;
 
-  return _new (type, api, instance_ext_list, device_ext_list,
+  return _new (api, instance_ext_list, device_ext_list,
                app_name, app_version);
 }
 
 GxrContext *
-gxr_context_new_from_api (GxrAppType type,
-                          GxrApi     api,
+gxr_context_new_from_api (GxrApi     api,
                           char      *app_name,
                           uint32_t   app_version)
 {
-  return gxr_context_new_full (type, api, NULL, NULL, app_name, app_version);
+  return gxr_context_new_full (api, NULL, NULL, app_name, app_version);
 }
 
 static void

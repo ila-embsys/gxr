@@ -139,8 +139,7 @@ _create_gxr_context ()
     g_slist_append (device_ext_list,
                     g_strdup (VK_KHR_MAINTENANCE1_EXTENSION_NAME));
 
-  GxrContext *context = gxr_context_new_from_vulkan_extensions (GXR_APP_SCENE,
-                                                                instance_ext_list,
+  GxrContext *context = gxr_context_new_from_vulkan_extensions (instance_ext_list,
                                                                 device_ext_list,
                                                                 "GXR Cube", 1);
 

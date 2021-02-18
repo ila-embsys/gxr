@@ -54,7 +54,6 @@ struct _GxrContextClass
 
   gboolean
   (*init_runtime) (GxrContext *self,
-                   GxrAppType  type,
                    char       *app_name,
                    uint32_t    app_version);
 
@@ -162,24 +161,20 @@ struct _GxrContextClass
   (*get_acquired_framebuffer) (GxrContext *self, uint32_t view);
 };
 
-GxrContext *gxr_context_new (GxrAppType  type,
-                             char       *app_name,
+GxrContext *gxr_context_new (char       *app_name,
                              uint32_t    app_version);
 
 GxrContext *
-gxr_context_new_from_api (GxrAppType type,
-                          GxrApi     backend,
+gxr_context_new_from_api (GxrApi     backend,
                           char      *app_name,
                           uint32_t   app_version);
 
-GxrContext *gxr_context_new_from_vulkan_extensions (GxrAppType type,
-                                                    GSList *instance_ext_list,
+GxrContext *gxr_context_new_from_vulkan_extensions (GSList *instance_ext_list,
                                                     GSList *device_ext_list,
                                                     char       *app_name,
                                                     uint32_t    app_version);
 
-GxrContext *gxr_context_new_full (GxrAppType type,
-                                  GxrApi     api,
+GxrContext *gxr_context_new_full (GxrApi     api,
                                   GSList    *instance_ext_list,
                                   GSList    *device_ext_list,
                                   char       *app_name,

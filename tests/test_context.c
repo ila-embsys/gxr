@@ -24,9 +24,9 @@ gxr_api_string (GxrApi v)
 }
 
 static void
-_test_init_context (GxrAppType type)
+_test_init_context ()
 {
-  GxrContext *context = gxr_context_new (type, "Test Context", 1);
+  GxrContext *context = gxr_context_new ("Test Context", 1);
   g_assert_nonnull (context);
 
   GxrApi api = gxr_context_get_api (context);
@@ -49,9 +49,9 @@ _system_quit_cb (GxrContext   *context,
 }
 
 static void
-_test_quit_event (GxrAppType type)
+_test_quit_event ()
 {
-  GxrContext *context = gxr_context_new (type, "Test Context", 1);
+  GxrContext *context = gxr_context_new ("Test Context", 1);
   g_assert_nonnull (context);
 
   gboolean quit_completed = FALSE;
@@ -75,8 +75,8 @@ _test_quit_event (GxrAppType type)
 int
 main ()
 {
-  _test_init_context (GXR_APP_SCENE);
-  _test_quit_event (GXR_APP_SCENE);
+  _test_init_context ();
+  _test_quit_event ();
   gxr_backend_shutdown ();
   return 0;
 }
