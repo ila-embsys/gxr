@@ -8,7 +8,7 @@
 #include <openxr/openxr.h>
 
 #include "openxr-action-set.h"
-#include "openxr-action.h"
+#include "gxr-action.h"
 #include "openxr-context.h"
 #include "gxr-manifest.h"
 
@@ -51,8 +51,8 @@ openxr_action_set_update_controllers (OpenXRActionSet *self)
   GSList *actions = gxr_action_set_get_actions (GXR_ACTION_SET (self));
   for (GSList *l = actions; l != NULL; l = l->next)
   {
-    OpenXRAction *action = OPENXR_ACTION (l->data);
-    openxr_action_update_controllers (action);
+    GxrAction *action = GXR_ACTION (l->data);
+    gxr_action_update_controllers (action);
   }
 }
 
@@ -205,7 +205,7 @@ _component_to_str (GxrBindingComponent c)
   }
 }
 
-static OpenXRAction *
+static GxrAction *
 _find_openxr_action_from_url (GxrActionSet **sets, uint32_t count, gchar *url)
 {
   for (uint32_t i = 0; i < count; i++)
@@ -213,8 +213,8 @@ _find_openxr_action_from_url (GxrActionSet **sets, uint32_t count, gchar *url)
       GSList *actions = gxr_action_set_get_actions (GXR_ACTION_SET (sets[i]));
       for (GSList *l = actions; l != NULL; l = l->next)
         {
-          OpenXRAction *action = OPENXR_ACTION (l->data);
-          gchar *action_url = openxr_action_get_url (action);
+          GxrAction *action = GXR_ACTION (l->data);
+          gchar *action_url = gxr_action_get_url (action);
           if (g_strcmp0 (action_url, url) == 0)
             return action;
         }
@@ -240,12 +240,12 @@ _suggest_for_interaction_profile (GxrActionSet **sets, uint32_t count,
   for (GList *l = action_list; l != NULL; l = l->next)
     {
 
-      OpenXRAction *action = _find_openxr_action_from_url (sets, count, l->data);
+      GxrAction *action = _find_openxr_action_from_url (sets, count, l->data);
       if (!action)
         continue;
 
-      XrAction handle = openxr_action_get_handle (action);
-      char *url = openxr_action_get_url (action);
+      XrAction handle = gxr_action_get_handle (action);
+      char *url = gxr_action_get_url (action);
 
       GxrBinding *binding = g_hash_table_lookup (actions, l->data);
 
@@ -378,8 +378,7 @@ static GxrAction*
 _create_action (GxrActionSet *self, GxrContext *context,
                 GxrActionType type, char *url)
 {
-  return (GxrAction*) openxr_action_new_from_type_url (OPENXR_CONTEXT (context),
-                                                       self, type, url);
+  return (GxrAction*) gxr_action_new_from_type_url (context, self, type, url);
 }
 
 static void

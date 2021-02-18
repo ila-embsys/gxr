@@ -17,7 +17,6 @@ gxr_sources = [
   'gxr-device.c',
   'gxr-model.c',
   'openxr/openxr-context.c',
-  'openxr/openxr-action.c',
   'openxr/openxr-action-set.c'
 ]
 

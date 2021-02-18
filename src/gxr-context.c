@@ -545,18 +545,6 @@ gxr_context_set_keyboard_transform (GxrContext        *self,
   klass->set_keyboard_transform (self, transform);
 }
 
-GxrAction *
-gxr_context_new_action_from_type_url (GxrContext   *self,
-                                      GxrActionSet *action_set,
-                                      GxrActionType type,
-                                      char          *url)
-{
-  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
-  if (klass->new_action_from_type_url == NULL)
-    return FALSE;
-  return klass->new_action_from_type_url (self, action_set, type, url);
-}
-
 GSList *
 gxr_context_get_model_list (GxrContext *self)
 {

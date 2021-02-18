@@ -137,12 +137,6 @@ struct _GxrContextClass
                            const char *first_binding,
                            va_list     args);
 
-  GxrAction *
-  (*new_action_from_type_url) (GxrContext   *context,
-                               GxrActionSet *action_set,
-                               GxrActionType type,
-                               char          *url);
-
   void
   (*request_quit) (GxrContext *self);
 
