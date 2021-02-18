@@ -996,9 +996,6 @@ _init_runtime (GxrContext *context,
   {
     case GXR_APP_SCENE:
       break;
-    case GXR_APP_OVERLAY:
-      g_print ("stub: Overlay app type is not implemented in OpenXR.\n");
-      break;
     case GXR_APP_HEADLESS:
       g_print ("stub: Headless app type is not implemented in OpenXR.\n");
       break;

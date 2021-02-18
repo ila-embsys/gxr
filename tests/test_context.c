@@ -87,7 +87,6 @@ main ()
 {
   _test_scene_available ();
   _test_init_context (GXR_APP_SCENE);
-  _test_init_context (GXR_APP_OVERLAY);
   _test_quit_event (GXR_APP_SCENE);
   gxr_backend_shutdown ();
   return 0;
