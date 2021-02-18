@@ -20,26 +20,14 @@
 G_BEGIN_DECLS
 
 #define GXR_TYPE_ACTION_SET gxr_action_set_get_type()
-G_DECLARE_DERIVABLE_TYPE (GxrActionSet, gxr_action_set,
-                          GXR, ACTION_SET, GObject)
+G_DECLARE_FINAL_TYPE (GxrActionSet, gxr_action_set, GXR, ACTION_SET, GObject)
 
 struct _GxrActionSetClass
 {
   GObjectClass parent;
-
-  gboolean
-  (*update) (GxrActionSet **sets, uint32_t count);
-
-  GxrAction*
-  (*create_action) (GxrActionSet *self, GxrContext *context,
-                    GxrActionType type, char *url);
-
-  gboolean
-  (*attach_bindings) (GxrActionSet **sets,
-                      GxrContext *context,
-                      uint32_t count);
-
 };
+
+GxrActionSet *gxr_action_set_new (GxrContext *context);
 
 GxrActionSet *
 gxr_action_set_new_from_url (GxrContext *context, gchar *url);
@@ -71,6 +59,9 @@ gboolean
 gxr_action_sets_attach_bindings (GxrActionSet **sets,
                                  GxrContext *context,
                                  uint32_t count);
+
+XrActionSet
+gxr_action_set_get_handle (GxrActionSet *self);
 
 G_END_DECLS
 

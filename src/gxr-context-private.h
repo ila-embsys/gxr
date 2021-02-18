@@ -12,16 +12,6 @@
 
 G_BEGIN_DECLS
 
-/* Methods exposed through other Gxr classes */
-GxrAction *
-gxr_context_new_action_from_type_url (GxrContext   *self,
-                                      GxrActionSet *action_set,
-                                      GxrActionType type,
-                                      char          *url);
-
-GxrActionSet *
-gxr_context_new_action_set_from_url (GxrContext *self, gchar *url);
-
 /* Signal emission */
 void
 gxr_context_emit_keyboard_press (GxrContext *self, gpointer event);

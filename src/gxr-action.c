@@ -15,7 +15,6 @@
 #include "gxr-controller.h"
 #include "gxr-context-private.h"
 #include "openxr/openxr-context.h"
-#include "openxr/openxr-action-set.h"
 
 
 // TODO: Do not hardcode this
@@ -196,7 +195,7 @@ gxr_action_new_from_type_url (GxrContext   *context,
   strcpy(action_info.actionName, name);
   strcpy(action_info.localizedActionName, name);
 
-  XrActionSet set = openxr_action_set_get_handle (OPENXR_ACTION_SET (action_set));
+  XrActionSet set = gxr_action_set_get_handle (action_set);
 
   XrResult result = xrCreateAction (set, &action_info, &self->handle);
 

@@ -126,9 +126,6 @@ struct _GxrContextClass
   GSList *
   (*get_model_list) (GxrContext *self);
 
-  GxrActionSet *
-  (*new_action_set_from_url) (GxrContext *self, gchar *url);
-
   gboolean
   (*load_action_manifest) (GxrContext *self,
                            const char *cache_name,

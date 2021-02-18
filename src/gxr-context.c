@@ -433,15 +433,6 @@ gxr_context_end_frame (GxrContext *self)
   return res;
 }
 
-GxrActionSet *
-gxr_context_new_action_set_from_url (GxrContext *self, gchar *url)
-{
-  GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
-  if (klass->new_action_set_from_url == NULL)
-    return FALSE;
-  return klass->new_action_set_from_url (self, url);
-}
-
 gboolean
 gxr_context_load_action_manifest (GxrContext *self,
                                   const char *cache_name,

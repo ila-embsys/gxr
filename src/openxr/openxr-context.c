@@ -29,8 +29,7 @@
 
 #include "gxr-version.h"
 
-#include "openxr/openxr-action-set.h"
-
+// TODO: Do not hardcode this
 #define NUM_CONTROLLERS 2
 
 struct _OpenXRContext
@@ -1474,13 +1473,6 @@ _get_model_list (GxrContext *self)
   return NULL;
 }
 
-static GxrActionSet *
-_new_action_set_from_url (GxrContext *context, gchar *url)
-{
-  return (GxrActionSet*)
-    openxr_action_set_new_from_url (OPENXR_CONTEXT (context), url);
-}
-
 static gboolean
 _load_action_manifest (GxrContext *self,
                        const char *cache_name,
@@ -1635,7 +1627,6 @@ openxr_context_class_init (OpenXRContextClass *klass)
   gxr_context_class->is_another_scene_running = _is_another_scene_running;
   gxr_context_class->set_keyboard_transform = _set_keyboard_transform;
   gxr_context_class->get_model_list = _get_model_list;
-  gxr_context_class->new_action_set_from_url = _new_action_set_from_url;
   gxr_context_class->load_action_manifest = _load_action_manifest;
   gxr_context_class->request_quit = _request_quit;
   gxr_context_class->get_instance_extensions = _get_instance_extensions;
