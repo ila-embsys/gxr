@@ -813,7 +813,9 @@ init_vulkan_enable1 (GxrContext *self,
 
   /* vk instance required for checking required device exts */
   GulkanClient *gc_tmp =
-    gulkan_client_new_from_extensions (instance_ext_list_combined, NULL);
+    gulkan_client_new_from_extensions (instance_ext_list_combined,
+                                       NULL,
+                                       VK_NULL_HANDLE);
 
   if (!gc_tmp)
     {
@@ -827,11 +829,29 @@ init_vulkan_enable1 (GxrContext *self,
   gxr_context_get_device_extensions (self, gc_tmp, &device_ext_list_combined);
   _add_missing_strings (&device_ext_list_combined, device_ext_list);
 
+  PFN_xrGetVulkanGraphicsDeviceKHR GetVulkanGraphicsDeviceKHR;
+  XrResult result =
+    xrGetInstanceProcAddr (self->instance,
+                          "xrGetVulkanGraphicsDeviceKHR",
+                          (PFN_xrVoidFunction *)&GetVulkanGraphicsDeviceKHR);
+  if (!_check_xr_result (result,
+    "Failed to retrieve xrGetVulkanGraphicsDeviceKHR pointer!"))
+    return FALSE;
+
+  VkPhysicalDevice physical_device;
+  result = GetVulkanGraphicsDeviceKHR (self->instance,
+                                       self->system_id,
+                                       gulkan_client_get_instance_handle (gc_tmp),
+                                      &physical_device);
+  if (!_check_xr_result (result, "Failed to get get vulkan graphics device!"))
+    return FALSE;
+
   g_object_unref (gc_tmp);
 
   self->gc =
     gulkan_client_new_from_extensions (instance_ext_list_combined,
-                                       device_ext_list_combined);
+                                       device_ext_list_combined,
+                                       physical_device);
 
   g_slist_free_full (instance_ext_list_combined, g_free);
   g_slist_free_full (device_ext_list_combined, g_free);
