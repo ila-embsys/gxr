@@ -13,7 +13,7 @@
 #include <gulkan.h>
 #include <gxr.h>
 
-#include "gxr-controller.h"
+#include "scene-controller.h"
 #include "scene-pointer-tip.h"
 #include "scene-object.h"
 
@@ -661,9 +661,9 @@ _render_stereo (SceneRenderer *self, VkCommandBuffer cmd_buffer)
 
 void
 scene_renderer_update_lights (SceneRenderer *self,
-                              GSList        *controllers)
+                              GList         *controllers)
 {
-  self->lights.active_lights = (int) g_slist_length (controllers);
+  self->lights.active_lights = (int) g_list_length (controllers);
   if (self->lights.active_lights > 2)
     {
       g_warning ("Update lights received more than 2 controllers.\n");
@@ -672,11 +672,11 @@ scene_renderer_update_lights (SceneRenderer *self,
 
   for (int i = 0; i < self->lights.active_lights; i++)
     {
-      GxrController *controller =
-        GXR_CONTROLLER (g_slist_nth_data (controllers, (guint) i));
+      SceneController *controller =
+        SCENE_CONTROLLER (g_list_nth_data (controllers, (guint) i));
 
       ScenePointerTip *scene_tip =
-        SCENE_POINTER_TIP (gxr_controller_get_pointer_tip (controller));
+        SCENE_POINTER_TIP (scene_controller_get_pointer_tip (controller));
 
       graphene_point3d_t tip_position;
       scene_object_get_position (SCENE_OBJECT (scene_tip), &tip_position);

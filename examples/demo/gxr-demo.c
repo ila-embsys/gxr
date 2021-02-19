@@ -11,8 +11,8 @@
 
 #include <gxr.h>
 
-#include "gxr-pointer-tip.h"
-#include "gxr-controller.h"
+#include "demo-pointer-tip.h"
+#include "scene-controller.h"
 
 #include "scene-pointer.h"
 #include "scene-pointer-tip.h"
@@ -53,6 +53,9 @@ typedef struct Example
   SceneRenderer *renderer;
   SceneBackground *background;
   SceneCube *cube;
+
+  // GxrController -> SceneController
+  GHashTable *controller_map;
 } Example;
 
 static gboolean
@@ -95,6 +98,8 @@ _cleanup (Example *self)
   g_clear_object (&self->cube);
 
   g_clear_object (&self->context);
+
+  g_hash_table_unref (self->controller_map);
 
   g_print ("Cleaned up!\n");
 }
@@ -156,31 +161,29 @@ _render_pointers (Example           *self,
                   VkPipelineLayout   pipeline_layout,
                   graphene_matrix_t *vp)
 {
-  GxrDeviceManager *dm = gxr_context_get_device_manager (self->context);
-  GSList *controllers = gxr_device_manager_get_controllers (dm);
-
-  for (GSList *l = controllers; l; l = l->next)
+  GList *scs = g_hash_table_get_values (self->controller_map);
+  for (GList *l = scs; l; l = l->next)
     {
-      GxrController *controller = GXR_CONTROLLER (l->data);
+      SceneController *sc = SCENE_CONTROLLER (l->data);
 
-      if (!gxr_controller_is_pointer_pose_valid (controller))
+      if (!gxr_controller_is_pointer_pose_valid (scene_controller_get_controller (sc)))
         {
           /*
           g_print ("Pointer pose not valid: %lu\n",
-                   gxr_controller_get_handle (controller));
+                   scene_controller_get_handle (controller));
           */
           continue;
         }
 
       ScenePointer *pointer =
-        SCENE_POINTER (gxr_controller_get_pointer (controller));
+        SCENE_POINTER (scene_controller_get_pointer (sc));
 
       scene_pointer_render (pointer, eye,
                                 pipelines[PIPELINE_POINTER],
                                 pipeline_layout, cmd_buffer, vp);
 
       ScenePointerTip *scene_tip =
-        SCENE_POINTER_TIP (gxr_controller_get_pointer_tip (controller));
+        SCENE_POINTER_TIP (scene_controller_get_pointer_tip (sc));
       scene_pointer_tip_render (scene_tip, eye,
                                     pipelines[PIPELINE_TIP],
                                     pipeline_layout,
@@ -269,10 +272,13 @@ _cube_set_position (Example *example)
     return;
 
   graphene_matrix_t pointer_pose;
-  gxr_controller_get_pointer_pose (example->cube_grabbed, &pointer_pose);
+  gxr_controller_get_pointer_pose (GXR_CONTROLLER (example->cube_grabbed),
+                                   &pointer_pose);
 
-  GxrPointer *pointer = gxr_controller_get_pointer (example->cube_grabbed);
-  float distance = gxr_pointer_get_default_length (pointer);
+  SceneController *sc = g_hash_table_lookup (example->controller_map,
+                                             example->cube_grabbed);
+  DemoPointer *pointer = scene_controller_get_pointer (sc);
+  float distance = demo_pointer_get_default_length (pointer);
 
   graphene_point3d_t p = { .x = .0f, .y = .0f, .z = - distance };
   graphene_matrix_transform_point3d (&pointer_pose, &p, &p);
@@ -315,9 +321,7 @@ _update_lights_cb (gpointer _self)
 {
   Example *self = _self;
 
-  GxrDeviceManager *dm = gxr_context_get_device_manager (self->context);
-  GSList *controllers = gxr_device_manager_get_controllers (dm);
-
+  GList *controllers = g_hash_table_get_values (self->controller_map);
   scene_renderer_update_lights (self->renderer, controllers);
 }
 
@@ -367,25 +371,31 @@ _device_activate_cb (GxrDeviceManager *dm,
   VkBuffer lights =
     scene_renderer_get_lights_buffer_handle (self->renderer);
 
+  SceneController *sc = scene_controller_new (controller, self->context);
+
   ScenePointer *pointer =
     scene_pointer_new (client, descriptor_set_layout);
-  gxr_controller_set_pointer (controller, GXR_POINTER (pointer));
+  scene_controller_set_pointer (sc, DEMO_POINTER (pointer));
 
   ScenePointerTip *pointer_tip =
     scene_pointer_tip_new (client, descriptor_set_layout, lights);
-  gxr_controller_set_pointer_tip (controller, GXR_POINTER_TIP (pointer_tip));
+  scene_controller_set_pointer_tip (sc, DEMO_POINTER_TIP (pointer_tip));
+
+  g_hash_table_insert (self->controller_map, controller, sc);
 }
 
 static void
 _device_deactivate_cb (GxrDeviceManager *dm,
                        GxrController    *controller,
-                       gpointer          _self)
+                       gpointer         _self)
 {
-  Example *self = _self;
-  (void) self;
   (void) dm;
-  (void) controller;
+  Example *self = _self;
   g_print ("Controller deactivated..\n");
+
+  SceneController *sc = g_hash_table_lookup (self->controller_map, controller);
+  g_hash_table_remove (self->controller_map, controller);
+  g_object_unref (sc);
 }
 
 static void
@@ -570,6 +580,8 @@ _init_example (Example *self)
   self->context = _create_gxr_context ();
   if (!self->context)
     return FALSE;
+
+  self->controller_map = g_hash_table_new (g_direct_hash, g_direct_equal);
 
   GxrDeviceManager *dm = gxr_context_get_device_manager (self->context);
   self->device_activate_signal =

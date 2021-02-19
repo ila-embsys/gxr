@@ -9,13 +9,13 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-#include "gxr-pointer-tip.h"
+#include "demo-pointer-tip.h"
 
 #include <gdk/gdk.h>
 
 #include <gxr.h>
 
-G_DEFINE_INTERFACE (GxrPointerTip, gxr_pointer_tip, G_TYPE_OBJECT)
+G_DEFINE_INTERFACE (DemoPointerTip, demo_pointer_tip, G_TYPE_OBJECT)
 
 /* TODO */
 static void
@@ -42,13 +42,13 @@ graphene_ext_matrix_get_translation_point3d (const graphene_matrix_t *m,
 
 
 static void
-gxr_pointer_tip_default_init (GxrPointerTipInterface *iface)
+demo_pointer_tip_default_init (DemoPointerTipInterface *iface)
 {
   (void) iface;
 }
 
 void
-gxr_pointer_tip_update (GxrPointerTip      *self,
+demo_pointer_tip_update (DemoPointerTip      *self,
                         GxrContext         *context,
                         graphene_matrix_t  *pose,
                         graphene_point3d_t *intersection_point)
@@ -56,97 +56,97 @@ gxr_pointer_tip_update (GxrPointerTip      *self,
   graphene_matrix_t transform;
   graphene_matrix_init_from_matrix (&transform, pose);
   gxr_math_matrix_set_translation_point (&transform, intersection_point);
-  gxr_pointer_tip_set_transformation (self, &transform);
+  demo_pointer_tip_set_transformation (self, &transform);
 
-  gxr_pointer_tip_update_apparent_size (self, context);
+  demo_pointer_tip_update_apparent_size (self, context);
 }
 
 void
-gxr_pointer_tip_set_transformation (GxrPointerTip     *self,
+demo_pointer_tip_set_transformation (DemoPointerTip     *self,
                                     graphene_matrix_t *matrix)
 {
-  GxrPointerTipInterface* iface = GXR_POINTER_TIP_GET_IFACE (self);
+  DemoPointerTipInterface* iface = DEMO_POINTER_TIP_GET_IFACE (self);
   iface->set_transformation (self, matrix);
 }
 
 void
-gxr_pointer_tip_get_transformation (GxrPointerTip     *self,
+demo_pointer_tip_get_transformation (DemoPointerTip     *self,
                                     graphene_matrix_t *matrix)
 {
-  GxrPointerTipInterface* iface = GXR_POINTER_TIP_GET_IFACE (self);
+  DemoPointerTipInterface* iface = DEMO_POINTER_TIP_GET_IFACE (self);
   iface->get_transformation (self, matrix);
 }
 
 void
-gxr_pointer_tip_show (GxrPointerTip *self)
+demo_pointer_tip_show (DemoPointerTip *self)
 {
-  GxrPointerTipInterface* iface = GXR_POINTER_TIP_GET_IFACE (self);
+  DemoPointerTipInterface* iface = DEMO_POINTER_TIP_GET_IFACE (self);
   iface->show (self);
 }
 
 void
-gxr_pointer_tip_hide (GxrPointerTip *self)
+demo_pointer_tip_hide (DemoPointerTip *self)
 {
-  GxrPointerTipInterface* iface = GXR_POINTER_TIP_GET_IFACE (self);
+  DemoPointerTipInterface* iface = DEMO_POINTER_TIP_GET_IFACE (self);
   iface->hide (self);
 }
 
 gboolean
-gxr_pointer_tip_is_visible (GxrPointerTip *self)
+demo_pointer_tip_is_visible (DemoPointerTip *self)
 {
-  GxrPointerTipInterface* iface = GXR_POINTER_TIP_GET_IFACE (self);
+  DemoPointerTipInterface* iface = DEMO_POINTER_TIP_GET_IFACE (self);
   return iface->is_visible (self);
 }
 
 void
-gxr_pointer_tip_set_width_meters (GxrPointerTip *self,
+demo_pointer_tip_set_width_meters (DemoPointerTip *self,
                                   float          meters)
 {
-  GxrPointerTipInterface* iface = GXR_POINTER_TIP_GET_IFACE (self);
+  DemoPointerTipInterface* iface = DEMO_POINTER_TIP_GET_IFACE (self);
   iface->set_width_meters (self, meters);
 }
 
 void
-gxr_pointer_tip_submit_texture (GxrPointerTip *self)
+demo_pointer_tip_submit_texture (DemoPointerTip *self)
 {
-  GxrPointerTipInterface* iface = GXR_POINTER_TIP_GET_IFACE (self);
+  DemoPointerTipInterface* iface = DEMO_POINTER_TIP_GET_IFACE (self);
   iface->submit_texture (self);
 }
 
 void
-gxr_pointer_tip_set_and_submit_texture (GxrPointerTip *self,
+demo_pointer_tip_set_and_submit_texture (DemoPointerTip *self,
                                         GulkanTexture *texture)
 {
-  GxrPointerTipInterface* iface = GXR_POINTER_TIP_GET_IFACE (self);
+  DemoPointerTipInterface* iface = DEMO_POINTER_TIP_GET_IFACE (self);
   iface->set_and_submit_texture (self, texture);
 }
 
 GulkanTexture *
-gxr_pointer_tip_get_texture (GxrPointerTip *self)
+demo_pointer_tip_get_texture (DemoPointerTip *self)
 {
-  GxrPointerTipInterface* iface = GXR_POINTER_TIP_GET_IFACE (self);
+  DemoPointerTipInterface* iface = DEMO_POINTER_TIP_GET_IFACE (self);
   return iface->get_texture (self);
 }
 
-GxrPointerTipData*
-gxr_pointer_tip_get_data (GxrPointerTip *self)
+DemoPointerTipData*
+demo_pointer_tip_get_data (DemoPointerTip *self)
 {
-  GxrPointerTipInterface* iface = GXR_POINTER_TIP_GET_IFACE (self);
+  DemoPointerTipInterface* iface = DEMO_POINTER_TIP_GET_IFACE (self);
   return iface->get_data (self);
 }
 
 GulkanClient*
-gxr_pointer_tip_get_gulkan_client (GxrPointerTip *self)
+demo_pointer_tip_get_gulkan_client (DemoPointerTip *self)
 {
-  GxrPointerTipInterface* iface = GXR_POINTER_TIP_GET_IFACE (self);
+  DemoPointerTipInterface* iface = DEMO_POINTER_TIP_GET_IFACE (self);
   return iface->get_gulkan_client (self);
 }
 
 static void
-_update_texture (GxrPointerTip *self);
+_update_texture (DemoPointerTip *self);
 
 static gboolean
-_cancel_animation (GxrPointerTipData *data)
+_cancel_animation (DemoPointerTipData *data)
 {
   if (data->animation != NULL)
     {
@@ -160,12 +160,12 @@ _cancel_animation (GxrPointerTipData *data)
 }
 
 static void
-_init_texture (GxrPointerTip *self)
+_init_texture (DemoPointerTip *self)
 {
-  GulkanClient *client = gxr_pointer_tip_get_gulkan_client (self);
-  GxrPointerTipData *data = gxr_pointer_tip_get_data (self);
+  GulkanClient *client = demo_pointer_tip_get_gulkan_client (self);
+  DemoPointerTipData *data = demo_pointer_tip_get_data (self);
 
-  GdkPixbuf* pixbuf = gxr_pointer_tip_render (GXR_POINTER_TIP (self), 1.0f);
+  GdkPixbuf* pixbuf = demo_pointer_tip_render (DEMO_POINTER_TIP (self), 1.0f);
 
   GulkanTexture *texture =
     gulkan_texture_new_from_pixbuf (client, pixbuf,
@@ -174,21 +174,21 @@ _init_texture (GxrPointerTip *self)
                                     false);
   g_object_unref (pixbuf);
 
-  gxr_pointer_tip_set_and_submit_texture (self, texture);
+  demo_pointer_tip_set_and_submit_texture (self, texture);
 }
 
 void
-gxr_pointer_tip_init_settings (GxrPointerTip     *self,
-                               GxrPointerTipData *data)
+demo_pointer_tip_init_settings (DemoPointerTip     *self,
+                               DemoPointerTipData *data)
 {
   data->tip = self;
 
   g_debug ("Initializing pointer tip!");
 
-  GxrPointerTipSettings *s = &data->settings;
+  DemoPointerTipSettings *s = &data->settings;
   s->keep_apparent_size = TRUE;
   s->width_meters = 0.05f * GXR_TIP_VIEWPORT_SCALE;
-  gxr_pointer_tip_set_width_meters (data->tip, s->width_meters);
+  demo_pointer_tip_set_width_meters (data->tip, s->width_meters);
   graphene_point3d_init (&s->active_color, 0.078f, 0.471f, 0.675f);
   graphene_point3d_init (&s->passive_color, 1.0f, 1.0f, 1.0f);
   s->texture_width = 64;
@@ -278,10 +278,10 @@ _render_cairo (int                 w,
  * If background scale is > 1, a transparent white background circle is rendered
  * behind the pointer tip. */
 GdkPixbuf*
-gxr_pointer_tip_render (GxrPointerTip *self,
+demo_pointer_tip_render (DemoPointerTip *self,
                         float          progress)
 {
-  GxrPointerTipData *data = gxr_pointer_tip_get_data (self);
+  DemoPointerTipData *data = demo_pointer_tip_get_data (self);
 
   int w = data->settings.texture_width * GXR_TIP_VIEWPORT_SCALE;
   int h = data->settings.texture_height * GXR_TIP_VIEWPORT_SCALE;
@@ -300,17 +300,17 @@ gxr_pointer_tip_render (GxrPointerTip *self,
 static gboolean
 _animate_cb (gpointer _animation)
 {
-  GxrPointerTipAnimation *animation = (GxrPointerTipAnimation *) _animation;
-  GxrPointerTip *tip = animation->tip;
+  DemoPointerTipAnimation *animation = (DemoPointerTipAnimation *) _animation;
+  DemoPointerTip *tip = animation->tip;
 
-  GxrPointerTipData *data = gxr_pointer_tip_get_data (tip);
+  DemoPointerTipData *data = demo_pointer_tip_get_data (tip);
 
-  GulkanTexture *texture = gxr_pointer_tip_get_texture (tip);
+  GulkanTexture *texture = demo_pointer_tip_get_texture (tip);
 
-  GdkPixbuf* pixbuf = gxr_pointer_tip_render (tip, animation->progress);
+  GdkPixbuf* pixbuf = demo_pointer_tip_render (tip, animation->progress);
 
   gulkan_texture_upload_pixbuf (texture, pixbuf, data->upload_layout);
-  gxr_pointer_tip_submit_texture (tip);
+  demo_pointer_tip_submit_texture (tip);
 
   g_object_unref (pixbuf);
 
@@ -327,13 +327,13 @@ _animate_cb (gpointer _animation)
 }
 
 void
-gxr_pointer_tip_animate_pulse (GxrPointerTip *self)
+demo_pointer_tip_animate_pulse (DemoPointerTip *self)
 {
-  GxrPointerTipData *data = gxr_pointer_tip_get_data (self);
+  DemoPointerTipData *data = demo_pointer_tip_get_data (self);
   if (data->animation != NULL)
-    gxr_pointer_tip_set_active (data->tip, data->active);
+    demo_pointer_tip_set_active (data->tip, data->active);
 
-  data->animation = g_malloc (sizeof (GxrPointerTipAnimation));
+  data->animation = g_malloc (sizeof (DemoPointerTipAnimation));
   data->animation->progress = 0;
   data->animation->tip = data->tip;
   data->animation->callback_id = g_timeout_add (20, _animate_cb,
@@ -341,34 +341,34 @@ gxr_pointer_tip_animate_pulse (GxrPointerTip *self)
 }
 
 static void
-_update_texture (GxrPointerTip *self)
+_update_texture (DemoPointerTip *self)
 {
-  GxrPointerTipData *data = gxr_pointer_tip_get_data (self);
+  DemoPointerTipData *data = demo_pointer_tip_get_data (self);
 
-  GdkPixbuf* pixbuf = gxr_pointer_tip_render (self, 1.0f);
-  GulkanTexture *texture = gxr_pointer_tip_get_texture (self);
+  GdkPixbuf* pixbuf = demo_pointer_tip_render (self, 1.0f);
+  GulkanTexture *texture = demo_pointer_tip_get_texture (self);
 
   gulkan_texture_upload_pixbuf (texture, pixbuf, data->upload_layout);
   g_object_unref (pixbuf);
 
-  gxr_pointer_tip_submit_texture (self);
+  demo_pointer_tip_submit_texture (self);
 }
 
 /**
- * gxr_pointer_tip_set_active:
- * @self: a #GxrPointerTip
+ * demo_pointer_tip_set_active:
+ * @self: a #DemoPointerTip
  * @active: whether to use the active or inactive style
  *
  * Changes whether the active or inactive style is rendered.
  * Also cancels animations.
  */
 void
-gxr_pointer_tip_set_active (GxrPointerTip *self,
+demo_pointer_tip_set_active (DemoPointerTip *self,
                             gboolean       active)
 {
-  GxrPointerTipData *data = gxr_pointer_tip_get_data (self);
+  DemoPointerTipData *data = demo_pointer_tip_get_data (self);
 
-  if (gxr_pointer_tip_get_texture (self) == NULL)
+  if (demo_pointer_tip_get_texture (self) == NULL)
     return;
 
   /* New texture needs to be rendered when
@@ -386,23 +386,23 @@ gxr_pointer_tip_set_active (GxrPointerTip *self,
 }
 
 /**
- * gxr_pointer_tip_update_apparent_size:
- * @self: a #GxrPointerTip
+ * demo_pointer_tip_update_apparent_size:
+ * @self: a #DemoPointerTip
  * @context: a #GxrContext
  *
  * Note: Move pointer tip to the desired location before calling.
  */
 void
-gxr_pointer_tip_update_apparent_size (GxrPointerTip *self,
+demo_pointer_tip_update_apparent_size (DemoPointerTip *self,
                                       GxrContext    *context)
 {
-  GxrPointerTipData *data = gxr_pointer_tip_get_data (self);
+  DemoPointerTipData *data = demo_pointer_tip_get_data (self);
 
   if (!data->settings.keep_apparent_size)
     return;
 
   graphene_matrix_t tip_pose;
-  gxr_pointer_tip_get_transformation (self, &tip_pose);
+  demo_pointer_tip_get_transformation (self, &tip_pose);
 
   graphene_point3d_t tip_point;
   graphene_ext_matrix_get_translation_point3d (&tip_pose, &tip_point);
@@ -411,7 +411,7 @@ gxr_pointer_tip_update_apparent_size (GxrPointerTip *self,
   gboolean has_pose = gxr_context_get_head_pose (context, &hmd_pose);
   if (!has_pose)
     {
-      gxr_pointer_tip_set_width_meters (self, data->settings.width_meters);
+      demo_pointer_tip_set_width_meters (self, data->settings.width_meters);
       return;
     }
 
@@ -423,16 +423,16 @@ gxr_pointer_tip_update_apparent_size (GxrPointerTip *self,
   float w = data->settings.width_meters
             / GXR_TIP_APPARENT_SIZE_DISTANCE * distance;
 
-  gxr_pointer_tip_set_width_meters (self, w);
+  demo_pointer_tip_set_width_meters (self, w);
 }
 
 void
-gxr_pointer_tip_update_texture_resolution (GxrPointerTip *self,
+demo_pointer_tip_update_texture_resolution (DemoPointerTip *self,
                                            int            width,
                                            int            height)
 {
-  GxrPointerTipData *data = gxr_pointer_tip_get_data (self);
-  GxrPointerTipSettings *s = &data->settings;
+  DemoPointerTipData *data = demo_pointer_tip_get_data (self);
+  DemoPointerTipSettings *s = &data->settings;
   s->texture_width = width;
   s->texture_height = height;
 
@@ -440,13 +440,13 @@ gxr_pointer_tip_update_texture_resolution (GxrPointerTip *self,
 }
 
 void
-gxr_pointer_tip_update_color (GxrPointerTip      *self,
+demo_pointer_tip_update_color (DemoPointerTip      *self,
                               gboolean            active_color,
                               graphene_point3d_t *color)
 
 {
-  GxrPointerTipData *data = gxr_pointer_tip_get_data (self);
-  GxrPointerTipSettings *s = &data->settings;
+  DemoPointerTipData *data = demo_pointer_tip_get_data (self);
+  DemoPointerTipSettings *s = &data->settings;
 
   if (active_color)
     graphene_point3d_init_from_point (&s->active_color, color);
@@ -461,32 +461,32 @@ gxr_pointer_tip_update_color (GxrPointerTip      *self,
 }
 
 void
-gxr_pointer_tip_update_pulse_alpha (GxrPointerTip *self,
+demo_pointer_tip_update_pulse_alpha (DemoPointerTip *self,
                                     double         alpha)
 {
-  GxrPointerTipData *data = gxr_pointer_tip_get_data (self);
-  GxrPointerTipSettings *s = &data->settings;
+  DemoPointerTipData *data = demo_pointer_tip_get_data (self);
+  DemoPointerTipSettings *s = &data->settings;
   s->pulse_alpha = alpha;
 }
 
 void
-gxr_pointer_tip_update_keep_apparent_size (GxrPointerTip *self,
+demo_pointer_tip_update_keep_apparent_size (DemoPointerTip *self,
                                            gboolean       keep_apparent_size)
 {
-  GxrPointerTipData *data = gxr_pointer_tip_get_data (self);
-  GxrPointerTipSettings *s = &data->settings;
+  DemoPointerTipData *data = demo_pointer_tip_get_data (self);
+  DemoPointerTipSettings *s = &data->settings;
 
   s->keep_apparent_size = keep_apparent_size;
-  gxr_pointer_tip_set_width_meters (data->tip, s->width_meters);
+  demo_pointer_tip_set_width_meters (data->tip, s->width_meters);
 }
 
 void
-gxr_pointer_tip_update_width_meters (GxrPointerTip *self,
+demo_pointer_tip_update_width_meters (DemoPointerTip *self,
                                      float          width)
 {
-  GxrPointerTipData *data = gxr_pointer_tip_get_data (self);
-  GxrPointerTipSettings *s = &data->settings;
+  DemoPointerTipData *data = demo_pointer_tip_get_data (self);
+  DemoPointerTipSettings *s = &data->settings;
 
   s->width_meters = width * GXR_TIP_VIEWPORT_SCALE;
-  gxr_pointer_tip_set_width_meters (data->tip, s->width_meters);
+  demo_pointer_tip_set_width_meters (data->tip, s->width_meters);
 }

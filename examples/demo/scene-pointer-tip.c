@@ -8,7 +8,7 @@
 
 #include "scene-pointer-tip.h"
 
-#include "gxr-pointer-tip.h"
+#include "demo-pointer-tip.h"
 #include "scene-object.h"
 
 #include <stdalign.h>
@@ -51,15 +51,15 @@ struct _ScenePointerTip
   float initial_height_meter;
   float scale;
 
-  GxrPointerTipData data;
+  DemoPointerTipData data;
 };
 
 static void
-scene_pointer_tip_interface_init (GxrPointerTipInterface *iface);
+scene_pointer_tip_interface_init (DemoPointerTipInterface *iface);
 
 G_DEFINE_TYPE_WITH_CODE (ScenePointerTip, scene_pointer_tip,
                          SCENE_TYPE_OBJECT,
-                         G_IMPLEMENT_INTERFACE (GXR_TYPE_POINTER_TIP,
+                         G_IMPLEMENT_INTERFACE (DEMO_TYPE_POINTER_TIP,
                                                 scene_pointer_tip_interface_init))
 
 static void
@@ -181,7 +181,7 @@ scene_pointer_tip_new (GulkanClient          *gulkan,
 
   _initialize (self, layout);
 
-  gxr_pointer_tip_init_settings (GXR_POINTER_TIP (self), &self->data);
+  demo_pointer_tip_init_settings (DEMO_POINTER_TIP (self), &self->data);
 
   return self;
 }
@@ -192,7 +192,7 @@ scene_pointer_tip_finalize (GObject *gobject)
   ScenePointerTip *self = SCENE_POINTER_TIP (gobject);
 
   /* cancels potentially running animation */
-  gxr_pointer_tip_set_active (GXR_POINTER_TIP (self), FALSE);
+  demo_pointer_tip_set_active (DEMO_POINTER_TIP (self), FALSE);
 
   VkDevice device = gulkan_client_get_device_handle (self->gulkan);
   vkDestroySampler (device, self->sampler, NULL);
@@ -208,7 +208,7 @@ scene_pointer_tip_finalize (GObject *gobject)
 }
 
 static void
-_set_transformation (GxrPointerTip     *tip,
+_set_transformation (DemoPointerTip     *tip,
                      graphene_matrix_t *matrix)
 {
   ScenePointerTip *self = SCENE_POINTER_TIP (tip);
@@ -216,7 +216,7 @@ _set_transformation (GxrPointerTip     *tip,
 }
 
 static void
-_get_transformation (GxrPointerTip     *tip,
+_get_transformation (DemoPointerTip     *tip,
                      graphene_matrix_t *matrix)
 {
   ScenePointerTip *self = SCENE_POINTER_TIP (tip);
@@ -228,7 +228,7 @@ _get_transformation (GxrPointerTip     *tip,
 
 
 static void
-_show (GxrPointerTip *tip)
+_show (DemoPointerTip *tip)
 {
   ScenePointerTip *self = SCENE_POINTER_TIP (tip);
   SceneObject *obj = SCENE_OBJECT (self);
@@ -236,7 +236,7 @@ _show (GxrPointerTip *tip)
 }
 
 static void
-_hide (GxrPointerTip *tip)
+_hide (DemoPointerTip *tip)
 {
   ScenePointerTip *self = SCENE_POINTER_TIP (tip);
   SceneObject *obj = SCENE_OBJECT (self);
@@ -244,7 +244,7 @@ _hide (GxrPointerTip *tip)
 }
 
 static gboolean
-_is_visible (GxrPointerTip *tip)
+_is_visible (DemoPointerTip *tip)
 {
   ScenePointerTip *self = SCENE_POINTER_TIP (tip);
   SceneObject *obj = SCENE_OBJECT (self);
@@ -252,7 +252,7 @@ _is_visible (GxrPointerTip *tip)
 }
 
 static void
-_set_width_meters (GxrPointerTip *tip,
+_set_width_meters (DemoPointerTip *tip,
                    float          meters)
 {
   ScenePointerTip *self = SCENE_POINTER_TIP (tip);
@@ -260,14 +260,14 @@ _set_width_meters (GxrPointerTip *tip,
 }
 
 static GulkanTexture*
-_get_texture (GxrPointerTip *tip)
+_get_texture (DemoPointerTip *tip)
 {
   ScenePointerTip *self = SCENE_POINTER_TIP (tip);
   return self->texture;
 }
 
 static void
-_submit_texture (GxrPointerTip *tip)
+_submit_texture (DemoPointerTip *tip)
 {
   (void) tip;
 }
@@ -347,7 +347,7 @@ _update_descriptors (ScenePointerTip *self)
 }
 
 static void
-_set_and_submit_texture (GxrPointerTip *tip, GulkanTexture *texture)
+_set_and_submit_texture (DemoPointerTip *tip, GulkanTexture *texture)
 {
   ScenePointerTip *self = SCENE_POINTER_TIP (tip);
   if (texture == self->texture)
@@ -422,15 +422,15 @@ _set_and_submit_texture (GxrPointerTip *tip, GulkanTexture *texture)
 
 }
 
-static GxrPointerTipData*
-_get_data (GxrPointerTip *tip)
+static DemoPointerTipData*
+_get_data (DemoPointerTip *tip)
 {
   ScenePointerTip *self = SCENE_POINTER_TIP (tip);
   return &self->data;
 }
 
 static GulkanClient*
-_get_gulkan_client (GxrPointerTip *tip)
+_get_gulkan_client (DemoPointerTip *tip)
 {
   (void) tip;
   ScenePointerTip *self = SCENE_POINTER_TIP (tip);
@@ -487,7 +487,7 @@ scene_pointer_tip_render (ScenePointerTip   *self,
 }
 
 static void
-scene_pointer_tip_interface_init (GxrPointerTipInterface *iface)
+scene_pointer_tip_interface_init (DemoPointerTipInterface *iface)
 {
   iface->set_transformation = _set_transformation;
   iface->get_transformation = _get_transformation;

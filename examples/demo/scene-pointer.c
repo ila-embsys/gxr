@@ -11,7 +11,7 @@
 #include <gulkan.h>
 
 #include "graphene-ext.h"
-#include "gxr-pointer.h"
+#include "demo-pointer.h"
 
 #include <stdalign.h>
 
@@ -20,18 +20,18 @@ typedef struct {
 } ScenePointerUniformBuffer;
 
 static void
-scene_pointer_interface_init (GxrPointerInterface *iface);
+scene_pointer_interface_init (DemoPointerInterface *iface);
 
 struct _ScenePointer
 {
   SceneObject parent;
   GulkanVertexBuffer *vertex_buffer;
 
-  GxrPointerData data;
+  DemoPointerData data;
 };
 
 G_DEFINE_TYPE_WITH_CODE (ScenePointer, scene_pointer, SCENE_TYPE_OBJECT,
-                         G_IMPLEMENT_INTERFACE (GXR_TYPE_POINTER,
+                         G_IMPLEMENT_INTERFACE (DEMO_TYPE_POINTER,
                                                 scene_pointer_interface_init))
 
 static void
@@ -50,7 +50,7 @@ scene_pointer_init (ScenePointer *self)
 {
   self->vertex_buffer = gulkan_vertex_buffer_new ();
 
-  gxr_pointer_init (GXR_POINTER (self));
+  demo_pointer_init (DEMO_POINTER (self));
 }
 
 static gboolean
@@ -153,7 +153,7 @@ scene_pointer_render (ScenePointer      *self,
 }
 
 static void
-_move (GxrPointer        *pointer,
+_move (DemoPointer        *pointer,
        graphene_matrix_t *transform)
 {
   ScenePointer *self = SCENE_POINTER (pointer);
@@ -162,7 +162,7 @@ _move (GxrPointer        *pointer,
 }
 
 static void
-_set_length (GxrPointer *pointer,
+_set_length (DemoPointer *pointer,
              float       length)
 {
   ScenePointer *self = SCENE_POINTER (pointer);
@@ -178,15 +178,15 @@ _set_length (GxrPointer *pointer,
   gulkan_vertex_buffer_map_array (self->vertex_buffer);
 }
 
-static GxrPointerData*
-_get_data (GxrPointer *pointer)
+static DemoPointerData*
+_get_data (DemoPointer *pointer)
 {
   ScenePointer *self = SCENE_POINTER (pointer);
   return &self->data;
 }
 
 static void
-_set_transformation (GxrPointer        *pointer,
+_set_transformation (DemoPointer        *pointer,
                      graphene_matrix_t *matrix)
 {
   ScenePointer *self = SCENE_POINTER (pointer);
@@ -194,7 +194,7 @@ _set_transformation (GxrPointer        *pointer,
 }
 
 static void
-_get_transformation (GxrPointer        *pointer,
+_get_transformation (DemoPointer        *pointer,
                      graphene_matrix_t *matrix)
 {
   ScenePointer *self = SCENE_POINTER (pointer);
@@ -204,21 +204,21 @@ _get_transformation (GxrPointer        *pointer,
 }
 
 static void
-_show (GxrPointer *pointer)
+_show (DemoPointer *pointer)
 {
   ScenePointer *self = SCENE_POINTER (pointer);
   scene_object_show (SCENE_OBJECT (self));
 }
 
 static void
-_hide (GxrPointer *pointer)
+_hide (DemoPointer *pointer)
 {
   ScenePointer *self = SCENE_POINTER (pointer);
   scene_object_hide (SCENE_OBJECT (self));
 }
 
 static void
-scene_pointer_interface_init (GxrPointerInterface *iface)
+scene_pointer_interface_init (DemoPointerInterface *iface)
 {
   iface->move = _move;
   iface->set_length = _set_length;

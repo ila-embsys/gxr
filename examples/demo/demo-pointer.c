@@ -5,66 +5,66 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "gxr-pointer.h"
+#include "demo-pointer.h"
 #include "graphene-ext.h"
 
-G_DEFINE_INTERFACE (GxrPointer, gxr_pointer, G_TYPE_OBJECT)
+G_DEFINE_INTERFACE (DemoPointer, demo_pointer, G_TYPE_OBJECT)
 
 static void
-gxr_pointer_default_init (GxrPointerInterface *iface)
+demo_pointer_default_init (DemoPointerInterface *iface)
 {
   (void) iface;
 }
 
 void
-gxr_pointer_move (GxrPointer        *self,
+demo_pointer_move (DemoPointer        *self,
                   graphene_matrix_t *transform)
 {
-  GxrPointerInterface* iface = GXR_POINTER_GET_IFACE (self);
+  DemoPointerInterface* iface = DEMO_POINTER_GET_IFACE (self);
   if (iface->move)
     iface->move (self, transform);
 }
 
 void
-gxr_pointer_set_length (GxrPointer *self,
+demo_pointer_set_length (DemoPointer *self,
                         float       length)
 {
-  GxrPointerData *data = gxr_pointer_get_data (self);
+  DemoPointerData *data = demo_pointer_get_data (self);
   if (length == data->length)
     return;
 
   data->length = length;
 
-  GxrPointerInterface* iface = GXR_POINTER_GET_IFACE (self);
+  DemoPointerInterface* iface = DEMO_POINTER_GET_IFACE (self);
   if (iface->set_length)
     iface->set_length (self, length);
 }
 
 float
-gxr_pointer_get_default_length (GxrPointer *self)
+demo_pointer_get_default_length (DemoPointer *self)
 {
-  GxrPointerData *data = gxr_pointer_get_data (self);
+  DemoPointerData *data = demo_pointer_get_data (self);
   return data->default_length;
 }
 
 void
-gxr_pointer_reset_length (GxrPointer *self)
+demo_pointer_reset_length (DemoPointer *self)
 {
-  GxrPointerData *data = gxr_pointer_get_data (self);
-  gxr_pointer_set_length (self, data->default_length);
+  DemoPointerData *data = demo_pointer_get_data (self);
+  demo_pointer_set_length (self, data->default_length);
 }
 
-GxrPointerData*
-gxr_pointer_get_data (GxrPointer *self)
+DemoPointerData*
+demo_pointer_get_data (DemoPointer *self)
 {
-  GxrPointerInterface* iface = GXR_POINTER_GET_IFACE (self);
+  DemoPointerInterface* iface = DEMO_POINTER_GET_IFACE (self);
   return iface->get_data (self);
 }
 
 void
-gxr_pointer_init (GxrPointer *self)
+demo_pointer_init (DemoPointer *self)
 {
-  GxrPointerData *data = gxr_pointer_get_data (self);
+  DemoPointerData *data = demo_pointer_get_data (self);
   data->start_offset = -0.02f;
   data->default_length = 5.0f;
   data->length = data->default_length;
@@ -72,29 +72,29 @@ gxr_pointer_init (GxrPointer *self)
 }
 
 void
-gxr_pointer_set_transformation (GxrPointer        *self,
+demo_pointer_set_transformation (DemoPointer        *self,
                                 graphene_matrix_t *matrix)
 {
-  GxrPointerInterface* iface = GXR_POINTER_GET_IFACE (self);
+  DemoPointerInterface* iface = DEMO_POINTER_GET_IFACE (self);
   iface->set_transformation (self, matrix);
 }
 
 void
-gxr_pointer_get_transformation (GxrPointer        *self,
+demo_pointer_get_transformation (DemoPointer        *self,
                                 graphene_matrix_t *matrix)
 {
-  GxrPointerInterface* iface = GXR_POINTER_GET_IFACE (self);
+  DemoPointerInterface* iface = DEMO_POINTER_GET_IFACE (self);
   iface->get_transformation (self, matrix);
 }
 
 void
-gxr_pointer_get_ray (GxrPointer     *self,
+demo_pointer_get_ray (DemoPointer     *self,
                      graphene_ray_t *res)
 {
-  GxrPointerData *data = gxr_pointer_get_data (self);
+  DemoPointerData *data = demo_pointer_get_data (self);
 
   graphene_matrix_t mat;
-  gxr_pointer_get_transformation (self, &mat);
+  demo_pointer_get_transformation (self, &mat);
 
   graphene_vec4_t start;
   graphene_vec4_init (&start, 0, 0, data->start_offset, 1);
@@ -120,7 +120,7 @@ gxr_pointer_get_ray (GxrPointer     *self,
 }
 
 gboolean
-gxr_pointer_get_plane_intersection (GxrPointer        *self,
+demo_pointer_get_plane_intersection (DemoPointer        *self,
                                     graphene_plane_t  *plane,
                                     graphene_matrix_t *plane_transform,
                                     float              plane_aspect,
@@ -128,7 +128,7 @@ gxr_pointer_get_plane_intersection (GxrPointer        *self,
                                     graphene_vec3_t   *res)
 {
   graphene_ray_t ray;
-  gxr_pointer_get_ray (self, &ray);
+  demo_pointer_get_ray (self, &ray);
 
   *distance = graphene_ray_get_distance_to_plane (&ray, plane);
   if (*distance == INFINITY)
@@ -164,10 +164,10 @@ gxr_pointer_get_plane_intersection (GxrPointer        *self,
 }
 
 void
-gxr_pointer_show (GxrPointer *self)
+demo_pointer_show (DemoPointer *self)
 {
-  GxrPointerInterface* iface = GXR_POINTER_GET_IFACE (self);
-  GxrPointerData *data = gxr_pointer_get_data (self);
+  DemoPointerInterface* iface = DEMO_POINTER_GET_IFACE (self);
+  DemoPointerData *data = demo_pointer_get_data (self);
 
   if (!data->render_ray)
     {
@@ -181,20 +181,20 @@ gxr_pointer_show (GxrPointer *self)
 }
 
 void
-gxr_pointer_hide (GxrPointer *self)
+demo_pointer_hide (DemoPointer *self)
 {
-  GxrPointerInterface* iface = GXR_POINTER_GET_IFACE (self);
+  DemoPointerInterface* iface = DEMO_POINTER_GET_IFACE (self);
   if (iface->hide)
     iface->hide (self);
 
-  GxrPointerData *data = gxr_pointer_get_data (self);
+  DemoPointerData *data = demo_pointer_get_data (self);
   data->visible = FALSE;
 }
 
 gboolean
-gxr_pointer_is_visible (GxrPointer *self)
+demo_pointer_is_visible (DemoPointer *self)
 {
-  GxrPointerData *data = gxr_pointer_get_data (self);
+  DemoPointerData *data = demo_pointer_get_data (self);
 
   if (!data->render_ray)
     return FALSE;
@@ -203,14 +203,14 @@ gxr_pointer_is_visible (GxrPointer *self)
 }
 
 void
-gxr_pointer_update_render_ray (GxrPointer *self, gboolean render_ray)
+demo_pointer_update_render_ray (DemoPointer *self, gboolean render_ray)
 {
-  GxrPointerData *data = gxr_pointer_get_data (self);
+  DemoPointerData *data = demo_pointer_get_data (self);
 
   data->render_ray = render_ray;
 
   if (!data->visible && render_ray)
-    gxr_pointer_show (self);
+    demo_pointer_show (self);
   else if (data->visible && !render_ray)
-    gxr_pointer_hide (self);
+    demo_pointer_hide (self);
 }

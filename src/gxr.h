@@ -24,8 +24,6 @@
 #include "gxr-io.h"
 #include "gxr-manifest.h"
 #include "gxr-controller.h"
-#include "gxr-pointer.h"
-#include "gxr-pointer-tip.h"
 #include "gxr-device.h"
 #include "gxr-model.h"
 #include "gxr-device-manager.h"

@@ -137,7 +137,7 @@ gxr_device_manager_add (GxrDeviceManager *self,
   GxrDevice *device;
   if (is_controller)
     {
-      device = GXR_DEVICE (gxr_controller_new (device_id, context, model_name));
+      device = GXR_DEVICE (gxr_controller_new (device_id, model_name));
       gxr_device_manager_emit_device_activate (self, device);
     }
   else
