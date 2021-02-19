@@ -1037,6 +1037,38 @@ _init_session (GxrContext *context)
   GulkanDevice *gd = gulkan_client_get_device (gc);
   GulkanQueue *queue = gulkan_device_get_graphics_queue (gd);
 
+  {
+    PFN_xrGetVulkanGraphicsDeviceKHR pfnxrGetVulkanGraphicsDeviceKHR;
+    xrGetInstanceProcAddr (
+        self->instance, "xrGetVulkanGraphicsDeviceKHR",
+        (PFN_xrVoidFunction *)&pfnxrGetVulkanGraphicsDeviceKHR);
+
+    VkPhysicalDevice vpd;
+    pfnxrGetVulkanGraphicsDeviceKHR (self->instance, self->system_id,
+                                     gulkan_client_get_instance_handle (gc),
+                                     &vpd);
+
+    PFN_xrGetVulkanDeviceExtensionsKHR pfnxrGetVulkanDeviceExtensionsKHR;
+    xrGetInstanceProcAddr (
+        self->instance, "xrGetVulkanDeviceExtensionsKHR",
+        (PFN_xrVoidFunction *)&pfnxrGetVulkanDeviceExtensionsKHR);
+
+    // TODO: use device
+
+    uint32_t num_device_exts;
+    pfnxrGetVulkanDeviceExtensionsKHR (self->instance, self->system_id, 0,
+                                       &num_device_exts, NULL);
+
+    char *device_exts = malloc (sizeof (char) * num_device_exts);
+    pfnxrGetVulkanDeviceExtensionsKHR (self->instance, self->system_id,
+                                       num_device_exts, &num_device_exts,
+                                       device_exts);
+
+    // TODO: use device ext string
+
+    free (device_exts);
+  }
+
   uint32_t family_index = gulkan_queue_get_family_index (queue);
 
   self->graphics_binding = (XrGraphicsBindingVulkanKHR){
