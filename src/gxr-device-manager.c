@@ -164,6 +164,7 @@ gxr_device_manager_remove (GxrDeviceManager *self,
   if (!device)
     {
       g_print ("Device Manager: Returned nonexistent device\n");
+      g_mutex_unlock (&self->device_mutex);
       return;
     }
 
