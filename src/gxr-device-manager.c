@@ -107,7 +107,13 @@ gxr_device_manager_emit_device_deactivate (GxrDeviceManager *self,
 GSList *
 gxr_device_manager_get_controllers (GxrDeviceManager *self)
 {
-  return self->controllers;
+  g_mutex_lock (&self->device_mutex);
+
+  GSList *controllers = self->controllers;
+
+  g_mutex_unlock (&self->device_mutex);
+
+  return controllers;
 }
 
 gboolean
