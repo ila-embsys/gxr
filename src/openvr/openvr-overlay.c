@@ -624,6 +624,11 @@ _print_info (GxrOverlay *overlay)
       g_print ("VROverlayTransform_Mountable\n");
       break;
 #endif
+#if (OPENVR_VERSION_MINOR >= 16)
+    case VROverlayTransformType_VROverlayTransform_Projection:
+      g_print ("VROverlayTransform_Projection\n");
+      break;
+#endif
     }
 
   TrackingUniverseOrigin tracking_origin;
