@@ -132,17 +132,22 @@ _check_xr_result (XrResult result, const char* format, ...)
   if (XR_SUCCEEDED (result))
     return TRUE;
 
-  const char *resultString = xr_result_to_string (result);
+  const char *result_str = xr_result_to_string (result);
 
-  char buf[BUF_LEN] = {0};
-  g_snprintf(buf, BUF_LEN, "[%s] ", resultString);
+  char msg[BUF_LEN] = {0};
+  g_snprintf(msg, BUF_LEN, "[%s] ", result_str);
+
+  int result_written_len = strlen (msg);
 
   va_list args;
   va_start (args, format);
-  g_vsnprintf (buf, BUF_LEN - strlen (buf), "[%s]", args);
+  g_vsnprintf (msg + result_written_len,
+               BUF_LEN - result_written_len,
+               format,
+               args);
   va_end (args);
 
-  g_warning("%s", buf);
+  g_warning("%s", msg);
   return FALSE;
 }
 
