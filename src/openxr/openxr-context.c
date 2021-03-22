@@ -1265,9 +1265,11 @@ _poll_event (GxrContext *context)
       return;
     }
 
-  g_print ("Stub: close keyboard\n");
   if (self->keyboard_active)
-    gxr_context_emit_keyboard_close (context);
+    {
+      g_print ("Stub: close keyboard\n");
+      gxr_context_emit_keyboard_close (context);
+    }
 }
 
 static void
