@@ -33,6 +33,9 @@ struct _OpenXRAction
 
   XrAction handle;
 
+  // gxr API has delta from last values, but OpenXR does not
+  graphene_vec3_t last_vec[NUM_HANDS];
+
   /* Only used for DIGITAL_FROM_FLOAT */
   float threshold;
   float last_float[NUM_HANDS];
@@ -51,6 +54,8 @@ openxr_action_init (OpenXRAction *self)
       self->hand_spaces[i] = XR_NULL_HANDLE;
       self->last_float[i] = 0.0f;
       self->last_bool[i] = FALSE;
+
+      graphene_vec3_init (&self->last_vec[i], 0, 0, 0);
     }
   self->threshold = 0.0f;
   self->haptic_action = NULL;
@@ -356,10 +361,12 @@ _action_poll_analog (OpenXRAction *self)
       event->controller = controller;
       event->active = (gboolean)value.isActive;
       graphene_vec3_init (&event->state, value.currentState, 0, 0);
-      graphene_vec3_init (&event->delta, 0, 0, 0); /* TODO */
+      graphene_vec3_subtract (&event->state, &self->last_vec[controller_handle], &event->delta);
       event->time = _get_time_diff (value.lastChangeTime);
 
       gxr_action_emit_analog (GXR_ACTION (self), event);
+
+      graphene_vec3_init_from_vec3 (&self->last_vec[controller_handle], &event->state);
     }
 
   return TRUE;
@@ -402,10 +409,12 @@ _action_poll_vec2f (OpenXRAction *self)
       event->controller = controller;
       event->active = (gboolean)value.isActive;
       graphene_vec3_init (&event->state, value.currentState.x, value.currentState.y, 0);
-      graphene_vec3_init (&event->delta, 0, 0, 0); /* TODO */
+      graphene_vec3_subtract (&event->state, &self->last_vec[controller_handle], &event->delta);
       event->time = _get_time_diff (value.lastChangeTime);
 
       gxr_action_emit_analog (GXR_ACTION (self), event);
+
+      graphene_vec3_init_from_vec3 (&self->last_vec[controller_handle], &event->state);
     }
 
   return TRUE;
