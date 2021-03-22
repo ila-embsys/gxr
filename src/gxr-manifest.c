@@ -87,6 +87,8 @@ _get_binding_component (const gchar *component_string)
     return GXR_BINDING_COMPONENT_POSITION;
   if (g_str_equal (component_string, "touch"))
     return GXR_BINDING_COMPONENT_TOUCH;
+  if (g_str_equal (component_string, "force"))
+    return GXR_BINDING_COMPONENT_FORCE;
 
   g_printerr ("Binding component %s is not known\n", component_string);
   return GXR_BINDING_COMPONENT_UNKNOWN;
