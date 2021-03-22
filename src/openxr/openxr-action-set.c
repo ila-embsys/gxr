@@ -197,6 +197,8 @@ _component_to_str (GxrBindingComponent c)
       return "value";
     case GXR_BINDING_COMPONENT_TOUCH:
       return "touch";
+    case GXR_BINDING_COMPONENT_FORCE:
+      return "force";
     case GXR_BINDING_COMPONENT_POSITION:
       /* use .../trackpad instead of .../trackpad/x etc. */
       return NULL;
