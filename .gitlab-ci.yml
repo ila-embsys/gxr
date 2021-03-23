@@ -1,61 +1,144 @@
-.build_template: &build_definition
+.templates_sha: &templates_sha 290b79e0e78eab67a83766f4e9691be554fc4afd
+
+include:
+  - project: 'freedesktop/ci-templates'
+    ref: *templates_sha
+    file: '/templates/arch.yml'
+  - project: "freedesktop/ci-templates"
+    ref: *templates_sha
+    file: "/templates/ubuntu.yml"
+
+
+variables:
+  FDO_UPSTREAM_REPO: xrdesktop/gxr
+  GULKAN_COMMIT: "d0a4e797c83cb66592845a5a22729474a7b4c403"
+  OPENXR_SDK_TAG: "release-1.0.14"
+  OPENVR_TAG: "v1.14.15" # 1.16.8 is broken without patches
+
+stages:
+  - container_prep
+  - build_and_test
+
+
+# "Base" job for installing Gulkan, OpenXR SDK and OpenVR
+.xrdesktop.base-job.build_deps:
+  stage: container_prep
+  variables:
+    FDO_DISTRIBUTION_EXEC: |
+      mkdir deps && \
+      cd deps && \
+      git clone https://gitlab.freedesktop.org/xrdesktop/gulkan.git && \
+      cd gulkan && \
+      git checkout $GULKAN_COMMIT && \
+      meson build --prefix /usr && \
+      ninja -C build install && \
+      cd .. && \
+      git clone --depth 1 --branch $OPENXR_SDK_TAG https://github.com/KhronosGroup/OpenXR-SDK-Source.git && \
+      cd OpenXR-SDK-Source && \
+      cmake . -G Ninja -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DDYNAMIC_LOADER=ON && \
+      ninja -C . install && \
+      cd .. && \
+      git clone --depth 1 --branch $OPENVR_TAG https://github.com/ValveSoftware/openvr.git && \
+      cd openvr && \
+      cmake . -G Ninja -DBUILD_SHARED=1 -DCMAKE_INSTALL_PREFIX=/usr/ && \
+      ninja -C . install
+
+# "Base" job for a Meson build
+.xrdesktop.base-job.build-meson:
+  stage: build_and_test
   script:
-    # Build gulkan
-    - mkdir deps
-    - cd deps
-    - git clone --depth 1 https://gitlab.freedesktop.org/xrdesktop/gulkan.git
-    - cd gulkan
-    - CC=clang meson build --prefix /usr
-    - ninja -C build install
-    - cd ..
-    # Build OpenXR loader
-    - git clone --depth 1 https://github.com/KhronosGroup/OpenXR-SDK-Source.git
-    - cd OpenXR-SDK-Source
-    - cmake . -G Ninja -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DDYNAMIC_LOADER=ON
-    - ninja -C . install
-    - cd ..
-    # OpenVR
-    - git clone --depth 1 https://github.com/ValveSoftware/openvr.git
-    - cd openvr
-    - cmake . -G Ninja -DBUILD_SHARED=1 -DCMAKE_INSTALL_PREFIX=/usr/
-    - ninja -C . install
-    - cd ..
-    # Build gxr
-    - cd ..
-    - CC=clang meson build --prefix /usr
+    - meson $MESON_ARGS --prefix /usr build
     - ninja -C build install
     - meson test -C build/ --no-suite gxr:xr
 
-build:arch:
-  image: archlinux/base:latest
-  before_script:
-    - pacman -Sy --noconfirm pkgconf meson git cmake clang # generic build deps
-    - pacman -Sy --noconfirm gdk-pixbuf2 vulkan-headers vulkan-icd-loader graphene cairo glslang  # gulkan deps
-    - pacman -Sy --noconfirm gtk3 # gxr deps
-  <<: *build_definition
+
+# variables shared by container_prep and build jobs
+.xrdesktop.variables.arch:rolling:
+  variables:
+    FDO_DISTRIBUTION_TAG: "2021-03-24.0"
+
+.xrdesktop.variables.ubuntu:focal:
+  variables:
+    FDO_DISTRIBUTION_VERSION: "20.04"
+    FDO_DISTRIBUTION_TAG: "2021-03-24.0"
+
+.xrdesktop.variables.ubuntu:groovy:
+  variables:
+    FDO_DISTRIBUTION_VERSION: "20.10"
+    FDO_DISTRIBUTION_TAG: "2021-03-24.0"
 
 
-build:ubuntu20.04:
-  image: ubuntu:20.04
-  before_script:
-    - DEBIAN_FRONTEND=noninteractive apt update
-    - DEBIAN_FRONTEND=noninteractive apt -y install meson clang pkg-config cmake git # generic build deps
-    - DEBIAN_FRONTEND=noninteractive apt -y install libglib2.0-dev libgdk-pixbuf2.0-dev libvulkan-dev libgraphene-1.0-dev libcairo2-dev glslang-tools # gulkan deps
-    - DEBIAN_FRONTEND=noninteractive apt -y install libgtk-3-dev libjson-glib-dev # gxr deps
-    - DEBIAN_FRONTEND=noninteractive apt -y install libxxf86vm-dev libgl1-mesa-dev libvulkan-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-glx0-dev libxcb-icccm4-dev libxcb-keysyms1-dev libxcb-randr0-dev libxrandr-dev libxxf86vm-dev mesa-common-dev # OpenXR loader deps
-  <<: *build_definition
+# === Archlinux ===
 
-build:ubuntu18.04:
-  image: ubuntu:18.04
-  before_script:
-    - DEBIAN_FRONTEND=noninteractive apt update
-    - DEBIAN_FRONTEND=noninteractive apt -y install software-properties-common
-    - DEBIAN_FRONTEND=noninteractive add-apt-repository -y ppa:graphics-drivers/ppa # for glslang-tools
-    - DEBIAN_FRONTEND=noninteractive apt -y full-upgrade
-    - DEBIAN_FRONTEND=noninteractive apt -y install clang ninja-build pkg-config cmake git # generic build deps
-    - DEBIAN_FRONTEND=noninteractive apt -y install libglib2.0-dev libgdk-pixbuf2.0-dev libvulkan-dev libgraphene-1.0-dev libcairo2-dev glslang-tools # gulkan deps
-    - DEBIAN_FRONTEND=noninteractive apt -y install libgtk-3-dev libjson-glib-dev # gxr deps
-    - DEBIAN_FRONTEND=noninteractive apt -y install python3-pip # to get recent meson on ubuntu 18.04
-    - DEBIAN_FRONTEND=noninteractive apt -y install libxxf86vm-dev libgl1-mesa-dev libvulkan-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-glx0-dev libxcb-icccm4-dev libxcb-keysyms1-dev libxcb-randr0-dev libxrandr-dev libxxf86vm-dev mesa-common-dev # OpenXR loader deps
-    - pip3 install meson
-  <<: *build_definition
+arch:container_prep:
+  extends:
+    - .xrdesktop.variables.arch:rolling
+    - .fdo.container-build@arch # from ci-templates
+    - .xrdesktop.base-job.build_deps
+  stage: container_prep
+  variables:
+    FDO_DISTRIBUTION_PACKAGES: "pkgconf meson gdk-pixbuf2 vulkan-headers vulkan-icd-loader graphene cairo glslang glfw-x11 glew shaderc json-glib gcc clang git cmake gtk3"
+
+arch:meson:gcc:
+  extends:
+    - .xrdesktop.variables.arch:rolling
+    - .fdo.distribution-image@arch # from ci-templates
+    - .xrdesktop.base-job.build-meson
+  variables:
+    MESON_ARGS: -Ddocs=disabled
+    CC: gcc
+    CXX: g++
+
+arch:meson:clang:
+  extends:
+    - .xrdesktop.variables.arch:rolling
+    - .fdo.distribution-image@arch # from ci-templates
+    - .xrdesktop.base-job.build-meson
+  variables:
+    MESON_ARGS: -Ddocs=disabled
+    CC: clang
+    CXX: clang++
+
+
+# === Ubuntu Focal ===
+
+ubuntu:focal:container_prep:
+  stage: container_prep
+  extends:
+    - .xrdesktop.variables.ubuntu:focal
+    - .fdo.container-build@ubuntu # from ci-templates
+    - .xrdesktop.base-job.build_deps
+  variables:
+    FDO_DISTRIBUTION_PACKAGES: "git gcc meson pkg-config libglib2.0-dev libgdk-pixbuf2.0-dev libvulkan-dev libgraphene-1.0-dev libcairo2-dev glslang-tools cmake libxxf86vm-dev libgl1-mesa-dev libvulkan-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-glx0-dev libxcb-icccm4-dev libxcb-keysyms1-dev libxcb-randr0-dev libxrandr-dev libxxf86vm-dev mesa-common-dev libgtk-3-dev libjson-glib-dev ca-certificates"
+
+ubuntu:focal:gcc:
+  extends:
+    - .xrdesktop.variables.ubuntu:focal
+    - .fdo.distribution-image@ubuntu # from ci-templates
+    - .xrdesktop.base-job.build-meson
+  variables:
+    MESON_ARGS: -Ddocs=disabled
+    CC: gcc
+    CXX: g++
+
+
+# === Ubuntu Groovy ===
+
+ubuntu:groovy:container_prep:
+  stage: container_prep
+  extends:
+    - .xrdesktop.variables.ubuntu:groovy
+    - .fdo.container-build@ubuntu # from ci-templates
+    - .xrdesktop.base-job.build_deps
+  variables:
+    FDO_DISTRIBUTION_PACKAGES: "git gcc meson pkg-config libglib2.0-dev libgdk-pixbuf2.0-dev libvulkan-dev libgraphene-1.0-dev libcairo2-dev glslang-tools cmake libxxf86vm-dev libgl1-mesa-dev libvulkan-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-glx0-dev libxcb-icccm4-dev libxcb-keysyms1-dev libxcb-randr0-dev libxrandr-dev libxxf86vm-dev mesa-common-dev libgtk-3-dev libjson-glib-dev ca-certificates"
+
+ubuntu:groovy:gcc:
+  extends:
+    - .xrdesktop.variables.ubuntu:groovy
+    - .fdo.distribution-image@ubuntu # from ci-templates
+    - .xrdesktop.base-job.build-meson
+  variables:
+    MESON_ARGS: -Ddocs=disabled
+    CC: gcc
+    CXX: g++
