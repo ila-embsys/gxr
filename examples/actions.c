@@ -39,7 +39,10 @@ _poll_events_cb (gpointer _self)
   Example *self = (Example*) _self;
 
   if (!gxr_action_sets_poll (self->action_sets, 2))
-    return FALSE;
+    {
+      g_print ("Failed to poll events\n");
+      return FALSE;
+    }
 
   return TRUE;
 }
@@ -112,7 +115,7 @@ main ()
   if (!gxr_context_load_action_manifest (
         self.context,
         "gxr",
-        "/res/bindings",
+        "/res/bindings/openxr",
         "actions.json"))
     {
       g_print ("Failed to load action bindings!\n");
