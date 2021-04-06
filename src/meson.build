@@ -170,7 +170,7 @@ if get_option('introspection')
     identifier_prefix: 'Gxr',
     symbol_prefix: 'gxr',
     export_packages: api_path,
-    includes: [ 'cairo-1.0', 'GdkPixbuf-2.0', 'Gdk-3.0'],
+    includes: [ 'cairo-1.0', 'GdkPixbuf-2.0', 'Gdk-3.0', 'Graphene-1.0', 'Gulkan-'+api_version],
     header: 'gxr/gxr.h',
     install: true,
   )

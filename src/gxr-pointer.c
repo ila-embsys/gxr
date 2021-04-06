@@ -54,6 +54,12 @@ gxr_pointer_reset_length (GxrPointer *self)
   gxr_pointer_set_length (self, data->default_length);
 }
 
+/**
+ * gxr_pointer_get_data:
+ * @self: a #GxrPointer
+ *
+ * Returns: (transfer none): a #GxrPointerData
+ */
 GxrPointerData*
 gxr_pointer_get_data (GxrPointer *self)
 {

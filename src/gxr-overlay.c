@@ -512,6 +512,12 @@ gxr_overlay_print_info (GxrOverlay *self)
   return klass->print_info (self);
 }
 
+/**
+ * gxr_overlay_get_context:
+ * @self: a #GxrOverlay
+ *
+ * Returns: (transfer none): a #GxrContext
+ */
 GxrContext *
 gxr_overlay_get_context (GxrOverlay *self)
 {

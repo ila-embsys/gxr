@@ -99,36 +99,72 @@ gxr_controller_finalize (GObject *gobject)
   G_OBJECT_CLASS (gxr_controller_parent_class)->finalize (gobject);
 }
 
+/**
+ * gxr_controller_get_pointer:
+ * @self: a #GxrController
+ *
+ * Returns: (transfer none): a #GxrPointer
+ */
 GxrPointer *
 gxr_controller_get_pointer (GxrController *self)
 {
   return self->pointer_ray;
 }
 
+/**
+ * gxr_controller_get_pointer_tip:
+ * @self: a #GxrController
+ *
+ * Returns: (transfer none): a #GxrPointerTip
+ */
 GxrPointerTip *
 gxr_controller_get_pointer_tip (GxrController *self)
 {
   return self->pointer_tip;
 }
 
+/**
+ * gxr_controller_set_pointer:
+ * @self: a #GxrController
+ * @pointer: (transfer full): a #GxrPointer
+ *
+ */
 void
 gxr_controller_set_pointer (GxrController *self, GxrPointer *pointer)
 {
   self->pointer_ray = pointer;
 }
 
+/**
+ * gxr_controller_set_pointer_tip:
+ * @self: a #GxrController
+ * @tip: (transfer full): a #GxrPointerTip
+ *
+ */
 void
 gxr_controller_set_pointer_tip (GxrController *self, GxrPointerTip *tip)
 {
   self->pointer_tip = tip;
 }
 
+/**
+ * gxr_controller_get_hover_state:
+ * @self: a #GxrController
+ *
+ * Returns: (transfer none): a #GxrHoverState
+ */
 GxrHoverState *
 gxr_controller_get_hover_state (GxrController *self)
 {
   return &self->hover_state;
 }
 
+/**
+ * gxr_controller_get_grab_state:
+ * @self: a #GxrController
+ *
+ * Returns: (transfer none): a #GxrGrabState
+ */
 GxrGrabState *
 gxr_controller_get_grab_state (GxrController *self)
 {

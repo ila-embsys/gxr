@@ -449,6 +449,12 @@ gxr_manifest_load_bindings (GxrManifest *self, const char *resource_path)
   return TRUE;
 }
 
+/**
+ * gxr_manifest_get_binding_filenames:
+ * @self: a #GxrManifest
+ *
+ * Returns: (transfer none) (element-type utf8): a list of file names
+ */
 GSList *
 gxr_manifest_get_binding_filenames (GxrManifest *self)
 {
@@ -461,6 +467,12 @@ gxr_manifest_new (void)
   return (GxrManifest *) g_object_new (GXR_TYPE_MANIFEST, 0);
 }
 
+/**
+ * gxr_manifest_get_binding_manifests:
+ * @self: a #GxrManifest
+ *
+ * Returns: (transfer none) (element-type GxrBindingManifest): a list of #GxrBindingManifest
+ */
 GSList *
 gxr_manifest_get_binding_manifests (GxrManifest *self)
 {

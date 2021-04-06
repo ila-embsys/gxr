@@ -230,6 +230,16 @@ GxrContext *gxr_context_new (GxrAppType type,
                                    app_name, app_version);
 }
 
+/**
+ * gxr_context_new_from_vulkan_extensions:
+ * @type: a #GxrAppType
+ * @instance_ext_list: (element-type utf8): a list of instance extensions
+ * @device_ext_list: (element-type utf8): a list of device extensions
+ * @app_name: the application name
+ * @app_version: the application version
+ *
+ * Returns: (transfer full): a new #GxrContext
+ */
 GxrContext *gxr_context_new_from_vulkan_extensions (GxrAppType type,
                                                     GSList *instance_ext_list,
                                                     GSList *device_ext_list,
@@ -241,6 +251,17 @@ GxrContext *gxr_context_new_from_vulkan_extensions (GxrAppType type,
                                app_name, app_version);
 }
 
+/**
+ * gxr_context_new_full:
+ * @type: a #GxrAppType
+ * @api: a #GxrApi
+ * @instance_ext_list: (element-type utf8): a list of instance extensions
+ * @device_ext_list: (element-type utf8): a list of device extensions
+ * @app_name: the application name
+ * @app_version: the application version
+ *
+ * Returns: (transfer full): a new #GxrContext
+ */
 GxrContext *gxr_context_new_full (GxrAppType type,
                                   GxrApi     api,
                                   GSList    *instance_ext_list,
@@ -328,6 +349,12 @@ gxr_context_get_api (GxrContext *self)
   return priv->api;
 }
 
+/**
+ * gxr_context_get_gulkan:
+ * @self: a #GxrContext
+ *
+ * Returns: (transfer none): a #GulkanClient
+ */
 GulkanClient*
 gxr_context_get_gulkan (GxrContext *self)
 {
@@ -351,6 +378,16 @@ gxr_context_get_head_pose (GxrContext *self, graphene_matrix_t *pose)
   return klass->get_head_pose (self, pose);
 }
 
+/**
+ * gxr_context_get_frustum_angles:
+ * @self: a #GxrContext
+ * @eye: a #GxrEye
+ * @left: (out): The angle from the center view axis to the left in deg.
+ * @right: (out): The angle from the center view axis to the right in deg.
+ * @top: (out): The angle from the center view axis to the top in deg.
+ * @bottom: (out): The angle from the center view axis to the bottom in deg.
+ *
+ */
 void
 gxr_context_get_frustum_angles (GxrContext *self, GxrEye eye,
                                 float *left, float *right,
@@ -543,12 +580,19 @@ gxr_context_end_frame (GxrContext *self)
   return res;
 }
 
+/**
+ * gxr_context_new_action_set_from_url:
+ * @self: a #GxrContext
+ * @url: an url
+ *
+ * Returns: (transfer full) (nullable): a #GxrActionSet
+ */
 GxrActionSet *
 gxr_context_new_action_set_from_url (GxrContext *self, gchar *url)
 {
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->new_action_set_from_url == NULL)
-    return FALSE;
+    return NULL;
   return klass->new_action_set_from_url (self, url);
 }
 
@@ -655,7 +699,7 @@ gxr_context_new_action_from_type_url (GxrContext   *self,
 {
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->new_action_from_type_url == NULL)
-    return FALSE;
+    return NULL;
   return klass->new_action_from_type_url (self, action_set, type, url);
 }
 
@@ -664,20 +708,32 @@ gxr_context_new_overlay (GxrContext *self, gchar* key)
 {
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->new_overlay == NULL)
-    return FALSE;
+    return NULL;
   return klass->new_overlay (self, key);
 }
 
+/**
+ * gxr_context_get_model_list:
+ * @self: a #GxrContext
+ *
+ * Returns: (transfer full) (element-type utf8): a list of models
+ */
 GSList *
 gxr_context_get_model_list (GxrContext *self)
 {
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->get_model_list == NULL)
-    return FALSE;
+    return NULL;
   return klass->get_model_list (self);
 }
 
-
+/**
+ * gxr_context_get_instance_extensions:
+ * @self: a #GxrContext
+ * @out_list: (out) (element-type utf8): a list of instance extensions
+ *
+ * Returns: %TRUE on success
+ */
 gboolean
 gxr_context_get_instance_extensions (GxrContext *self, GSList **out_list)
 {
@@ -687,6 +743,13 @@ gxr_context_get_instance_extensions (GxrContext *self, GSList **out_list)
   return klass->get_instance_extensions (self, out_list);
 }
 
+/**
+ * gxr_context_get_device_extensions:
+ * @self: a #GxrContext
+ * @out_list: (out) (element-type utf8): a list of device extensions
+ *
+ * Returns: %TRUE on success
+ */
 gboolean
 gxr_context_get_device_extensions (GxrContext   *self,
                                    GulkanClient *gc,
@@ -698,6 +761,12 @@ gxr_context_get_device_extensions (GxrContext   *self,
   return klass->get_device_extensions (self, gc, out_list);
 }
 
+/**
+ * gxr_context_get_device_manager:
+ * @self: a #GxrContext
+ *
+ * Returns: (transfer none): a #GxrDeviceManager
+ */
 GxrDeviceManager *
 gxr_context_get_device_manager (GxrContext *self)
 {
@@ -710,15 +779,21 @@ gxr_context_get_view_count (GxrContext *self)
 {
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->get_view_count == NULL)
-    return FALSE;
+    return 0;
   return klass->get_view_count (self);
 }
 
+/**
+ * gxr_context_get_acquired_framebuffer:
+ * @self: a #GxrContext
+ *
+ * Returns: (transfer none): a #GulkanFrameBuffer
+ */
 GulkanFrameBuffer *
 gxr_context_get_acquired_framebuffer (GxrContext *self, uint32_t view)
 {
   GxrContextClass *klass = GXR_CONTEXT_GET_CLASS (self);
   if (klass->get_acquired_framebuffer == NULL)
-    return FALSE;
+    return NULL;
   return klass->get_acquired_framebuffer (self, view);
 }

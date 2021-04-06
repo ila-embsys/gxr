@@ -131,6 +131,12 @@ gxr_action_get_action_type (GxrAction *self)
   return priv->type;
 }
 
+/**
+ * gxr_action_get_action_set:
+ * @self: a #GxrAction
+ *
+ * Returns: (transfer none): the #GxrActionSet
+ */
 GxrActionSet *
 gxr_action_get_action_set (GxrAction *self)
 {
@@ -138,6 +144,12 @@ gxr_action_get_action_set (GxrAction *self)
   return priv->action_set;
 }
 
+/**
+ * gxr_action_get_url:
+ * @self: a #GxrAction
+ *
+ * Returns: (transfer none): the url
+ */
 gchar*
 gxr_action_get_url (GxrAction *self)
 {
@@ -152,6 +164,12 @@ gxr_action_set_action_type (GxrAction *self, GxrActionType type)
   priv->type = type;
 }
 
+/**
+ * gxr_action_set_action_set:
+ * @self: a #GxrAction
+ * @action_set: (transfer full): a #GxrActionSet
+ *
+ */
 void
 gxr_action_set_action_set (GxrAction *self, GxrActionSet *action_set)
 {
@@ -159,6 +177,12 @@ gxr_action_set_action_set (GxrAction *self, GxrActionSet *action_set)
   priv->action_set = action_set;
 }
 
+/**
+ * gxr_action_set_url:
+ * @self: a #GxrAction
+ * @url: (transfer full): the url
+ *
+ */
 void
 gxr_action_set_url (GxrAction *self, gchar* url)
 {

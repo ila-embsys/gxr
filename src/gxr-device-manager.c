@@ -104,6 +104,12 @@ gxr_device_manager_emit_device_deactivate (GxrDeviceManager *self,
   g_signal_emit (self, dm_signals[DEVICE_DEACTIVATE_EVENT], 0, event);
 }
 
+/**
+ * gxr_device_manager_get_controllers:
+ * @self: a #GxrDeviceManager
+ *
+ * Returns: (transfer none) (element-type GxrDevice): a list of #GxrDevice
+ */
 GSList *
 gxr_device_manager_get_controllers (GxrDeviceManager *self)
 {
@@ -218,6 +224,13 @@ gxr_device_manager_update_poses (GxrDeviceManager *self, GxrPose *poses)
   g_mutex_unlock (&self->device_mutex);
 }
 
+/**
+ * gxr_device_manager_get:
+ * @self: a #GxrDeviceManager
+ * @device_id: the device id
+ *
+ * Returns: (transfer none) : a #GxrDevice
+ */
 GxrDevice *
 gxr_device_manager_get (GxrDeviceManager *self, guint64 device_id)
 {
@@ -230,6 +243,12 @@ gxr_device_manager_get (GxrDeviceManager *self, guint64 device_id)
   return d;
 }
 
+/**
+ * gxr_device_manager_get_devices:
+ * @self: a #GxrDeviceManager
+ *
+ * Returns: (transfer none) (element-type GxrDevice): a list of #GxrDevice
+ */
 GList *
 gxr_device_manager_get_devices (GxrDeviceManager *self)
 {

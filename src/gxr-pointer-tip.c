@@ -121,6 +121,12 @@ gxr_pointer_tip_set_and_submit_texture (GxrPointerTip *self,
   iface->set_and_submit_texture (self, texture);
 }
 
+/**
+ * gxr_pointer_tip_get_texture:
+ * @self: a #GxrPointerTip
+ *
+ * Returns: (transfer none): a #GulkanTexture
+ */
 GulkanTexture *
 gxr_pointer_tip_get_texture (GxrPointerTip *self)
 {
@@ -128,6 +134,12 @@ gxr_pointer_tip_get_texture (GxrPointerTip *self)
   return iface->get_texture (self);
 }
 
+/**
+ * gxr_pointer_tip_get_data:
+ * @self: a #GxrPointerTip
+ *
+ * Returns: (transfer none): a #GxrPointerTipData
+ */
 GxrPointerTipData*
 gxr_pointer_tip_get_data (GxrPointerTip *self)
 {
@@ -135,6 +147,12 @@ gxr_pointer_tip_get_data (GxrPointerTip *self)
   return iface->get_data (self);
 }
 
+/**
+ * gxr_pointer_tip_get_gulkan_client:
+ * @self: a #GxrPointerTip
+ *
+ * Returns: (transfer none): a #GulkanClient
+ */
 GulkanClient*
 gxr_pointer_tip_get_gulkan_client (GxrPointerTip *self)
 {
@@ -273,10 +291,17 @@ _render_cairo (int                 w,
   return pixbuf;
 }
 
-/** _render:
+/**
+ * gxr_pointer_tip_render:
+ * @self: a #GxrPointerTip
+ * @progress: the pulse progress
+ *
  * Renders the pointer tip with the desired colors.
  * If background scale is > 1, a transparent white background circle is rendered
- * behind the pointer tip. */
+ * behind the pointer tip.
+ *
+ * Returns: (transfer full) (nullable): a new #GdkPixbuf
+ */
 GdkPixbuf*
 gxr_pointer_tip_render (GxrPointerTip *self,
                         float          progress)

@@ -79,6 +79,17 @@ gxr_action_sets_poll (GxrActionSet **sets, uint32_t count)
   return TRUE;
 }
 
+/**
+ * gxr_action_set_connect_digital_from_float:
+ * @self: a #GxrActionSet
+ * @context: a #GxrContext
+ * @threshold: a threshold
+ * @haptic_url: the haptic url
+ * @callback: (scope async): a #GCallback
+ * @data: user data passed to the @callback
+ *
+ * Returns: (transfer full): a new #GxrAction
+ */
 GxrAction *
 gxr_action_set_connect_digital_from_float (GxrActionSet *self,
                                            GxrContext   *context,
@@ -124,6 +135,17 @@ gxr_action_set_connect_digital_from_float (GxrActionSet *self,
   return action;
 }
 
+/**
+ * gxr_action_set_connect:
+ * @self: a #GxrActionSet
+ * @context: a #GxrContext
+ * @type: a #GxrActionType
+ * @url: an url
+ * @callback: (scope async): a #GCallback
+ * @data: user data passed to the @callback
+ *
+ * Returns: %TRUE on success
+ */
 gboolean
 gxr_action_set_connect (GxrActionSet *self,
                         GxrContext   *context,
@@ -170,7 +192,12 @@ gxr_action_set_connect (GxrActionSet *self,
   return TRUE;
 }
 
-
+/**
+ * gxr_action_set_get_actions:
+ * @self: a #GxrActionSet
+ *
+ * Returns: (transfer none) (element-type GxrAction): a list of #GxrAction
+ */
 GSList *
 gxr_action_set_get_actions (GxrActionSet *self)
 {

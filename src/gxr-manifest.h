@@ -125,7 +125,7 @@ gxr_manifest_get_binding_filenames (GxrManifest *self);
 
 /* GxrBindingManifest */
 GSList *
-gxr_manifest_get_binding_manifests (GxrManifest *manifest);
+gxr_manifest_get_binding_manifests (GxrManifest *self);
 
 G_END_DECLS
 
