@@ -216,7 +216,7 @@ gxr_pointer_tip_init_settings (GxrPointerTip     *self,
   _update_texture (self);
 }
 
-/** draws a circle in the center of a cairo surface of dimensions WIDTHxHEIGHT.
+/* draws a circle in the center of a cairo surface of dimensions WIDTHxHEIGHT.
  * scale affects the radius of the circle and should be in [0,2].
  * a_in is the alpha value at the center, a_out at the outer border. */
 static void
@@ -379,9 +379,14 @@ _update_texture (GxrPointerTip *self)
   gxr_pointer_tip_submit_texture (self);
 }
 
-/** gxr_pointer_tip_set_active:
+/**
+ * gxr_pointer_tip_set_active:
+ * @self: a #GxrPointerTip
+ * @active: whether to use the active or inactive style
+ *
  * Changes whether the active or inactive style is rendered.
- * Also cancels animations. */
+ * Also cancels animations.
+ */
 void
 gxr_pointer_tip_set_active (GxrPointerTip *self,
                             gboolean       active)
@@ -405,7 +410,13 @@ gxr_pointer_tip_set_active (GxrPointerTip *self,
   _update_texture (self);
 }
 
-/* note: Move pointer tip to the desired location before calling. */
+/**
+ * gxr_pointer_tip_update_apparent_size:
+ * @self: a #GxrPointerTip
+ * @context: a #GxrContext
+ *
+ * Note: Move pointer tip to the desired location before calling.
+ */
 void
 gxr_pointer_tip_update_apparent_size (GxrPointerTip *self,
                                       GxrContext    *context)
