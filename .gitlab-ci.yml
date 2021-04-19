@@ -11,7 +11,7 @@ include:
 
 variables:
   FDO_UPSTREAM_REPO: xrdesktop/gxr
-  GULKAN_COMMIT: "d0a4e797c83cb66592845a5a22729474a7b4c403"
+  GULKAN_COMMIT: "95311383f405f6e926c08279c656db16a810e1d0"
   OPENXR_SDK_TAG: "release-1.0.14"
   OPENVR_TAG: "v1.14.15" # 1.16.8 is broken without patches
 
