@@ -540,7 +540,7 @@ _init_graphics_pipelines (SceneRenderer *self)
             VK_DYNAMIC_STATE_SCISSOR,
           }
         },
-        .subpass = VK_NULL_HANDLE
+        .subpass = 0
       };
 
       GulkanClient *gc = gxr_context_get_gulkan (self->context);
