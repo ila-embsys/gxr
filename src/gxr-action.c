@@ -285,7 +285,7 @@ _action_poll_digital (GxrAction *self)
 
       if (result != XR_SUCCESS)
         {
-          g_debug ("Failed to poll digital action\n");
+          g_debug ("Failed to poll digital action");
           continue;
         }
 
@@ -345,7 +345,7 @@ _action_poll_digital_from_float (GxrAction *self)
 
       if (result != XR_SUCCESS)
         {
-          g_debug ("Failed to poll float action\n");
+          g_debug ("Failed to poll float action");
           continue;
         }
 
@@ -354,7 +354,7 @@ _action_poll_digital_from_float (GxrAction *self)
                              self->last_float[controller_handle],
                              value.currentState))
         {
-          g_debug ("Threshold %f passed, triggering haptic\n", self->threshold);
+          g_debug ("Threshold %f passed, triggering haptic", self->threshold);
           gxr_action_trigger_haptic (GXR_ACTION (self->haptic_action),
                                      0.f, 0.03f, 50.f, 0.4f, controller_handle);
         }
@@ -407,7 +407,7 @@ _action_poll_analog (GxrAction *self)
 
       if (result != XR_SUCCESS)
       {
-        g_debug ("Failed to poll float action\n");
+        g_debug ("Failed to poll float action");
         continue;
       }
 
@@ -458,7 +458,7 @@ _action_poll_vec2f (GxrAction *self)
 
       if (result != XR_SUCCESS)
         {
-          g_debug ("Failed to poll vec2f action\n");
+          g_debug ("Failed to poll vec2f action");
           continue;
         }
 
@@ -535,7 +535,7 @@ _action_poll_pose_secs_from_now (GxrAction *self,
 
       if (result != XR_SUCCESS)
         {
-          g_debug ("Failed to poll analog action\n");
+          g_debug ("Failed to poll analog action");
           continue;
         }
 
@@ -555,7 +555,7 @@ _action_poll_pose_secs_from_now (GxrAction *self,
 
       if (result != XR_SUCCESS)
         {
-          g_debug ("Failed to poll hand space location\n");
+          g_debug ("Failed to poll hand space location");
           continue;
         }
 
@@ -619,7 +619,7 @@ gxr_action_trigger_haptic (GxrAction *self,
 
   XrTime duration = (XrTime) ((double)duration_seconds * 1000. * 1000. * 1000.);
 
-  // g_debug ("Haptic %f %f Hz, %lu ns\n", amplitude, frequency, duration);
+  // g_debug ("Haptic %f %f Hz, %lu ns", amplitude, frequency, duration);
 
   XrHapticVibration vibration =  {
     .type = XR_TYPE_HAPTIC_VIBRATION,
@@ -739,7 +739,7 @@ gxr_action_update_controllers (GxrAction *self)
         {
           gxr_device_manager_add (dm, context, controller_handle, TRUE);
 
-          g_debug ("Added controller %lu from action %s\n",
+          g_debug ("Added controller %lu from action %s",
                    controller_handle, self->url);
         }
     }
