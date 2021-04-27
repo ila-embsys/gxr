@@ -126,7 +126,7 @@ gxr_device_manager_add (GxrDeviceManager *self,
 
   if (g_hash_table_lookup (self->devices, &device_id) != NULL)
     {
-      g_debug ("Device %lu already added\n", device_id);
+      g_debug ("Device %lu already added", device_id);
       g_mutex_unlock (&self->device_mutex);
       return FALSE;
     }
@@ -145,7 +145,7 @@ gxr_device_manager_add (GxrDeviceManager *self,
       device = gxr_device_new (device_id, model_name);
     }
 
-  g_debug ("Created device for %lu, model %s, is controller: %d\n",
+  g_debug ("Created device for %lu, model %s, is controller: %d",
            device_id, model_name, is_controller);
 
   g_free (model_name);
@@ -181,7 +181,7 @@ gxr_device_manager_remove (GxrDeviceManager *self,
     self->controllers = g_slist_remove (self->controllers, device);
 
   g_hash_table_remove (self->devices, &device_id);
-  g_debug ("Destroyed device %lu\n", device_id);
+  g_debug ("Destroyed device %lu", device_id);
 
   g_mutex_unlock (&self->device_mutex);
 }
