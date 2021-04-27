@@ -272,7 +272,7 @@ _create_system (GxrContext* self)
   result = xrStringToPath (self->instance, viewport_config_name, &vrConfigName);
   _check_xr_result (result, "failed to get viewport configuration name");
 
-  g_debug ("Got vrconfig %lu\n", vrConfigName);
+  g_debug ("Got vrconfig %lu", vrConfigName);
 
   XrSystemGetInfo systemGetInfo = {
     .type = XR_TYPE_SYSTEM_GET_INFO,
@@ -610,7 +610,7 @@ _create_swapchains (GxrContext* self)
         .mipCount = 1,
       };
 
-      g_debug ("Swapchain %d dimensions: %dx%d\n", i,
+      g_debug ("Swapchain %d dimensions: %dx%d", i,
                self->configuration_views[i].recommendedImageRectWidth,
                self->configuration_views[i].recommendedImageRectHeight);
 
@@ -1012,15 +1012,15 @@ gxr_context_poll_event (GxrContext *self)
         } break;
         case XR_TYPE_EVENT_DATA_MAIN_SESSION_VISIBILITY_CHANGED_EXTX:
         {
-          g_debug ("Event: STUB: Session visibility changed\n");
+          g_debug ("Event: STUB: Session visibility changed");
         } break;
         case XR_TYPE_EVENT_DATA_PERF_SETTINGS_EXT:
         {
-          g_debug ("Event: STUB: perf settings\n");
+          g_debug ("Event: STUB: perf settings");
         } break;
         case XR_TYPE_EVENT_DATA_VISIBILITY_MASK_CHANGED_KHR:
         {
-          g_debug ("Event: STUB: visibility mask changed\n");
+          g_debug ("Event: STUB: visibility mask changed");
         } break;
         case XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED:
         {
@@ -1028,14 +1028,14 @@ gxr_context_poll_event (GxrContext *self)
             (XrEventDataSessionStateChanged*)&runtimeEvent;
 
           self->session_state = event->state;
-          g_debug ("EVENT: session state changed to %d\n", event->state);
+          g_debug ("EVENT: session state changed to %d", event->state);
           if (event->state >= XR_SESSION_STATE_STOPPING)
             {
               self->is_stopping = TRUE;
 
               GxrQuitEvent *quit_event = g_malloc (sizeof (GxrQuitEvent));
               quit_event->reason = GXR_QUIT_SHUTDOWN;
-              g_debug ("Event: sending VR_QUIT_SHUTDOWN signal\n");
+              g_debug ("Event: sending VR_QUIT_SHUTDOWN signal");
               gxr_context_emit_quit (self, quit_event);
 
               xrEndSession (self->session);
@@ -1049,7 +1049,7 @@ gxr_context_poll_event (GxrContext *self)
         {
           GxrQuitEvent *event = g_malloc (sizeof (GxrQuitEvent));
           event->reason = GXR_QUIT_SHUTDOWN;
-          g_debug ("Event: sending VR_QUIT_SHUTDOWN signal\n");
+          g_debug ("Event: sending VR_QUIT_SHUTDOWN signal");
           gxr_context_emit_quit (self, event);
           break;
         }
@@ -1123,7 +1123,7 @@ gxr_context_poll_event (GxrContext *self)
   if (pollResult == XR_EVENT_UNAVAILABLE)
     {
       // this is the usual case
-      // g_debug ("Poll events: No more events in queue\n");
+      // g_debug ("Poll events: No more events in queue");
     }
   else
     {
@@ -1201,7 +1201,7 @@ gxr_context_init_framebuffers (GxrContext           *self,
   self->framebuffer = g_malloc (sizeof (GulkanFrameBuffer*) * self->view_count);
   for (uint32_t view = 0; view < self->view_count; view++)
     {
-      g_debug ("Creating %d framebuffers for view %d\n",
+      g_debug ("Creating %d framebuffers for view %d",
                self->swapchain_length[view], view);
 
       self->framebuffer[view] =
