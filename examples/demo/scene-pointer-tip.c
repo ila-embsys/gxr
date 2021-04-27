@@ -350,7 +350,7 @@ _set_and_submit_texture (GxrPointerTip *tip, GulkanTexture *texture)
   ScenePointerTip *self = SCENE_POINTER_TIP (tip);
   if (texture == self->texture)
     {
-      g_debug ("Texture %p was already set on tip %p.\n",
+      g_debug ("Texture %p was already set on tip %p.",
                 (void*) texture, (void*) self);
       return;
     }
