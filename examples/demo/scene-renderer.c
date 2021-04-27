@@ -35,7 +35,7 @@ static void _init_renderdoc ()
       pRENDERDOC_GetAPI RENDERDOC_GetAPI = (pRENDERDOC_GetAPI)dlsym(mod, "RENDERDOC_GetAPI");
       int ret = RENDERDOC_GetAPI(eRENDERDOC_API_Version_1_1_2, (void **)&rdoc_api);
       if (ret != 1)
-        g_debug ("Failed to init renderdoc\n");
+        g_debug ("Failed to init renderdoc");
     }
 }
 #endif
