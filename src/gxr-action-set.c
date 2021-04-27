@@ -161,7 +161,7 @@ _update (GxrActionSet **sets, uint32_t count)
   if (result == XR_SESSION_NOT_FOCUSED)
     {
       /* xrSyncActions can be called before reading the session state change */
-      g_debug ("SyncActions while session not focused\n");
+      g_debug ("SyncActions while session not focused");
       return TRUE;
     }
 
@@ -481,10 +481,10 @@ gxr_action_sets_attach_bindings (GxrActionSet **sets,
       return FALSE;
     }
 
-  g_debug ("Attached %d action sets\n", count);
+  g_debug ("Attached %d action sets", count);
 
   _update_controllers (self);
-  g_debug ("Updating controllers based on actions\n");
+  g_debug ("Updating controllers based on actions");
 
   return TRUE;
 }
