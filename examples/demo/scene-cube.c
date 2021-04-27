@@ -493,7 +493,7 @@ scene_cube_render (SceneCube             *self,
   SceneObject *obj = SCENE_OBJECT (self);
   if (!scene_object_is_visible (obj))
     {
-      // g_debug ("Cube not visible\n");
+      // g_debug ("Cube not visible");
       return;
     }
 
