@@ -11,16 +11,18 @@
 #include "gxr-pointer-tip.h"
 #include "scene-object.h"
 
-typedef struct __attribute__((__packed__)) {
-  float mvp[16];
-  float mv[16];
-  float m[16];
-  bool receive_light;
+#include <stdalign.h>
+
+typedef struct {
+  alignas(16) float mvp[16];
+  alignas(16) float mv[16];
+  alignas(16) float m[16];
+  alignas(4) bool receive_light;
 } ScenePointerTipUniformBuffer;
 
-typedef struct __attribute__((__packed__)) {
-  float color[4];
-  bool flip_y;
+typedef struct {
+  alignas(16) float color[4];
+  alignas(4) bool flip_y;
 } WindowUniformBuffer;
 
 struct _ScenePointerTip
@@ -440,7 +442,7 @@ _update_ubo (ScenePointerTip   *self,
              GxrEye             eye,
              graphene_matrix_t *vp)
 {
-  ScenePointerTipUniformBuffer ub;
+  ScenePointerTipUniformBuffer ub  = {0};
 
   ub.receive_light = FALSE;
 

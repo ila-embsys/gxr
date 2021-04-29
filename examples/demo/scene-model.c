@@ -10,8 +10,10 @@
 
 #include <gxr.h>
 
+#include <stdalign.h>
+
 typedef struct {
-  float mvp[16];
+  alignas(16) float mvp[16];
 } SceneModelUniformBuffer;
 
 struct _SceneModel
@@ -141,7 +143,7 @@ _update_ubo (SceneModel        *self,
              graphene_matrix_t *transformation,
              graphene_matrix_t *vp)
 {
-  SceneModelUniformBuffer ub;
+  SceneModelUniformBuffer ub = {0};
 
   graphene_matrix_t mvp_matrix;
   graphene_matrix_multiply (transformation, vp, &mvp_matrix);

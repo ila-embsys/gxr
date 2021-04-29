@@ -9,8 +9,10 @@
 #include <gulkan.h>
 #include "graphene-ext.h"
 
-typedef struct __attribute__((__packed__)) {
-  float mvp[16];
+#include <stdalign.h>
+
+typedef struct {
+  alignas(16) float mvp[16];
 } SceneBackgroundUniformBuffer;
 
 struct _SceneBackground
@@ -169,7 +171,7 @@ _update_ubo (SceneBackground   *self,
              GxrEye             eye,
              graphene_matrix_t *vp)
 {
-  SceneBackgroundUniformBuffer ub;
+  SceneBackgroundUniformBuffer ub = {0};
 
   graphene_matrix_t m_matrix;
   scene_object_get_transformation (SCENE_OBJECT (self), &m_matrix);

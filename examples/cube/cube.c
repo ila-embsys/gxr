@@ -10,8 +10,10 @@
 
 #include <gxr.h>
 
+#include <stdalign.h>
+
 typedef struct {
-  float mvp[16];
+  alignas(16) float mvp[16];
 } UniformBuffer;
 
 static const float positions[] = {
@@ -499,7 +501,7 @@ _update_transformation (CubeExample *self,
   graphene_point3d_t pos = (graphene_point3d_t){ 0.0f, 0.0f, -6.0f };
   graphene_matrix_translate (&model, &pos);
 
-  UniformBuffer ub;
+  UniformBuffer ub = {0};
 
   graphene_matrix_t model_view;
   graphene_matrix_multiply (&model, &view, &model_view);
