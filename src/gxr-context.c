@@ -833,7 +833,7 @@ gxr_context_init (GxrContext *self)
 static void
 _cleanup (GxrContext *self)
 {
-  if (!self->swapchains)
+  if (self->swapchains)
     {
       for (uint32_t i = 0; i < self->view_count; i++) {
         xrDestroySwapchain (self->swapchains[i]);
