@@ -380,7 +380,10 @@ _set_up_views (GxrContext* self)
 
   self->views = g_malloc (sizeof(XrView) * self->view_count);
   for (uint32_t i = 0; i < self->view_count; i++)
-    self->views[i].type = XR_TYPE_VIEW;
+    {
+      self->views[i].type = XR_TYPE_VIEW;
+      self->views[i].next = NULL;
+    }
 
   if (!_check_xr_result (result,
       "Failed to get view configuration view count!"))
