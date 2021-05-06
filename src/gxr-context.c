@@ -1753,6 +1753,7 @@ _begin_frame (GxrContext* self)
     .type = XR_TYPE_VIEW_LOCATE_INFO,
     .displayTime = frame_state.predictedDisplayTime,
     .space = self->play_space,
+    .viewConfigurationType = self->view_config_type
   };
 
   XrViewState viewState = {
