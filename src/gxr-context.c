@@ -1985,9 +1985,50 @@ gxr_context_get_model_list (GxrContext *self)
 gboolean
 gxr_context_get_instance_extensions (GxrContext *self, GSList **out_list)
 {
-  (void) self;
-  (void) out_list;
-  g_print ("Stub: get instance extensions\n");
+  PFN_xrGetVulkanInstanceExtensionsKHR GetVulkanInstanceExtensionsKHR = NULL;
+  XrResult result =
+    xrGetInstanceProcAddr (self->instance,
+                          "xrGetVulkanInstanceExtensionsKHR",
+                          (PFN_xrVoidFunction*)
+                          (&GetVulkanInstanceExtensionsKHR));
+  if (!_check_xr_result (result,
+    "Failed to retrieve xrGetVulkanGraphicsRequirements2KHR pointer!"))
+    return FALSE;
+
+  uint32_t ext_str_len = 0;
+  result =
+    GetVulkanInstanceExtensionsKHR (self->instance,
+                                    self->system_id,
+                                    0,
+                                    &ext_str_len,
+                                    NULL);
+  if (!_check_xr_result (result,
+    "Failed to get Vulkan instance extension string size!"))
+    return FALSE;
+
+  gchar *ext_str = g_malloc (sizeof (gchar) * ext_str_len);
+
+  result =
+    GetVulkanInstanceExtensionsKHR (self->instance,
+                                    self->system_id,
+                                    ext_str_len,
+                                    &ext_str_len,
+                                    ext_str);
+  if (!_check_xr_result (result,
+    "Failed to get Vulkan instance extension string!"))
+    {
+      g_free (ext_str);
+      return FALSE;
+    }
+
+  g_debug ("runtime instance ext str: %s", ext_str);
+
+  gchar **ext_str_split =  g_strsplit (ext_str, " ", 0);
+  for (gchar **token = ext_str_split; *token; token++)
+    *out_list = g_slist_append (*out_list, g_strdup (*token));
+
+  g_strfreev (ext_str_split);
+  g_free (ext_str);
   return TRUE;
 }
 
@@ -1996,10 +2037,52 @@ gxr_context_get_device_extensions (GxrContext   *self,
                                    GulkanClient *gc,
                                    GSList      **out_list)
 {
-  (void) self;
   (void) gc;
-  (void) out_list;
-  g_print ("Stub: get device extensions\n");
+  PFN_xrGetVulkanDeviceExtensionsKHR GetVulkanDeviceExtensionsKHR = NULL;
+  XrResult result =
+    xrGetInstanceProcAddr (self->instance,
+                          "xrGetVulkanDeviceExtensionsKHR",
+                          (PFN_xrVoidFunction*)
+                          (&GetVulkanDeviceExtensionsKHR));
+  if (!_check_xr_result (result,
+    "Failed to retrieve xrGetVulkanGraphicsRequirements2KHR pointer!"))
+    return FALSE;
+
+  uint32_t ext_str_len = 0;
+  result =
+    GetVulkanDeviceExtensionsKHR (self->instance,
+                                  self->system_id,
+                                  0,
+                                 &ext_str_len,
+                                  NULL);
+  if (!_check_xr_result (result,
+    "Failed to get Vulkan device extension string size!"))
+    return FALSE;
+
+  gchar *ext_str = g_malloc (sizeof (gchar) * ext_str_len);
+
+  result =
+    GetVulkanDeviceExtensionsKHR (self->instance,
+                                    self->system_id,
+                                    ext_str_len,
+                                    &ext_str_len,
+                                    ext_str);
+  if (!_check_xr_result (result,
+    "Failed to get Vulkan device extension string!"))
+    {
+      g_free (ext_str);
+      return FALSE;
+    }
+
+  g_debug ("runtime device ext str: %s", ext_str);
+
+  gchar **ext_str_split =  g_strsplit (ext_str, " ", 0);
+  for (gchar **token = ext_str_split; *token; token++)
+    *out_list = g_slist_append (*out_list, g_strdup (*token));
+
+  g_strfreev (ext_str_split);
+  g_free (ext_str);
+  return TRUE;
   return TRUE;
 }
 
