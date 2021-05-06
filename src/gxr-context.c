@@ -22,6 +22,11 @@ struct _GxrContext
   GObject parent;
   GulkanClient *gc;
 
+  struct {
+    gboolean vulkan_enable;
+    gboolean vulkan_enable2;
+  } extensions;
+
   GxrDeviceManager *device_manager;
 
   XrInstance instance;
@@ -143,7 +148,7 @@ gxr_context_class_init (GxrContextClass *klass)
 static const char* viewport_config_name = "/viewport_configuration/vr";
 
 static const char*
-xr_result_to_string(XrResult result)
+_check_xr_result_to_string(XrResult result)
 {
   switch (result) {
 
@@ -162,7 +167,7 @@ _check_xr_result (XrResult result, const char* format, ...)
   if (XR_SUCCEEDED (result))
     return TRUE;
 
- const char *result_str = xr_result_to_string (result);
+ const char *result_str = _check_xr_result_to_string (result);
 
   char msg[BUF_LEN] = {0};
   g_snprintf(msg, BUF_LEN, "[%s] ", result_str);
@@ -193,7 +198,7 @@ _is_extension_supported (char                  *name,
 }
 
 static gboolean
-_check_vk_extension (void)
+_check_vk_extension (GxrContext *self)
 {
   XrResult result;
   uint32_t instanceExtensionCount = 0;
@@ -217,17 +222,31 @@ _check_vk_extension (void)
   if (!_check_xr_result (result, "Failed to enumerate extension properties"))
     return FALSE;
 
-  result =
-    _is_extension_supported (XR_KHR_VULKAN_ENABLE_EXTENSION_NAME,
-                             instanceExtensionProperties,
-                             instanceExtensionCount);
+
+  self->extensions.vulkan_enable2 =
+    _is_extension_supported (XR_KHR_VULKAN_ENABLE2_EXTENSION_NAME,
+                            instanceExtensionProperties,
+                            instanceExtensionCount);
+
+  // force use of vulkan_enable1
+  // self->extensions.vulkan_enable2 = false;
+
+  /* only enable vulkan_enable 1, if 2 is not supported */
+  if (!self->extensions.vulkan_enable2)
+    self->extensions.vulkan_enable =
+      _is_extension_supported (XR_KHR_VULKAN_ENABLE_EXTENSION_NAME,
+                              instanceExtensionProperties,
+                              instanceExtensionCount);
 
   g_free (instanceExtensionProperties);
 
-  if (!_check_xr_result (result,
-      "Runtime does not support required instance extension %s\n",
-       XR_KHR_VULKAN_ENABLE_EXTENSION_NAME))
-    return FALSE;
+  if (!self->extensions.vulkan_enable2 && !self->extensions.vulkan_enable)
+    {
+      g_printerr ("Runtime does not support instance extension %s or %s\n",
+                  XR_KHR_VULKAN_ENABLE_EXTENSION_NAME,
+                  XR_KHR_VULKAN_ENABLE2_EXTENSION_NAME);
+      return FALSE;
+    }
 
   return TRUE;
 }
@@ -236,7 +255,9 @@ static gboolean
 _create_instance (GxrContext* self, char *app_name, uint32_t app_version)
 {
   const char* const enabledExtensions[] = {
-    XR_KHR_VULKAN_ENABLE_EXTENSION_NAME
+    self->extensions.vulkan_enable2 ?
+      XR_KHR_VULKAN_ENABLE2_EXTENSION_NAME :
+      XR_KHR_VULKAN_ENABLE_EXTENSION_NAME
   };
 
   XrInstanceCreateInfo instanceCreateInfo = {
@@ -381,22 +402,52 @@ _set_up_views (GxrContext* self)
 static gboolean
 _check_graphics_api_support (GxrContext* self)
 {
+
+  // same aliased struct and type for vulkan_enable and vulkan_enable2
   XrGraphicsRequirementsVulkanKHR vk_reqs = {
     .type = XR_TYPE_GRAPHICS_REQUIREMENTS_VULKAN_KHR,
   };
-  PFN_xrGetVulkanGraphicsRequirementsKHR GetVulkanGraphicsRequirements = NULL;
-  XrResult result =
-    xrGetInstanceProcAddr(self->instance, "xrGetVulkanGraphicsRequirementsKHR",
-      (PFN_xrVoidFunction*)(&GetVulkanGraphicsRequirements));
-  if (!_check_xr_result (result,
-      "Failed to retrieve OpenXR Vulkan function pointer!"))
-    return FALSE;
 
-  result =
-    GetVulkanGraphicsRequirements (self->instance, self->system_id, &vk_reqs);
-  if (!_check_xr_result (result,
-      "Failed to get Vulkan graphics requirements!"))
-    return FALSE;
+  if (self->extensions.vulkan_enable2)
+    {
+      PFN_xrGetVulkanGraphicsRequirementsKHR GetVulkanGraphicsRequirements2 = NULL;
+      XrResult result =
+        xrGetInstanceProcAddr (self->instance,
+                               "xrGetVulkanGraphicsRequirements2KHR",
+                               (PFN_xrVoidFunction*)
+                               (&GetVulkanGraphicsRequirements2));
+      if (!_check_xr_result (result,
+          "Failed to retrieve xrGetVulkanGraphicsRequirements2KHR pointer!"))
+        return FALSE;
+
+      result =
+        GetVulkanGraphicsRequirements2 (self->instance,
+                                        self->system_id,
+                                       &vk_reqs);
+      if (!_check_xr_result (result,
+        "Failed to get Vulkan graphics requirements!"))
+        return FALSE;
+    }
+  else if (self->extensions.vulkan_enable)
+    {
+      PFN_xrGetVulkanGraphicsRequirementsKHR GetVulkanGraphicsRequirements = NULL;
+      XrResult result =
+        xrGetInstanceProcAddr (self->instance,
+                               "xrGetVulkanGraphicsRequirementsKHR",
+                               (PFN_xrVoidFunction*)
+                               (&GetVulkanGraphicsRequirements));
+      if (!_check_xr_result (result,
+          "Failed to retrieve xrGetVulkanGraphicsRequirementsKHR pointer!"))
+        return FALSE;
+
+      result =
+        GetVulkanGraphicsRequirements (self->instance,
+                                       self->system_id,
+                                      &vk_reqs);
+      if (!_check_xr_result (result,
+        "Failed to get Vulkan graphics requirements!"))
+        return FALSE;
+    }
 
   XrVersion desired_version = XR_MAKE_VERSION (1, 0, 0);
   if (desired_version > vk_reqs.maxApiVersionSupported ||
@@ -416,7 +467,7 @@ _init_runtime (GxrContext *self,
                char       *app_name,
                uint32_t    app_version)
 {
-  if (!_check_vk_extension())
+  if (!_check_vk_extension (self))
     return FALSE;
 
   if (!_create_instance(self, app_name, app_version))
@@ -724,7 +775,7 @@ _init_session (GxrContext *self)
 }
 
 static void
-_add_missing (GSList **target, GSList *source)
+_add_missing_strings (GSList **target, GSList *source)
 {
   for (GSList *l = source; l; l = l->next)
     {
@@ -732,6 +783,341 @@ _add_missing (GSList **target, GSList *source)
       if (!g_slist_find_custom (*target, source_ext, (GCompareFunc) g_strcmp0))
         *target = g_slist_append (*target, g_strdup (source_ext));
     }
+}
+
+static gboolean
+init_vulkan_enable1 (GxrContext *self,
+                     GSList     *instance_ext_list,
+                     GSList     *device_ext_list)
+{
+  // we own the list and its data elements
+  GSList *instance_ext_list_combined = NULL;
+  gxr_context_get_instance_extensions (self, &instance_ext_list_combined);
+  _add_missing_strings (&instance_ext_list_combined, instance_ext_list);
+
+  /* vk instance required for checking required device exts */
+  GulkanClient *gc_tmp =
+    gulkan_client_new_from_extensions (instance_ext_list_combined, NULL);
+
+  if (!gc_tmp)
+    {
+      g_object_unref (self);
+      g_slist_free_full (instance_ext_list_combined, g_free);
+      g_printerr ("Could not init gulkan client from instance exts.\n");
+      return FALSE;
+    }
+
+  GSList *device_ext_list_combined = NULL;
+  gxr_context_get_device_extensions (self, gc_tmp, &device_ext_list_combined);
+  _add_missing_strings (&device_ext_list_combined, device_ext_list);
+
+  g_object_unref (gc_tmp);
+
+  self->gc =
+    gulkan_client_new_from_extensions (instance_ext_list_combined,
+                                       device_ext_list_combined);
+
+  g_slist_free_full (instance_ext_list_combined, g_free);
+  g_slist_free_full (device_ext_list_combined, g_free);
+
+  if (!self->gc)
+    {
+      g_object_unref (self);
+      g_printerr ("Could not init gulkan client.\n");
+      return FALSE;
+    }
+  return TRUE;
+}
+
+static gboolean
+_create_vk_instance2 (GxrContext *self, GSList *instance_ext_list, VkInstance *instance)
+{
+  VkApplicationInfo app_info = {
+    .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+    .pApplicationName = "xrgears",
+    .pEngineName = "xrgears",
+    .apiVersion = VK_MAKE_VERSION(1, 0, 2),
+  };
+
+  uint32_t num_extensions = g_slist_length (instance_ext_list);
+  const char **extension_names = g_malloc (sizeof (char*) * num_extensions);
+
+  uint32_t i = 0;
+  for (GSList *l = instance_ext_list; l; l = l->next)
+    extension_names[i++] = l->data;
+
+  // runtime will add extensions it requires
+  VkInstanceCreateInfo instance_info = {
+    .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+    .pApplicationInfo = &app_info,
+    .enabledExtensionCount = num_extensions,
+    .ppEnabledExtensionNames = extension_names,
+  };
+
+  XrVulkanInstanceCreateInfoKHR xr_vk_instance_info = {
+    .type = XR_TYPE_VULKAN_INSTANCE_CREATE_INFO_KHR,
+    .next = NULL,
+    .createFlags = 0,
+    .pfnGetInstanceProcAddr = vkGetInstanceProcAddr,
+    .systemId = self->system_id,
+    .vulkanCreateInfo = &instance_info,
+    .vulkanAllocator = NULL
+  };
+
+  PFN_xrCreateVulkanInstanceKHR CreateVulkanInstanceKHR = NULL;
+  XrResult result =
+    xrGetInstanceProcAddr(self->instance, "xrCreateVulkanInstanceKHR",
+                          (PFN_xrVoidFunction*)&CreateVulkanInstanceKHR);
+  if (!_check_xr_result(result, "Failed to load xrCreateVulkanInstanceKHR."))
+    return FALSE;
+
+  VkResult vk_result;
+  result = CreateVulkanInstanceKHR(self->instance, &xr_vk_instance_info,
+                                   instance, &vk_result);
+
+  if (!_check_xr_result(result, "Failed to create Vulkan instance!"))
+    return FALSE;
+
+  if (vk_result != VK_SUCCESS) {
+    g_printerr ("Runtime failed to create Vulkan instance: %d\n", vk_result);
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+static gboolean
+_get_vk_physical_device2 (GxrContext *self,
+                          VkInstance vk_instance,
+                          VkPhysicalDevice* physical_device)
+{
+  PFN_xrGetVulkanGraphicsDevice2KHR fun = NULL;
+  XrResult res = xrGetInstanceProcAddr(
+    self->instance, "xrGetVulkanGraphicsDevice2KHR", (PFN_xrVoidFunction*)&fun);
+
+  if (!_check_xr_result(res, "Failed to load xrGetVulkanGraphicsDevice2KHR."))
+    return false;
+
+  XrVulkanGraphicsDeviceGetInfoKHR info = {
+    .type = XR_TYPE_VULKAN_GRAPHICS_DEVICE_GET_INFO_KHR,
+    .next = NULL,
+    .systemId = self->system_id,
+    .vulkanInstance = vk_instance
+  };
+
+  res = fun(self->instance, &info, physical_device);
+
+  if (!_check_xr_result(res, "Failed to get Vulkan graphics device."))
+    return false;
+
+  return true;
+}
+
+static gboolean
+find_queue_index_for_flags (VkQueueFlagBits          flags,
+                            VkQueueFlagBits          exclude_flags,
+                            uint32_t                 num_queues,
+                            VkQueueFamilyProperties *queue_family_props,
+                            uint32_t                *out_index)
+{
+  uint32_t i = 0;
+  for (i = 0; i < num_queues; i++)
+    if (queue_family_props[i].queueFlags & flags &&
+        !(queue_family_props[i].queueFlags & exclude_flags))
+      break;
+
+  if (i >= num_queues)
+    return FALSE;
+
+  *out_index = i;
+  return TRUE;
+}
+
+static gboolean
+_find_queue_families (VkPhysicalDevice vk_physical_device,
+                      uint32_t *graphics_queue_index,
+                      uint32_t *transfer_queue_index)
+{
+  /* Find the first graphics queue */
+  uint32_t num_queues = 0;
+  vkGetPhysicalDeviceQueueFamilyProperties (
+    vk_physical_device, &num_queues, 0);
+
+  VkQueueFamilyProperties *queue_family_props =
+    g_malloc (sizeof(VkQueueFamilyProperties) * num_queues);
+
+  vkGetPhysicalDeviceQueueFamilyProperties (
+    vk_physical_device, &num_queues, queue_family_props);
+
+  if (num_queues == 0)
+    {
+      g_printerr ("Failed to get queue properties.\n");
+      return FALSE;
+    }
+
+  *graphics_queue_index = UINT32_MAX;
+  if (!find_queue_index_for_flags (VK_QUEUE_GRAPHICS_BIT,
+                                   (VkQueueFlagBits)0,
+                                   num_queues,
+                                   queue_family_props,
+                                   graphics_queue_index))
+    {
+      g_printerr ("No graphics queue found\n");
+      return FALSE;
+    }
+
+
+  *transfer_queue_index = UINT32_MAX;
+  if (find_queue_index_for_flags (VK_QUEUE_TRANSFER_BIT,
+                                  VK_QUEUE_GRAPHICS_BIT,
+                                  num_queues,
+                                  queue_family_props,
+                                  transfer_queue_index))
+    {
+      g_debug ("Got pure transfer queue");
+    }
+  else
+    {
+      g_debug ("No pure transfer queue found, trying all queues");
+      if (find_queue_index_for_flags (VK_QUEUE_TRANSFER_BIT,
+                                      (VkQueueFlagBits)0,
+                                      num_queues,
+                                      queue_family_props,
+                                      transfer_queue_index))
+        {
+          g_debug ("Got a transfer queue");
+        }
+      else
+        {
+          g_printerr ("No transfer queue found\n");
+          return FALSE;
+        }
+    }
+
+  g_free (queue_family_props);
+  return TRUE;
+}
+
+static gboolean
+_create_vk_device2 (GxrContext      *self,
+                    VkPhysicalDevice physical_device,
+                    GSList          *device_ext_list,
+                    VkDevice        *vk_device,
+                    uint32_t        *graphics_queue_index,
+                    uint32_t        *transfer_queue_index)
+{
+
+  PFN_xrCreateVulkanDeviceKHR CreateVulkanDeviceKHR = NULL;
+  XrResult res =
+    xrGetInstanceProcAddr(self->instance, "xrCreateVulkanDeviceKHR",
+                          (PFN_xrVoidFunction*)&CreateVulkanDeviceKHR);
+
+  if (!_check_xr_result(res, "Failed to load xrCreateVulkanDeviceKHR."))
+    return FALSE;
+
+
+  if (!_find_queue_families (physical_device,
+                             graphics_queue_index,
+                             transfer_queue_index))
+    return FALSE;
+
+  VkPhysicalDeviceFeatures enabled_features = {
+    .samplerAnisotropy = VK_TRUE,
+  };
+
+  uint32_t num_extensions = g_slist_length (device_ext_list);
+  const char **extension_names = g_malloc (sizeof (char*) * num_extensions);
+
+  uint32_t i = 0;
+  for (GSList *l = device_ext_list; l; l = l->next)
+    extension_names[i++] = l->data;
+
+  // runtime will add extensions it requires
+  VkDeviceCreateInfo device_info = {
+    .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+    .queueCreateInfoCount = 2,
+    .pQueueCreateInfos =
+        (VkDeviceQueueCreateInfo[]) {
+          {
+            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+            .queueFamilyIndex = *graphics_queue_index,
+            .queueCount = 1,
+            .pQueuePriorities = (const float[]) { 1.0f }
+          },
+          {
+            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+            .queueFamilyIndex = *transfer_queue_index,
+            .queueCount = 1,
+            .pQueuePriorities = (const float[]) { 0.8f }
+          },
+        },
+    .pEnabledFeatures = &enabled_features,
+    .enabledExtensionCount = num_extensions,
+    .ppEnabledExtensionNames = extension_names,
+  };
+
+  XrVulkanDeviceCreateInfoKHR info = {
+    .type = XR_TYPE_VULKAN_DEVICE_CREATE_INFO_KHR,
+    .next = NULL,
+    .systemId = self->system_id,
+    .createFlags = 0,
+    .pfnGetInstanceProcAddr = vkGetInstanceProcAddr,
+    .vulkanPhysicalDevice = physical_device,
+    .vulkanCreateInfo = &device_info,
+    .vulkanAllocator = NULL,
+  };
+
+  VkResult vk_result;
+  res = CreateVulkanDeviceKHR (self->instance, &info, vk_device, &vk_result);
+
+  if (!_check_xr_result(res, "Failed to create Vulkan graphics device."))
+    return false;
+
+  if (vk_result != VK_SUCCESS) {
+    g_printerr ("Runtime failed to create Vulkan device: %d\n", vk_result);
+    return false;
+  }
+
+  return true;
+}
+
+static gboolean
+init_vulkan_enable2 (GxrContext *self,
+                     GSList     *instance_ext_list,
+                     GSList     *device_ext_list)
+{
+  if (!_check_graphics_api_support (self))
+    return FALSE;
+
+  VkInstance vk_instance;
+  if (!_create_vk_instance2 (self, instance_ext_list, &vk_instance))
+    return FALSE;
+
+  VkPhysicalDevice physical_device;
+  if (!_get_vk_physical_device2 (self, vk_instance, &physical_device))
+    return TRUE;
+
+  VkDevice vk_device;
+  uint32_t graphics_queue_index;
+  uint32_t transfer_queue_index;
+  if (!_create_vk_device2 (self,
+                           physical_device,
+                           device_ext_list,
+                          &vk_device,
+                          &graphics_queue_index,
+                          &transfer_queue_index))
+    return TRUE;
+
+  self->gc = gulkan_client_new_from_vk (vk_instance,
+                                        physical_device,
+                                        vk_device,
+                                        graphics_queue_index,
+                                        transfer_queue_index);
+
+  if (!self->gc)
+    return FALSE;
+
+  return TRUE;
 }
 
 static GxrContext *
@@ -754,41 +1140,23 @@ _new (GSList     *instance_ext_list,
       return NULL;
     }
 
-  GSList *runtime_instance_ext_list = NULL;
-  gxr_context_get_instance_extensions (self, &runtime_instance_ext_list);
-
-  /* vk instance required for checking required device exts */
-  GulkanClient *gc_tmp =
-    gulkan_client_new_from_extensions (runtime_instance_ext_list, NULL);
-
-  if (!gc_tmp)
+  if (self->extensions.vulkan_enable2)
     {
-      g_object_unref (self);
-      g_slist_free_full (runtime_instance_ext_list, g_free);
-      g_printerr ("Could not init gulkan client from instance exts.\n");
-      return NULL;
+      g_debug ("Initializing with vulkan_enable2");
+      if (!init_vulkan_enable2 (self, instance_ext_list, device_ext_list))
+        {
+          g_free (self);
+          return NULL;
+        }
     }
-
-  GSList *runtime_device_ext_list = NULL;
-
-  gxr_context_get_device_extensions (self, gc_tmp, &runtime_device_ext_list);
-
-  g_object_unref (gc_tmp);
-
-  _add_missing (&runtime_instance_ext_list, instance_ext_list);
-  _add_missing (&runtime_device_ext_list, device_ext_list);
-
-  self->gc =
-    gulkan_client_new_from_extensions (runtime_instance_ext_list, runtime_device_ext_list);
-
-  g_slist_free_full (runtime_instance_ext_list, g_free);
-  g_slist_free_full (runtime_device_ext_list, g_free);
-
-  if (!self->gc)
+  else if (self->extensions.vulkan_enable)
     {
-      g_object_unref (self);
-      g_printerr ("Could not init gulkan client.\n");
-      return NULL;
+      g_debug ("Initializing with vulkan_enable1");
+      if (!init_vulkan_enable1 (self, instance_ext_list, device_ext_list))
+        {
+          g_free (self);
+          return NULL;
+        }
     }
 
   if (!_init_session (self))
