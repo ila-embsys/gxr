@@ -812,21 +812,19 @@ init_vulkan_enable1 (GxrContext *self,
   _add_missing_strings (&instance_ext_list_combined, instance_ext_list);
 
   /* vk instance required for checking required device exts */
-  GulkanClient *gc_tmp =
-    gulkan_client_new_from_extensions (instance_ext_list_combined,
-                                       NULL,
-                                       VK_NULL_HANDLE);
+  GulkanInstance *gki = gulkan_instance_new ();
+  gulkan_instance_create (gki, instance_ext_list);
 
-  if (!gc_tmp)
+  if (!gki)
     {
       g_object_unref (self);
       g_slist_free_full (instance_ext_list_combined, g_free);
-      g_printerr ("Could not init gulkan client from instance exts.\n");
+      g_printerr ("Could not init gulkan instance from instance exts.\n");
       return FALSE;
     }
 
   GSList *device_ext_list_combined = NULL;
-  gxr_context_get_device_extensions (self, gc_tmp, &device_ext_list_combined);
+  gxr_context_get_device_extensions (self, &device_ext_list_combined);
   _add_missing_strings (&device_ext_list_combined, device_ext_list);
 
   PFN_xrGetVulkanGraphicsDeviceKHR GetVulkanGraphicsDeviceKHR;
@@ -841,17 +839,15 @@ init_vulkan_enable1 (GxrContext *self,
   VkPhysicalDevice physical_device;
   result = GetVulkanGraphicsDeviceKHR (self->instance,
                                        self->system_id,
-                                       gulkan_client_get_instance_handle (gc_tmp),
+                                       gulkan_instance_get_handle (gki),
                                       &physical_device);
   if (!_check_xr_result (result, "Failed to get get vulkan graphics device!"))
     return FALSE;
 
-  g_object_unref (gc_tmp);
-
   self->gc =
-    gulkan_client_new_from_extensions (instance_ext_list_combined,
-                                       device_ext_list_combined,
-                                       physical_device);
+    gulkan_client_new_from_instance (gki,
+                                     device_ext_list_combined,
+                                     physical_device);
 
   g_slist_free_full (instance_ext_list_combined, g_free);
   g_slist_free_full (device_ext_list_combined, g_free);
@@ -2071,10 +2067,8 @@ gxr_context_get_instance_extensions (GxrContext *self, GSList **out_list)
 
 gboolean
 gxr_context_get_device_extensions (GxrContext   *self,
-                                   GulkanClient *gc,
                                    GSList      **out_list)
 {
-  (void) gc;
   PFN_xrGetVulkanDeviceExtensionsKHR GetVulkanDeviceExtensionsKHR = NULL;
   XrResult result =
     xrGetInstanceProcAddr (self->instance,

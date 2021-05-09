@@ -138,7 +138,6 @@ gxr_context_get_instance_extensions (GxrContext *self, GSList **out_list);
 
 gboolean
 gxr_context_get_device_extensions (GxrContext   *self,
-                                   GulkanClient *gc,
                                    GSList      **out_list);
 
 struct _GxrDeviceManager;
