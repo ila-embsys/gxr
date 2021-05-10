@@ -801,6 +801,70 @@ _add_missing_strings (GSList **target, GSList *source)
     }
 }
 
+static void
+_remove_unsupported_exts (GSList               **target,
+                          uint32_t               supported_count,
+                          VkExtensionProperties *supported_props)
+{
+  for (GSList *l = *target; l; l = l->next)
+    {
+      gboolean is_supported = false;
+      for (uint32_t i = 0; i < supported_count; i++)
+        {
+          gchar *ext = l->data;
+          if (strcmp (supported_props[i].extensionName, ext) == 0)
+            {
+              is_supported = TRUE;
+              break;
+            }
+        }
+      if (!is_supported)
+        {
+          g_print ("Disabling unsupported ext %s\n", (gchar*) l->data);
+          *target = g_slist_delete_link (*target, l);
+        }
+    }
+}
+
+static void
+_remove_unsupported_instance_exts (GSList **target)
+{
+  uint32_t supported_count;
+  vkEnumerateInstanceExtensionProperties (NULL,
+                                         &supported_count,
+                                          NULL);
+
+  VkExtensionProperties *supported_props =
+    malloc (sizeof(VkExtensionProperties) * supported_count);
+  vkEnumerateInstanceExtensionProperties (NULL,
+                                         &supported_count,
+                                          supported_props);
+
+  _remove_unsupported_exts (target, supported_count, supported_props);
+  free (supported_props);
+}
+
+static void
+_remove_unsupported_device_exts (VkPhysicalDevice vk_physical_device,
+                                 GSList         **target)
+{
+  uint32_t supported_count;
+  vkEnumerateDeviceExtensionProperties (vk_physical_device,
+                                        NULL,
+                                        &supported_count,
+                                        NULL);
+
+  VkExtensionProperties *supported_props =
+    malloc (sizeof(VkExtensionProperties) * supported_count);
+  vkEnumerateDeviceExtensionProperties (vk_physical_device,
+                                        NULL,
+                                        &supported_count,
+                                        supported_props);
+
+  _remove_unsupported_exts (target, supported_count, supported_props);
+  free (supported_props);
+}
+
 static gboolean
 init_vulkan_enable1 (GxrContext *self,
                      GSList     *instance_ext_list,
@@ -808,8 +872,10 @@ init_vulkan_enable1 (GxrContext *self,
 {
   // we own the list and its data elements
   GSList *instance_ext_list_combined = NULL;
-  gxr_context_get_instance_extensions (self, &instance_ext_list_combined);
+  gxr_context_get_runtime_instance_extensions (self,
+                                              &instance_ext_list_combined);
   _add_missing_strings (&instance_ext_list_combined, instance_ext_list);
+  _remove_unsupported_instance_exts (&instance_ext_list_combined);
 
   /* vk instance required for checking required device exts */
   GulkanInstance *gki = gulkan_instance_new ();
@@ -823,9 +889,6 @@ init_vulkan_enable1 (GxrContext *self,
       return FALSE;
     }
 
-  GSList *device_ext_list_combined = NULL;
-  gxr_context_get_device_extensions (self, &device_ext_list_combined);
-  _add_missing_strings (&device_ext_list_combined, device_ext_list);
 
   PFN_xrGetVulkanGraphicsDeviceKHR GetVulkanGraphicsDeviceKHR;
   XrResult result =
@@ -843,6 +906,11 @@ init_vulkan_enable1 (GxrContext *self,
                                       &physical_device);
   if (!_check_xr_result (result, "Failed to get get vulkan graphics device!"))
     return FALSE;
+
+  GSList *device_ext_list_combined = NULL;
+  gxr_context_get_runtime_device_extensions (self, &device_ext_list_combined);
+  _add_missing_strings (&device_ext_list_combined, device_ext_list);
+  _remove_unsupported_device_exts (physical_device, &device_ext_list_combined);
 
   self->gc =
     gulkan_client_new_from_instance (gki,
@@ -871,11 +939,16 @@ _create_vk_instance2 (GxrContext *self, GSList *instance_ext_list, VkInstance *i
     .apiVersion = VK_MAKE_VERSION(1, 0, 2),
   };
 
-  uint32_t num_extensions = g_slist_length (instance_ext_list);
+  GSList *instance_ext_list_reduced = g_slist_copy_deep (instance_ext_list,
+                                                         (GCopyFunc) g_strdup,
+                                                         NULL);
+  _remove_unsupported_instance_exts (&instance_ext_list_reduced);
+
+  uint32_t num_extensions = g_slist_length (instance_ext_list_reduced);
   const char **extension_names = g_malloc (sizeof (char*) * num_extensions);
 
   uint32_t i = 0;
-  for (GSList *l = instance_ext_list; l; l = l->next)
+  for (GSList *l = instance_ext_list_reduced; l; l = l->next)
     extension_names[i++] = l->data;
 
   // runtime will add extensions it requires
@@ -906,6 +979,8 @@ _create_vk_instance2 (GxrContext *self, GSList *instance_ext_list, VkInstance *i
   VkResult vk_result;
   result = CreateVulkanInstanceKHR(self->instance, &xr_vk_instance_info,
                                    instance, &vk_result);
+
+  g_slist_free_full (instance_ext_list_reduced, g_free);
 
   if (!_check_xr_result(result, "Failed to create Vulkan instance!"))
     return FALSE;
@@ -1057,11 +1132,17 @@ _create_vk_device2 (GxrContext      *self,
     .samplerAnisotropy = VK_TRUE,
   };
 
-  uint32_t num_extensions = g_slist_length (device_ext_list);
+  GSList *device_ext_list_reduced = g_slist_copy_deep (device_ext_list,
+                                                       (GCopyFunc) g_strdup,
+                                                       NULL);
+  _remove_unsupported_device_exts (physical_device,
+                                   &device_ext_list_reduced);
+
+  uint32_t num_extensions = g_slist_length (device_ext_list_reduced);
   const char **extension_names = g_malloc (sizeof (char*) * num_extensions);
 
   uint32_t i = 0;
-  for (GSList *l = device_ext_list; l; l = l->next)
+  for (GSList *l = device_ext_list_reduced; l; l = l->next)
     extension_names[i++] = l->data;
 
   // runtime will add extensions it requires
@@ -1101,6 +1182,8 @@ _create_vk_device2 (GxrContext      *self,
 
   VkResult vk_result;
   res = CreateVulkanDeviceKHR (self->instance, &info, vk_device, &vk_result);
+
+  g_slist_free_full (device_ext_list_reduced, g_free);
 
   if (!_check_xr_result(res, "Failed to create Vulkan graphics device."))
     return false;
@@ -2016,7 +2099,7 @@ gxr_context_get_model_list (GxrContext *self)
 
 
 gboolean
-gxr_context_get_instance_extensions (GxrContext *self, GSList **out_list)
+gxr_context_get_runtime_instance_extensions (GxrContext *self, GSList **out_list)
 {
   PFN_xrGetVulkanInstanceExtensionsKHR GetVulkanInstanceExtensionsKHR = NULL;
   XrResult result =
@@ -2066,8 +2149,8 @@ gxr_context_get_instance_extensions (GxrContext *self, GSList **out_list)
 }
 
 gboolean
-gxr_context_get_device_extensions (GxrContext   *self,
-                                   GSList      **out_list)
+gxr_context_get_runtime_device_extensions (GxrContext   *self,
+                                           GSList      **out_list)
 {
   PFN_xrGetVulkanDeviceExtensionsKHR GetVulkanDeviceExtensionsKHR = NULL;
   XrResult result =
