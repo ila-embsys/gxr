@@ -1128,9 +1128,10 @@ _create_vk_device2 (GxrContext      *self,
                              transfer_queue_index))
     return FALSE;
 
-  VkPhysicalDeviceFeatures enabled_features = {
-    .samplerAnisotropy = VK_TRUE,
-  };
+  VkPhysicalDeviceFeatures physical_device_features;
+  vkGetPhysicalDeviceFeatures (physical_device,
+                               &physical_device_features);
+
 
   GSList *device_ext_list_reduced = g_slist_copy_deep (device_ext_list,
                                                        (GCopyFunc) g_strdup,
@@ -1164,7 +1165,7 @@ _create_vk_device2 (GxrContext      *self,
             .pQueuePriorities = (const float[]) { 0.8f }
           },
         },
-    .pEnabledFeatures = &enabled_features,
+    .pEnabledFeatures = &physical_device_features,
     .enabledExtensionCount = num_extensions,
     .ppEnabledExtensionNames = extension_names,
   };
