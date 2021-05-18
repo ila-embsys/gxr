@@ -2,7 +2,7 @@ subdir('shaders')
 
 cube_sources = [
   'cube.c',
-  shader_resources,
+  cube_shader_resources,
 ]
 
 executable(

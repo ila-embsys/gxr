@@ -9,7 +9,7 @@ cube_sources = [
   'scene-pointer-tip.c',
   'scene-renderer.c',
   'scene-cube.c',
-  shader_resources,
+  demo_shader_resources,
   test_resources
 ]
 

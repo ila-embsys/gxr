@@ -24,6 +24,6 @@ foreach s : shaders
   endif
 endforeach
 
-shader_resources = gnome.compile_resources(
-  'shader_resources', 'shaders.gresource.xml',
+demo_shader_resources = gnome.compile_resources(
+  'demo_shader_resources', 'shaders.gresource.xml',
   source_dir : '.')
