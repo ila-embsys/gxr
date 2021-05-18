@@ -7,7 +7,9 @@ include:
   - project: "freedesktop/ci-templates"
     ref: *templates_sha
     file: "/templates/ubuntu.yml"
-
+  - project: "freedesktop/ci-templates"
+    ref: *templates_sha
+    file: "/templates/debian.yml"
 
 variables:
   FDO_UPSTREAM_REPO: xrdesktop/gxr
@@ -66,6 +68,26 @@ stages:
   variables:
     FDO_DISTRIBUTION_VERSION: "20.10"
     FDO_DISTRIBUTION_TAG: "2021-03-24.0"
+
+.xrdesktop.variables.ubuntu:hirsute:
+  variables:
+    FDO_DISTRIBUTION_VERSION: "21.04"
+    FDO_DISTRIBUTION_TAG: "2021-05-19.1"
+
+.xrdesktop.variables.debian:buster:
+  variables:
+    FDO_DISTRIBUTION_VERSION: "buster"
+    FDO_DISTRIBUTION_TAG: "2021-05-19.1"
+
+.xrdesktop.variables.debian:bullseye:
+  variables:
+    FDO_DISTRIBUTION_VERSION: "bullseye"
+    FDO_DISTRIBUTION_TAG: "2021-05-19.1"
+
+.xrdesktop.variables.debian:sid:
+  variables:
+    FDO_DISTRIBUTION_VERSION: "sid"
+    FDO_DISTRIBUTION_TAG: "2021-05-19.1"
 
 
 # === Archlinux ===
@@ -137,6 +159,94 @@ ubuntu:groovy:gcc:
   extends:
     - .xrdesktop.variables.ubuntu:groovy
     - .fdo.distribution-image@ubuntu # from ci-templates
+    - .xrdesktop.base-job.build-meson
+  variables:
+    MESON_ARGS: -Ddocs=disabled
+    CC: gcc
+    CXX: g++
+
+
+# === Ubuntu Hirsute ===
+
+ubuntu:hirsute:container_prep:
+  stage: container_prep
+  extends:
+    - .xrdesktop.variables.ubuntu:hirsute
+    - .fdo.container-build@ubuntu # from ci-templates
+    - .xrdesktop.base-job.build_deps
+  variables:
+    FDO_DISTRIBUTION_PACKAGES: "git gcc meson pkg-config libglib2.0-dev libgdk-pixbuf2.0-dev libvulkan-dev libgraphene-1.0-dev libcairo2-dev glslang-tools cmake libxxf86vm-dev libgl1-mesa-dev libvulkan-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-glx0-dev libxcb-icccm4-dev libxcb-keysyms1-dev libxcb-randr0-dev libxrandr-dev libxxf86vm-dev mesa-common-dev libgtk-3-dev libjson-glib-dev ca-certificates"
+
+ubuntu:hirsute:gcc:
+  extends:
+    - .xrdesktop.variables.ubuntu:hirsute
+    - .fdo.distribution-image@ubuntu # from ci-templates
+    - .xrdesktop.base-job.build-meson
+  variables:
+    MESON_ARGS: -Ddocs=disabled
+    CC: gcc
+    CXX: g++
+
+
+# === Debian buster ===
+
+debian:buster:container_prep:
+  stage: container_prep
+  extends:
+    - .xrdesktop.variables.debian:buster
+    - .fdo.container-build@debian # from ci-templates
+    - .xrdesktop.base-job.build_deps
+  variables:
+    FDO_DISTRIBUTION_PACKAGES: "git gcc meson pkg-config libglib2.0-dev libgdk-pixbuf2.0-dev libvulkan-dev libgraphene-1.0-dev libcairo2-dev glslang-tools cmake libxxf86vm-dev libgl1-mesa-dev libvulkan-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-glx0-dev libxcb-icccm4-dev libxcb-keysyms1-dev libxcb-randr0-dev libxrandr-dev libxxf86vm-dev mesa-common-dev libgtk-3-dev libjson-glib-dev ca-certificates"
+
+debian:buster:gcc:
+  extends:
+    - .xrdesktop.variables.debian:buster
+    - .fdo.distribution-image@debian # from ci-templates
+    - .xrdesktop.base-job.build-meson
+  variables:
+    MESON_ARGS: -Ddocs=disabled
+    CC: gcc
+    CXX: g++
+
+
+# === Debian bullseye ===
+
+debian:bullseye:container_prep:
+  stage: container_prep
+  extends:
+    - .xrdesktop.variables.debian:bullseye
+    - .fdo.container-build@debian # from ci-templates
+    - .xrdesktop.base-job.build_deps
+  variables:
+    FDO_DISTRIBUTION_PACKAGES: "git gcc meson pkg-config libglib2.0-dev libgdk-pixbuf2.0-dev libvulkan-dev libgraphene-1.0-dev libcairo2-dev glslang-tools cmake libxxf86vm-dev libgl1-mesa-dev libvulkan-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-glx0-dev libxcb-icccm4-dev libxcb-keysyms1-dev libxcb-randr0-dev libxrandr-dev libxxf86vm-dev mesa-common-dev libgtk-3-dev libjson-glib-dev ca-certificates"
+
+debian:bullseye:gcc:
+  extends:
+    - .xrdesktop.variables.debian:bullseye
+    - .fdo.distribution-image@debian # from ci-templates
+    - .xrdesktop.base-job.build-meson
+  variables:
+    MESON_ARGS: -Ddocs=disabled
+    CC: gcc
+    CXX: g++
+
+
+# === Debian sid ===
+
+debian:sid:container_prep:
+  stage: container_prep
+  extends:
+    - .xrdesktop.variables.debian:sid
+    - .fdo.container-build@debian # from ci-templates
+    - .xrdesktop.base-job.build_deps
+  variables:
+    FDO_DISTRIBUTION_PACKAGES: "git gcc meson pkg-config libglib2.0-dev libgdk-pixbuf2.0-dev libvulkan-dev libgraphene-1.0-dev libcairo2-dev glslang-tools cmake libxxf86vm-dev libgl1-mesa-dev libvulkan-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-glx0-dev libxcb-icccm4-dev libxcb-keysyms1-dev libxcb-randr0-dev libxrandr-dev libxxf86vm-dev mesa-common-dev libgtk-3-dev libjson-glib-dev ca-certificates"
+
+debian:sid:gcc:
+  extends:
+    - .xrdesktop.variables.debian:sid
+    - .fdo.distribution-image@debian # from ci-templates
     - .xrdesktop.base-job.build-meson
   variables:
     MESON_ARGS: -Ddocs=disabled
