@@ -936,7 +936,7 @@ _create_vk_instance2 (GxrContext *self, GSList *instance_ext_list, VkInstance *i
     .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
     .pApplicationName = "xrgears",
     .pEngineName = "xrgears",
-    .apiVersion = VK_MAKE_VERSION(1, 0, 2),
+    .apiVersion = VK_MAKE_VERSION(1, 1, 0),
   };
 
   GSList *instance_ext_list_reduced = g_slist_copy_deep (instance_ext_list,
