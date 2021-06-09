@@ -35,7 +35,7 @@ stages:
       cd .. && \
       git clone --depth 1 --branch $OPENXR_SDK_TAG https://github.com/KhronosGroup/OpenXR-SDK-Source.git && \
       cd OpenXR-SDK-Source && \
-      cmake . -G Ninja -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DDYNAMIC_LOADER=ON && \
+      CC=clang CXX=clang++ cmake . -G Ninja -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DDYNAMIC_LOADER=ON && \
       ninja -C . install && \
       cd .. && \
       git clone --depth 1 --branch $OPENVR_TAG https://github.com/ValveSoftware/openvr.git && \
