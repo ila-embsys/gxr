@@ -11,7 +11,7 @@ include:
 
 variables:
   FDO_UPSTREAM_REPO: xrdesktop/gxr
-  GULKAN_COMMIT: "95311383f405f6e926c08279c656db16a810e1d0"
+  GULKAN_COMMIT: "1420f327253027f350452e8bf0c85756d163121b"
   OPENXR_SDK_TAG: "release-1.0.14"
   OPENVR_TAG: "v1.14.15" # 1.16.8 is broken without patches
 
@@ -55,18 +55,26 @@ stages:
 # variables shared by container_prep and build jobs
 .xrdesktop.variables.arch:rolling:
   variables:
-    FDO_DISTRIBUTION_TAG: "2021-04-19.0"
+    FDO_DISTRIBUTION_TAG: "2021-06-09.0"
 
 .xrdesktop.variables.ubuntu:focal:
   variables:
     FDO_DISTRIBUTION_VERSION: "20.04"
-    FDO_DISTRIBUTION_TAG: "2021-03-24.0"
+    FDO_DISTRIBUTION_TAG: "2021-06-09.0"
 
 .xrdesktop.variables.ubuntu:groovy:
   variables:
     FDO_DISTRIBUTION_VERSION: "20.10"
-    FDO_DISTRIBUTION_TAG: "2021-03-24.0"
+    FDO_DISTRIBUTION_TAG: "2021-06-09.0"
 
+.xrdesktop.variables.ubuntu:hirsute:
+  variables:
+    FDO_DISTRIBUTION_VERSION: "21.04"
+    FDO_DISTRIBUTION_TAG: "2021-06-09.1"
+
+.xrdesktop.variables.debian-based-packages:
+  variables:
+    CORE_REQUIRED_PACKAGES: "git gcc clang meson pkg-config libglib2.0-dev libgdk-pixbuf2.0-dev libvulkan-dev libgraphene-1.0-dev libcairo2-dev glslang-tools cmake libxxf86vm-dev libgl1-mesa-dev libvulkan-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-glx0-dev libxcb-icccm4-dev libxcb-keysyms1-dev libxcb-randr0-dev libxrandr-dev libxxf86vm-dev mesa-common-dev libgtk-3-dev libjson-glib-dev ca-certificates libdrm-dev"
 
 # === Archlinux ===
 
@@ -108,8 +116,9 @@ ubuntu:focal:container_prep:
     - .xrdesktop.variables.ubuntu:focal
     - .fdo.container-build@ubuntu # from ci-templates
     - .xrdesktop.base-job.build_deps
+    - .xrdesktop.variables.debian-based-packages
   variables:
-    FDO_DISTRIBUTION_PACKAGES: "git gcc meson pkg-config libglib2.0-dev libgdk-pixbuf2.0-dev libvulkan-dev libgraphene-1.0-dev libcairo2-dev glslang-tools cmake libxxf86vm-dev libgl1-mesa-dev libvulkan-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-glx0-dev libxcb-icccm4-dev libxcb-keysyms1-dev libxcb-randr0-dev libxrandr-dev libxxf86vm-dev mesa-common-dev libgtk-3-dev libjson-glib-dev ca-certificates"
+    FDO_DISTRIBUTION_PACKAGES: "${CORE_REQUIRED_PACKAGES}"
 
 ubuntu:focal:gcc:
   extends:
@@ -130,12 +139,36 @@ ubuntu:groovy:container_prep:
     - .xrdesktop.variables.ubuntu:groovy
     - .fdo.container-build@ubuntu # from ci-templates
     - .xrdesktop.base-job.build_deps
+    - .xrdesktop.variables.debian-based-packages
   variables:
-    FDO_DISTRIBUTION_PACKAGES: "git gcc meson pkg-config libglib2.0-dev libgdk-pixbuf2.0-dev libvulkan-dev libgraphene-1.0-dev libcairo2-dev glslang-tools cmake libxxf86vm-dev libgl1-mesa-dev libvulkan-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-glx0-dev libxcb-icccm4-dev libxcb-keysyms1-dev libxcb-randr0-dev libxrandr-dev libxxf86vm-dev mesa-common-dev libgtk-3-dev libjson-glib-dev ca-certificates"
+    FDO_DISTRIBUTION_PACKAGES: "${CORE_REQUIRED_PACKAGES}"
 
 ubuntu:groovy:gcc:
   extends:
     - .xrdesktop.variables.ubuntu:groovy
+    - .fdo.distribution-image@ubuntu # from ci-templates
+    - .xrdesktop.base-job.build-meson
+  variables:
+    MESON_ARGS: -Ddocs=disabled
+    CC: gcc
+    CXX: g++
+
+
+# === Ubuntu Hirsute ===
+
+ubuntu:hirsute:container_prep:
+  stage: container_prep
+  extends:
+    - .xrdesktop.variables.ubuntu:hirsute
+    - .fdo.container-build@ubuntu # from ci-templates
+    - .xrdesktop.base-job.build_deps
+    - .xrdesktop.variables.debian-based-packages
+  variables:
+    FDO_DISTRIBUTION_PACKAGES: "${CORE_REQUIRED_PACKAGES}"
+
+ubuntu:hirsute:gcc:
+  extends:
+    - .xrdesktop.variables.ubuntu:hirsute
     - .fdo.distribution-image@ubuntu # from ci-templates
     - .xrdesktop.base-job.build-meson
   variables:
