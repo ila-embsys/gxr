@@ -13,14 +13,13 @@ variables:
   FDO_UPSTREAM_REPO: xrdesktop/gxr
   GULKAN_COMMIT: "1420f327253027f350452e8bf0c85756d163121b"
   OPENXR_SDK_TAG: "release-1.0.14"
-  OPENVR_TAG: "v1.14.15" # 1.16.8 is broken without patches
 
 stages:
   - container_prep
   - build_and_test
 
 
-# "Base" job for installing Gulkan, OpenXR SDK and OpenVR
+# "Base" job for installing Gulkan, OpenXR SDK
 .xrdesktop.base-job.build_deps:
   stage: container_prep
   variables:
@@ -38,10 +37,6 @@ stages:
       CC=clang CXX=clang++ cmake . -G Ninja -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DDYNAMIC_LOADER=ON && \
       ninja -C . install && \
       cd .. && \
-      git clone --depth 1 --branch $OPENVR_TAG https://github.com/ValveSoftware/openvr.git && \
-      cd openvr && \
-      cmake . -G Ninja -DBUILD_SHARED=1 -DCMAKE_INSTALL_PREFIX=/usr/ && \
-      ninja -C . install
 
 # "Base" job for a Meson build
 .xrdesktop.base-job.build-meson:
