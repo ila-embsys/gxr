@@ -12,8 +12,8 @@
 
 #include <gxr.h>
 
-#include "demo-pointer-tip.h"
-#include "demo-pointer.h"
+#include "scene-pointer-tip.h"
+#include "scene-pointer.h"
 #include <graphene.h>
 
 G_BEGIN_DECLS
@@ -55,17 +55,17 @@ typedef struct {
 SceneController *scene_controller_new (GxrController *controller,
                                        GxrContext *context);
 
-DemoPointer *
+ScenePointer *
 scene_controller_get_pointer (SceneController *self);
 
-DemoPointerTip *
+ScenePointerTip *
 scene_controller_get_pointer_tip (SceneController *self);
 
 void
-scene_controller_set_pointer (SceneController *self, DemoPointer *pointer);
+scene_controller_set_pointer (SceneController *self, ScenePointer *pointer);
 
 void
-scene_controller_set_pointer_tip (SceneController *self, DemoPointerTip *tip);
+scene_controller_set_pointer_tip (SceneController *self, ScenePointerTip *tip);
 
 GxrHoverState *
 scene_controller_get_hover_state (SceneController *self);

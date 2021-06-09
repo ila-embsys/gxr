@@ -6,7 +6,6 @@
  */
 
 #include "scene-controller.h"
-#include "demo-pointer.h"
 
 #include "graphene-ext.h"
 
@@ -14,8 +13,8 @@ struct _SceneController
 {
   GObject parent;
 
-  DemoPointer *pointer_ray;
-  DemoPointerTip *pointer_tip;
+  ScenePointer *pointer_ray;
+  ScenePointerTip *pointer_tip;
   GxrHoverState hover_state;
   GxrGrabState grab_state;
 
@@ -102,26 +101,26 @@ scene_controller_finalize (GObject *gobject)
   G_OBJECT_CLASS (scene_controller_parent_class)->finalize (gobject);
 }
 
-DemoPointer *
+ScenePointer *
 scene_controller_get_pointer (SceneController *self)
 {
   return self->pointer_ray;
 }
 
-DemoPointerTip *
+ScenePointerTip *
 scene_controller_get_pointer_tip (SceneController *self)
 {
   return self->pointer_tip;
 }
 
 void
-scene_controller_set_pointer (SceneController *self, DemoPointer *pointer)
+scene_controller_set_pointer (SceneController *self, ScenePointer *pointer)
 {
   self->pointer_ray = pointer;
 }
 
 void
-scene_controller_set_pointer_tip (SceneController *self, DemoPointerTip *tip)
+scene_controller_set_pointer_tip (SceneController *self, ScenePointerTip *tip)
 {
   self->pointer_tip = tip;
 }
@@ -177,11 +176,11 @@ _no_hover_transform_tip (SceneController *self,
   graphene_matrix_rotate_quaternion (&tip_pose, &controller_rotation);
   graphene_matrix_translate (&tip_pose, &controller_translation_point);
 
-  demo_pointer_tip_set_transformation (self->pointer_tip, &tip_pose);
+  scene_object_set_transformation (SCENE_OBJECT (self->pointer_tip), &tip_pose);
 
-  demo_pointer_tip_update_apparent_size (self->pointer_tip, self->context);
+  scene_pointer_tip_update_apparent_size (self->pointer_tip, self->context);
 
-  demo_pointer_tip_set_active (self->pointer_tip, FALSE);
+  scene_pointer_tip_set_active (self->pointer_tip, FALSE);
 }
 
 static void
@@ -204,27 +203,27 @@ _controller_move_cb (GxrController *controller,
 
   /* The pointer's pose is always set by pose update. When hovering, only the
    * length is set by gxr_controller_update_hovered_object(). */
-  demo_pointer_move (self->pointer_ray, &pose);
+  scene_pointer_move (self->pointer_ray, &pose);
 }
 
 void
 scene_controller_hide_pointer (SceneController *self)
 {
-  demo_pointer_hide (self->pointer_ray);
-  demo_pointer_tip_hide (self->pointer_tip);
+  scene_pointer_hide (self->pointer_ray);
+  scene_object_hide (SCENE_OBJECT (self->pointer_tip));
 }
 
 void
 scene_controller_show_pointer (SceneController *self)
 {
-  demo_pointer_show (self->pointer_ray);
-  demo_pointer_tip_show (self->pointer_tip);
+  scene_pointer_show (self->pointer_ray);
+  scene_object_show (SCENE_OBJECT (self->pointer_tip));
 }
 
 gboolean
 scene_controller_is_pointer_visible (SceneController *self)
 {
-  return demo_pointer_tip_is_visible (self->pointer_tip);
+  return scene_object_is_visible (SCENE_OBJECT (self->pointer_tip));
 }
 
 void
@@ -237,7 +236,7 @@ scene_controller_update_hovered_object (SceneController *self,
                                       float intersection_distance)
 {
   if (last_object != object)
-    demo_pointer_tip_set_active (self->pointer_tip, object != NULL);
+    scene_pointer_tip_set_active (self->pointer_tip, object != NULL);
 
   if (object)
     {
@@ -248,10 +247,10 @@ scene_controller_update_hovered_object (SceneController *self,
 
       self->hover_state.distance = intersection_distance;
 
-      demo_pointer_tip_update (self->pointer_tip, self->context,
+      scene_pointer_tip_update (self->pointer_tip, self->context,
                               object_pose, intersection_point);
 
-      demo_pointer_set_length (self->pointer_ray, intersection_distance);
+      scene_pointer_set_length (self->pointer_ray, intersection_distance);
     }
   else
     {
@@ -267,7 +266,7 @@ scene_controller_update_hovered_object (SceneController *self,
       graphene_point3d_init (&distance_point,
                             0.f,
                             0.f,
-                            -demo_pointer_get_default_length (self->pointer_ray));
+                            -scene_pointer_get_default_length (self->pointer_ray));
 
       graphene_point3d_t controller_position;
       graphene_ext_matrix_get_translation_point3d (&pointer_pose,
@@ -278,13 +277,14 @@ scene_controller_update_hovered_object (SceneController *self,
       graphene_matrix_translate (&tip_pose, &distance_point);
       graphene_matrix_rotate_quaternion (&tip_pose, &controller_rotation);
       graphene_matrix_translate (&tip_pose, &controller_position);
-      demo_pointer_tip_set_transformation (self->pointer_tip, &tip_pose);
-      demo_pointer_tip_update_apparent_size (self->pointer_tip, self->context);
+      scene_object_set_transformation (SCENE_OBJECT (self->pointer_tip),
+                                       &tip_pose);
+      scene_pointer_tip_update_apparent_size (self->pointer_tip, self->context);
 
 
       if (last_object)
         {
-          demo_pointer_reset_length (self->pointer_ray);
+          scene_pointer_reset_length (self->pointer_ray);
           scene_controller_reset_hover_state (self);
           scene_controller_reset_grab_state (self);
         }
@@ -404,10 +404,10 @@ scene_controller_get_drag_pose (SceneController     *self,
   xrd_pointer_set_selected_window (pointer, window);
   */
 
-  demo_pointer_tip_set_transformation (self->pointer_tip,
-                                      &self->intersection_pose);
+  scene_object_set_transformation (SCENE_OBJECT (self->pointer_tip),
+                                   &self->intersection_pose);
   /* update apparent size after pointer has been moved */
-  demo_pointer_tip_update_apparent_size (self->pointer_tip, self->context);
+  scene_pointer_tip_update_apparent_size (self->pointer_tip, self->context);
 
   return TRUE;
 }

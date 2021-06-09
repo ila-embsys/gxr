@@ -11,7 +11,7 @@
 
 #include <gxr.h>
 
-#include "demo-pointer-tip.h"
+#include "scene-pointer-tip.h"
 #include "scene-controller.h"
 
 #include "scene-pointer.h"
@@ -277,8 +277,8 @@ _cube_set_position (Example *example)
 
   SceneController *sc = g_hash_table_lookup (example->controller_map,
                                              example->cube_grabbed);
-  DemoPointer *pointer = scene_controller_get_pointer (sc);
-  float distance = demo_pointer_get_default_length (pointer);
+  ScenePointer *pointer = scene_controller_get_pointer (sc);
+  float distance = scene_pointer_get_default_length (pointer);
 
   graphene_point3d_t p = { .x = .0f, .y = .0f, .z = - distance };
   graphene_matrix_transform_point3d (&pointer_pose, &p, &p);
@@ -375,11 +375,11 @@ _device_activate_cb (GxrDeviceManager *dm,
 
   ScenePointer *pointer =
     scene_pointer_new (client, descriptor_set_layout);
-  scene_controller_set_pointer (sc, DEMO_POINTER (pointer));
+  scene_controller_set_pointer (sc, pointer);
 
   ScenePointerTip *pointer_tip =
     scene_pointer_tip_new (client, descriptor_set_layout, lights);
-  scene_controller_set_pointer_tip (sc, DEMO_POINTER_TIP (pointer_tip));
+  scene_controller_set_pointer_tip (sc, pointer_tip);
 
   g_hash_table_insert (self->controller_map, controller, sc);
 }
