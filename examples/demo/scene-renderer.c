@@ -190,7 +190,7 @@ static gboolean
 _init_shaders (SceneRenderer *self)
 {
   const char *shader_names[PIPELINE_COUNT] = {
-    "window", "window", "pointer", "pointer", "pointer", "device_model"
+    "window", "window", "pointer", "pointer", "pointer"
   };
   const char *stage_names[2] = {"vert", "frag"};
 
@@ -443,35 +443,6 @@ _init_graphics_pipelines (SceneRenderer *self)
           .lineWidth = 1.0f
       }
     },
-    // PIPELINE_DEVICE_MODELS
-    {
-      .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-      .stride = gxr_context_get_model_vertex_stride (self->context),
-      .attribs = (VkVertexInputAttributeDescription []) {
-        {0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0},
-        {1, 0, VK_FORMAT_R32G32B32_SFLOAT,
-          gxr_context_get_model_normal_offset (self->context)},
-        {2, 0, VK_FORMAT_R32G32_SFLOAT,
-          gxr_context_get_model_uv_offset (self->context)},
-      },
-      .depth_stencil_state = &(VkPipelineDepthStencilStateCreateInfo) {
-          .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
-          .depthTestEnable = VK_TRUE,
-          .depthWriteEnable = VK_TRUE,
-          .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL
-      },
-      .attrib_count = 3,
-      .blend_attachments = &(VkPipelineColorBlendAttachmentState) {
-        .blendEnable = VK_FALSE,
-        .colorWriteMask = 0xf
-      },
-      .rasterization_state = &(VkPipelineRasterizationStateCreateInfo) {
-          .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-          .polygonMode = VK_POLYGON_MODE_FILL,
-          .cullMode = VK_CULL_MODE_BACK_BIT,
-          .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE
-      }
-    }
   };
 
   for (uint32_t i = 0; i < PIPELINE_COUNT; i++)

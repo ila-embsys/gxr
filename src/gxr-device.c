@@ -18,10 +18,6 @@ typedef struct _GxrDevicePrivate
 
   gboolean pose_valid;
 
-  gchar *model_name;
-
-  GxrModel *model;
-
   graphene_matrix_t transformation;
 
 } GxrDevicePrivate;
@@ -44,30 +40,20 @@ gxr_device_init (GxrDevice *self)
 {
   GxrDevicePrivate *priv = gxr_device_get_instance_private (self);
   priv->pose_valid = FALSE;
-  priv->model = NULL;
-  priv->model_name = NULL;
 }
 
 GxrDevice *
-gxr_device_new (guint64 device_id, gchar *model_name)
+gxr_device_new (guint64 device_id)
 {
   GxrDevice *self = (GxrDevice*) g_object_new (GXR_TYPE_DEVICE, 0);
   GxrDevicePrivate *priv = gxr_device_get_instance_private (self);
   priv->device_id = device_id;
-  priv->model_name = g_strdup (model_name);
   return self;
 }
 
 static void
 gxr_device_finalize (GObject *gobject)
 {
-  GxrDevice *self = GXR_DEVICE (gobject);
-  GxrDevicePrivate *priv = gxr_device_get_instance_private (self);
-  g_free (priv->model_name);
-
-  if (priv->model)
-    g_object_unref (priv->model);
-
   G_OBJECT_CLASS (gxr_device_parent_class)->finalize (gobject);
 }
 
@@ -89,39 +75,6 @@ gxr_device_is_pose_valid (GxrDevice *self)
 {
   GxrDevicePrivate *priv = gxr_device_get_instance_private (self);
   return priv->pose_valid;
-}
-
-gchar *
-gxr_device_get_model_name (GxrDevice *self)
-{
-  GxrDevicePrivate *priv = gxr_device_get_instance_private (self);
-  return priv->model_name;
-}
-
-void
-gxr_device_set_model_name (GxrDevice *self, gchar *model_name)
-{
-  GxrDevicePrivate *priv = gxr_device_get_instance_private (self);
-  if (priv->model_name)
-    g_free (priv->model_name);
-  priv->model_name = g_strdup (model_name);
-}
-
-/* takes ownership */
-void
-gxr_device_set_model (GxrDevice *self, GxrModel *model)
-{
-  GxrDevicePrivate *priv = gxr_device_get_instance_private (self);
-  if (priv->model)
-    g_object_unref (priv->model);
-  priv->model = model;
-}
-
-GxrModel *
-gxr_device_get_model (GxrDevice *self)
-{
-  GxrDevicePrivate *priv = gxr_device_get_instance_private (self);
-  return priv->model;
 }
 
 /*

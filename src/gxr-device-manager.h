@@ -30,7 +30,6 @@ GxrDeviceManager *gxr_device_manager_new (void);
 
 gboolean
 gxr_device_manager_add (GxrDeviceManager   *self,
-                        struct _GxrContext *context,
                         guint64             device_id,
                         bool                is_controller);
 

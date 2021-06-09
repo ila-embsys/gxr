@@ -25,7 +25,6 @@
 #include "gxr-manifest.h"
 #include "gxr-controller.h"
 #include "gxr-device.h"
-#include "gxr-model.h"
 #include "gxr-device-manager.h"
 
 #undef GXR_INSIDE

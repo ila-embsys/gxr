@@ -20,8 +20,7 @@ G_BEGIN_DECLS
 #define GXR_TYPE_CONTROLLER gxr_controller_get_type()
 G_DECLARE_FINAL_TYPE (GxrController, gxr_controller, GXR, CONTROLLER, GxrDevice)
 
-GxrController *gxr_controller_new (guint64 controller_handle,
-                                   gchar      *model_name);
+GxrController *gxr_controller_new (guint64 controller_handle);
 
 void
 gxr_controller_get_hand_grip_pose (GxrController *self,

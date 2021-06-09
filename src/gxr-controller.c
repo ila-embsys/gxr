@@ -58,16 +58,13 @@ gxr_controller_init (GxrController *self)
 }
 
 GxrController *
-gxr_controller_new (guint64 controller_handle,
-                    gchar *model_name)
+gxr_controller_new (guint64 controller_handle)
 {
   GxrController *controller =
     (GxrController*) g_object_new (GXR_TYPE_CONTROLLER, 0);
 
   GxrDevice *device = GXR_DEVICE (controller);
   gxr_device_set_handle (device, controller_handle);
-
-  gxr_device_set_model_name (GXR_DEVICE (controller), model_name);
 
   return controller;
 }

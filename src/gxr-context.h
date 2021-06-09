@@ -69,15 +69,6 @@ gxr_context_init_framebuffers (GxrContext           *self,
 void
 gxr_context_poll_event (GxrContext *self);
 
-uint32_t
-gxr_context_get_model_vertex_stride (GxrContext *self);
-
-uint32_t
-gxr_context_get_model_normal_offset (GxrContext *self);
-
-uint32_t
-gxr_context_get_model_uv_offset (GxrContext *self);
-
 void
 gxr_context_get_projection (GxrContext *self,
                             GxrEye eye,
@@ -105,21 +96,9 @@ gxr_context_is_tracked_device_connected (GxrContext *self, uint32_t i);
 gboolean
 gxr_context_device_is_controller (GxrContext *self, uint32_t i);
 
-gchar* gxr_context_get_device_model_name(GxrContext* self, uint32_t i);
-
-gboolean
-gxr_context_load_model (GxrContext         *self,
-                        GulkanVertexBuffer *vbo,
-                        GulkanTexture     **texture,
-                        VkSampler          *sampler,
-                        const char         *model_name);
-
 void
 gxr_context_set_keyboard_transform (GxrContext        *self,
                                     graphene_matrix_t *transform);
-
-GSList *
-gxr_context_get_model_list (GxrContext *self);
 
 gboolean
 gxr_context_load_action_manifest (GxrContext *self,

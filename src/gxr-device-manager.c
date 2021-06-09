@@ -118,7 +118,6 @@ gxr_device_manager_get_controllers (GxrDeviceManager *self)
 
 gboolean
 gxr_device_manager_add (GxrDeviceManager *self,
-                        GxrContext       *context,
                         guint64           device_id,
                         bool              is_controller)
 {
@@ -131,24 +130,19 @@ gxr_device_manager_add (GxrDeviceManager *self,
       return FALSE;
     }
 
-  gchar *model_name = gxr_context_get_device_model_name (context,
-                                                         (uint32_t) device_id);
-
   GxrDevice *device;
   if (is_controller)
     {
-      device = GXR_DEVICE (gxr_controller_new (device_id, model_name));
+      device = GXR_DEVICE (gxr_controller_new (device_id));
       gxr_device_manager_emit_device_activate (self, device);
     }
   else
     {
-      device = gxr_device_new (device_id, model_name);
+      device = gxr_device_new (device_id);
     }
 
-  g_debug ("Created device for %lu, model %s, is controller: %d",
-           device_id, model_name, is_controller);
-
-  g_free (model_name);
+  g_debug ("Created device for %lu, is controller: %d",
+           device_id, is_controller);
 
   if (is_controller)
     self->controllers = g_slist_append (self->controllers, device);

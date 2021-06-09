@@ -737,7 +737,7 @@ gxr_action_update_controllers (GxrAction *self)
 
       if (!gxr_device_manager_get (dm, controller_handle))
         {
-          gxr_device_manager_add (dm, context, controller_handle, TRUE);
+          gxr_device_manager_add (dm, controller_handle, TRUE);
 
           g_debug ("Added controller %lu from action %s",
                    controller_handle, self->url);

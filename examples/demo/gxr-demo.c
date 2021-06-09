@@ -20,7 +20,6 @@
 #include "gxr-device-manager.h"
 #include "scene-background.h"
 #include "scene-cube.h"
-#include "scene-model.h"
 
 typedef struct Example
 {
@@ -191,80 +190,6 @@ _render_pointers (Example           *self,
     }
 }
 
-static SceneModel *
-_get_scene_model (Example *self, GxrDevice *device)
-{
-  GxrModel *model = gxr_device_get_model (device);
-  if (model)
-    {
-      // g_print ("Using model %s\n", gxr_model_get_name (model));
-      return SCENE_MODEL (model);
-    }
-
-  gchar *model_name = gxr_device_get_model_name (device);
-  if (!model_name)
-      return NULL;
-
-  VkDescriptorSetLayout *descriptor_set_layout =
-    scene_renderer_get_descriptor_set_layout (self->renderer);
-  GulkanClient *gulkan = scene_renderer_get_gulkan (self->renderer);
-
-  SceneModel *sm = scene_model_new (descriptor_set_layout, gulkan);
-  // g_print ("Loading model %s\n", model_name);
-  scene_model_load (sm, self->context, model_name);
-
-  gxr_device_set_model (device, GXR_MODEL (sm));
-
-  return sm;
-}
-
-static void
-_render_device (GxrDevice         *device,
-                uint32_t           eye,
-                VkCommandBuffer    cmd_buffer,
-                VkPipelineLayout   pipeline_layout,
-                VkPipeline         pipeline,
-                graphene_matrix_t *vp,
-                Example           *self)
-{
-  SceneModel *model = _get_scene_model (self, device);
-  if (!model)
-    {
-      // g_print ("Device has no model\n");
-      return;
-    }
-
-  if (!gxr_device_is_pose_valid (device))
-    {
-      // g_print ("Pose invalid for %s\n", gxr_device_get_model_name (device));
-      return;
-    }
-
-  graphene_matrix_t transformation;
-  gxr_device_get_transformation_direct (device, &transformation);
-
-  scene_model_render (model, eye, pipeline, cmd_buffer, pipeline_layout,
-                          &transformation, vp);
-}
-
-static void
-_render_devices (uint32_t           eye,
-                 VkCommandBuffer    cmd_buffer,
-                 VkPipelineLayout   pipeline_layout,
-                 VkPipeline        *pipelines,
-                 graphene_matrix_t *vp,
-                 Example           *self)
-{
-  GxrContext *context = self->context;
-  GxrDeviceManager *dm = gxr_context_get_device_manager (context);
-  GList *devices = gxr_device_manager_get_devices (dm);
-
-  for (GList *l = devices; l; l = l->next)
-    _render_device (l->data, eye, cmd_buffer, pipeline_layout,
-                    pipelines[PIPELINE_DEVICE_MODELS], vp, self);
-  g_list_free (devices);
-}
-
 static void
 _cube_set_position (Example *example)
 {
@@ -302,8 +227,6 @@ _render_eye_cb (uint32_t         eye,
   scene_background_render (self->background, eye,
                                pipelines[PIPELINE_BACKGROUND],
                                pipeline_layout, cmd_buffer, &vp);
-
-  _render_devices (eye, cmd_buffer, pipeline_layout, pipelines, &vp, self);
 
   _render_pointers (self, eye, cmd_buffer, pipelines, pipeline_layout, &vp);
 

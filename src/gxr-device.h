@@ -34,7 +34,7 @@ struct _GxrDeviceClass
 };
 
 GxrDevice *
-gxr_device_new (guint64 device_id, gchar *model_name);
+gxr_device_new (guint64 device_id);
 
 gboolean
 gxr_device_initialize (GxrDevice *self);
@@ -47,18 +47,6 @@ gxr_device_set_is_pose_valid (GxrDevice *self, bool valid);
 
 gboolean
 gxr_device_is_pose_valid (GxrDevice *self);
-
-void
-gxr_device_set_model_name (GxrDevice *self, gchar *model_name);
-
-gchar *
-gxr_device_get_model_name (GxrDevice *self);
-
-void
-gxr_device_set_model (GxrDevice *self, struct _GxrModel *model);
-
-struct _GxrModel *
-gxr_device_get_model (GxrDevice *self);
 
 void
 gxr_device_set_transformation_direct (GxrDevice         *self,

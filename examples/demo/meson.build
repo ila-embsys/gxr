@@ -3,7 +3,6 @@ subdir('shaders')
 cube_sources = [
   'gxr-demo.c',
   'scene-background.c',
-  'scene-model.c',
   'scene-object.c',
   'scene-pointer.c',
   'scene-pointer-tip.c',

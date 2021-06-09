@@ -1710,31 +1710,6 @@ gxr_context_init_framebuffers (GxrContext           *self,
   return TRUE;
 }
 
-/*
- * Dummy values to make the pipeline initialize,
- * TODO: Add GLTF models for OpenXR backend.
- */
-uint32_t
-gxr_context_get_model_vertex_stride (GxrContext *self)
-{
-  (void) self;
-  return 1;
-}
-
-uint32_t
-gxr_context_get_model_normal_offset (GxrContext *self)
-{
-  (void) self;
-  return 1;
-}
-
-uint32_t
-gxr_context_get_model_uv_offset (GxrContext *self)
-{
-  (void) self;
-  return 2;
-}
-
 static void
 _get_projection_matrix_from_fov (const XrFovf       fov,
                                  const float        near_z,
@@ -2058,46 +2033,12 @@ gxr_context_device_is_controller (GxrContext *self, uint32_t i)
   return FALSE;
 }
 
-gchar*
-gxr_context_get_device_model_name (GxrContext *self, uint32_t i)
-{
-  /* TODO: Implement in OpenXR */
-  (void) self;
-  (void) i;
-  return NULL;
-}
-
-gboolean
-gxr_context_load_model (GxrContext         *self,
-                        GulkanVertexBuffer *vbo,
-                        GulkanTexture     **texture,
-                        VkSampler          *sampler,
-                        const char         *model_name)
-{
-  /* TODO: Implement in OpenXR */
-  (void) self;
-  (void) vbo;
-  (void) texture;
-  (void) sampler;
-  (void) model_name;
-  return FALSE;
-}
-
 void
 gxr_context_request_quit (GxrContext *self)
 {
   /* _poll_event will send quit event once session is in STOPPING state */
   xrRequestExitSession (self->session);
 }
-
-GSList *
-gxr_context_get_model_list (GxrContext *self)
-{
-  /* TODO: Implement in OpenXR */
-  (void) self;
-  return NULL;
-}
-
 
 gboolean
 gxr_context_get_runtime_instance_extensions (GxrContext *self, GSList **out_list)
