@@ -471,9 +471,7 @@ _system_quit_cb (GxrContext   *context,
 {
   (void) event;
   (void) self;
-  g_print ("Handling VR quit event %d\n", event->reason);
-  gxr_context_acknowledge_quit (context);
-
+  (void) context;
   g_main_loop_quit (self->loop);
   g_free (event);
 }

@@ -2009,31 +2009,6 @@ gxr_context_load_action_manifest (GxrContext *self,
 }
 
 void
-gxr_context_acknowledge_quit (GxrContext *self)
-{
-  /* TODO: Implement in OpenXR */
-  (void) self;
-}
-
-gboolean
-gxr_context_is_tracked_device_connected (GxrContext *self, uint32_t i)
-{
-  /* TODO: Implement in OpenXR */
-  (void) self;
-  (void) i;
-  return FALSE;
-}
-
-gboolean
-gxr_context_device_is_controller (GxrContext *self, uint32_t i)
-{
-  /* TODO: Implement in OpenXR */
-  (void) self;
-  (void) i;
-  return FALSE;
-}
-
-void
 gxr_context_request_quit (GxrContext *self)
 {
   /* _poll_event will send quit event once session is in STOPPING state */

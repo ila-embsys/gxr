@@ -88,15 +88,6 @@ gboolean
 gxr_context_end_frame (GxrContext *self);
 
 void
-gxr_context_acknowledge_quit (GxrContext *self);
-
-gboolean
-gxr_context_is_tracked_device_connected (GxrContext *self, uint32_t i);
-
-gboolean
-gxr_context_device_is_controller (GxrContext *self, uint32_t i);
-
-void
 gxr_context_set_keyboard_transform (GxrContext        *self,
                                     graphene_matrix_t *transform);
 
