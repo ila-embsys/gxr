@@ -929,6 +929,14 @@ init_vulkan_enable1 (GxrContext *self,
   return TRUE;
 }
 
+static gpointer
+_copy_str (gconstpointer src,
+           gpointer data)
+{
+  (void) data;
+  return g_strdup (src);
+}
+
 static gboolean
 _create_vk_instance2 (GxrContext *self, GSList *instance_ext_list, VkInstance *instance)
 {
@@ -940,7 +948,7 @@ _create_vk_instance2 (GxrContext *self, GSList *instance_ext_list, VkInstance *i
   };
 
   GSList *instance_ext_list_reduced = g_slist_copy_deep (instance_ext_list,
-                                                         (GCopyFunc) g_strdup,
+                                                         _copy_str,
                                                          NULL);
   _remove_unsupported_instance_exts (&instance_ext_list_reduced);
 
@@ -1132,9 +1140,8 @@ _create_vk_device2 (GxrContext      *self,
   vkGetPhysicalDeviceFeatures (physical_device,
                                &physical_device_features);
 
-
   GSList *device_ext_list_reduced = g_slist_copy_deep (device_ext_list,
-                                                       (GCopyFunc) g_strdup,
+                                                       _copy_str,
                                                        NULL);
   _remove_unsupported_device_exts (physical_device,
                                    &device_ext_list_reduced);
