@@ -27,6 +27,7 @@ struct _GxrContext
     gboolean vulkan_enable2;
     gboolean overlay;
   } extensions;
+  XrEnvironmentBlendMode blend_mode;
 
   GxrDeviceManager *device_manager;
 
@@ -255,6 +256,56 @@ _check_extensions (GxrContext *self)
                   XR_KHR_VULKAN_ENABLE2_EXTENSION_NAME);
       return FALSE;
     }
+
+  return TRUE;
+}
+
+static gboolean
+_check_blend_mode (GxrContext *self)
+{
+  XrResult result;
+  uint32_t blend_modes_count = 0;
+  result = xrEnumerateEnvironmentBlendModes (self->instance,
+                                             self->system_id,
+                                             self->view_config_type,
+                                             0,
+                                             &blend_modes_count,
+                                             NULL);
+  if (!_check_xr_result (result, "Failed to get blend modes count"))
+    return FALSE;
+
+  XrEnvironmentBlendMode *blend_modes =
+    g_malloc (sizeof (XrEnvironmentBlendMode) * blend_modes_count);
+
+  result = xrEnumerateEnvironmentBlendModes (self->instance,
+                                             self->system_id,
+                                             self->view_config_type,
+                                             blend_modes_count,
+                                             &blend_modes_count,
+                                             blend_modes);
+  if (!_check_xr_result (result, "Failed to get blend modes"))
+    {
+      g_free (blend_modes);
+      return FALSE;
+    }
+
+  for (uint32_t i = 0; i < blend_modes_count; i++)
+    {
+      if (blend_modes[i] == XR_ENVIRONMENT_BLEND_MODE_OPAQUE)
+        {
+          self->blend_mode = blend_modes[i];
+          break;
+        }
+    }
+
+  if (self->blend_mode == 0)
+    {
+      g_warning ("XR_ENVIRONMENT_BLEND_MODE_OPAQUE not supported, fallback: %d",
+                 blend_modes[0]);
+      self->blend_mode = blend_modes[0];
+    }
+
+  g_free (blend_modes);
 
   return TRUE;
 }
@@ -500,6 +551,9 @@ _init_runtime (GxrContext *self,
     return FALSE;
 
   if (!_check_graphics_api_support(self))
+    return FALSE;
+
+  if (!_check_blend_mode (self))
     return FALSE;
 
   return TRUE;
@@ -1961,7 +2015,7 @@ _end_frame (GxrContext *self)
     .displayTime = self->predicted_display_time,
     .layerCount = self->have_valid_pose ? 1 : 0,
     .layers = self->have_valid_pose ? projection_layers : NULL,
-    .environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE,
+    .environmentBlendMode = self->blend_mode,
   };
   result = xrEndFrame (self->session, &frame_end_info);
   if (!_check_xr_result (result, "failed to end frame!"))
