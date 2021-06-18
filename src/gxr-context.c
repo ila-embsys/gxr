@@ -25,6 +25,7 @@ struct _GxrContext
   struct {
     gboolean vulkan_enable;
     gboolean vulkan_enable2;
+    gboolean overlay;
   } extensions;
 
   GxrDeviceManager *device_manager;
@@ -198,7 +199,7 @@ _is_extension_supported (char                  *name,
 }
 
 static gboolean
-_check_vk_extension (GxrContext *self)
+_check_extensions (GxrContext *self)
 {
   XrResult result;
   uint32_t instanceExtensionCount = 0;
@@ -238,6 +239,13 @@ _check_vk_extension (GxrContext *self)
                               instanceExtensionProperties,
                               instanceExtensionCount);
 
+  self->extensions.overlay =
+    _is_extension_supported (XR_EXTX_OVERLAY_EXTENSION_NAME,
+                             instanceExtensionProperties,
+                             instanceExtensionCount);
+  g_debug ("%s extension supported: %d",
+           XR_EXTX_OVERLAY_EXTENSION_NAME, self->extensions.overlay);
+
   g_free (instanceExtensionProperties);
 
   if (!self->extensions.vulkan_enable2 && !self->extensions.vulkan_enable)
@@ -254,16 +262,19 @@ _check_vk_extension (GxrContext *self)
 static gboolean
 _create_instance (GxrContext* self, char *app_name, uint32_t app_version)
 {
+  // vulkan_enable or vulkan_enable2 is required. overlay is optional.
+  // list will need to be dynamic when more optional extensions are used.
   const char* const enabledExtensions[] = {
     self->extensions.vulkan_enable2 ?
       XR_KHR_VULKAN_ENABLE2_EXTENSION_NAME :
-      XR_KHR_VULKAN_ENABLE_EXTENSION_NAME
+      XR_KHR_VULKAN_ENABLE_EXTENSION_NAME,
+    XR_EXTX_OVERLAY_EXTENSION_NAME
   };
 
   XrInstanceCreateInfo instanceCreateInfo = {
     .type = XR_TYPE_INSTANCE_CREATE_INFO,
     .createFlags = 0,
-    .enabledExtensionCount = 1,
+    .enabledExtensionCount = self->extensions.overlay ? 2 : 1,
     .enabledExtensionNames = enabledExtensions,
     .enabledApiLayerCount = 0,
     .applicationInfo = {
@@ -476,7 +487,7 @@ _init_runtime (GxrContext *self,
                char       *app_name,
                uint32_t    app_version)
 {
-  if (!_check_vk_extension (self))
+  if (!_check_extensions (self))
     return FALSE;
 
   if (!_create_instance(self, app_name, app_version))
@@ -497,9 +508,16 @@ _init_runtime (GxrContext *self,
 static gboolean
 _create_session (GxrContext* self)
 {
+  // TODO: session layer placement should be configurable
+  XrSessionCreateInfoOverlayEXTX overlay_info = {
+    .type = XR_TYPE_SESSION_CREATE_INFO_OVERLAY_EXTX,
+    .next = &self->graphics_binding,
+    .sessionLayersPlacement = 1,
+  };
+
   XrSessionCreateInfo session_create_info = {
     .type = XR_TYPE_SESSION_CREATE_INFO,
-    .next = &self->graphics_binding,
+    .next = self->extensions.overlay ? (void*)&overlay_info : (void*)&self->graphics_binding,
     .systemId = self->system_id,
   };
 
@@ -781,7 +799,7 @@ _init_session (GxrContext *self)
 
   self->projection_layer = (XrCompositionLayerProjection){
     .type = XR_TYPE_COMPOSITION_LAYER_PROJECTION,
-    .layerFlags = 0,
+    .layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT,
     .space = self->play_space,
     .viewCount = self->view_count,
     .views = self->projection_views,
