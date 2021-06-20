@@ -83,6 +83,7 @@ enum {
   KEYBOARD_PRESS_EVENT,
   KEYBOARD_CLOSE_EVENT,
   QUIT_EVENT,
+  OVERLAY_EVENT,
   DEVICE_UPDATE_EVENT,
   BINDING_LOADED,
   BINDINGS_UPDATE,
@@ -116,6 +117,13 @@ gxr_context_class_init (GxrContextClass *klass)
 
   context_signals[QUIT_EVENT] =
   g_signal_new ("quit-event",
+                G_TYPE_FROM_CLASS (klass),
+                G_SIGNAL_RUN_LAST,
+                0, NULL, NULL, NULL, G_TYPE_NONE,
+                1, G_TYPE_POINTER | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  context_signals[OVERLAY_EVENT] =
+  g_signal_new ("overlay-event",
                 G_TYPE_FROM_CLASS (klass),
                 G_SIGNAL_RUN_LAST,
                 0, NULL, NULL, NULL, G_TYPE_NONE,
@@ -1579,7 +1587,15 @@ gxr_context_poll_event (GxrContext *self)
         } break;
         case XR_TYPE_EVENT_DATA_MAIN_SESSION_VISIBILITY_CHANGED_EXTX:
         {
-          g_debug ("Event: STUB: Session visibility changed");
+          XrEventDataMainSessionVisibilityChangedEXTX* event =
+           (XrEventDataMainSessionVisibilityChangedEXTX*)&runtimeEvent;
+
+          g_debug ("Event: main session visibility now: %d", event->visible);
+
+          GxrOverlayEvent *overlay_event = g_malloc (sizeof (GxrOverlayEvent));
+          overlay_event->main_session_visible =  event->visible;
+
+          gxr_context_emit_overlay_event (self, overlay_event);
         } break;
         case XR_TYPE_EVENT_DATA_PERF_SETTINGS_EXT:
         {
@@ -1715,6 +1731,11 @@ gxr_context_emit_quit (GxrContext *self, gpointer event)
   g_signal_emit (self, context_signals[QUIT_EVENT], 0, event);
 }
 
+void
+gxr_context_emit_overlay_event (GxrContext *self, gpointer event)
+{
+  g_signal_emit (self, context_signals[OVERLAY_EVENT], 0, event);
+}
 
 void
 gxr_context_emit_device_update (GxrContext *self, gpointer event)

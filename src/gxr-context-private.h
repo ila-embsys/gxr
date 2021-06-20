@@ -23,6 +23,9 @@ void
 gxr_context_emit_quit (GxrContext *self, gpointer event);
 
 void
+gxr_context_emit_overlay_event (GxrContext *self, gpointer event);
+
+void
 gxr_context_emit_device_activate (GxrContext *self, gpointer event);
 
 void

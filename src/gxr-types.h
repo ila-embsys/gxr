@@ -91,6 +91,16 @@ typedef struct {
 } GxrQuitEvent;
 
 /**
+ * GxrOverlayEvent:
+ * @main_session_visible: If a Main session is visible after this event.
+ *
+ * Event that is emitted when running in OpenXR overlay mode.
+ **/
+typedef struct {
+  bool main_session_visible;
+} GxrOverlayEvent;
+
+/**
  * GxrPose:
  * @transformation: The #graphene_matrix_t.
  * @is_valid: Validity of the pose.
