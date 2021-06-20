@@ -68,6 +68,7 @@ struct _CubeExample
 
   guint render_source;
   guint sigint_signal;
+  gboolean render_background;
 };
 
 G_DEFINE_TYPE (CubeExample, cube_example, GULKAN_TYPE_RENDERER)
@@ -93,6 +94,7 @@ cube_example_init (CubeExample *self)
   self->descriptor_pool = NULL;
   self->loop = g_main_loop_new (NULL, FALSE);
   self->sigint_signal = g_unix_signal_add (SIGINT, _sigint_cb, self);
+  self->render_background = TRUE;
 }
 
 static void
@@ -233,7 +235,15 @@ _init_pipeline (CubeExample *self)
           (VkPipelineColorBlendAttachmentState[]){
             { .colorWriteMask =
                 VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-                VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT },
+                VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT ,
+                .blendEnable = VK_TRUE,
+                .srcColorBlendFactor=VK_BLEND_FACTOR_SRC_ALPHA,
+                .dstColorBlendFactor=VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+                .colorBlendOp=VK_BLEND_OP_ADD,
+                .srcAlphaBlendFactor=VK_BLEND_FACTOR_ONE,
+                .dstAlphaBlendFactor=VK_BLEND_FACTOR_ZERO,
+                .alphaBlendOp=VK_BLEND_OP_ADD
+            }
           } },
     .layout = self->pipeline_layout,
     .renderPass = gulkan_render_pass_get_handle (self->render_pass),
@@ -431,6 +441,16 @@ _init_uniform_buffer (CubeExample *self)
   return TRUE;
 }
 
+static void
+_overlay_cb (GxrContext      *context,
+             GxrOverlayEvent *event,
+             CubeExample     *self)
+{
+  (void) context;
+  self->render_background = !event->main_session_visible;
+  g_free (event);
+}
+
 static gboolean
 _init (CubeExample *self)
 {
@@ -473,6 +493,9 @@ _init (CubeExample *self)
     return FALSE;
 
   _update_descriptors (self);
+
+  g_signal_connect (self->context, "overlay-event",
+                    (GCallback) _overlay_cb, self);
 
   return TRUE;
 }
@@ -554,8 +577,12 @@ _render_stereo (CubeExample *self, VkCommandBuffer cmd_buffer)
   };
   vkCmdSetScissor (cmd_buffer, 0, 1, &scissor);
 
-  VkClearColorValue black = {
-    .float32 = { 0.0f, 0.0f, 0.0f, 1.0f },
+  float r = self->render_background ? 0.1f : 0.0f;
+  float g = self->render_background ? 0.1f : 0.0f;
+  float b = self->render_background ? 0.7f : 0.0f;
+  float a = self->render_background ? 1.0f : 0.0f;
+  VkClearColorValue clear_color = {
+    .float32 = { r, g, b, a }
   };
 
   uint32_t view_count = gxr_context_get_view_count (self->context);
@@ -564,7 +591,7 @@ _render_stereo (CubeExample *self, VkCommandBuffer cmd_buffer)
       GulkanFrameBuffer *framebuffer =
         gxr_context_get_acquired_framebuffer (self->context, view);
 
-      gulkan_render_pass_begin (self->render_pass, extent, black,
+      gulkan_render_pass_begin (self->render_pass, extent, clear_color,
                                 framebuffer, cmd_buffer);
 
       _render_eye (self, view, cmd_buffer);
