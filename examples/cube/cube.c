@@ -581,6 +581,8 @@ _iterate_cb (gpointer _self)
   GulkanDevice *device = gulkan_client_get_device (gc);
   GulkanQueue *queue = gulkan_device_get_graphics_queue (device);
 
+  gxr_context_poll_event (self->context);
+
   if (!gxr_context_begin_frame (self->context))
     return FALSE;
 
