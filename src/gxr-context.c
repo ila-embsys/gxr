@@ -1562,10 +1562,14 @@ gxr_context_poll_event (GxrContext *self)
     .next = NULL,
   };
 
-  XrResult pollResult = xrPollEvent (self->instance, &runtimeEvent);
-
-  while (pollResult == XR_SUCCESS)
+  XrResult pollResult;
+  while (true)
     {
+      runtimeEvent.type = XR_TYPE_EVENT_DATA_BUFFER;
+      pollResult = xrPollEvent (self->instance, &runtimeEvent);
+      if (pollResult != XR_SUCCESS)
+        break;
+
       switch (runtimeEvent.type)
       {
         case XR_TYPE_EVENT_DATA_EVENTS_LOST:
@@ -1679,8 +1683,6 @@ gxr_context_poll_event (GxrContext *self)
           break;
         }
       }
-
-      pollResult = xrPollEvent (self->instance, &runtimeEvent);
     }
 
   if (pollResult == XR_EVENT_UNAVAILABLE)
