@@ -51,6 +51,7 @@ typedef struct Example
 
   SceneRenderer *renderer;
   SceneBackground *background;
+  gboolean render_background;
   SceneCube *cube;
 
   // GxrController -> SceneController
@@ -224,9 +225,10 @@ _render_eye_cb (uint32_t         eye,
   graphene_matrix_multiply (&self->mat_view[eye],
                             &self->mat_projection[eye], &vp);
 
-  scene_background_render (self->background, eye,
-                               pipelines[PIPELINE_BACKGROUND],
-                               pipeline_layout, cmd_buffer, &vp);
+  if (self->render_background)
+    scene_background_render (self->background, eye,
+                             pipelines[PIPELINE_BACKGROUND],
+                             pipeline_layout, cmd_buffer, &vp);
 
   _render_pointers (self, eye, cmd_buffer, pipelines, pipeline_layout, &vp);
 
@@ -476,6 +478,16 @@ _system_quit_cb (GxrContext   *context,
   g_free (event);
 }
 
+static void
+_overlay_cb (GxrContext      *context,
+             GxrOverlayEvent *event,
+             Example         *self)
+{
+  (void) context;
+  self->render_background = !event->main_session_visible;
+  g_free (event);
+}
+
 static gboolean
 _init_example (Example *self)
 {
@@ -530,6 +542,10 @@ _init_example (Example *self)
 
   g_signal_connect (self->context, "quit-event",
                     (GCallback) _system_quit_cb, self);
+
+  self->render_background = TRUE;
+  g_signal_connect (self->context, "overlay-event",
+                    (GCallback) _overlay_cb, self);
 
   return TRUE;
 }

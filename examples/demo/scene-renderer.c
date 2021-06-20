@@ -600,7 +600,7 @@ _render_stereo (SceneRenderer *self, VkCommandBuffer cmd_buffer)
   vkCmdSetScissor (cmd_buffer, 0, 1, &scissor);
 
   VkClearColorValue black = {
-    .float32 = { 0.0f, 0.0f, 0.0f, 1.0f },
+    .float32 = { 0.0f, 0.0f, 0.0f, .0f },
   };
 
   uint32_t view_count = gxr_context_get_view_count (self->context);
