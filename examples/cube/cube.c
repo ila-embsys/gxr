@@ -72,7 +72,7 @@ struct _CubeExample
 
 G_DEFINE_TYPE (CubeExample, cube_example, GULKAN_TYPE_RENDERER)
 
-CubeExample *
+static CubeExample *
 cube_example_new (void)
 {
   return (CubeExample*) g_object_new (CUBE_TYPE_EXAMPLE, 0);
