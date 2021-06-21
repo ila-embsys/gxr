@@ -172,7 +172,7 @@ _check_xr_result (XrResult result, const char* format, ...)
   char msg[BUF_LEN] = {0};
   g_snprintf(msg, BUF_LEN, "[%s] ", result_str);
 
-  int result_written_len = strlen (msg);
+  gulong result_written_len = strlen (msg);
 
   va_list args;
   va_start (args, format);
