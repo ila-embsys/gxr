@@ -59,7 +59,6 @@ gdk_dep = dependency('gdk-3.0', version: '>= 3.22')
 gmodule_dep = dependency('gmodule-2.0')
 json_glib_dep = dependency('json-glib-1.0')
 
-backends = ['openxr']
 openxr_dep = dependency('openxr')
 config_h.set('GXR_DEFAULT_API', 'GXR_API_OPENXR')
 
