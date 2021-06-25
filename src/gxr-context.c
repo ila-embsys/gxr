@@ -616,20 +616,23 @@ _check_supported_spaces (GxrContext* self)
   if (!_check_xr_result (result, "Enumerating reference spaces failed!"))
     return FALSE;
 
-  if (!_is_space_supported (spaces, count, XR_REFERENCE_SPACE_TYPE_LOCAL)) {
-    g_print ("XR_REFERENCE_SPACE_TYPE_LOCAL unsupported.\n");
-    return FALSE;
-  }
-
-  if (_is_space_supported (spaces, count, XR_REFERENCE_SPACE_TYPE_STAGE))
+  XrReferenceSpaceType space_type = XR_REFERENCE_SPACE_TYPE_STAGE;
+  const gchar *gxr_space = g_getenv ("GXR_SPACE");
+  if (gxr_space)
     {
-      self->play_space_type = XR_REFERENCE_SPACE_TYPE_STAGE;
-      g_debug ("Stage space supported.");
+      if (g_strcmp0 (gxr_space, "LOCAL") == 0)
+        space_type = XR_REFERENCE_SPACE_TYPE_LOCAL;
+    }
+
+  if (_is_space_supported (spaces, count, space_type))
+    {
+      self->play_space_type = space_type;
+      g_debug ("Requested play space supported.");
     }
   else
     {
-      self->play_space_type = XR_REFERENCE_SPACE_TYPE_LOCAL;
-      g_debug ("Stage space not supported, fall back to local space!");
+      self->play_space_type = spaces[0];
+      g_debug ("Requested play space not supported, fall back to %d!", spaces[0]);
     }
 
   if (!_is_space_supported (spaces, count, XR_REFERENCE_SPACE_TYPE_VIEW)) {
@@ -644,11 +647,14 @@ _check_supported_spaces (GxrContext* self)
     .position = { .x = 0, .y = 0, .z = 0 },
   };
 
+  // TODO: monado doesn't handle this well
+#if 0
   if (self->play_space_type == XR_REFERENCE_SPACE_TYPE_LOCAL)
     {
       space_pose.position.y = -1.6f;
       g_debug ("Using local space with %f y offset", space_pose.position.y);
     }
+#endif
 
   XrReferenceSpaceCreateInfo info = {
     .type = XR_TYPE_REFERENCE_SPACE_CREATE_INFO,
