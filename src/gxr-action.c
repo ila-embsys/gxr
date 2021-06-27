@@ -295,14 +295,15 @@ _action_poll_digital (GxrAction *self)
           return TRUE;
         }
 
-      GxrDigitalEvent *event = g_malloc (sizeof (GxrDigitalEvent));
-      event->controller = controller;
-      event->active = (gboolean)value.isActive;
-      event->state = (gboolean)value.currentState;
-      event->changed = (gboolean)value.changedSinceLastSync;
-      event->time = _get_time_diff (value.lastChangeTime);
+      GxrDigitalEvent event = {
+        .controller = controller,
+        .active = (gboolean)value.isActive,
+        .state = (gboolean)value.currentState,
+        .changed = (gboolean)value.changedSinceLastSync,
+        .time = _get_time_diff (value.lastChangeTime)
+      };
 
-      gxr_action_emit_digital (GXR_ACTION (self), event);
+      gxr_action_emit_digital (GXR_ACTION (self), &event);
     }
 
   return TRUE;
@@ -361,15 +362,16 @@ _action_poll_digital_from_float (GxrAction *self)
 
       gboolean currentState = value.currentState >= self->threshold;
 
-      GxrDigitalEvent *event = g_malloc (sizeof (GxrDigitalEvent));
-      event->controller = controller;
-      event->active = (gboolean)value.isActive;
-      event->state = (gboolean)currentState;
-      event->changed = (gboolean)(value.changedSinceLastSync &&
-        currentState != self->last_bool[controller_handle]);
-      event->time = _get_time_diff (value.lastChangeTime);
+      GxrDigitalEvent event = {
+        .controller = controller,
+        .active = (gboolean)value.isActive,
+        .state = (gboolean)currentState,
+        .changed = (gboolean)(value.changedSinceLastSync &&
+            currentState != self->last_bool[controller_handle]),
+        .time = _get_time_diff (value.lastChangeTime),
+      };
 
-      gxr_action_emit_digital (GXR_ACTION (self), event);
+      gxr_action_emit_digital (GXR_ACTION (self), &event);
       self->last_float[controller_handle] = value.currentState;
       self->last_bool[controller_handle] = currentState;
     }
@@ -411,19 +413,20 @@ _action_poll_analog (GxrAction *self)
         continue;
       }
 
-      GxrAnalogEvent *event = g_malloc (sizeof (GxrAnalogEvent));
-      event->controller = controller;
-      event->active = (gboolean)value.isActive;
-      graphene_vec3_init (&event->state, value.currentState, 0, 0);
-      graphene_vec3_subtract (&event->state,
+      GxrAnalogEvent event = {
+        .controller = controller,
+        .active = (gboolean)value.isActive,
+        .time = _get_time_diff (value.lastChangeTime),
+      };
+      graphene_vec3_init (&event.state, value.currentState, 0, 0);
+      graphene_vec3_subtract (&event.state,
                               &self->last_vec[controller_handle],
-                              &event->delta);
-      event->time = _get_time_diff (value.lastChangeTime);
+                              &event.delta);
 
-      gxr_action_emit_analog (GXR_ACTION (self), event);
+      gxr_action_emit_analog (GXR_ACTION (self), &event);
 
       graphene_vec3_init_from_vec3 (&self->last_vec[controller_handle],
-                                    &event->state);
+                                    &event.state);
     }
 
   return TRUE;
@@ -462,19 +465,20 @@ _action_poll_vec2f (GxrAction *self)
           continue;
         }
 
-      GxrAnalogEvent *event = g_malloc (sizeof (GxrAnalogEvent));
-      event->controller = controller;
-      event->active = (gboolean)value.isActive;
-      graphene_vec3_init (&event->state, value.currentState.x, value.currentState.y, 0);
-      graphene_vec3_subtract (&event->state,
+      GxrAnalogEvent event = {
+        .controller = controller,
+        .active = (gboolean)value.isActive,
+        .time = _get_time_diff (value.lastChangeTime),
+      };
+      graphene_vec3_init (&event.state, value.currentState.x, value.currentState.y, 0);
+      graphene_vec3_subtract (&event.state,
                               &self->last_vec[controller_handle],
-                              &event->delta);
-      event->time = _get_time_diff (value.lastChangeTime);
+                              &event.delta);
 
-      gxr_action_emit_analog (GXR_ACTION (self), event);
+      gxr_action_emit_analog (GXR_ACTION (self), &event);
 
       graphene_vec3_init_from_vec3 (&self->last_vec[controller_handle],
-                                    &event->state);
+                                    &event.state);
     }
 
   return TRUE;
@@ -570,16 +574,17 @@ _action_poll_pose_secs_from_now (GxrAction *self,
       );
       */
 
-      GxrPoseEvent *event = g_malloc (sizeof (GxrPoseEvent));
-      event->active = value.isActive == XR_TRUE;
-      event->controller = controller;
-      _get_model_matrix_from_pose(&space_location.pose, &event->pose);
-      graphene_vec3_init (&event->velocity, 0, 0, 0);
-      graphene_vec3_init (&event->angular_velocity, 0, 0, 0);
-      event->valid = spaceLocationValid;
-      event->device_connected = event->active;
+      GxrPoseEvent event = {
+        .active = value.isActive == XR_TRUE,
+        .controller = controller,
+        .valid = spaceLocationValid,
+        .device_connected = value.isActive == XR_TRUE,
+      };
+      _get_model_matrix_from_pose(&space_location.pose, &event.pose);
+      graphene_vec3_init (&event.velocity, 0, 0, 0);
+      graphene_vec3_init (&event.angular_velocity, 0, 0, 0);
 
-      gxr_action_emit_pose (GXR_ACTION (self), event);
+      gxr_action_emit_pose (GXR_ACTION (self), &event);
     }
 
   return TRUE;

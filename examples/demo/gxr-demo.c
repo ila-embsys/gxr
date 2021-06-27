@@ -336,7 +336,6 @@ _action_restart_cb (GxrAction       *action,
 
       g_main_loop_quit (self->loop);
     }
-  g_free (event);
 }
 
 static void
@@ -352,7 +351,6 @@ _action_quit_cb (GxrAction       *action,
 
       g_main_loop_quit (self->loop);
     }
-  g_free (event);
 }
 
 static void
@@ -374,7 +372,6 @@ _action_grab_cb (GxrAction       *action,
       g_print ("Ungrabbing cube\n");
       self->cube_grabbed = NULL;
     }
-  g_free (event);
 }
 
 static GxrActionSet *
@@ -475,7 +472,6 @@ _system_quit_cb (GxrContext   *context,
   (void) self;
   (void) context;
   g_main_loop_quit (self->loop);
-  g_free (event);
 }
 
 static void
@@ -485,7 +481,6 @@ _overlay_cb (GxrContext      *context,
 {
   (void) context;
   self->render_background = !event->main_session_visible;
-  g_free (event);
 }
 
 static gboolean

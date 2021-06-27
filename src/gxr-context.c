@@ -1598,10 +1598,11 @@ gxr_context_poll_event (GxrContext *self)
 
           g_debug ("Event: main session visibility now: %d", event->visible);
 
-          GxrOverlayEvent *overlay_event = g_malloc (sizeof (GxrOverlayEvent));
-          overlay_event->main_session_visible =  event->visible;
+          GxrOverlayEvent overlay_event = {
+            .main_session_visible =  event->visible,
+          };
 
-          gxr_context_emit_overlay_event (self, overlay_event);
+          gxr_context_emit_overlay_event (self, &overlay_event);
         } break;
         case XR_TYPE_EVENT_DATA_PERF_SETTINGS_EXT:
         {
@@ -1622,10 +1623,11 @@ gxr_context_poll_event (GxrContext *self)
             {
               self->is_stopping = TRUE;
 
-              GxrQuitEvent *quit_event = g_malloc (sizeof (GxrQuitEvent));
-              quit_event->reason = GXR_QUIT_SHUTDOWN;
+              GxrQuitEvent quit_event = {
+                .reason = GXR_QUIT_SHUTDOWN,
+              };
               g_debug ("Event: sending VR_QUIT_SHUTDOWN signal");
-              gxr_context_emit_quit (self, quit_event);
+              gxr_context_emit_quit (self, &quit_event);
 
               xrEndSession (self->session);
 
@@ -1636,10 +1638,11 @@ gxr_context_poll_event (GxrContext *self)
         }
         case XR_TYPE_EVENT_DATA_INSTANCE_LOSS_PENDING:
         {
-          GxrQuitEvent *event = g_malloc (sizeof (GxrQuitEvent));
-          event->reason = GXR_QUIT_SHUTDOWN;
+          GxrQuitEvent event = {
+            .reason = GXR_QUIT_SHUTDOWN,
+          };
           g_debug ("Event: sending VR_QUIT_SHUTDOWN signal");
-          gxr_context_emit_quit (self, event);
+          gxr_context_emit_quit (self, &event);
           break;
         }
         case XR_TYPE_EVENT_DATA_INTERACTION_PROFILE_CHANGED:

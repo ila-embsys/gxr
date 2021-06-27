@@ -250,8 +250,6 @@ _update_pointer_pose_cb (GxrAction        *action,
   gxr_controller_update_pointer_pose (event->controller, &event->pose, valid);
 
   g_mutex_unlock (&self->device_mutex);
-
-  g_free (event);
 }
 
 static void
@@ -268,8 +266,6 @@ _update_hand_grip_pose_cb (GxrAction        *action,
   gxr_controller_update_hand_grip_pose (event->controller, &event->pose, valid);
 
   g_mutex_unlock (&self->device_mutex);
-
-  g_free (event);
 }
 
 void

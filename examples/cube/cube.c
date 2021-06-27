@@ -448,7 +448,6 @@ _overlay_cb (GxrContext      *context,
 {
   (void) context;
   self->render_background = !event->main_session_visible;
-  g_free (event);
 }
 
 static gboolean
