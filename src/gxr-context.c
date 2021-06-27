@@ -1068,12 +1068,17 @@ _create_vk_instance2 (GxrContext *self, GSList *instance_ext_list, VkInstance *i
     xrGetInstanceProcAddr(self->instance, "xrCreateVulkanInstanceKHR",
                           (PFN_xrVoidFunction*)&CreateVulkanInstanceKHR);
   if (!_check_xr_result(result, "Failed to load xrCreateVulkanInstanceKHR."))
-    return FALSE;
+    {
+      g_free (extension_names);
+      g_slist_free_full (instance_ext_list_reduced, g_free);
+      return FALSE;
+    }
 
   VkResult vk_result;
   result = CreateVulkanInstanceKHR(self->instance, &xr_vk_instance_info,
                                    instance, &vk_result);
 
+  g_free (extension_names);
   g_slist_free_full (instance_ext_list_reduced, g_free);
 
   if (!_check_xr_result(result, "Failed to create Vulkan instance!"))
