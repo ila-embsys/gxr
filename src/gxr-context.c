@@ -460,7 +460,7 @@ _set_up_views (GxrContext* self)
     return FALSE;
 
   self->configuration_views =
-    malloc(sizeof(XrViewConfigurationView) * self->view_count);
+    g_malloc(sizeof(XrViewConfigurationView) * self->view_count);
 
   for (uint32_t i = 0; i < self->view_count; i++)
     {
@@ -807,7 +807,7 @@ static void
 _create_projection_views (GxrContext* self)
 {
   self->projection_views =
-    malloc(sizeof(XrCompositionLayerProjectionView) * self->view_count);
+    g_malloc(sizeof(XrCompositionLayerProjectionView) * self->view_count);
 
   for (uint32_t i = 0; i < self->view_count; i++)
     self->projection_views[i] = (XrCompositionLayerProjectionView) {
@@ -921,13 +921,13 @@ _remove_unsupported_instance_exts (GSList **target)
                                           NULL);
 
   VkExtensionProperties *supported_props =
-    malloc (sizeof(VkExtensionProperties) * supported_count);
+    g_malloc (sizeof(VkExtensionProperties) * supported_count);
   vkEnumerateInstanceExtensionProperties (NULL,
                                          &supported_count,
                                           supported_props);
 
   _remove_unsupported_exts (target, supported_count, supported_props);
-  free (supported_props);
+  g_free (supported_props);
 }
 
 static void
@@ -941,14 +941,14 @@ _remove_unsupported_device_exts (VkPhysicalDevice vk_physical_device,
                                         NULL);
 
   VkExtensionProperties *supported_props =
-    malloc (sizeof(VkExtensionProperties) * supported_count);
+    g_malloc (sizeof(VkExtensionProperties) * supported_count);
   vkEnumerateDeviceExtensionProperties (vk_physical_device,
                                         NULL,
                                         &supported_count,
                                         supported_props);
 
   _remove_unsupported_exts (target, supported_count, supported_props);
-  free (supported_props);
+  g_free (supported_props);
 }
 
 static gboolean
