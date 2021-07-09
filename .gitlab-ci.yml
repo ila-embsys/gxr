@@ -11,7 +11,7 @@ include:
 
 variables:
   FDO_UPSTREAM_REPO: xrdesktop/gxr
-  GULKAN_COMMIT: "1420f327253027f350452e8bf0c85756d163121b"
+  GULKAN_COMMIT: "5804d98551a125be1141a32cb075d93cdb71718a"
   OPENXR_SDK_TAG: "release-1.0.14"
 
 stages:
@@ -50,22 +50,22 @@ stages:
 # variables shared by container_prep and build jobs
 .xrdesktop.variables.arch:rolling:
   variables:
-    FDO_DISTRIBUTION_TAG: "2021-06-09.0"
+    FDO_DISTRIBUTION_TAG: "2021-07-09.0"
 
 .xrdesktop.variables.ubuntu:focal:
   variables:
     FDO_DISTRIBUTION_VERSION: "20.04"
-    FDO_DISTRIBUTION_TAG: "2021-06-09.0"
+    FDO_DISTRIBUTION_TAG: "2021-07-09.0"
 
 .xrdesktop.variables.ubuntu:groovy:
   variables:
     FDO_DISTRIBUTION_VERSION: "20.10"
-    FDO_DISTRIBUTION_TAG: "2021-06-09.0"
+    FDO_DISTRIBUTION_TAG: "2021-07-09.0"
 
 .xrdesktop.variables.ubuntu:hirsute:
   variables:
     FDO_DISTRIBUTION_VERSION: "21.04"
-    FDO_DISTRIBUTION_TAG: "2021-06-09.1"
+    FDO_DISTRIBUTION_TAG: "2021-07-09.0"
 
 .xrdesktop.variables.debian-based-packages:
   variables:
