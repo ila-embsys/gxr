@@ -36,7 +36,7 @@ stages:
       cd OpenXR-SDK-Source && \
       CC=clang CXX=clang++ cmake . -G Ninja -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DDYNAMIC_LOADER=ON && \
       ninja -C . install && \
-      cd .. && \
+      cd ..
 
 # "Base" job for a Meson build
 .xrdesktop.base-job.build-meson:
