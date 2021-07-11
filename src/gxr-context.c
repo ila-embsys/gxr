@@ -863,7 +863,7 @@ _init_session (GxrContext *self)
   self->session_state = XR_SESSION_STATE_UNKNOWN;
   self->should_render = FALSE;
   self->have_valid_pose = FALSE;
-  self->is_stopping = FALSE;
+  self->is_exiting = FALSE;
 
   self->projection_layer = (XrCompositionLayerProjection){
     .type = XR_TYPE_COMPOSITION_LAYER_PROJECTION,
@@ -894,7 +894,7 @@ _remove_unsupported_exts (GSList               **target,
 {
   for (GSList *l = *target; l; l = l->next)
     {
-      gboolean is_supported = false;
+      gboolean is_supported = FALSE;
       for (uint32_t i = 0; i < supported_count; i++)
         {
           gchar *ext = l->data;
@@ -1102,7 +1102,7 @@ _get_vk_physical_device2 (GxrContext *self,
     self->instance, "xrGetVulkanGraphicsDevice2KHR", (PFN_xrVoidFunction*)&fun);
 
   if (!_check_xr_result(res, "Failed to load xrGetVulkanGraphicsDevice2KHR."))
-    return false;
+    return FALSE;
 
   XrVulkanGraphicsDeviceGetInfoKHR info = {
     .type = XR_TYPE_VULKAN_GRAPHICS_DEVICE_GET_INFO_KHR,
@@ -1114,9 +1114,9 @@ _get_vk_physical_device2 (GxrContext *self,
   res = fun(self->instance, &info, physical_device);
 
   if (!_check_xr_result(res, "Failed to get Vulkan graphics device."))
-    return false;
+    return FALSE;
 
-  return true;
+  return TRUE;
 }
 
 static gboolean
@@ -1285,14 +1285,14 @@ _create_vk_device2 (GxrContext      *self,
   g_slist_free_full (device_ext_list_reduced, g_free);
 
   if (!_check_xr_result(res, "Failed to create Vulkan graphics device."))
-    return false;
+    return FALSE;
 
   if (vk_result != VK_SUCCESS) {
     g_printerr ("Runtime failed to create Vulkan device: %d\n", vk_result);
-    return false;
+    return FALSE;
   }
 
-  return true;
+  return TRUE;
 }
 
 static gboolean
@@ -1582,7 +1582,7 @@ gxr_context_poll_event (GxrContext *self)
   };
 
   XrResult pollResult;
-  while (true)
+  while (TRUE)
     {
       runtimeEvent.type = XR_TYPE_EVENT_DATA_BUFFER;
       pollResult = xrPollEvent (self->instance, &runtimeEvent);
