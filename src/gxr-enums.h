@@ -20,7 +20,6 @@
  * GxrQuitReason:
  * @GXR_QUIT_SHUTDOWN: Runtime is shutting down.
  * @GXR_QUIT_APPLICATION_TRANSITION: A new scene application wants the focus.
- * @GXR_QUIT_PROCESS_QUIT: A running scene application releases the focus.
  *
  * Reason why an quit signal was received
  *
@@ -28,7 +27,6 @@
 typedef enum {
   GXR_QUIT_SHUTDOWN,
   GXR_QUIT_APPLICATION_TRANSITION,
-  GXR_QUIT_PROCESS_QUIT
 } GxrQuitReason;
 
 /**
