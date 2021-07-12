@@ -62,7 +62,7 @@ scene_controller_init (SceneController *self)
 
 static void
 _controller_move_cb (GxrController *controller,
-                     GxrQuitEvent *event,
+                     GxrStateChangeEvent *event,
                      SceneController *self);
 
 SceneController *
@@ -185,7 +185,7 @@ _no_hover_transform_tip (SceneController *self,
 
 static void
 _controller_move_cb (GxrController *controller,
-                     GxrQuitEvent *event,
+                     GxrStateChangeEvent *event,
                      SceneController *self)
 {
   (void) event;

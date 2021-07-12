@@ -17,17 +17,25 @@
 #define GXR_MODEL_NAME_MAX 32768
 
 /**
- * GxrQuitReason:
- * @GXR_QUIT_SHUTDOWN: Runtime is shutting down.
- * @GXR_QUIT_APPLICATION_TRANSITION: A new scene application wants the focus.
- *
- * Reason why an quit signal was received
+ * GxrStateChange:
+ * @GXR_STATE_FRAMECYCLE_START: Ready to call gxr_context_begin_frame /
+ *  gxr_context_end_frame.
+ * @GXR_STATE_FRAMECYCLE_STOP: Not ready to call gxr_context_begin_frame /
+ *  gxr_context_end_frame.
+ * @GXR_STATE_RENDERING_START: The frame content will be shown in XR.
+ * @GXR_STATE_RENDERING_STOP: The frame content will not be visible, expensive
+ *  rendering work can be skipped, but  gxr_context_begin_frame /
+ *   gxr_context_end_frame should be called.
+ * @GXR_QUIT_SHUTDOWN: XR Runtime is shutting down.
  *
  **/
 typedef enum {
-  GXR_QUIT_SHUTDOWN,
-  GXR_QUIT_APPLICATION_TRANSITION,
-} GxrQuitReason;
+  GXR_STATE_FRAMECYCLE_START,
+  GXR_STATE_FRAMECYCLE_STOP,
+  GXR_STATE_RENDERING_START,
+  GXR_STATE_RENDERING_STOP,
+  GXR_STATE_SHUTDOWN,
+} GxrStateChange;
 
 /**
  * GxrEye:

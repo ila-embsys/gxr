@@ -20,7 +20,7 @@ void
 gxr_context_emit_keyboard_close (GxrContext *self);
 
 void
-gxr_context_emit_quit (GxrContext *self, gpointer event);
+gxr_context_emit_state_change (GxrContext *self, gpointer event);
 
 void
 gxr_context_emit_overlay_event (GxrContext *self, gpointer event);

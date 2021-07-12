@@ -81,14 +81,14 @@ typedef struct {
 } GxrPoseEvent;
 
 /**
- * GxrQuitEvent:
+ * GxrStateChangeEvent:
  * @reason: The #GxrQuitReason.
  *
  * Event that is emitted when the application needs to quit.
  **/
 typedef struct {
-  GxrQuitReason reason;
-} GxrQuitEvent;
+  GxrStateChange state_change;
+} GxrStateChangeEvent;
 
 /**
  * GxrOverlayEvent:

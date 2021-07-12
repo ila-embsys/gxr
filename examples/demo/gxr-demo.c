@@ -33,6 +33,8 @@ typedef struct Example
 
   guint render_source;
   bool shutdown;
+  bool rendering;
+  bool framecycle;
 
   GxrActionSet *actionset;
   guint poll_input_source_id;
@@ -112,6 +114,9 @@ _iterate_cb (gpointer _self)
   if (self->shutdown)
     return FALSE;
 
+  if (!self->framecycle)
+    return TRUE;
+
   GxrContext *context = self->context;
   if (!gxr_context_begin_frame (context))
     return FALSE;
@@ -124,7 +129,8 @@ _iterate_cb (gpointer _self)
     gxr_context_get_projection (context, eye, self->near, self->far,
                                 &self->mat_projection[eye]);
 
-  scene_renderer_draw (self->renderer);
+  if (self->rendering)
+    scene_renderer_draw (self->renderer);
 
   gxr_context_end_frame (context);
 
@@ -420,6 +426,9 @@ _poll_runtime_events (Example *self)
 static gboolean
 _poll_input_events (Example *self)
 {
+  if (!self->framecycle)
+    return TRUE;
+
   if (!self->context)
   {
     g_printerr ("Error polling events: No Gxr Context\n");
@@ -464,14 +473,30 @@ _init_input_callbacks (Example *self)
 }
 
 static void
-_system_quit_cb (GxrContext   *context,
-                 GxrQuitEvent *event,
-                 Example      *self)
+_state_change_cb (GxrContext          *context,
+                  GxrStateChangeEvent *event,
+                  Example             *self)
 {
-  (void) event;
-  (void) self;
+
   (void) context;
-  g_main_loop_quit (self->loop);
+  switch (event->state_change)
+  {
+    case GXR_STATE_SHUTDOWN:
+      g_main_loop_quit (self->loop);
+      break;
+    case GXR_STATE_FRAMECYCLE_START:
+      self->framecycle = TRUE;
+      break;
+    case GXR_STATE_FRAMECYCLE_STOP:
+      self->framecycle = FALSE;
+      break;
+    case GXR_STATE_RENDERING_START:
+      self->rendering = TRUE;
+      break;
+    case GXR_STATE_RENDERING_STOP:
+      self->rendering = FALSE;
+      break;
+  }
 }
 
 static void
@@ -535,8 +560,8 @@ _init_example (Example *self)
   self->poll_runtime_event_source_id =
     g_timeout_add (20, (GSourceFunc) _poll_runtime_events, self);
 
-  g_signal_connect (self->context, "quit-event",
-                    (GCallback) _system_quit_cb, self);
+  g_signal_connect (self->context, "state-change-event",
+                    (GCallback) _state_change_cb, self);
 
   self->render_background = TRUE;
   g_signal_connect (self->context, "overlay-event",

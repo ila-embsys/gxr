@@ -63,7 +63,10 @@ struct _GxrContext
   XrSessionState session_state;
   gboolean should_render;
   gboolean have_valid_pose;
-  gboolean is_stopping;
+  // to avoid beginning an already running session
+  gboolean session_running;
+  // run begin/end frame cycle only when we are in certain states
+  gboolean should_submit_frames;
 
   XrCompositionLayerProjection projection_layer;
 
@@ -82,7 +85,7 @@ G_DEFINE_TYPE (GxrContext, gxr_context, G_TYPE_OBJECT)
 enum {
   KEYBOARD_PRESS_EVENT,
   KEYBOARD_CLOSE_EVENT,
-  QUIT_EVENT,
+  STATE_CHANGE_EVENT,
   OVERLAY_EVENT,
   DEVICE_UPDATE_EVENT,
   BINDING_LOADED,
@@ -115,8 +118,8 @@ gxr_context_class_init (GxrContextClass *klass)
                 G_SIGNAL_RUN_FIRST,
                 0, NULL, NULL, NULL, G_TYPE_NONE, 0);
 
-  context_signals[QUIT_EVENT] =
-  g_signal_new ("quit-event",
+  context_signals[STATE_CHANGE_EVENT] =
+  g_signal_new ("state-change-event",
                 G_TYPE_FROM_CLASS (klass),
                 G_SIGNAL_RUN_LAST,
                 0, NULL, NULL, NULL, G_TYPE_NONE,
@@ -182,7 +185,7 @@ _check_xr_result (XrResult result, const char* format, ...)
   char msg[BUF_LEN] = {0};
   g_snprintf(msg, BUF_LEN, "[%s] ", result_str);
 
-  gulong result_written_len = strlen (msg);
+  gulong result_written_len = (gulong) strlen (msg);
 
   va_list args;
   va_start (args, format);
@@ -684,6 +687,30 @@ _begin_session (GxrContext* self)
   if (!_check_xr_result (result, "Failed to begin session!"))
     return FALSE;
 
+  self->session_running = TRUE;
+  return TRUE;
+}
+
+static gboolean
+_end_session (GxrContext* self)
+{
+  XrResult result = xrEndSession(self->session);
+  if (!_check_xr_result (result, "Failed to end session!"))
+    return FALSE;
+
+  self->session_running = FALSE;
+  return TRUE;
+}
+
+static gboolean
+_destroy_session (GxrContext* self)
+{
+  XrResult result = xrDestroySession(self->session);
+  if (!_check_xr_result (result, "Failed to destroy session!"))
+    return FALSE;
+
+  self->session_running = FALSE;
+  self->session = NULL;
   return TRUE;
 }
 
@@ -863,7 +890,6 @@ _init_session (GxrContext *self)
   self->session_state = XR_SESSION_STATE_UNKNOWN;
   self->should_render = FALSE;
   self->have_valid_pose = FALSE;
-  self->is_exiting = FALSE;
 
   self->projection_layer = (XrCompositionLayerProjection){
     .type = XR_TYPE_COMPOSITION_LAYER_PROJECTION,
@@ -1483,6 +1509,8 @@ gxr_context_finalize (GObject *gobject)
 
   /* child classes MUST destroy gulkan after this destructor finishes */
 
+  g_debug ("destroyed up gxr context, bye");
+
   G_OBJECT_CLASS (gxr_context_parent_class)->finalize (gobject);
 }
 
@@ -1624,30 +1652,103 @@ gxr_context_poll_event (GxrContext *self)
 
           self->session_state = event->state;
           g_debug ("EVENT: session state changed to %d", event->state);
-          if (event->state >= XR_SESSION_STATE_STOPPING)
+
+          /*
+           * react to session state changes, see OpenXR spec 9.3 diagram. What we need to react to:
+           *
+           * * READY -> xrBeginSession STOPPING -> xrEndSession (note that the same session can be restarted)
+           * * EXITING -> xrDestroySession (EXITING only happens after we went through STOPPING and called xrEndSession)
+           *
+           * After exiting it is still possible to create a new session but we don't do that here.
+           *
+           * * IDLE -> don't run render loop, but keep polling for events
+           * * SYNCHRONIZED, VISIBLE, FOCUSED -> run render loop
+           */
+          gboolean should_submit_frames = FALSE;
+          switch (event->state) {
+            // skip render loop, keep polling
+            case XR_SESSION_STATE_MAX_ENUM: // must be a bug
+            case XR_SESSION_STATE_IDLE:
+            case XR_SESSION_STATE_UNKNOWN:
+              break; // state handling switch
+
+            // do nothing, run render loop normally
+            case XR_SESSION_STATE_FOCUSED:
+            case XR_SESSION_STATE_SYNCHRONIZED:
+            case XR_SESSION_STATE_VISIBLE:
+              should_submit_frames = TRUE;
+              break; // state handling switch
+
+            // begin session and then run render loop
+            case XR_SESSION_STATE_READY:
             {
-              self->is_stopping = TRUE;
-
-              GxrQuitEvent quit_event = {
-                .reason = GXR_QUIT_SHUTDOWN,
-              };
-              g_debug ("Event: sending VR_QUIT_SHUTDOWN signal");
-              gxr_context_emit_quit (self, &quit_event);
-
-              xrEndSession (self->session);
-
-              /* don't poll further events, leave them to "next" session */
-              return;
+              // start session only if it is not running, i.e. not when we already called xrBeginSession
+              // but the runtime did not switch to the next state yet
+              if (!self->session_running) {
+                if (!_begin_session (self))
+                  g_printerr ("Failed to begin session\n");
+              }
+              should_submit_frames = TRUE;
+              break; // state handling switch
             }
-          break;
+
+            // end session, skip render loop, keep polling for next state change
+            case XR_SESSION_STATE_STOPPING:
+            {
+              // end session only if it is running, i.e. not when we already called xrEndSession but the
+              // runtime did not switch to the next state yet
+              if (self->session_running) {
+                if (!_end_session (self))
+                  g_printerr ("Failed to end session\n");
+              }
+              break; // state handling switch
+            }
+
+            // destroy session, skip render loop, exit render loop and quit
+            case XR_SESSION_STATE_LOSS_PENDING:
+            case XR_SESSION_STATE_EXITING:
+              if (self->session)
+                {
+                  if (!_destroy_session (self))
+                    g_printerr ("Failed to destroy session\n");
+
+                  GxrStateChangeEvent state_change_event = {
+                    .state_change = GXR_STATE_SHUTDOWN,
+                  };
+                  g_debug ("Event: state is EXITING, sending VR_QUIT_SHUTDOWN");
+                  gxr_context_emit_state_change (self, &state_change_event);
+
+                }
+              break; // state handling switch
+          }
+
+          if (!self->should_submit_frames && should_submit_frames)
+            {
+              GxrStateChangeEvent state_change_event = {
+                .state_change = GXR_STATE_FRAMECYCLE_START,
+              };
+              g_debug ("Event: start frame cycle");
+              gxr_context_emit_state_change (self, &state_change_event);
+            }
+          else if (self->should_submit_frames && ! should_submit_frames)
+            {
+              GxrStateChangeEvent state_change_event = {
+                .state_change = GXR_STATE_FRAMECYCLE_STOP,
+              };
+              g_debug ("Event: stop frame cycle");
+              gxr_context_emit_state_change (self, &state_change_event);
+            }
+
+          self->should_submit_frames = should_submit_frames;
+          break; // session event handling switch
         }
         case XR_TYPE_EVENT_DATA_INSTANCE_LOSS_PENDING:
         {
-          GxrQuitEvent event = {
-            .reason = GXR_QUIT_SHUTDOWN,
+          GxrStateChangeEvent event = {
+            .state_change = GXR_STATE_SHUTDOWN,
           };
-          g_debug ("Event: sending VR_QUIT_SHUTDOWN signal");
-          gxr_context_emit_quit (self, &event);
+          g_debug ("Event: instance loss pending, sending VR_QUIT_SHUTDOWN");
+          gxr_context_emit_state_change (self, &event);
           break;
         }
         case XR_TYPE_EVENT_DATA_INTERACTION_PROFILE_CHANGED:
@@ -1740,9 +1841,9 @@ gxr_context_emit_keyboard_close (GxrContext *self)
 }
 
 void
-gxr_context_emit_quit (GxrContext *self, gpointer event)
+gxr_context_emit_state_change (GxrContext *self, gpointer event)
 {
-  g_signal_emit (self, context_signals[QUIT_EVENT], 0, event);
+  g_signal_emit (self, context_signals[STATE_CHANGE_EVENT], 0, event);
 }
 
 void
@@ -1917,6 +2018,12 @@ gxr_context_get_view (GxrContext *self,
 static gboolean
 _begin_frame (GxrContext* self)
 {
+  if (!self->session_running)
+    {
+      g_printerr ("Can't begin frame with no session running\n");
+      return FALSE;
+    }
+
   XrResult result;
 
   XrFrameState frame_state = {
@@ -1931,6 +2038,23 @@ _begin_frame (GxrContext* self)
   if (!_check_xr_result
       (result, "xrWaitFrame() was not successful, exiting..."))
     return FALSE;
+
+  if (!self->should_render && frame_state.shouldRender)
+    {
+      GxrStateChangeEvent state_change_event = {
+        .state_change = GXR_STATE_RENDERING_START,
+      };
+      g_debug ("Event: start rendering");
+      gxr_context_emit_state_change (self, &state_change_event);
+    }
+  else if (self->should_render && !frame_state.shouldRender)
+    {
+      GxrStateChangeEvent state_change_event = {
+        .state_change = GXR_STATE_RENDERING_STOP,
+      };
+      g_debug ("Event: stop rendering");
+      gxr_context_emit_state_change (self, &state_change_event);
+    }
 
   self->should_render = frame_state.shouldRender == XR_TRUE;
 
@@ -2042,16 +2166,33 @@ gxr_context_begin_frame (GxrContext *self)
 static gboolean
 _end_frame (GxrContext *self)
 {
+  if (!self->session_running)
+    {
+      g_printerr ("Can't end frame with no session running\n");
+      return FALSE;
+    }
+
   XrResult result;
 
-  const XrCompositionLayerBaseHeader* const projection_layers[1] = {
-    (const XrCompositionLayerBaseHeader* const) &self->projection_layer
-  };
+  const XrCompositionLayerBaseHeader *layers[1];
+  uint32_t layer_count = 0;
+
+  // if we end up here but shouldn't render, the app probably hasn't rendered
+  if (self->should_render)
+    {
+      // for submiting projection layers we need a valid pose from xrLocateViews
+      if (self->have_valid_pose)
+        {
+          layers[layer_count++] =
+            (const XrCompositionLayerBaseHeader *) &self->projection_layer;
+        }
+    }
+
   XrFrameEndInfo frame_end_info = {
     .type = XR_TYPE_FRAME_END_INFO,
     .displayTime = self->predicted_display_time,
-    .layerCount = self->have_valid_pose ? 1 : 0,
-    .layers = self->have_valid_pose ? projection_layers : NULL,
+    .layerCount = layer_count,
+    .layers = layers,
     .environmentBlendMode = self->blend_mode,
   };
   result = xrEndFrame (self->session, &frame_end_info);
