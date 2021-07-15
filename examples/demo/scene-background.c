@@ -37,7 +37,7 @@ scene_background_class_init (SceneBackgroundClass *klass)
 static void
 scene_background_init (SceneBackground *self)
 {
-  self->vertex_buffer = gulkan_vertex_buffer_new ();
+  self->vertex_buffer = NULL;
 }
 
 static gboolean
@@ -140,6 +140,10 @@ _initialize (SceneBackground       *self,
              GulkanClient          *gulkan,
              VkDescriptorSetLayout *layout)
 {
+  GulkanDevice *device = gulkan_client_get_device (gulkan);
+  self->vertex_buffer =
+    gulkan_vertex_buffer_new (device, VK_PRIMITIVE_TOPOLOGY_LINE_LIST);
+
   gulkan_vertex_buffer_reset (self->vertex_buffer);
 
   graphene_vec3_t color;
@@ -148,8 +152,7 @@ _initialize (SceneBackground       *self,
   _append_floor (self->vertex_buffer, 20, 0.0f, &color);
   _append_floor (self->vertex_buffer, 20, 4.0f, &color);
 
-  GulkanDevice *device = gulkan_client_get_device (gulkan);
-  if (!gulkan_vertex_buffer_alloc_empty (self->vertex_buffer, device,
+  if (!gulkan_vertex_buffer_alloc_empty (self->vertex_buffer,
                                          GXR_DEVICE_INDEX_MAX))
     return FALSE;
 

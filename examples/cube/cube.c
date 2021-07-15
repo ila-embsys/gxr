@@ -416,9 +416,14 @@ static gboolean
 _init_vertex_buffer (CubeExample *self)
 {
   GulkanClient *gc = gxr_context_get_gulkan (self->context);
-  GulkanDevice *gulkan_device = gulkan_client_get_device (gc);
-  self->vb = GULKAN_VERTEX_BUFFER_NEW_FROM_ATTRIBS (gulkan_device, positions,
-                                                    positions, positions);
+  GulkanDevice *device = gulkan_client_get_device (gc);
+  self->vb = gulkan_vertex_buffer_new (device,
+                                       VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP);
+  GULKAN_VERTEX_BUFFER_ADD_ATTRIBUTE (self->vb, 3, positions);
+
+  if (!gulkan_vertex_buffer_upload (self->vb))
+    return FALSE;
+
   if (!self->vb)
     return FALSE;
 

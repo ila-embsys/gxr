@@ -46,7 +46,7 @@ scene_pointer_class_init (ScenePointerClass *klass)
 static void
 scene_pointer_init (ScenePointer *self)
 {
-  self->vertex_buffer = gulkan_vertex_buffer_new ();
+  self->vertex_buffer = NULL;
   self->start_offset = -0.02f;
   self->default_length = 5.0f;
   self->length = self->default_length;
@@ -58,6 +58,9 @@ _initialize (ScenePointer          *self,
              GulkanClient          *gulkan,
              VkDescriptorSetLayout *layout)
 {
+  GulkanDevice *device = gulkan_client_get_device (gulkan);
+  self->vertex_buffer =
+    gulkan_vertex_buffer_new (device, VK_PRIMITIVE_TOPOLOGY_LINE_LIST);
   gulkan_vertex_buffer_reset (self->vertex_buffer);
 
   graphene_vec4_t start;
@@ -69,9 +72,7 @@ _initialize (ScenePointer          *self,
   gulkan_geometry_append_ray (self->vertex_buffer,
                               &start, self->length, &identity);
 
-  GulkanDevice *device = gulkan_client_get_device (gulkan);
-
-  if (!gulkan_vertex_buffer_alloc_empty (self->vertex_buffer, device,
+  if (!gulkan_vertex_buffer_alloc_empty (self->vertex_buffer,
     GXR_DEVICE_INDEX_MAX))
     return FALSE;
 

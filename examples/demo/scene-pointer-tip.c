@@ -106,7 +106,7 @@ scene_pointer_tip_init (ScenePointerTip *self)
   self->settings.width_meters = 1.0f;
   self->upload_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-  self->vertex_buffer = gulkan_vertex_buffer_new ();
+  self->vertex_buffer = NULL;
   self->sampler = VK_NULL_HANDLE;
   self->aspect_ratio = 1.0;
   self->shading_buffer_data.flip_y = FALSE;
@@ -155,8 +155,10 @@ _initialize (ScenePointerTip* self, VkDescriptorSetLayout *layout)
 
   GulkanDevice *device = gulkan_client_get_device (self->gulkan);
 
+  self->vertex_buffer =
+    gulkan_vertex_buffer_new (device, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
   _append_plane (self->vertex_buffer, self->aspect_ratio);
-  if (!gulkan_vertex_buffer_alloc_array (self->vertex_buffer, device))
+  if (!gulkan_vertex_buffer_alloc_array (self->vertex_buffer))
     return FALSE;
 
   VkDeviceSize ubo_size = sizeof (ScenePointerTipUniformBuffer);
