@@ -88,7 +88,7 @@ arch:meson:gcc:
     - .fdo.distribution-image@arch # from ci-templates
     - .xrdesktop.base-job.build-meson
   variables:
-    MESON_ARGS: -Ddocs=disabled
+    MESON_ARGS: -Dapi_doc=false
     CC: gcc
     CXX: g++
 
@@ -98,7 +98,7 @@ arch:meson:clang:
     - .fdo.distribution-image@arch # from ci-templates
     - .xrdesktop.base-job.build-meson
   variables:
-    MESON_ARGS: -Ddocs=disabled
+    MESON_ARGS: -Dapi_doc=false
     CC: clang
     CXX: clang++
 
@@ -121,7 +121,7 @@ ubuntu:focal:gcc:
     - .fdo.distribution-image@ubuntu # from ci-templates
     - .xrdesktop.base-job.build-meson
   variables:
-    MESON_ARGS: -Ddocs=disabled
+    MESON_ARGS: -Dapi_doc=false
     CC: gcc
     CXX: g++
 
@@ -144,7 +144,7 @@ ubuntu:groovy:gcc:
     - .fdo.distribution-image@ubuntu # from ci-templates
     - .xrdesktop.base-job.build-meson
   variables:
-    MESON_ARGS: -Ddocs=disabled
+    MESON_ARGS: -Dapi_doc=false
     CC: gcc
     CXX: g++
 
@@ -167,6 +167,6 @@ ubuntu:hirsute:gcc:
     - .fdo.distribution-image@ubuntu # from ci-templates
     - .xrdesktop.base-job.build-meson
   variables:
-    MESON_ARGS: -Ddocs=disabled
+    MESON_ARGS: -Dapi_doc=false
     CC: gcc
     CXX: g++
