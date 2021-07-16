@@ -12,7 +12,7 @@ include:
 variables:
   FDO_UPSTREAM_REPO: xrdesktop/gxr
   GULKAN_COMMIT: "5804d98551a125be1141a32cb075d93cdb71718a"
-  OPENXR_SDK_TAG: "release-1.0.14"
+  OPENXR_SDK_TAG: "release-1.0.17"
 
 stages:
   - container_prep
@@ -34,6 +34,7 @@ stages:
       cd .. && \
       git clone --depth 1 --branch $OPENXR_SDK_TAG https://github.com/KhronosGroup/OpenXR-SDK-Source.git && \
       cd OpenXR-SDK-Source && \
+      git checkout $OPENXR_SDK_TAG && \
       CC=clang CXX=clang++ cmake . -G Ninja -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DDYNAMIC_LOADER=ON && \
       ninja -C . install && \
       cd ..
