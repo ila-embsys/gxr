@@ -17,30 +17,20 @@ typedef struct {
 } UniformBuffer;
 
 static const float positions[] = {
-  -1.0f, +1.0f, +1.0f,
-  +1.0f, +1.0f, +1.0f,
-  -1.0f, -1.0f, +1.0f,
-  +1.0f, -1.0f, +1.0f,
-  +1.0f, +1.0f, -1.0f,
-  -1.0f, +1.0f, -1.0f,
-  +1.0f, -1.0f, -1.0f,
-  -1.0f, -1.0f, -1.0f,
-  +1.0f, +1.0f, +1.0f,
-  +1.0f, +1.0f, -1.0f,
-  +1.0f, -1.0f, +1.0f,
-  +1.0f, -1.0f, -1.0f,
-  -1.0f, +1.0f, -1.0f,
-  -1.0f, +1.0f, +1.0f,
-  -1.0f, -1.0f, -1.0f,
-  -1.0f, -1.0f, +1.0f,
-  -1.0f, -1.0f, +1.0f,
-  +1.0f, -1.0f, +1.0f,
-  -1.0f, -1.0f, -1.0f,
-  +1.0f, -1.0f, -1.0f,
-  -1.0f, +1.0f, -1.0f,
-  +1.0f, +1.0f, -1.0f,
-  -1.0f, +1.0f, +1.0f,
-  +1.0f, +1.0f, +1.0f
+  -1.f, +1.f, +1.f,
+  +1.f, +1.f, +1.f,
+  -1.f, -1.f, +1.f,
+  +1.f, -1.f, +1.f,
+  +1.f, -1.f, -1.f,
+  +1.f, +1.f, +1.f,
+  +1.f, +1.f, -1.f,
+  -1.f, +1.f, +1.f,
+  -1.f, +1.f, -1.f,
+  -1.f, -1.f, +1.f,
+  -1.f, -1.f, -1.f,
+  +1.f, -1.f, -1.f,
+  -1.f, +1.f, -1.f,
+  +1.f, +1.f, -1.f
 };
 
 #define CUBE_TYPE_EXAMPLE cube_example_get_type()
@@ -580,12 +570,7 @@ _render_eye (CubeExample *self,
                            &self->descriptor_sets[eye], 0, NULL);
 
   gulkan_vertex_buffer_bind_with_offsets (self->vb, cmd_buffer);
-  vkCmdDraw (cmd_buffer, 4, 1, 0, 0);
-  vkCmdDraw (cmd_buffer, 4, 1, 4, 0);
-  vkCmdDraw (cmd_buffer, 4, 1, 8, 0);
-  vkCmdDraw (cmd_buffer, 4, 1, 12, 0);
-  vkCmdDraw (cmd_buffer, 4, 1, 16, 0);
-  vkCmdDraw (cmd_buffer, 4, 1, 20, 0);
+  vkCmdDraw (cmd_buffer, 14, 1, 0, 0);
 }
 
 static void
