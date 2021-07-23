@@ -675,7 +675,7 @@ _draw (SceneRenderer *self)
   GulkanQueue *queue = gulkan_device_get_graphics_queue (device);
 
   GulkanCmdBuffer *cmd_buffer = gulkan_queue_request_cmd_buffer (queue);
-  gulkan_cmd_buffer_begin (cmd_buffer);
+  gulkan_cmd_buffer_begin (cmd_buffer, 0);
 
   self->update_lights (self->scene_client);
 
@@ -683,7 +683,7 @@ _draw (SceneRenderer *self)
 
   _render_stereo (self, cmd_handle);
 
-  gulkan_queue_submit (queue, cmd_buffer);
+  gulkan_queue_end_submit (queue, cmd_buffer);
 
   gulkan_queue_free_cmd_buffer (queue, cmd_buffer);
 

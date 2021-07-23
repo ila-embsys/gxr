@@ -63,6 +63,7 @@ struct _CubeExample
   GulkanUniformBuffer *uniform_buffers[2];
   GulkanDescriptorPool *descriptor_pool;
   GulkanVertexBuffer *vb;
+  GulkanCmdBuffer **cmd_buffers;
 
   GxrContext *context;
 
@@ -72,6 +73,9 @@ struct _CubeExample
 };
 
 G_DEFINE_TYPE (CubeExample, cube_example, GULKAN_TYPE_RENDERER)
+
+static void
+_build_cmd_buffers (CubeExample *self);
 
 static CubeExample *
 cube_example_new (void)
@@ -95,6 +99,7 @@ cube_example_init (CubeExample *self)
   self->loop = g_main_loop_new (NULL, FALSE);
   self->sigint_signal = g_unix_signal_add (SIGINT, _sigint_cb, self);
   self->render_background = TRUE;
+  self->cmd_buffers = NULL;
 }
 
 static void
@@ -106,8 +111,20 @@ cube_example_finalize (GObject *gobject)
   g_source_remove (self->sigint_signal);
 
   GulkanClient *gc = gxr_context_get_gulkan (self->context);
+  GulkanDevice *gd = gulkan_client_get_device (gc);
+
   VkDevice device = gulkan_client_get_device_handle (gc);
+  GulkanQueue *queue = gulkan_device_get_graphics_queue (gd);
+
   vkDeviceWaitIdle (device);
+
+  uint32_t swapchain_length = gxr_context_get_swapchain_length(self->context);
+  for (uint32_t i = 0; i < swapchain_length; i++)
+    {
+      gulkan_queue_free_cmd_buffer (queue, self->cmd_buffers[i]);
+    }
+
+  g_free (self->cmd_buffers);
 
   vkDestroyPipelineLayout (device, self->pipeline_layout, NULL);
   vkDestroyDescriptorSetLayout (device, self->descriptor_set_layout, NULL);
@@ -117,12 +134,14 @@ cube_example_finalize (GObject *gobject)
   for (uint32_t eye = 0; eye < 2; eye++)
     g_object_unref (self->uniform_buffers[eye]);
 
+
   g_object_unref (self->descriptor_pool);
   g_clear_object (&self->vb);
   g_clear_object (&self->render_pass);
   g_clear_object (&self->context);
 
   g_main_loop_unref (self->loop);
+
 
   G_OBJECT_CLASS (cube_example_parent_class)->finalize (gobject);
 }
@@ -465,6 +484,9 @@ _init (CubeExample *self)
   if (!self->context)
     return FALSE;
 
+  self->cmd_buffers = g_malloc (sizeof(GulkanCmdBuffer*) *
+                                gxr_context_get_swapchain_length(self->context));
+
   gulkan_renderer_set_client (GULKAN_RENDERER (self),
                               gxr_context_get_gulkan (self->context));
 
@@ -500,6 +522,8 @@ _init (CubeExample *self)
     return FALSE;
 
   _update_descriptors (self);
+
+  _build_cmd_buffers (self);
 
   g_signal_connect (self->context, "overlay-event",
                     (GCallback) _overlay_cb, self);
@@ -565,7 +589,7 @@ _render_eye (CubeExample *self,
 }
 
 static void
-_render_stereo (CubeExample *self, VkCommandBuffer cmd_buffer)
+_render_stereo (CubeExample *self, VkCommandBuffer cmd_buffer, uint32_t swapchain_id)
 {
   VkExtent2D extent = gulkan_renderer_get_extent (GULKAN_RENDERER (self));
 
@@ -581,7 +605,7 @@ _render_stereo (CubeExample *self, VkCommandBuffer cmd_buffer)
   for (uint32_t view = 0; view < view_count; view++)
     {
       GulkanFrameBuffer *framebuffer =
-        gxr_context_get_acquired_framebuffer (self->context, view);
+        gxr_context_get_framebuffer_at (self->context, view, swapchain_id);
 
       gulkan_render_pass_begin (self->render_pass, extent, clear_color,
                                 framebuffer, cmd_buffer);
@@ -589,6 +613,24 @@ _render_stereo (CubeExample *self, VkCommandBuffer cmd_buffer)
       _render_eye (self, view, cmd_buffer);
 
       vkCmdEndRenderPass (cmd_buffer);
+    }
+}
+
+static void
+_build_cmd_buffers (CubeExample *self) {
+  GulkanClient *gc = gxr_context_get_gulkan (self->context);
+  GulkanDevice *device = gulkan_client_get_device (gc);
+  GulkanQueue *queue = gulkan_device_get_graphics_queue (device);
+
+  uint32_t swapchain_length = gxr_context_get_swapchain_length(self->context);
+  for (uint32_t i = 0; i < swapchain_length; i++)
+    {
+      self->cmd_buffers[i] = gulkan_queue_request_cmd_buffer (queue);
+      gulkan_cmd_buffer_begin (self->cmd_buffers[i], 0);
+
+      VkCommandBuffer cmd_handle = gulkan_cmd_buffer_get_handle (self->cmd_buffers[i]);
+      _render_stereo (self, cmd_handle, i);
+      gulkan_cmd_buffer_end (self->cmd_buffers[i]);
     }
 }
 
@@ -608,15 +650,10 @@ _iterate_cb (gpointer _self)
   for (uint32_t eye = 0; eye < 2; eye++)
     _update_transformation (self, eye);
 
-  GulkanCmdBuffer *cmd_buffer = gulkan_queue_request_cmd_buffer (queue);
-  gulkan_cmd_buffer_begin (cmd_buffer);
+  uint32_t i = gxr_context_get_buffer_index (self->context);
 
-  VkCommandBuffer cmd_handle = gulkan_cmd_buffer_get_handle (cmd_buffer);
+  gulkan_queue_submit (queue, self->cmd_buffers[i]);
 
-  _render_stereo (self, cmd_handle);
-
-  gulkan_queue_submit (queue, cmd_buffer);
-  gulkan_queue_free_cmd_buffer (queue, cmd_buffer);
   gxr_context_end_frame (self->context);
 
   return TRUE;

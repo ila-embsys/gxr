@@ -123,9 +123,16 @@ gxr_context_get_device_manager (GxrContext *self);
 uint32_t
 gxr_context_get_view_count (GxrContext *self);
 
+
+uint32_t
+gxr_context_get_swapchain_length (GxrContext *self);
+
 GulkanFrameBuffer *
 gxr_context_get_acquired_framebuffer (GxrContext *self, uint32_t view);
 
+GulkanFrameBuffer *
+gxr_context_get_framebuffer_at (GxrContext *self, uint32_t view,
+                                uint32_t i);
 
 void
 gxr_context_cleanup(GxrContext *self);
@@ -171,6 +178,9 @@ gxr_context_get_predicted_display_time (GxrContext *self);
 
 XrSessionState
 gxr_context_get_session_state (GxrContext *self);
+
+uint32_t
+gxr_context_get_buffer_index (GxrContext *self);
 
 G_END_DECLS
 

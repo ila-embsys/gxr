@@ -2386,12 +2386,33 @@ gxr_context_get_view_count (GxrContext *self)
   return self->view_count;
 }
 
+uint32_t
+gxr_context_get_swapchain_length (GxrContext *self)
+{
+  return self->swapchain_length[0];
+}
+
 GulkanFrameBuffer *
 gxr_context_get_acquired_framebuffer (GxrContext *self, uint32_t view)
 {
   GulkanFrameBuffer *fb =
     GULKAN_FRAME_BUFFER (self->framebuffer[view][self->buffer_index[view]]);
   return fb;
+}
+
+GulkanFrameBuffer *
+gxr_context_get_framebuffer_at (GxrContext *self, uint32_t view,
+                                uint32_t i)
+{
+  GulkanFrameBuffer *fb =
+    GULKAN_FRAME_BUFFER (self->framebuffer[view][i]);
+  return fb;
+}
+
+uint32_t
+gxr_context_get_buffer_index (GxrContext *self)
+{
+  return self->buffer_index[0];
 }
 
 XrSessionState
