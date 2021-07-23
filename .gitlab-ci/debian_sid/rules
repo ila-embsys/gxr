@@ -1,0 +1,19 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_missing:
+	dh_missing --list-missing
+
+test_env = \
+	-u DISPLAY \
+	HOME=$(CURDIR)/debian/tmp-home XDG_CACHE_HOME=
+
+override_dh_auto_test:
+	install -d $(CURDIR)/debian/tmp-home/.cache/gxr
+	# Run tests without VR runtime
+	env $(test_env) meson build
+	env $(test_env) ninja -C build
+	env $(test_env) meson test -C build/ --no-suite gxr:xr --no-suite post-install
+

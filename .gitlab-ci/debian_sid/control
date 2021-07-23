@@ -1,0 +1,56 @@
+Source: gxr
+Section: libs
+Priority: optional
+Maintainer: Andrew Lee (李健秋) <ajqlee@debian.org>
+Uploaders: Héctor Orón Martínez <zumbi@debian.org>
+Build-Depends:
+ debhelper (>= 11),
+ chrpath,
+ glslang-tools,
+ gobject-introspection,
+ gtk-doc-tools,
+ libgtk-3-dev (>= 3.22),
+ libgulkan-dev (>= 0.15.0),
+ libjson-glib-dev,
+ libopenxr-dev,
+ mesa-common-dev,
+ meson (>= 0.45.1),
+ pkg-config,
+Standards-Version: 4.5.0
+Homepage: https://gitlab.freedesktop.org/xrdesktop/gxr
+Vcs-Browser: https://salsa.debian.org/xrdesktop-team/gxr
+Vcs-Git: https://salsa.debian.org/xrdesktop-team/gxr.git
+
+Package: libgxr-0.15-0
+Section: libs
+Architecture: linux-any
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends},
+ libsdl2-2.0-0,
+Description: glib wrapper for OpenXR APIs
+ A glib wrapper and utilities for the OpenXR APIs.
+ .
+ This package contains the shared libraries.
+
+Package: libgxr-dev
+Section: libdevel
+Architecture: any
+Depends:
+ ${misc:Depends},
+ libcogl-dev,
+ libcogl-path-dev,
+ libgdk-pixbuf2.0-dev,
+ libglib2.0-dev,
+ libgraphene-1.0-dev,
+ libgtk-3-dev,
+ libgulkan-dev,
+ libopenxr-dev,
+ libgxr-0.15-0 (= ${binary:Version}),
+ libvulkan-dev,
+ mesa-common-dev,
+Description: glib wrapper for OpenVR and OpenXR APIs - development headers
+ Development files for the libgxr library.
+ .
+ This package contains the header and development files which are
+ needed for building OpenVR and OpenXR applications.

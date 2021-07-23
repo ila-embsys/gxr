@@ -7,17 +7,23 @@ include:
   - project: "freedesktop/ci-templates"
     ref: *templates_sha
     file: "/templates/ubuntu.yml"
-
+  - project: "freedesktop/ci-templates"
+    ref: *templates_sha
+    file: "/templates/debian.yml"
 
 variables:
   FDO_UPSTREAM_REPO: xrdesktop/gxr
   GULKAN_COMMIT: "5804d98551a125be1141a32cb075d93cdb71718a"
   OPENXR_SDK_TAG: "release-1.0.17"
+  # increment to easily rebuild all images
+  GLOBAL_TAG_SUFFIX: 0
 
 stages:
   - container_prep
   - build_and_test
-
+  - package
+  - reprepro
+  - pages
 
 # "Base" job for installing Gulkan, OpenXR SDK
 .xrdesktop.base-job.build_deps:
@@ -51,26 +57,41 @@ stages:
 # variables shared by container_prep and build jobs
 .xrdesktop.variables.arch:rolling:
   variables:
-    FDO_DISTRIBUTION_TAG: "2021-07-09.0"
+    FDO_DISTRIBUTION_TAG: "2021-07-26.${GLOBAL_TAG_SUFFIX}.0"
 
 .xrdesktop.variables.ubuntu:focal:
   variables:
     FDO_DISTRIBUTION_VERSION: "20.04"
-    FDO_DISTRIBUTION_TAG: "2021-07-09.0"
+    FDO_DISTRIBUTION_TAG: "2021-07-26.${GLOBAL_TAG_SUFFIX}.0"
 
 .xrdesktop.variables.ubuntu:groovy:
   variables:
     FDO_DISTRIBUTION_VERSION: "20.10"
-    FDO_DISTRIBUTION_TAG: "2021-07-09.0"
+    FDO_DISTRIBUTION_TAG: "2021-07-26.${GLOBAL_TAG_SUFFIX}.0"
 
 .xrdesktop.variables.ubuntu:hirsute:
   variables:
     FDO_DISTRIBUTION_VERSION: "21.04"
-    FDO_DISTRIBUTION_TAG: "2021-07-09.0"
+    FDO_DISTRIBUTION_TAG: "2021-07-26.${GLOBAL_TAG_SUFFIX}.0"
+
+.xrdesktop.variables.debian:buster:
+  variables:
+    FDO_DISTRIBUTION_VERSION: "buster"
+    FDO_DISTRIBUTION_TAG: "2021-07-26.${GLOBAL_TAG_SUFFIX}.0"
+
+.xrdesktop.variables.debian:bullseye:
+  variables:
+    FDO_DISTRIBUTION_VERSION: "bullseye"
+    FDO_DISTRIBUTION_TAG: "2021-07-26.${GLOBAL_TAG_SUFFIX}.0"
+
+.xrdesktop.variables.debian:sid:
+  variables:
+    FDO_DISTRIBUTION_VERSION: "sid"
+    FDO_DISTRIBUTION_TAG: "2021-07-26.${GLOBAL_TAG_SUFFIX}.0"
 
 .xrdesktop.variables.debian-based-packages:
   variables:
-    CORE_REQUIRED_PACKAGES: "git gcc clang meson pkg-config libglib2.0-dev libgdk-pixbuf2.0-dev libvulkan-dev libgraphene-1.0-dev libcairo2-dev glslang-tools cmake libxxf86vm-dev libgl1-mesa-dev libvulkan-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-glx0-dev libxcb-icccm4-dev libxcb-keysyms1-dev libxcb-randr0-dev libxrandr-dev libxxf86vm-dev mesa-common-dev libgtk-3-dev libjson-glib-dev ca-certificates libdrm-dev"
+    CORE_REQUIRED_PACKAGES: "git gcc clang meson pkg-config libglib2.0-dev libgdk-pixbuf2.0-dev libvulkan-dev libgraphene-1.0-dev libcairo2-dev glslang-tools cmake libxxf86vm-dev libgl1-mesa-dev libvulkan-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-glx0-dev libxcb-icccm4-dev libxcb-keysyms1-dev libxcb-randr0-dev libxrandr-dev libxxf86vm-dev mesa-common-dev libgtk-3-dev libjson-glib-dev ca-certificates libdrm-dev apt-utils reprepro build-essential devscripts debhelper dput-ng gettext-base gtk-doc-tools libglew-dev libglfw3-dev"
 
 # === Archlinux ===
 
@@ -171,3 +192,250 @@ ubuntu:hirsute:gcc:
     MESON_ARGS: -Dapi_doc=false
     CC: gcc
     CXX: g++
+
+
+# === Debian buster ===
+
+debian:buster:container_prep:
+  stage: container_prep
+  extends:
+    - .xrdesktop.variables.debian:buster
+    - .fdo.container-build@debian # from ci-templates
+    - .xrdesktop.base-job.build_deps
+    - .xrdesktop.variables.debian-based-packages
+  variables:
+    FDO_DISTRIBUTION_PACKAGES: "${CORE_REQUIRED_PACKAGES}"
+
+debian:buster:gcc:
+  extends:
+    - .xrdesktop.variables.debian:buster
+    - .fdo.distribution-image@debian # from ci-templates
+    - .xrdesktop.base-job.build-meson
+  variables:
+    MESON_ARGS: -Dapi_doc=false
+    CC: gcc
+    CXX: g++
+
+
+# === Debian bullseye ===
+
+debian:bullseye:container_prep:
+  stage: container_prep
+  extends:
+    - .xrdesktop.variables.debian:bullseye
+    - .fdo.container-build@debian # from ci-templates
+    - .xrdesktop.base-job.build_deps
+    - .xrdesktop.variables.debian-based-packages
+  variables:
+    FDO_DISTRIBUTION_PACKAGES: "${CORE_REQUIRED_PACKAGES}"
+
+debian:bullseye:gcc:
+  extends:
+    - .xrdesktop.variables.debian:bullseye
+    - .fdo.distribution-image@debian # from ci-templates
+    - .xrdesktop.base-job.build-meson
+  variables:
+    MESON_ARGS: -Dapi_doc=false
+    CC: gcc
+    CXX: g++
+
+
+# === Debian sid ===
+
+debian:sid:container_prep:
+  stage: container_prep
+  extends:
+    - .xrdesktop.variables.debian:sid
+    - .fdo.container-build@debian # from ci-templates
+    - .xrdesktop.base-job.build_deps
+    - .xrdesktop.variables.debian-based-packages
+  variables:
+    FDO_DISTRIBUTION_PACKAGES: "${CORE_REQUIRED_PACKAGES}"
+
+debian:sid:gcc:
+  extends:
+    - .xrdesktop.variables.debian:sid
+    - .fdo.distribution-image@debian # from ci-templates
+    - .xrdesktop.base-job.build-meson
+  variables:
+    MESON_ARGS: -Dapi_doc=false
+    CC: gcc
+    CXX: g++
+
+
+# Packaging
+.xrdesktop.packaging.conditions:
+  rules:
+    # Only the default branch of the "upstream" repo.
+    #- if: '$CI_PROJECT_PATH == $FDO_UPSTREAM_REPO && $CI_COMMIT_REF_NAME == "next"'
+    - if: '$CI_PROJECT_PATH == "haagch/gxr" && $CI_COMMIT_REF_NAME == "next"'
+      when: on_success
+    # Otherwise, don't build packages.
+    - when: never
+
+
+# Packaging
+.xrdesktop.base-job.debuild:
+  extends:
+    - .xrdesktop.packaging.conditions
+  stage: package
+  before_script:
+    # Configure git - needed despite not actually committing here.
+    - git config --global user.email "christoph.haag@collabora.com"
+    - git config --global user.name "xrdesktop CI"
+  script:
+    # Prep the source tree
+    - git clean -dfx
+    - git remote -v
+    - git fetch --unshallow
+    - git fetch origin
+    - git fetch origin --tags
+    - rm -rf debian
+    - cp -ra ${PACKAGE_DIR} debian
+    - DEBFULLNAME="xrdesktop CI <christoph.haag@collabora.com>" DEBEMAIL="christoph.haag@collabora.com" debian/extra/prepare-commit-package.sh ${CI_COMMIT_SHA} 1~${BACKPORT_SUFFIX}~ci$(date --utc "+%Y%m%d")
+    # Build the package
+    - debuild -uc -us
+    # Use dput-ng to move the package-related files into some artifacts.
+    - export INCOMING=$(pwd)/incoming
+    - mkdir -p $INCOMING
+    - mkdir -p ~/.dput.d/profiles
+    - cat .gitlab-ci/localhost.json | envsubst  > ~/.dput.d/profiles/localhost.json
+    - dpkg-parsechangelog --show-field version > incoming/${DISTRO}.distro
+    - dput --force --debug localhost ../gxr_$(dpkg-parsechangelog --show-field version)_amd64.changes
+  artifacts:
+    paths:
+      - "incoming/"
+    expire_in: 2 days
+
+
+debian:buster:package:
+  extends:
+    - .xrdesktop.variables.debian:buster
+    - .fdo.distribution-image@debian # from ci-templates
+    - .xrdesktop.base-job.debuild
+  variables:
+    BACKPORT_SUFFIX: bpo8
+    PACKAGE_DIR:  .gitlab-ci/debian_sid
+    DISTRO: buster
+
+
+debian:bullseye:package:
+  extends:
+    - .xrdesktop.variables.debian:bullseye
+    - .fdo.distribution-image@debian # from ci-templates
+    - .xrdesktop.base-job.debuild
+  variables:
+    BACKPORT_SUFFIX: bpo9
+    PACKAGE_DIR:  .gitlab-ci/debian_sid
+    DISTRO: bullseye
+
+
+debian:sid:package:
+  extends:
+    - .xrdesktop.variables.debian:sid
+    - .fdo.distribution-image@debian # from ci-templates
+    - .xrdesktop.base-job.debuild
+  variables:
+    BACKPORT_SUFFIX: bpo10
+    PACKAGE_DIR:  .gitlab-ci/debian_sid
+    DISTRO: sid
+
+
+ubuntu:focal:package:
+  extends:
+    - .xrdesktop.variables.ubuntu:focal
+    - .fdo.distribution-image@ubuntu # from ci-templates
+    - .xrdesktop.base-job.debuild
+  variables:
+    BACKPORT_SUFFIX: ubuntu20.04
+    PACKAGE_DIR:  .gitlab-ci/debian_sid
+    DISTRO: focal
+
+
+ubuntu:groovy:package:
+  extends:
+    - .xrdesktop.variables.ubuntu:groovy
+    - .fdo.distribution-image@ubuntu # from ci-templates
+    - .xrdesktop.base-job.debuild
+  variables:
+    BACKPORT_SUFFIX: ubuntu20.10
+    PACKAGE_DIR:  .gitlab-ci/debian_sid
+    DISTRO: groovy
+
+
+ubuntu:hirsute:package:
+  extends:
+    - .xrdesktop.variables.ubuntu:hirsute
+    - .fdo.distribution-image@ubuntu # from ci-templates
+    - .xrdesktop.base-job.debuild
+  variables:
+    BACKPORT_SUFFIX: ubuntu21.04
+    PACKAGE_DIR:  .gitlab-ci/debian_sid
+    DISTRO: hirsute
+
+
+reprepro:package:
+  stage: reprepro
+  extends:
+    - .xrdesktop.variables.debian:sid
+    - .xrdesktop.packaging.conditions
+    - .fdo.distribution-image@debian # from ci-templates
+  dependencies:
+    - debian:buster:package
+    - debian:bullseye:package
+    - debian:sid:package
+    - ubuntu:focal:package
+    - ubuntu:groovy:package
+    - ubuntu:hirsute:package
+  before_script:
+    # Convince gnupg to work properly in CI
+    - mkdir -p ~/.gnupg && chmod 700 ~/.gnupg
+    - touch ~/.gnupg/gpg.conf
+    - echo 'use-agent' > ~/.gnupg/gpg.conf
+    - echo 'pinentry-mode loopback' >> ~/.gnupg/gpg.conf
+    - touch ~/.gnupg/gpg-agent.conf
+    - echo 'allow-loopback-pinentry' > ~/.gnupg/gpg-agent.conf
+    - echo RELOADAGENT | gpg-connect-agent
+    - gpg --batch --no-tty --yes --pinentry-mode loopback --passphrase ${XRDESKTOP_GPG_PASSPHRASE} --import ${XRDESKTOP_GPG_SECRET_KEY}
+
+  script:
+    # Use reprepro to create an apt repository in our artifacts
+    - mkdir -p repo/conf
+    # For each distro, sign the changes file and add it to the repo.
+    - |
+      for fn in incoming/*.distro; do
+        # parse the distro name out
+        export DISTRO=$(echo $fn | sed -e 's:incoming/::' -e 's:[.]distro::')
+        echo "Processing $DISTRO"
+        # add distro to repository config - blank line is mandatory!
+        cat .gitlab-ci/distributions | envsubst >> repo/conf/distributions
+        echo >> repo/conf/distributions
+
+        echo "Signing package for $DISTRO"
+        debsign -k ${XRDESKTOP_GPG_FINGERPRINT} -p "gpg --batch --no-tty --yes --pinentry-mode loopback --passphrase ${XRDESKTOP_GPG_PASSPHRASE}" incoming/gxr_$(cat $fn)_amd64.changes
+
+        echo "Adding package for $DISTRO to the repository"
+        reprepro -V --ignore=wrongdistribution -b repo include ${DISTRO} incoming/gxr_$(cat $fn)_amd64.changes
+      done
+  artifacts:
+    paths:
+      - "repo/"
+    expire_in: 2 days
+
+
+###
+# Pages
+###
+pages:
+  stage: pages
+  extends:
+    - .xrdesktop.packaging.conditions
+  dependencies:
+    - reprepro:package
+  script:
+    - mkdir -p public
+    # - mv build/doc/html/* public/
+    - mv repo public/apt
+  artifacts:
+    paths:
+      - public

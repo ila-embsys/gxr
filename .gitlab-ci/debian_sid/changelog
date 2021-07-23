@@ -1,0 +1,75 @@
+gxr (0.15.1-2) unstable; urgency=medium
+
+  * Source only upload.
+
+ -- Andrew Lee (李健秋) <ajqlee@debian.org>  Tue, 21 Jul 2020 14:58:40 +0800
+
+gxr (0.15.1-1) experimental; urgency=medium
+
+  * New upstream version 0.15.1
+  * Drop non-free libopenvr support. (Closes: #959608, #963882)
+  * Bump Standard-Version to 4.5.0.
+  * Rename shared library package for soname bump.
+  * Bump build-deps on libgulkan 0.15.
+  * Clean up rules for non-free libopenvr support.
+
+ -- Andrew Lee (李健秋) <ajqlee@debian.org>  Mon, 20 Jul 2020 13:46:49 +0800
+
+gxr (0.14.0-4) unstable; urgency=medium
+
+  * Source only upload.
+
+ -- Andrew Lee (李健秋) <ajqlee@debian.org>  Fri, 24 Apr 2020 12:12:25 +0800
+
+gxr (0.14.0-3) unstable; urgency=medium
+
+  * Update package descriptions.
+  * Package both openvr and openxr backends. (Closes: #956732)
+  * Use chrpath utility to remove the RPATH.
+
+ -- Andrew Lee (李健秋) <ajqlee@debian.org>  Tue, 21 Apr 2020 18:27:00 +0800
+
+gxr (0.14.0-2) unstable; urgency=medium
+
+  * Source only upload.
+
+ -- Andrew Lee (李健秋) <ajqlee@debian.org>  Tue, 14 Apr 2020 17:28:50 +0800
+
+gxr (0.14.0-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Drop patches already included in upstream.
+  * Build against to openxr instead of non-free openvr.
+  * Move to main as no depends on non-free software openvr now.
+  * debian/control: update versioned build-deps on gulkan.
+  * Rename package to match the sonames numbers.
+
+ -- Andrew Lee (李健秋) <ajqlee@debian.org>  Fri, 03 Apr 2020 14:00:55 +0800
+
+gxr (0.13.2-2) unstable; urgency=medium
+
+  * debian/control: update build-depends and depends for openvr
+    transition.
+
+ -- Andrew Lee (李健秋) <ajqlee@debian.org>  Wed, 11 Dec 2019 16:13:40 +0800
+
+gxr (0.13.2-1) unstable; urgency=medium
+
+  * New upstream 0.13.2 release.
+  * debian/copyright: update DFSG license for the cat image.
+  * Cherry-pick upstream patches to support openvr version 0.8.19.
+  * Use chrpath utility to remove the RPATH.
+
+ -- Andrew Lee (李健秋) <ajqlee@debian.org>  Mon, 25 Nov 2019 14:16:57 +0800
+
+gxr (0.13.1-1) unstable; urgency=medium
+
+  * New upstream 0.13.1 release.
+
+ -- Andrew Lee (李健秋) <ajqlee@debian.org>  Sat, 12 Oct 2019 19:55:22 +0800
+
+gxr (0.12.1-1) unstable; urgency=medium
+
+  * Initial Release. (Closes: #933568)
+
+ -- Andrew Lee (李健秋) <ajqlee@debian.org>  Sun, 04 Aug 2019 10:17:40 +0800
