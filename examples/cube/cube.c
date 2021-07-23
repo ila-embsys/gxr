@@ -578,13 +578,14 @@ _render_stereo (CubeExample *self, VkCommandBuffer cmd_buffer, uint32_t swapchai
 {
   VkExtent2D extent = gulkan_renderer_get_extent (GULKAN_RENDERER (self));
 
-  float r = self->render_background ? 0.1f : 0.0f;
-  float g = self->render_background ? 0.1f : 0.0f;
-  float b = self->render_background ? 0.7f : 0.0f;
-  float a = self->render_background ? 1.0f : 0.0f;
   VkClearColorValue clear_color = {
-    .float32 = { r, g, b, a }
+    .float32 = { 0, 0, 0, 0 }
   };
+
+  if (self->render_background)
+    clear_color = (VkClearColorValue) {
+      .float32 = {0.1f, 0.1f, 0.7f, 1.0f}
+    };
 
   uint32_t view_count = gxr_context_get_view_count (self->context);
   for (uint32_t view = 0; view < view_count; view++)
