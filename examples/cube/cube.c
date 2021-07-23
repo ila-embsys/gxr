@@ -139,6 +139,7 @@ _init_pipeline (CubeExample *self)
 {
   GulkanClient *gc = gxr_context_get_gulkan (self->context);
   VkDevice device = gulkan_client_get_device_handle (gc);
+  VkExtent2D extent = gulkan_renderer_get_extent (GULKAN_RENDERER (self));
 
   VkPipelineVertexInputStateCreateInfo vi_create_info = {
     .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
@@ -194,18 +195,20 @@ _init_pipeline (CubeExample *self)
     .pViewportState = &(VkPipelineViewportStateCreateInfo) {
       .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
       .viewportCount = 1,
+      .pViewports = &(VkViewport) {
+        .x = 0.0f,
+        .y = (float) extent.height,
+        .width = (float) extent.width,
+        .height = - (float) extent.height,
+        .minDepth = 0.0f,
+        .maxDepth = 1.0f
+      },
       .scissorCount = 1,
+      .pScissors = &(VkRect2D) {
+        .offset = {0, 0},
+        .extent = extent
+      }
     },
-    .pDynamicState =
-      &(VkPipelineDynamicStateCreateInfo){
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
-        .dynamicStateCount = 2,
-        .pDynamicStates =
-          (VkDynamicState[]){
-            VK_DYNAMIC_STATE_VIEWPORT,
-            VK_DYNAMIC_STATE_SCISSOR,
-         },
-     },
     .pRasterizationState =
       &(VkPipelineRasterizationStateCreateInfo){
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
@@ -565,21 +568,6 @@ static void
 _render_stereo (CubeExample *self, VkCommandBuffer cmd_buffer)
 {
   VkExtent2D extent = gulkan_renderer_get_extent (GULKAN_RENDERER (self));
-
-  VkViewport viewport = {
-    .x = 0.0f,
-    .y = (float) extent.height,
-    .width = (float) extent.width,
-    .height = - (float) extent.height,
-    .minDepth = 0.0f,
-    .maxDepth = 1.0f
-  };
-  vkCmdSetViewport (cmd_buffer, 0, 1, &viewport);
-  VkRect2D scissor = {
-    .offset = {0, 0},
-    .extent = extent
-  };
-  vkCmdSetScissor (cmd_buffer, 0, 1, &scissor);
 
   float r = self->render_background ? 0.1f : 0.0f;
   float g = self->render_background ? 0.1f : 0.0f;
