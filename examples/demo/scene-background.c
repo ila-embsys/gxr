@@ -12,7 +12,7 @@
 #include <stdalign.h>
 
 typedef struct {
-  alignas(16) float mvp[16];
+  alignas(32) float mvp[2][16];
 } SceneBackgroundUniformBuffer;
 
 struct _SceneBackground
@@ -169,34 +169,12 @@ _initialize (SceneBackground       *self,
   return TRUE;
 }
 
-static void
-_update_ubo (SceneBackground   *self,
-             GxrEye             eye,
-             graphene_matrix_t *vp)
-{
-  SceneBackgroundUniformBuffer ub = {0};
-
-  graphene_matrix_t m_matrix;
-  scene_object_get_transformation (SCENE_OBJECT (self), &m_matrix);
-
-  graphene_matrix_t mvp_matrix;
-  graphene_matrix_multiply (&m_matrix, vp, &mvp_matrix);
-
-  float mvp[16];
-  graphene_matrix_to_float (&mvp_matrix, mvp);
-  for (int i = 0; i < 16; i++)
-    ub.mvp[i] = mvp[i];
-
-  scene_object_update_ubo (SCENE_OBJECT (self), eye, &ub);
-}
-
 void
-scene_background_render (SceneBackground   *self,
-                         GxrEye             eye,
-                         VkPipeline         pipeline,
-                         VkPipelineLayout   pipeline_layout,
-                         VkCommandBuffer    cmd_buffer,
-                         graphene_matrix_t *vp)
+scene_background_render (SceneBackground    *self,
+                         VkPipeline          pipeline,
+                         VkPipelineLayout    pipeline_layout,
+                         VkCommandBuffer     cmd_buffer,
+                         graphene_matrix_t  *vp)
 {
   if (!gulkan_vertex_buffer_is_initialized (self->vertex_buffer))
     return;
@@ -207,8 +185,24 @@ scene_background_render (SceneBackground   *self,
 
   vkCmdBindPipeline (cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-  _update_ubo (self, eye, vp);
+  SceneBackgroundUniformBuffer ub = {0};
 
-  scene_object_bind (obj, eye, cmd_buffer, pipeline_layout);
+  graphene_matrix_t m_matrix;
+  scene_object_get_transformation (SCENE_OBJECT (self), &m_matrix);
+
+  for (uint32_t eye = 0; eye < 2; eye++)
+    {
+      graphene_matrix_t mvp_matrix;
+      graphene_matrix_multiply (&m_matrix, &vp[eye], &mvp_matrix);
+
+      float mvp[16];
+      graphene_matrix_to_float (&mvp_matrix, mvp);
+      for (int i = 0; i < 16; i++)
+        ub.mvp[eye][i] = mvp[i];
+    }
+
+  scene_object_update_ubo (SCENE_OBJECT (self), &ub);
+
+  scene_object_bind (obj, cmd_buffer, pipeline_layout);
   gulkan_vertex_buffer_draw (self->vertex_buffer, cmd_buffer);
 }

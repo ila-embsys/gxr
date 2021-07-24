@@ -26,8 +26,7 @@ scene_background_new (GulkanClient          *gulkan,
                       VkDescriptorSetLayout *layout);
 
 void
-scene_background_render (SceneBackground *self,
-                         GxrEye              eye,
+scene_background_render (SceneBackground    *self,
                          VkPipeline          pipeline,
                          VkPipelineLayout    pipeline_layout,
                          VkCommandBuffer     cmd_buffer,

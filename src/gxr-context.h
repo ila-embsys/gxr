@@ -128,11 +128,10 @@ uint32_t
 gxr_context_get_swapchain_length (GxrContext *self);
 
 GulkanFrameBuffer *
-gxr_context_get_acquired_framebuffer (GxrContext *self, uint32_t view);
+gxr_context_get_acquired_framebuffer (GxrContext *self);
 
 GulkanFrameBuffer *
-gxr_context_get_framebuffer_at (GxrContext *self, uint32_t view,
-                                uint32_t i);
+gxr_context_get_framebuffer_at (GxrContext *self, uint32_t i);
 
 void
 gxr_context_cleanup(GxrContext *self);
@@ -142,10 +141,9 @@ gxr_context_aquire_swapchain(GxrContext *self, uint32_t i,
                              uint32_t *buffer_index);
 
 gboolean
-gxr_context_release_swapchain(GxrContext *self,
-                              uint32_t eye);
+gxr_context_release_swapchain(GxrContext *self);
 
-XrSwapchainImageVulkanKHR**
+XrSwapchainImageVulkanKHR*
 gxr_context_get_images(GxrContext *self);
 
 void

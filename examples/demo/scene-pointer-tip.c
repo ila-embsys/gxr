@@ -18,9 +18,9 @@
 #endif
 
 typedef struct {
-  alignas(16) float mvp[16];
-  alignas(16) float mv[16];
-  alignas(16) float m[16];
+  alignas(32) float mvp[2][16];
+  alignas(32) float mv[2][16];
+  alignas(32) float m[16];
   alignas(4) bool receive_light;
 } ScenePointerTipUniformBuffer;
 
@@ -238,73 +238,69 @@ _update_descriptors (ScenePointerTip *self)
 {
   VkDevice device = gulkan_client_get_device_handle (self->gulkan);
 
-  for (uint32_t eye = 0; eye < 2; eye++)
-  {
-    VkBuffer transformation_buffer =
-    scene_object_get_transformation_buffer (SCENE_OBJECT (self),
-                                                eye);
+  VkBuffer transformation_buffer =
+  scene_object_get_transformation_buffer (SCENE_OBJECT (self));
 
-    VkDescriptorSet descriptor_set =
-    scene_object_get_descriptor_set (SCENE_OBJECT (self), eye);
+  VkDescriptorSet descriptor_set =
+    scene_object_get_descriptor_set (SCENE_OBJECT (self));
 
-    VkWriteDescriptorSet *write_descriptor_sets = (VkWriteDescriptorSet []) {
-      {
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .dstSet = descriptor_set,
-        .dstBinding = 0,
-        .descriptorCount = 1,
-        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .pBufferInfo = &(VkDescriptorBufferInfo) {
-          .buffer = transformation_buffer,
-          .offset = 0,
-          .range = VK_WHOLE_SIZE
-        },
-        .pTexelBufferView = NULL
+  VkWriteDescriptorSet *write_descriptor_sets = (VkWriteDescriptorSet []) {
+    {
+      .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+      .dstSet = descriptor_set,
+      .dstBinding = 0,
+      .descriptorCount = 1,
+      .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+      .pBufferInfo = &(VkDescriptorBufferInfo) {
+        .buffer = transformation_buffer,
+        .offset = 0,
+        .range = VK_WHOLE_SIZE
       },
-      {
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .dstSet = descriptor_set,
-        .dstBinding = 1,
-        .descriptorCount = 1,
-        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-        .pImageInfo = &(VkDescriptorImageInfo) {
-          .sampler = self->sampler,
-          .imageView = gulkan_texture_get_image_view (self->texture),
-          .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-        },
-        .pBufferInfo = NULL,
-        .pTexelBufferView = NULL
+      .pTexelBufferView = NULL
+    },
+    {
+      .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+      .dstSet = descriptor_set,
+      .dstBinding = 1,
+      .descriptorCount = 1,
+      .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+      .pImageInfo = &(VkDescriptorImageInfo) {
+        .sampler = self->sampler,
+        .imageView = gulkan_texture_get_image_view (self->texture),
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
       },
-      {
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .dstSet = descriptor_set,
-        .dstBinding = 2,
-        .descriptorCount = 1,
-        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .pBufferInfo = &(VkDescriptorBufferInfo) {
-          .buffer = gulkan_uniform_buffer_get_handle (self->shading_buffer),
-          .offset = 0,
-          .range = VK_WHOLE_SIZE
-        },
-        .pTexelBufferView = NULL
+      .pBufferInfo = NULL,
+      .pTexelBufferView = NULL
+    },
+    {
+      .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+      .dstSet = descriptor_set,
+      .dstBinding = 2,
+      .descriptorCount = 1,
+      .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+      .pBufferInfo = &(VkDescriptorBufferInfo) {
+        .buffer = gulkan_uniform_buffer_get_handle (self->shading_buffer),
+        .offset = 0,
+        .range = VK_WHOLE_SIZE
       },
-      {
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .dstSet = descriptor_set,
-        .dstBinding = 3,
-        .descriptorCount = 1,
-        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .pBufferInfo = &(VkDescriptorBufferInfo) {
-          .buffer = self->lights,
-          .offset = 0,
-          .range = VK_WHOLE_SIZE
-        },
-        .pTexelBufferView = NULL
-      }
-    };
+      .pTexelBufferView = NULL
+    },
+    {
+      .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+      .dstSet = descriptor_set,
+      .dstBinding = 3,
+      .descriptorCount = 1,
+      .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+      .pBufferInfo = &(VkDescriptorBufferInfo) {
+        .buffer = self->lights,
+        .offset = 0,
+        .range = VK_WHOLE_SIZE
+      },
+      .pTexelBufferView = NULL
+    }
+  };
 
-    vkUpdateDescriptorSets (device, 4, write_descriptor_sets, 0, NULL);
-  }
+  vkUpdateDescriptorSets (device, 4, write_descriptor_sets, 0, NULL);
 }
 
 void
@@ -384,36 +380,12 @@ scene_pointer_tip_set_and_submit_texture (ScenePointerTip *tip,
 
 }
 
-static void
-_update_ubo (ScenePointerTip   *self,
-             GxrEye             eye,
-             graphene_matrix_t *vp)
-{
-  ScenePointerTipUniformBuffer ub  = {0};
-
-  ub.receive_light = FALSE;
-
-  graphene_matrix_t m_matrix;
-  scene_object_get_transformation (SCENE_OBJECT (self), &m_matrix);
-
-  graphene_matrix_t mvp_matrix;
-  graphene_matrix_multiply (&m_matrix, vp, &mvp_matrix);
-
-  float mvp[16];
-  graphene_matrix_to_float (&mvp_matrix, mvp);
-  for (int i = 0; i < 16; i++)
-    ub.mvp[i] = mvp[i];
-
-  scene_object_update_ubo (SCENE_OBJECT (self), eye, &ub);
-}
-
 void
-scene_pointer_tip_render (ScenePointerTip   *self,
-                          GxrEye             eye,
-                          VkPipeline         pipeline,
-                          VkPipelineLayout   pipeline_layout,
-                          VkCommandBuffer    cmd_buffer,
-                          graphene_matrix_t *vp)
+scene_pointer_tip_render (ScenePointerTip    *self,
+                          VkPipeline          pipeline,
+                          VkPipelineLayout    pipeline_layout,
+                          VkCommandBuffer     cmd_buffer,
+                          graphene_matrix_t  *vp)
 {
   if (!self->texture)
   {
@@ -427,9 +399,29 @@ scene_pointer_tip_render (ScenePointerTip   *self,
 
   vkCmdBindPipeline (cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-  _update_ubo (self, eye, vp);
+  //_update_ubo (self, eye, vp);
 
-  scene_object_bind (obj, eye, cmd_buffer, pipeline_layout);
+  ScenePointerTipUniformBuffer ub  = {0};
+
+  ub.receive_light = FALSE;
+
+  graphene_matrix_t m_matrix;
+  scene_object_get_transformation (SCENE_OBJECT (self), &m_matrix);
+
+  for (uint32_t eye = 0; eye < 2; eye++)
+    {
+      graphene_matrix_t mvp_matrix;
+      graphene_matrix_multiply (&m_matrix, &vp[eye], &mvp_matrix);
+
+      float mvp[16];
+      graphene_matrix_to_float (&mvp_matrix, mvp);
+      for (int i = 0; i < 16; i++)
+        ub.mvp[eye][i] = mvp[i];
+    }
+
+  scene_object_update_ubo (SCENE_OBJECT (self), &ub);
+
+  scene_object_bind (obj, cmd_buffer, pipeline_layout);
   gulkan_vertex_buffer_draw (self->vertex_buffer, cmd_buffer);
 }
 
@@ -460,10 +452,10 @@ graphene_ext_matrix_get_translation_point3d (const graphene_matrix_t *m,
 
 
 void
-scene_pointer_tip_update (ScenePointerTip      *self,
-                        GxrContext         *context,
-                        graphene_matrix_t  *pose,
-                        graphene_point3d_t *intersection_point)
+scene_pointer_tip_update (ScenePointerTip    *self,
+                          GxrContext         *context,
+                          graphene_matrix_t  *pose,
+                          graphene_point3d_t *intersection_point)
 {
   graphene_matrix_t transform;
   graphene_matrix_init_from_matrix (&transform, pose);

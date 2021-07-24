@@ -6,6 +6,7 @@
  */
 
 #version 460
+
 #extension GL_ARB_separate_shader_objects : enable
 
 const float shininess = 16.0f;
@@ -16,8 +17,8 @@ layout (location = 1) in vec4 view_position;
 layout (location = 2) in vec2 uv;
 
 layout (binding = 0) uniform Transformation {
-  mat4 mvp;
-  mat4 mv;
+  mat4 mvp[2];
+  mat4 mv[2];
   mat4 m;
   bool receive_light;
 } transformation;

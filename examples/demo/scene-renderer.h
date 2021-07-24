@@ -47,11 +47,10 @@ scene_renderer_draw (SceneRenderer *self);
 
 void
 scene_renderer_set_render_cb (SceneRenderer *self,
-                              void (*render_eye) (uint32_t         eye,
-                                                  VkCommandBuffer  cmd_buffer,
-                                                  VkPipelineLayout pipeline_layout,
-                                                  VkPipeline      *pipelines,
-                                                  gpointer         data),
+                              void (*render) (VkCommandBuffer  cmd_buffer,
+                                              VkPipelineLayout pipeline_layout,
+                                              VkPipeline      *pipelines,
+                                              gpointer         data),
                               gpointer scene_client);
 
 void

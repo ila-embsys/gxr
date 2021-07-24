@@ -53,7 +53,6 @@ scene_object_get_transformation (SceneObject       *self,
 
 void
 scene_object_bind (SceneObject     *self,
-                   GxrEye           eye,
                    VkCommandBuffer  cmd_buffer,
                    VkPipelineLayout pipeline_layout);
 
@@ -91,17 +90,16 @@ scene_object_set_transformation_direct (SceneObject       *self,
                                         graphene_matrix_t *mat);
 
 GulkanUniformBuffer *
-scene_object_get_ubo (SceneObject *self, uint32_t eye);
+scene_object_get_ubo (SceneObject *self);
 
 VkBuffer
-scene_object_get_transformation_buffer (SceneObject *self, uint32_t eye);
+scene_object_get_transformation_buffer (SceneObject *self);
 
 VkDescriptorSet
-scene_object_get_descriptor_set (SceneObject *self, uint32_t eye);
+scene_object_get_descriptor_set (SceneObject *self);
 
 void
 scene_object_update_ubo (SceneObject *self,
-                         GxrEye       eye,
                          gpointer     uniform_buffer);
 
 G_END_DECLS

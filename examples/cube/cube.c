@@ -13,7 +13,7 @@
 #include <stdalign.h>
 
 typedef struct {
-  alignas(16) float mvp[16];
+  alignas(32) float mvp[2][16];
 } UniformBuffer;
 
 static const float positions[] = {
@@ -44,13 +44,13 @@ struct _CubeExample
   GMainLoop *loop;
 
   VkPipelineCache pipeline_cache;
-  VkDescriptorSet descriptor_sets[2];
+  VkDescriptorSet descriptor_set;
   VkDescriptorSetLayout descriptor_set_layout;
   VkPipeline pipeline;
   VkPipelineLayout pipeline_layout;
 
   GulkanRenderPass *render_pass;
-  GulkanUniformBuffer *uniform_buffers[2];
+  GulkanUniformBuffer *uniform_buffer;
   GulkanDescriptorPool *descriptor_pool;
   GulkanVertexBuffer *vb;
   GulkanCmdBuffer **cmd_buffers;
@@ -60,6 +60,8 @@ struct _CubeExample
   guint render_source;
   guint sigint_signal;
   gboolean render_background;
+
+  UniformBuffer ub;
 };
 
 G_DEFINE_TYPE (CubeExample, cube_example, GULKAN_TYPE_RENDERER)
@@ -121,9 +123,7 @@ cube_example_finalize (GObject *gobject)
   vkDestroyPipeline (device, self->pipeline, NULL);
   vkDestroyPipelineCache (device, self->pipeline_cache, NULL);
 
-  for (uint32_t eye = 0; eye < 2; eye++)
-    g_object_unref (self->uniform_buffers[eye]);
-
+  g_object_unref (self->uniform_buffer);
 
   g_object_unref (self->descriptor_pool);
   g_clear_object (&self->vb);
@@ -330,27 +330,23 @@ _update_descriptors (CubeExample *self)
   GulkanClient *gc = gxr_context_get_gulkan (self->context);
   VkDevice device = gulkan_client_get_device_handle (gc);
 
-  for (uint32_t eye = 0; eye < 2; eye++)
+  VkWriteDescriptorSet *write_descriptor_sets = (VkWriteDescriptorSet []) {
     {
-      VkWriteDescriptorSet *write_descriptor_sets = (VkWriteDescriptorSet []) {
-        {
-          .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-          .dstSet = self->descriptor_sets[eye],
-          .dstBinding = 0,
-          .descriptorCount = 1,
-          .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-          .pBufferInfo = &(VkDescriptorBufferInfo) {
-            .buffer = gulkan_uniform_buffer_get_handle (
-                        self->uniform_buffers[eye]),
-            .offset = 0,
-            .range = VK_WHOLE_SIZE
-          },
-          .pTexelBufferView = NULL
-        }
-      };
-
-      vkUpdateDescriptorSets (device, 1, write_descriptor_sets, 0, NULL);
+      .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+      .dstSet = self->descriptor_set,
+      .dstBinding = 0,
+      .descriptorCount = 1,
+      .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+      .pBufferInfo = &(VkDescriptorBufferInfo) {
+        .buffer = gulkan_uniform_buffer_get_handle (self->uniform_buffer),
+        .offset = 0,
+        .range = VK_WHOLE_SIZE
+      },
+      .pTexelBufferView = NULL
     }
+  };
+
+  vkUpdateDescriptorSets (device, 1, write_descriptor_sets, 0, NULL);
 }
 
 static gboolean
@@ -416,10 +412,9 @@ _init_descriptor_pool (CubeExample *self)
   if (!self->descriptor_pool)
     return FALSE;
 
-  for (uint32_t eye = 0; eye < set_count; eye++)
-    if (!gulkan_descriptor_pool_allocate_sets (self->descriptor_pool,
-                                               1, &self->descriptor_sets[eye]))
-      return FALSE;
+  if (!gulkan_descriptor_pool_allocate_sets (self->descriptor_pool,
+                                             1, &self->descriptor_set))
+    return FALSE;
 
   return TRUE;
 }
@@ -448,13 +443,11 @@ _init_uniform_buffer (CubeExample *self)
   GulkanClient *gc = gxr_context_get_gulkan (self->context);
   GulkanDevice *gulkan_device = gulkan_client_get_device (gc);
   /* Create uniform buffer to hold a matrix per eye */
-  for (uint32_t eye = 0; eye < 2; eye++)
-    {
-      self->uniform_buffers[eye] = gulkan_uniform_buffer_new (gulkan_device,
-                                                              sizeof (UniformBuffer));
-      if (!self->uniform_buffers[eye])
-        return FALSE;
-    }
+  self->uniform_buffer = gulkan_uniform_buffer_new (gulkan_device,
+                                                    sizeof (UniformBuffer));
+  if (!self->uniform_buffer)
+    return FALSE;
+
   return TRUE;
 }
 
@@ -545,32 +538,12 @@ _update_transformation (CubeExample *self,
   graphene_point3d_t pos = (graphene_point3d_t){ 0.0f, 0.0f, -6.0f };
   graphene_matrix_translate (&model, &pos);
 
-  UniformBuffer ub = {0};
-
   graphene_matrix_t model_view;
   graphene_matrix_multiply (&model, &view, &model_view);
 
   graphene_matrix_t model_view_projection;
   graphene_matrix_multiply (&model_view, &projection, &model_view_projection);
-  graphene_matrix_to_float (&model_view_projection, ub.mvp);
-
-  gulkan_uniform_buffer_update (self->uniform_buffers[eye], (gpointer) &ub);
-}
-
-static void
-_render_eye (CubeExample *self,
-             uint32_t         eye,
-             VkCommandBuffer  cmd_buffer)
-{
-  vkCmdBindPipeline (cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                     self->pipeline);
-
-  vkCmdBindDescriptorSets (cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                           self->pipeline_layout, 0, 1,
-                           &self->descriptor_sets[eye], 0, NULL);
-
-  gulkan_vertex_buffer_bind_with_offsets (self->vb, cmd_buffer);
-  vkCmdDraw (cmd_buffer, 14, 1, 0, 0);
+  graphene_matrix_to_float (&model_view_projection, self->ub.mvp[eye]);
 }
 
 static void
@@ -587,19 +560,24 @@ _render_stereo (CubeExample *self, VkCommandBuffer cmd_buffer, uint32_t swapchai
       .float32 = {0.1f, 0.1f, 0.7f, 1.0f}
     };
 
-  uint32_t view_count = gxr_context_get_view_count (self->context);
-  for (uint32_t view = 0; view < view_count; view++)
-    {
-      GulkanFrameBuffer *framebuffer =
-        gxr_context_get_framebuffer_at (self->context, view, swapchain_id);
+  GulkanFrameBuffer *framebuffer =
+    gxr_context_get_framebuffer_at (self->context, swapchain_id);
 
-      gulkan_render_pass_begin (self->render_pass, extent, clear_color,
-                                framebuffer, cmd_buffer);
+  gulkan_render_pass_begin (self->render_pass, extent, clear_color,
+                            framebuffer, cmd_buffer);
 
-      _render_eye (self, view, cmd_buffer);
+  vkCmdBindPipeline (cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                     self->pipeline);
 
-      vkCmdEndRenderPass (cmd_buffer);
-    }
+  vkCmdBindDescriptorSets (cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                           self->pipeline_layout, 0, 1,
+                           &self->descriptor_set, 0, NULL);
+
+  gulkan_vertex_buffer_bind_with_offsets (self->vb, cmd_buffer);
+  vkCmdDraw (cmd_buffer, 14, 1, 0, 0);
+
+  vkCmdEndRenderPass (cmd_buffer);
+
 }
 
 static void
@@ -635,6 +613,7 @@ _iterate_cb (gpointer _self)
 
   for (uint32_t eye = 0; eye < 2; eye++)
     _update_transformation (self, eye);
+  gulkan_uniform_buffer_update (self->uniform_buffer, (gpointer) &self->ub);
 
   uint32_t i = gxr_context_get_buffer_index (self->context);
 

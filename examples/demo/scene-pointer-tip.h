@@ -37,12 +37,11 @@ scene_pointer_tip_new (GulkanClient          *gulkan,
                        VkBuffer               lights);
 
 void
-scene_pointer_tip_render (ScenePointerTip   *self,
-                          GxrEye             eye,
-                          VkPipeline         pipeline,
-                          VkPipelineLayout   pipeline_layout,
-                          VkCommandBuffer    cmd_buffer,
-                          graphene_matrix_t *vp);
+scene_pointer_tip_render (ScenePointerTip    *self,
+                          VkPipeline          pipeline,
+                          VkPipelineLayout    pipeline_layout,
+                          VkCommandBuffer     cmd_buffer,
+                          graphene_matrix_t  *vp);
 
 void
 scene_pointer_tip_update_apparent_size (ScenePointerTip *self,

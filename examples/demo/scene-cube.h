@@ -18,8 +18,7 @@
 G_BEGIN_DECLS
 
 #define SCENE_TYPE_CUBE scene_cube_get_type()
-G_DECLARE_FINAL_TYPE (SceneCube, scene_cube,
-                      SCENE, CUBE, SceneObject)
+G_DECLARE_FINAL_TYPE (SceneCube, scene_cube, SCENE, CUBE, SceneObject)
 
 SceneCube *
 scene_cube_new (GulkanClient         *gulkan,
@@ -28,11 +27,10 @@ scene_cube_new (GulkanClient         *gulkan,
                 VkSampleCountFlagBits sample_count);
 
 void
-scene_cube_render (SceneCube          *self,
-                   GxrEye              eye,
-                   VkCommandBuffer     cmd_buffer,
-                   graphene_matrix_t  *view,
-                   graphene_matrix_t  *projection);
+scene_cube_render (SceneCube         *self,
+                   VkCommandBuffer    cmd_buffer,
+                   graphene_matrix_t *view,
+                   graphene_matrix_t *projection);
 
 void
 scene_cube_override_position (SceneCube          *self,

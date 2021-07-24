@@ -7,11 +7,13 @@
 
 #version 460 core
 
+#extension GL_EXT_multiview : enable
+
 layout (std140, set = 0, binding = 0) uniform block
 {
-  uniform mat4 mv_matrix;
-  uniform mat4 mvp_matrix;
-  uniform mat3 normal_matrix;
+  uniform mat4 mv_matrix[2];
+  uniform mat4 mvp_matrix[2];
+  uniform mat3 normal_matrix[2];
 };
 
 layout (location = 0) in vec4 in_position;
@@ -25,11 +27,11 @@ layout (location = 2) out vec4 diffuse_color;
 void
 main ()
 {
-  normal_view = normal_matrix * in_normal;
-  vec4 positon_view_vec4 = mv_matrix * in_position;
+  normal_view = normal_matrix[gl_ViewIndex] * in_normal;
+  vec4 positon_view_vec4 = mv_matrix[gl_ViewIndex] * in_position;
   positon_view = positon_view_vec4.xyz / positon_view_vec4.w;
 
   diffuse_color = in_color;
 
-  gl_Position = mvp_matrix * in_position;
+  gl_Position = mvp_matrix[gl_ViewIndex] * in_position;
 }

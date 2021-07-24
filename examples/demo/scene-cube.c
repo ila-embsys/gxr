@@ -11,9 +11,9 @@
 #include "scene-cube.h"
 
 typedef struct __attribute__((__packed__)) {
-  float mv_matrix[16];
-  float mvp_matrix[16];
-  float normal_matrix[12];
+  float mv_matrix[2][16];
+  float mvp_matrix[2][16];
+  float normal_matrix[2][12];
 } SceneCubeUniformBuffer;
 
 typedef struct {
@@ -433,39 +433,6 @@ scene_cube_finalize (GObject *gobject)
 }
 
 static void
-_update_ubo (SceneCube         *self,
-             GxrEye             eye,
-             graphene_matrix_t *view,
-             graphene_matrix_t *projection)
-{
-  SceneCubeUniformBuffer ub;
-
-  graphene_matrix_t m_matrix;
-  scene_object_get_transformation (SCENE_OBJECT (self), &m_matrix);
-
-  graphene_matrix_t mv_matrix;
-  graphene_matrix_multiply (&m_matrix, view, &mv_matrix);
-
-  graphene_matrix_t mvp_matrix;
-  graphene_matrix_multiply (&mv_matrix, projection, &mvp_matrix);
-
-  float mv[16];
-  graphene_matrix_to_float (&mv_matrix, mv);
-  for (int i = 0; i < 16; i++)
-    ub.mv_matrix[i] = mv[i];
-
-  float mvp[16];
-  graphene_matrix_to_float (&mvp_matrix, mvp);
-  for (int i = 0; i < 16; i++)
-    ub.mvp_matrix[i] = mvp[i];
-
-  /* The mat3 normalMatrix is laid out as 3 vec4s. */
-  memcpy (ub.normal_matrix, ub.mv_matrix, sizeof ub.normal_matrix);
-
-  scene_object_update_ubo (SCENE_OBJECT (self), eye, &ub);
-}
-
-static void
 _set_transformation (SceneCube *self)
 {
   graphene_matrix_t m_matrix;
@@ -484,11 +451,10 @@ _set_transformation (SceneCube *self)
 }
 
 void
-scene_cube_render (SceneCube             *self,
-                       GxrEye             eye,
-                       VkCommandBuffer    cmd_buffer,
-                       graphene_matrix_t *view,
-                       graphene_matrix_t *projection)
+scene_cube_render (SceneCube          *self,
+                   VkCommandBuffer     cmd_buffer,
+                   graphene_matrix_t  *view,
+                   graphene_matrix_t  *projection)
 {
   if (!gulkan_vertex_buffer_is_initialized (self->vb))
     {
@@ -510,9 +476,37 @@ scene_cube_render (SceneCube             *self,
                      self->pipeline);
   /* TODO: would be nice if update_mvp matrix would fully update our ubo
    * scene_object_update_mvp_matrix (obj, eye, vp); */
-  _update_ubo (self, eye, view, projection);
+  SceneCubeUniformBuffer ub;
 
-  scene_object_bind (obj, eye, cmd_buffer, self->pipeline_layout);
+  graphene_matrix_t m_matrix;
+  scene_object_get_transformation (SCENE_OBJECT (self), &m_matrix);
+
+  for (uint32_t eye = 0; eye < 2; eye++)
+    {
+      graphene_matrix_t mv_matrix;
+      graphene_matrix_multiply (&m_matrix, &view[eye], &mv_matrix);
+
+      graphene_matrix_t mvp_matrix;
+      graphene_matrix_multiply (&mv_matrix, &projection[eye], &mvp_matrix);
+
+      float mv[16];
+      graphene_matrix_to_float (&mv_matrix, mv);
+      for (int i = 0; i < 16; i++)
+        ub.mv_matrix[eye][i] = mv[i];
+
+      float mvp[16];
+      graphene_matrix_to_float (&mvp_matrix, mvp);
+      for (int i = 0; i < 16; i++)
+        ub.mvp_matrix[eye][i] = mvp[i];
+
+      /* The mat3 normalMatrix is laid out as 3 vec4s. */
+      memcpy (ub.normal_matrix[eye], ub.mv_matrix[eye],
+              sizeof ub.normal_matrix[eye]);
+    }
+
+  scene_object_update_ubo (SCENE_OBJECT (self), &ub);
+
+  scene_object_bind (obj, cmd_buffer, self->pipeline_layout);
 
   gulkan_vertex_buffer_bind_with_offsets (self->vb, cmd_buffer);
   vkCmdDraw (cmd_buffer, 4, 1, 0, 0);

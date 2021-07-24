@@ -79,11 +79,10 @@ struct _SceneRenderer
   GxrContext *context;
 
   void
-  (*render_eye) (uint32_t         eye,
-                 VkCommandBuffer  cmd_buffer,
-                 VkPipelineLayout pipeline_layout,
-                 VkPipeline      *pipelines,
-                 gpointer         data);
+  (*render) (VkCommandBuffer  cmd_buffer,
+             VkPipelineLayout pipeline_layout,
+             VkPipeline      *pipelines,
+             gpointer         data);
 
   void (*update_lights) (gpointer data);
 };
@@ -104,7 +103,7 @@ static void
 scene_renderer_init (SceneRenderer *self)
 {
   self->render_scale = 1.0f;
-  self->render_eye = NULL;
+  self->render = NULL;
   self->scene_client = NULL;
 
   self->lights.active_lights = 0;
@@ -603,31 +602,22 @@ _render_stereo (SceneRenderer *self, VkCommandBuffer cmd_buffer)
     .float32 = { 0.0f, 0.0f, 0.0f, .0f },
   };
 
-  uint32_t view_count = gxr_context_get_view_count (self->context);
-  for (uint32_t view = 0; view < view_count; view++)
+  GulkanFrameBuffer *framebuffer =
+    gxr_context_get_acquired_framebuffer (self->context);
+
+  if (!GULKAN_IS_FRAME_BUFFER (framebuffer))
     {
-      /* TOOD: adjust code to support rendering more than 2 views */
-      if (view >= 2)
-        break;
-
-      GulkanFrameBuffer *framebuffer =
-        gxr_context_get_acquired_framebuffer (self->context, view);
-
-      if (!GULKAN_IS_FRAME_BUFFER (framebuffer))
-        {
-          g_printerr ("framebuffer invalid for view %d\n", view);
-          continue;
-        }
-
-      gulkan_render_pass_begin (self->render_pass, extent, black,
-                                framebuffer, cmd_buffer);
-
-      if (self->render_eye)
-        self->render_eye (view, cmd_buffer, self->pipeline_layout,
-                          self->pipelines, self->scene_client);
-
-      vkCmdEndRenderPass (cmd_buffer);
+      g_printerr ("framebuffer invalid\n");
     }
+
+  gulkan_render_pass_begin (self->render_pass, extent, black,
+                            framebuffer, cmd_buffer);
+
+  if (self->render)
+    self->render (cmd_buffer, self->pipeline_layout,
+                  self->pipelines, self->scene_client);
+
+  vkCmdEndRenderPass (cmd_buffer);
 }
 
 void
@@ -675,7 +665,7 @@ _draw (SceneRenderer *self)
   GulkanQueue *queue = gulkan_device_get_graphics_queue (device);
 
   GulkanCmdBuffer *cmd_buffer = gulkan_queue_request_cmd_buffer (queue);
-  gulkan_cmd_buffer_begin (cmd_buffer, 0);
+  gulkan_cmd_buffer_begin_one_time (cmd_buffer);
 
   self->update_lights (self->scene_client);
 
@@ -701,14 +691,13 @@ scene_renderer_draw (SceneRenderer *self)
 
 void
 scene_renderer_set_render_cb (SceneRenderer *self,
-                              void (*render_eye) (uint32_t         eye,
-                                                  VkCommandBuffer  cmd_buffer,
-                                                  VkPipelineLayout pipeline_layout,
-                                                  VkPipeline      *pipelines,
-                                                  gpointer         data),
+                              void (*render) (VkCommandBuffer  cmd_buffer,
+                                              VkPipelineLayout pipeline_layout,
+                                              VkPipeline      *pipelines,
+                                              gpointer         data),
                               gpointer scene_client)
 {
-  self->render_eye = render_eye;
+  self->render = render;
   self->scene_client = scene_client;
 }
 

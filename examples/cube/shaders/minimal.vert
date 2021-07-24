@@ -7,18 +7,20 @@
 
 #version 460 core
 
+#extension GL_EXT_multiview : enable
+
 layout (std140, set = 0, binding = 0) uniform block
 {
-  uniform mat4 mvp;
+  uniform mat4 mvp[2];
 };
 
 layout (location = 0) in vec4 in_position;
 
-layout (location = 0) out vec4 positon;
+layout (location = 0) out vec4 color;
 
 void
 main ()
 {
-  positon = in_position;
-  gl_Position = mvp * in_position;
+  color = in_position;
+  gl_Position = mvp[gl_ViewIndex] * in_position;
 }

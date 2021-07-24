@@ -27,12 +27,11 @@ scene_pointer_new (GulkanClient          *gulkan,
                    VkDescriptorSetLayout *layout);
 
 void
-scene_pointer_render (ScenePointer      *self,
-                      GxrEye             eye,
-                      VkPipeline         pipeline,
-                      VkPipelineLayout   pipeline_layout,
-                      VkCommandBuffer    cmd_buffer,
-                      graphene_matrix_t *vp);
+scene_pointer_render (ScenePointer       *self,
+                      VkPipeline          pipeline,
+                      VkPipelineLayout    pipeline_layout,
+                      VkCommandBuffer     cmd_buffer,
+                      graphene_matrix_t  *vp);
 
 void
 scene_pointer_move (ScenePointer *self,

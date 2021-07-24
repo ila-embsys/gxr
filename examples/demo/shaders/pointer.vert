@@ -8,8 +8,10 @@
 #version 460
 #extension GL_ARB_separate_shader_objects : enable
 
+#extension GL_EXT_multiview : enable
+
 layout (binding = 0) uniform Transformation {
-  mat4 mvp;
+  mat4 mvp[2];
 } ubo;
 
 layout (location = 0) in vec3 position;
@@ -23,6 +25,6 @@ out gl_PerVertex {
 
 void main() {
 
-  gl_Position = ubo.mvp * vec4 (position, 1.0);
+  gl_Position = ubo.mvp[gl_ViewIndex] * vec4 (position, 1.0);
   out_color = vec4 (color, 1.0);
 }

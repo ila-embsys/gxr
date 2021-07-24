@@ -117,22 +117,20 @@ _iterate_cb (gpointer _self)
   if (!self->framecycle)
     return TRUE;
 
-  GxrContext *context = self->context;
-  if (!gxr_context_begin_frame (context))
+  if (!gxr_context_begin_frame (self->context))
     return FALSE;
 
   for (uint32_t eye = 0; eye < 2; eye++)
-    gxr_context_get_view (context, eye, &self->mat_view[eye]);
-
-
-  for (uint32_t eye = 0; eye < 2; eye++)
-    gxr_context_get_projection (context, eye, self->near, self->far,
-                                &self->mat_projection[eye]);
+    {
+      gxr_context_get_view (self->context, eye, &self->mat_view[eye]);
+      gxr_context_get_projection (self->context, eye, self->near, self->far,
+                                 &self->mat_projection[eye]);
+    }
 
   if (self->rendering)
     scene_renderer_draw (self->renderer);
 
-  gxr_context_end_frame (context);
+  gxr_context_end_frame (self->context);
 
   return TRUE;
 }
@@ -152,7 +150,7 @@ _create_gxr_context ()
 
   GxrContext *context = gxr_context_new_from_vulkan_extensions (instance_ext_list,
                                                                 device_ext_list,
-                                                                "GXR Cube", 1);
+                                                                "gxr Demo", 1);
 
   g_slist_free_full (instance_ext_list, g_free);
   g_slist_free_full (device_ext_list, g_free);
@@ -160,12 +158,11 @@ _create_gxr_context ()
 }
 
 static void
-_render_pointers (Example           *self,
-                  GxrEye             eye,
-                  VkCommandBuffer    cmd_buffer,
-                  VkPipeline        *pipelines,
-                  VkPipelineLayout   pipeline_layout,
-                  graphene_matrix_t *vp)
+_render_pointers (Example            *self,
+                  VkCommandBuffer     cmd_buffer,
+                  VkPipeline         *pipelines,
+                  VkPipelineLayout    pipeline_layout,
+                  graphene_matrix_t  *vp)
 {
   GList *scs = g_hash_table_get_values (self->controller_map);
   for (GList *l = scs; l; l = l->next)
@@ -184,16 +181,16 @@ _render_pointers (Example           *self,
       ScenePointer *pointer =
         SCENE_POINTER (scene_controller_get_pointer (sc));
 
-      scene_pointer_render (pointer, eye,
-                                pipelines[PIPELINE_POINTER],
-                                pipeline_layout, cmd_buffer, vp);
+      scene_pointer_render (pointer,
+                            pipelines[PIPELINE_POINTER],
+                            pipeline_layout, cmd_buffer, vp);
 
       ScenePointerTip *scene_tip =
         SCENE_POINTER_TIP (scene_controller_get_pointer_tip (sc));
-      scene_pointer_tip_render (scene_tip, eye,
-                                    pipelines[PIPELINE_TIP],
-                                    pipeline_layout,
-                                    cmd_buffer, vp);
+      scene_pointer_tip_render (scene_tip,
+                                pipelines[PIPELINE_TIP],
+                                pipeline_layout,
+                                cmd_buffer, vp);
     }
 }
 
@@ -219,28 +216,31 @@ _cube_set_position (Example *example)
 }
 
 static void
-_render_eye_cb (uint32_t         eye,
-                VkCommandBuffer  cmd_buffer,
-                VkPipelineLayout pipeline_layout,
-                VkPipeline      *pipelines,
-                gpointer         _self)
+_render_cb (VkCommandBuffer  cmd_buffer,
+            VkPipelineLayout pipeline_layout,
+            VkPipeline      *pipelines,
+            gpointer         _self)
 {
   Example *self = _self;
 
-  graphene_matrix_t vp;
-  graphene_matrix_multiply (&self->mat_view[eye],
-                            &self->mat_projection[eye], &vp);
+  graphene_matrix_t vp[2];
+
+  for (uint32_t eye = 0; eye < 2; eye++)
+    graphene_matrix_multiply (&self->mat_view[eye],
+                              &self->mat_projection[eye], &vp[eye]);
 
   if (self->render_background)
-    scene_background_render (self->background, eye,
+    scene_background_render (self->background,
                              pipelines[PIPELINE_BACKGROUND],
-                             pipeline_layout, cmd_buffer, &vp);
+                             pipeline_layout, cmd_buffer,
+                             vp);
 
-  _render_pointers (self, eye, cmd_buffer, pipelines, pipeline_layout, &vp);
+  _render_pointers (self, cmd_buffer, pipelines, pipeline_layout, vp);
 
   _cube_set_position (self);
-  scene_cube_render (self->cube, eye, cmd_buffer, &self->mat_view[eye],
-                         &self->mat_projection[eye]);
+  scene_cube_render (self->cube, cmd_buffer,
+                     self->mat_view,
+                     self->mat_projection);
 }
 
 /*
@@ -273,11 +273,11 @@ _init_vulkan (Example       *self,
   VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT;
 
   self->cube = scene_cube_new (gc, GULKAN_RENDERER (renderer),
-                                   render_pass, sample_count);
+                               render_pass, sample_count);
 
   self->background = scene_background_new (gc, descriptor_set_layout);
 
-  scene_renderer_set_render_cb (renderer, _render_eye_cb, self);
+  scene_renderer_set_render_cb (renderer, _render_cb, self);
   scene_renderer_set_update_lights_cb (renderer, _update_lights_cb, self);
 
   return TRUE;

@@ -40,15 +40,15 @@ struct _GxrContext
   XrViewConfigurationType view_config_type;
 
   /* One array per eye */
-  XrSwapchain *swapchains;
-  XrSwapchainImageVulkanKHR **images;
+  XrSwapchain swapchain;
+  XrSwapchainImageVulkanKHR *images;
   /* last acquired swapchain image index per swapchain */
-  uint32_t *buffer_index;
+  uint32_t buffer_index;
   /* for each view */
-  uint32_t *swapchain_length;
+  uint32_t swapchain_length;
 
   /* 1 framebuffer for each swapchain image, for each swapchain (1 per view) */
-  GulkanFrameBuffer  ***framebuffer;
+  GulkanFrameBuffer  **framebuffers;
   VkExtent2D            framebuffer_extent;
   VkSampleCountFlagBits framebuffer_sample_count;
 
@@ -56,7 +56,6 @@ struct _GxrContext
   XrViewConfigurationView* configuration_views;
 
   XrGraphicsBindingVulkanKHR graphics_binding;
-
 
   uint32_t view_count;
 
@@ -758,71 +757,62 @@ _create_swapchains (GxrContext* self)
     }
 
 
-  self->swapchains = g_malloc (sizeof (XrSwapchain) * self->view_count);
-  self->images =
-    g_malloc (sizeof (XrSwapchainImageVulkanKHR*) * self->view_count);
-  self->swapchain_length = g_malloc (sizeof (uint32_t) * self->view_count);
+  /* make sure we don't clean up uninitialized pointer on failure */
+  self->images = NULL;
 
-  for (uint32_t i = 0; i < self->view_count; i++)
+  XrSwapchainCreateInfo swapchainCreateInfo = {
+    .type = XR_TYPE_SWAPCHAIN_CREATE_INFO,
+    .usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT |
+                  XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT,
+    .createFlags = 0,
+    // just use the first enumerated format
+    .format = self->swapchain_format,
+    .sampleCount = 1,
+    .width = self->configuration_views[0].recommendedImageRectWidth,
+    .height = self->configuration_views[0].recommendedImageRectHeight,
+    .faceCount = 1,
+    .arraySize = 2,
+    .mipCount = 1,
+  };
+
+  g_debug ("Swapchain %d dimensions: %dx%d", 0,
+           self->configuration_views[0].recommendedImageRectWidth,
+           self->configuration_views[0].recommendedImageRectHeight);
+
+  result = xrCreateSwapchain (self->session, &swapchainCreateInfo,
+                              &self->swapchain);
+  if (!_check_xr_result (result, "Failed to create swapchain %d!", 0))
     {
-      /* make sure we don't clean up uninitialized pointer on failure */
-      self->images[i] = NULL;
+      g_free (swapchainFormats);
+      return FALSE;
+    }
 
-      XrSwapchainCreateInfo swapchainCreateInfo = {
-        .type = XR_TYPE_SWAPCHAIN_CREATE_INFO,
-        .usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT |
-                      XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT,
-        .createFlags = 0,
-        // just use the first enumerated format
-        .format = self->swapchain_format,
-        .sampleCount = 1,
-        .width = self->configuration_views[i].recommendedImageRectWidth,
-        .height = self->configuration_views[i].recommendedImageRectHeight,
-        .faceCount = 1,
-        .arraySize = 1,
-        .mipCount = 1,
-      };
+  result = xrEnumerateSwapchainImages (self->swapchain, 0,
+                                       &self->swapchain_length, NULL);
+  if (!_check_xr_result (result, "Failed to enumerate swapchains"))
+    {
+      g_free (swapchainFormats);
+      return FALSE;
+    }
 
-      g_debug ("Swapchain %d dimensions: %dx%d", i,
-               self->configuration_views[i].recommendedImageRectWidth,
-               self->configuration_views[i].recommendedImageRectHeight);
+  self->images =
+    g_malloc (sizeof(XrSwapchainImageVulkanKHR) * self->swapchain_length);
 
-      result = xrCreateSwapchain (self->session, &swapchainCreateInfo,
-                                  &self->swapchains[i]);
-      if (!_check_xr_result (result, "Failed to create swapchain %d!", i))
-        {
-          g_free (swapchainFormats);
-          return FALSE;
-        }
+  for (uint32_t j = 0; j < self->swapchain_length; j++)
+    {
+      // ...IMAGE_VULKAN2_KHR = ...IMAGE_VULKAN_KHR
+      self->images[j].type = XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR;
+      self->images[j].next = NULL;
+    }
 
-      result = xrEnumerateSwapchainImages (self->swapchains[i], 0,
-                                           &self->swapchain_length[i], NULL);
-      if (!_check_xr_result (result, "Failed to enumerate swapchains"))
-        {
-          g_free (swapchainFormats);
-          return FALSE;
-        }
-
-
-      self->images[i] =
-        g_malloc (sizeof(XrSwapchainImageVulkanKHR) * self->swapchain_length[i]);
-
-      for (uint32_t j = 0; j < self->swapchain_length[i]; j++)
-        {
-          // ...IMAGE_VULKAN2_KHR = ...IMAGE_VULKAN_KHR
-          self->images[i][j].type = XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR;
-          self->images[i][j].next = NULL;
-        }
-
-      result = xrEnumerateSwapchainImages(
-        self->swapchains[i], self->swapchain_length[i],
-        &self->swapchain_length[i],
-        (XrSwapchainImageBaseHeader*)self->images[i]);
-      if (!_check_xr_result (result, "Failed to enumerate swapchain images"))
-        {
-          g_free (swapchainFormats);
-          return FALSE;
-        }
+  result = xrEnumerateSwapchainImages(
+    self->swapchain, self->swapchain_length,
+    &self->swapchain_length,
+    (XrSwapchainImageBaseHeader*)self->images);
+  if (!_check_xr_result (result, "Failed to enumerate swapchain images"))
+    {
+      g_free (swapchainFormats);
+      return FALSE;
     }
 
   g_free (swapchainFormats);
@@ -840,13 +830,14 @@ _create_projection_views (GxrContext* self)
     self->projection_views[i] = (XrCompositionLayerProjectionView) {
       .type = XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW,
       .subImage = {
-        .swapchain = self->swapchains[i],
+        .swapchain = self->swapchain,
         .imageRect = {
           .extent = {
               .width = (int32_t) self->configuration_views[i].recommendedImageRectWidth,
               .height = (int32_t) self->configuration_views[i].recommendedImageRectHeight,
           },
         },
+        .imageArrayIndex = i,
       },
     };
 }
@@ -885,7 +876,7 @@ _init_session (GxrContext *self)
 
   _create_projection_views(self);
 
-  self->buffer_index = g_malloc (sizeof (uint32_t) * self->view_count);
+  self->buffer_index = 0;
 
   self->session_state = XR_SESSION_STATE_UNKNOWN;
   self->should_render = FALSE;
@@ -1380,6 +1371,10 @@ _new (GSList     *instance_ext_list,
       return NULL;
     }
 
+  // Always enable multiview extension.
+  device_ext_list = g_slist_append (device_ext_list,
+                                    g_strdup (VK_KHR_MULTIVIEW_EXTENSION_NAME));
+
   if (self->extensions.vulkan_enable2)
     {
       g_debug ("Initializing with vulkan_enable2");
@@ -1434,22 +1429,16 @@ gxr_context_init (GxrContext *self)
   self->manifest = NULL;
   self->predicted_display_time = 0;
   self->predicted_display_period = 0;
-  self->framebuffer = NULL;
+  self->framebuffers = NULL;
   self->images = NULL;
 }
 
 static void
 _cleanup (GxrContext *self)
 {
-  if (self->swapchains)
-    {
-      for (uint32_t i = 0; i < self->view_count; i++) {
-        xrDestroySwapchain (self->swapchains[i]);
-      }
-    }
+  if (self->swapchain != XR_NULL_HANDLE)
+    xrDestroySwapchain (self->swapchain);
 
-  if (self->swapchains)
-    g_free (self->swapchains);
   if (self->play_space)
     xrDestroySpace (self->play_space);
   if (self->session)
@@ -1462,33 +1451,21 @@ _cleanup (GxrContext *self)
   g_free (self->views);
   g_free (self->projection_views);
 
-  if (self->framebuffer)
+  if (self->framebuffers)
     {
-      for (uint32_t view = 0; view < self->view_count; view++)
+      for (uint32_t i = 0; i < self->swapchain_length; i++)
         {
-          for (uint32_t i = 0; i < self->swapchain_length[view]; i++)
-            {
-              if (GULKAN_IS_FRAME_BUFFER (self->framebuffer[view][i]))
-                g_object_unref (self->framebuffer[view][i]);
-              else
-                g_printerr ("Failed to release framebuffer %d for view %d\n",
-                            i, view);
-            }
-          g_free (self->framebuffer[view]);
+          if (GULKAN_IS_FRAME_BUFFER (self->framebuffers[i]))
+            g_object_unref (self->framebuffers[i]);
+          else
+            g_printerr ("Failed to release framebuffer %d\n", i);
         }
-      g_free (self->framebuffer);
+      g_free (self->framebuffers);
     }
 
-  g_free (self->swapchain_length);
 
   if (self->images)
-    {
-      for (uint32_t i = 0; i < self->view_count; i++)
-        g_free (self->images[i]);
-      g_free (self->images);
-    }
-
-  g_free (self->buffer_index);
+    g_free (self->images);
 }
 
 static void
@@ -1891,38 +1868,33 @@ gxr_context_init_framebuffers (GxrContext           *self,
   self->framebuffer_sample_count = sample_count;
 
   *render_pass =
-    gulkan_render_pass_new (device, sample_count, format,
-                            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, TRUE);
+    gulkan_render_pass_new_multiview (device, sample_count, format,
+      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, TRUE);
   if (!*render_pass)
     {
       g_printerr ("Could not init render pass.\n");
       return FALSE;
     }
 
-  self->framebuffer = g_malloc (sizeof (GulkanFrameBuffer*) * self->view_count);
-  for (uint32_t view = 0; view < self->view_count; view++)
+  g_debug ("Creating %d framebuffers", self->swapchain_length);
+
+  self->framebuffers =
+    g_malloc (sizeof (GulkanFrameBuffer*) * self->swapchain_length);
+  for (uint32_t i = 0; i < self->swapchain_length; i++)
     {
-      g_debug ("Creating %d framebuffers for view %d",
-               self->swapchain_length[view], view);
 
-      self->framebuffer[view] =
-        g_malloc (sizeof (GulkanFrameBuffer*) * self->swapchain_length[view]);
-      for (uint32_t i = 0; i < self->swapchain_length[view]; i++)
+      self->framebuffers[i] =
+        gulkan_frame_buffer_new_from_image_with_depth (device, *render_pass,
+                                                       self->images[i].image,
+                                                       extent, sample_count,
+                                                       format, self->view_count);
+
+      if (!GULKAN_IS_FRAME_BUFFER (self->framebuffers[i]))
         {
-
-          self->framebuffer[view][i] =
-            gulkan_frame_buffer_new_from_image_with_depth (device, *render_pass,
-                                                           self->images[view][i].image,
-                                                           extent, sample_count,
-                                                           format);
-
-          if (!GULKAN_IS_FRAME_BUFFER (self->framebuffer[view][i]))
-            {
-              g_printerr ("Could not initialize frambuffer.");
-              return FALSE;
-            }
+          g_printerr ("Could not initialize frambuffer.");
+          return FALSE;
         }
-  }
+    }
 
   return TRUE;
 }
@@ -2099,37 +2071,6 @@ _begin_frame (GxrContext* self)
   return TRUE;
 }
 
-static gboolean
-_aquire_swapchain (GxrContext* self,
-                   uint32_t i,
-                   uint32_t *buffer_index)
-{
-  XrResult result;
-
-  XrSwapchainImageAcquireInfo swapchainImageAcquireInfo = {
-    .type = XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO,
-  };
-
-  result = xrAcquireSwapchainImage (self->swapchains[i],
-                                    &swapchainImageAcquireInfo, buffer_index);
-  if (!_check_xr_result (result, "failed to acquire swapchain image!"))
-    return FALSE;
-
-  XrSwapchainImageWaitInfo swapchainImageWaitInfo = {
-    .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
-    .timeout = INT64_MAX,
-  };
-  result = xrWaitSwapchainImage (self->swapchains[i], &swapchainImageWaitInfo);
-  if (!_check_xr_result (result, "failed to wait for swapchain image!"))
-    return FALSE;
-
-  self->projection_views[i].pose = self->views[i].pose;
-  self->projection_views[i].fov = self->views[i].fov;
-  self->projection_views[i].subImage.imageArrayIndex = 0;
-
-  return TRUE;
-}
-
 gboolean
 gxr_context_begin_frame (GxrContext *self)
 {
@@ -2138,12 +2079,30 @@ gxr_context_begin_frame (GxrContext *self)
     return FALSE;
   }
 
+  XrResult result;
+
+  XrSwapchainImageAcquireInfo swapchainImageAcquireInfo = {
+    .type = XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO,
+  };
+
+  result = xrAcquireSwapchainImage (self->swapchain,
+                                    &swapchainImageAcquireInfo,
+                                    &self->buffer_index);
+  if (!_check_xr_result (result, "failed to acquire swapchain image!"))
+    return FALSE;
+
+  XrSwapchainImageWaitInfo swapchainImageWaitInfo = {
+    .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
+    .timeout = INT64_MAX,
+  };
+  result = xrWaitSwapchainImage (self->swapchain, &swapchainImageWaitInfo);
+  if (!_check_xr_result (result, "failed to wait for swapchain image!"))
+    return FALSE;
+
   for (uint32_t i = 0; i < 2; i++) {
-    if (!_aquire_swapchain (self, i, &self->buffer_index[i]))
-      {
-        g_printerr ("Could not aquire xr swapchain\n");
-        return FALSE;
-      }
+    self->projection_views[i].pose = self->views[i].pose;
+    self->projection_views[i].fov = self->views[i].fov;
+    self->projection_views[i].subImage.imageArrayIndex = i;
   }
 
   /* TODO: update poses, so GxrContext can update them for DeviceManager.
@@ -2206,10 +2165,9 @@ _end_frame (GxrContext *self)
 gboolean
 gxr_context_end_frame (GxrContext *self)
 {
-  for (uint32_t i = 0; i < 2; i++)
-  if (!gxr_context_release_swapchain (self, i)) {
-      g_printerr ("Could not release xr swapchain\n");
-      return FALSE;
+  if (!gxr_context_release_swapchain (self)) {
+    g_printerr ("Could not release xr swapchain\n");
+    return FALSE;
   }
 
   if (!_end_frame (self)) {
@@ -2389,30 +2347,29 @@ gxr_context_get_view_count (GxrContext *self)
 uint32_t
 gxr_context_get_swapchain_length (GxrContext *self)
 {
-  return self->swapchain_length[0];
+  return self->swapchain_length;
 }
 
 GulkanFrameBuffer *
-gxr_context_get_acquired_framebuffer (GxrContext *self, uint32_t view)
+gxr_context_get_acquired_framebuffer (GxrContext *self)
 {
   GulkanFrameBuffer *fb =
-    GULKAN_FRAME_BUFFER (self->framebuffer[view][self->buffer_index[view]]);
+    GULKAN_FRAME_BUFFER (self->framebuffers[self->buffer_index]);
   return fb;
 }
 
 GulkanFrameBuffer *
-gxr_context_get_framebuffer_at (GxrContext *self, uint32_t view,
-                                uint32_t i)
+gxr_context_get_framebuffer_at (GxrContext *self, uint32_t i)
 {
   GulkanFrameBuffer *fb =
-    GULKAN_FRAME_BUFFER (self->framebuffer[view][i]);
+    GULKAN_FRAME_BUFFER (self->framebuffers[i]);
   return fb;
 }
 
 uint32_t
 gxr_context_get_buffer_index (GxrContext *self)
 {
-  return self->buffer_index[0];
+  return self->buffer_index;
 }
 
 XrSessionState
@@ -2458,13 +2415,13 @@ gxr_context_get_swapchain_format (GxrContext *self)
 }
 
 gboolean
-gxr_context_release_swapchain (GxrContext * self, uint32_t eye)
+gxr_context_release_swapchain (GxrContext * self)
 {
   XrSwapchainImageReleaseInfo swapchainImageReleaseInfo = {
     .type = XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO,
   };
   XrResult result =
-    xrReleaseSwapchainImage (self->swapchains[eye], &swapchainImageReleaseInfo);
+    xrReleaseSwapchainImage (self->swapchain, &swapchainImageReleaseInfo);
   if (!_check_xr_result (result, "failed to release swapchain image!"))
     return FALSE;
 
@@ -2480,7 +2437,7 @@ gxr_context_get_swapchain_dimensions (GxrContext *self,
   extent->height = self->configuration_views[i].recommendedImageRectHeight;
 }
 
-XrSwapchainImageVulkanKHR**
+XrSwapchainImageVulkanKHR*
 gxr_context_get_images (GxrContext *self)
 {
   return self->images;

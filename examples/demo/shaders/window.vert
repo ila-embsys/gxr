@@ -6,11 +6,13 @@
  */
 
 #version 460
+
 #extension GL_ARB_separate_shader_objects : enable
+#extension GL_EXT_multiview : enable
 
 layout (binding = 0) uniform Transformation {
-  mat4 mvp;
-  mat4 mv;
+  mat4 mvp[2];
+  mat4 mv[2];
   mat4 m;
   bool receive_light;
 } transformation;
@@ -28,12 +30,12 @@ out gl_PerVertex {
 };
 
 void main() {
-  gl_Position = transformation.mvp * vec4 (position, 1.0f);
+  gl_Position = transformation.mvp[gl_ViewIndex] * vec4 (position, 1.0f);
   out_uv = uv;
 
   if (!transformation.receive_light)
     return;
 
   out_world_position = transformation.m * vec4 (position, 1.0f);
-  out_view_position = transformation.mv * vec4 (position, 1.0f);
+  out_view_position = transformation.mv[gl_ViewIndex] * vec4 (position, 1.0f);
 }
