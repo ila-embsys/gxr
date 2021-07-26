@@ -17,3 +17,5 @@ override_dh_auto_test:
 	env $(test_env) ninja -C build
 	env $(test_env) meson test -C build/ --no-suite gxr:xr --no-suite post-install
 
+override_dh_shlibdeps:
+	dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info
