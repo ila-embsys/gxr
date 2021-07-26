@@ -9,7 +9,7 @@ cube_sources = [
   'scene-renderer.c',
   'scene-cube.c',
   'scene-controller.c',
-  shader_resources,
+  demo_shader_resources,
   test_resources
 ]
 
