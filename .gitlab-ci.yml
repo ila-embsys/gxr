@@ -294,7 +294,7 @@ debian:sid:gcc:
     - cp -ra ${PACKAGE_DIR} debian
     - DEBFULLNAME="xrdesktop CI <christoph.haag@collabora.com>" DEBEMAIL="christoph.haag@collabora.com" debian/extra/prepare-commit-package.sh ${CI_COMMIT_SHA} 1~${BACKPORT_SUFFIX}~ci$(date --utc "+%Y%m%d")
     # Build the package
-    - debuild -uc -us -d
+    - debuild -uc -us -d -sa
     # Use dput-ng to move the package-related files into some artifacts.
     - export INCOMING=$(pwd)/incoming
     - mkdir -p $INCOMING
