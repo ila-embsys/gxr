@@ -28,8 +28,8 @@ Depends:
  ${misc:Depends},
  ${shlibs:Depends},
  libsdl2-2.0-0,
-Description: glib wrapper for OpenXR APIs
- A glib wrapper and utilities for the OpenXR APIs.
+Description: glib wrapper for OpenXR API
+ A glib wrapper and utilities for the OpenXR API.
  .
  This package contains the shared libraries.
 
@@ -49,8 +49,8 @@ Depends:
  libgxr-0.15-0 (= ${binary:Version}),
  libvulkan-dev,
  mesa-common-dev,
-Description: glib wrapper for OpenVR and OpenXR APIs - development headers
+Description: glib wrapper for the OpenXR API - development headers
  Development files for the libgxr library.
  .
  This package contains the header and development files which are
- needed for building OpenVR and OpenXR applications.
+ needed for building OpenXR applications.
