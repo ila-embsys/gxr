@@ -267,8 +267,7 @@ debian:sid:gcc:
 .xrdesktop.packaging.conditions:
   rules:
     # Only the default branch of the "upstream" repo.
-    #- if: '$CI_PROJECT_PATH == $FDO_UPSTREAM_REPO && $CI_COMMIT_REF_NAME == "next"'
-    - if: '$CI_PROJECT_PATH == "haagch/gxr" && $CI_COMMIT_REF_NAME == "next"'
+    - if: '$CI_PROJECT_PATH == $FDO_UPSTREAM_REPO && $CI_COMMIT_REF_NAME == "next"'
       when: on_success
     # Otherwise, don't build packages.
     - when: never
