@@ -515,16 +515,8 @@ _init (CubeExample *self)
 }
 
 static void
-_update_transformation (CubeExample *self,
-                        GxrEye       eye)
+_update_transformation (CubeExample *self)
 {
-  graphene_matrix_t view;
-  graphene_matrix_t projection;
-
-  gxr_context_get_view (self->context, eye, &view);
-  gxr_context_get_projection (self->context, eye, 0.05f, 100.0f,
-                              &projection);
-
   graphene_matrix_t model;
   graphene_matrix_init_identity (&model);
 
@@ -538,16 +530,30 @@ _update_transformation (CubeExample *self,
   graphene_point3d_t pos = (graphene_point3d_t){ 0.0f, 0.0f, -6.0f };
   graphene_matrix_translate (&model, &pos);
 
-  graphene_matrix_t model_view;
-  graphene_matrix_multiply (&model, &view, &model_view);
+  for (uint32_t eye = 0; eye < 2; eye++)
+    {
+      graphene_matrix_t view;
+      graphene_matrix_t projection;
 
-  graphene_matrix_t model_view_projection;
-  graphene_matrix_multiply (&model_view, &projection, &model_view_projection);
-  graphene_matrix_to_float (&model_view_projection, self->ub.mvp[eye]);
+      gxr_context_get_view (self->context, eye, &view);
+      gxr_context_get_projection (self->context, eye, 0.05f, 100.0f,
+                                  &projection);
+
+      graphene_matrix_t model_view;
+      graphene_matrix_multiply (&model, &view, &model_view);
+
+      graphene_matrix_t model_view_projection;
+      graphene_matrix_multiply (&model_view, &projection,
+                                &model_view_projection);
+      graphene_matrix_to_float (&model_view_projection, self->ub.mvp[eye]);
+    }
+
+  gulkan_uniform_buffer_update (self->uniform_buffer, (gpointer) &self->ub);
 }
 
 static void
-_render_stereo (CubeExample *self, VkCommandBuffer cmd_buffer, uint32_t swapchain_id)
+_render_stereo (CubeExample *self, VkCommandBuffer cmd_buffer,
+                uint32_t swapchain_image_id)
 {
   VkExtent2D extent = gulkan_renderer_get_extent (GULKAN_RENDERER (self));
 
@@ -561,7 +567,7 @@ _render_stereo (CubeExample *self, VkCommandBuffer cmd_buffer, uint32_t swapchai
     };
 
   GulkanFrameBuffer *framebuffer =
-    gxr_context_get_framebuffer_at (self->context, swapchain_id);
+    gxr_context_get_framebuffer_at (self->context, swapchain_image_id);
 
   gulkan_render_pass_begin (self->render_pass, extent, clear_color,
                             framebuffer, cmd_buffer);
@@ -611,9 +617,7 @@ _iterate_cb (gpointer _self)
   if (!gxr_context_begin_frame (self->context))
     return FALSE;
 
-  for (uint32_t eye = 0; eye < 2; eye++)
-    _update_transformation (self, eye);
-  gulkan_uniform_buffer_update (self->uniform_buffer, (gpointer) &self->ub);
+  _update_transformation (self);
 
   uint32_t i = gxr_context_get_buffer_index (self->context);
 
