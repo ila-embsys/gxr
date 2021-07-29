@@ -77,6 +77,8 @@ struct _GxrContext
   int64_t swapchain_format;
 
   GxrManifest *manifest;
+
+  XrVersion desired_vk_version;
 };
 
 G_DEFINE_TYPE (GxrContext, gxr_context, G_TYPE_OBJECT)
@@ -530,15 +532,14 @@ _check_graphics_api_support (GxrContext* self)
         return FALSE;
     }
 
-  XrVersion desired_version = XR_MAKE_VERSION (1, 0, 0);
-  if (desired_version > vk_reqs.maxApiVersionSupported ||
-      desired_version < vk_reqs.minApiVersionSupported)
+  if (self->desired_vk_version > vk_reqs.maxApiVersionSupported ||
+      self->desired_vk_version < vk_reqs.minApiVersionSupported)
     {
-      g_printerr ("Runtime does not support requested Vulkan version.\n");
-      g_printerr ("desired_version %lu\n", desired_version);
-      g_printerr ("minApiVersionSupported %lu\n", vk_reqs.minApiVersionSupported);
-      g_printerr ("maxApiVersionSupported %lu\n", vk_reqs.maxApiVersionSupported);
-      return FALSE;
+      g_warning ("Runtime does not support requested Vulkan version %lu",
+                 self->desired_vk_version);
+      g_warning ("We will use maxApiVersionSupported %lu",
+                 vk_reqs.maxApiVersionSupported);
+      self->desired_vk_version = vk_reqs.maxApiVersionSupported;
     }
   return TRUE;
 }
@@ -1040,14 +1041,23 @@ _copy_str (gconstpointer src,
   return g_strdup (src);
 }
 
+static uint32_t
+_xr_to_vk_version (XrVersion version)
+{
+  return VK_MAKE_API_VERSION (0,
+                              XR_VERSION_MAJOR (version),
+                              XR_VERSION_MINOR (version),
+                              XR_VERSION_PATCH (version));
+}
+
 static gboolean
 _create_vk_instance2 (GxrContext *self, GSList *instance_ext_list, VkInstance *instance)
 {
   VkApplicationInfo app_info = {
     .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-    .pApplicationName = "xrgears",
-    .pEngineName = "xrgears",
-    .apiVersion = VK_MAKE_VERSION(1, 1, 0),
+    .pApplicationName = "gxr",
+    .pEngineName = "gxr",
+    .apiVersion = _xr_to_vk_version (self->desired_vk_version),
   };
 
   GSList *instance_ext_list_reduced = g_slist_copy_deep (instance_ext_list,
@@ -1431,6 +1441,7 @@ gxr_context_init (GxrContext *self)
   self->predicted_display_period = 0;
   self->framebuffers = NULL;
   self->images = NULL;
+  self->desired_vk_version = XR_MAKE_VERSION (1, 2, 0);
 }
 
 static void
