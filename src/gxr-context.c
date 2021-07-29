@@ -1295,6 +1295,15 @@ _create_vk_device2 (GxrContext      *self,
     .ppEnabledExtensionNames = extension_names,
   };
 
+#ifdef VK_API_VERSION_1_2
+  VkPhysicalDeviceVulkan11Features enabled_vulkan11_features = {
+    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
+    .multiview = VK_TRUE
+  };
+  if (self->desired_vk_version >= XR_MAKE_VERSION(1, 2, 0))
+    device_info.pNext = &enabled_vulkan11_features;
+#endif
+
   XrVulkanDeviceCreateInfoKHR info = {
     .type = XR_TYPE_VULKAN_DEVICE_CREATE_INFO_KHR,
     .next = NULL,
