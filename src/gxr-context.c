@@ -23,7 +23,6 @@ struct _GxrContext
   GulkanClient *gc;
 
   struct {
-    gboolean vulkan_enable;
     gboolean vulkan_enable2;
     gboolean overlay;
   } extensions;
@@ -242,16 +241,6 @@ _check_extensions (GxrContext *self)
                             instanceExtensionProperties,
                             instanceExtensionCount);
 
-  // force use of vulkan_enable1
-  // self->extensions.vulkan_enable2 = false;
-
-  /* only enable vulkan_enable 1, if 2 is not supported */
-  if (!self->extensions.vulkan_enable2)
-    self->extensions.vulkan_enable =
-      _is_extension_supported (XR_KHR_VULKAN_ENABLE_EXTENSION_NAME,
-                              instanceExtensionProperties,
-                              instanceExtensionCount);
-
   self->extensions.overlay =
     _is_extension_supported (XR_EXTX_OVERLAY_EXTENSION_NAME,
                              instanceExtensionProperties,
@@ -261,10 +250,9 @@ _check_extensions (GxrContext *self)
 
   g_free (instanceExtensionProperties);
 
-  if (!self->extensions.vulkan_enable2 && !self->extensions.vulkan_enable)
+  if (!self->extensions.vulkan_enable2)
     {
-      g_printerr ("Runtime does not support instance extension %s or %s\n",
-                  XR_KHR_VULKAN_ENABLE_EXTENSION_NAME,
+      g_printerr ("Runtime does not support instance extension %s\n",
                   XR_KHR_VULKAN_ENABLE2_EXTENSION_NAME);
       return FALSE;
     }
@@ -325,12 +313,10 @@ _check_blend_mode (GxrContext *self)
 static gboolean
 _create_instance (GxrContext* self, char *app_name, uint32_t app_version)
 {
-  // vulkan_enable or vulkan_enable2 is required. overlay is optional.
+  // vulkan_enable2 is required. overlay is optional.
   // list will need to be dynamic when more optional extensions are used.
-  const char* const enabledExtensions[] = {
-    self->extensions.vulkan_enable2 ?
-      XR_KHR_VULKAN_ENABLE2_EXTENSION_NAME :
-      XR_KHR_VULKAN_ENABLE_EXTENSION_NAME,
+  const char* const enabled_extensions[] = {
+    XR_KHR_VULKAN_ENABLE2_EXTENSION_NAME,
     XR_EXTX_OVERLAY_EXTENSION_NAME
   };
 
@@ -338,7 +324,7 @@ _create_instance (GxrContext* self, char *app_name, uint32_t app_version)
     .type = XR_TYPE_INSTANCE_CREATE_INFO,
     .createFlags = 0,
     .enabledExtensionCount = self->extensions.overlay ? 2 : 1,
-    .enabledExtensionNames = enabledExtensions,
+    .enabledExtensionNames = enabled_extensions,
     .enabledApiLayerCount = 0,
     .applicationInfo = {
       .applicationVersion = app_version,
@@ -491,46 +477,20 @@ _check_graphics_api_support (GxrContext* self)
     .type = XR_TYPE_GRAPHICS_REQUIREMENTS_VULKAN_KHR,
   };
 
-  if (self->extensions.vulkan_enable2)
-    {
-      PFN_xrGetVulkanGraphicsRequirementsKHR GetVulkanGraphicsRequirements2 = NULL;
-      XrResult result =
-        xrGetInstanceProcAddr (self->instance,
-                               "xrGetVulkanGraphicsRequirements2KHR",
-                               (PFN_xrVoidFunction*)
-                               (&GetVulkanGraphicsRequirements2));
-      if (!_check_xr_result (result,
-          "Failed to retrieve xrGetVulkanGraphicsRequirements2KHR pointer!"))
-        return FALSE;
+  PFN_xrGetVulkanGraphicsRequirementsKHR GetVulkanGraphicsRequirements2 = NULL;
+  XrResult result =
+    xrGetInstanceProcAddr (self->instance,
+                           "xrGetVulkanGraphicsRequirements2KHR",
+                           (PFN_xrVoidFunction*)
+                           (&GetVulkanGraphicsRequirements2));
+  if (!_check_xr_result (result,
+      "Failed to retrieve xrGetVulkanGraphicsRequirements2KHR pointer!"))
+    return FALSE;
 
-      result =
-        GetVulkanGraphicsRequirements2 (self->instance,
-                                        self->system_id,
-                                       &vk_reqs);
-      if (!_check_xr_result (result,
-        "Failed to get Vulkan graphics requirements!"))
-        return FALSE;
-    }
-  else if (self->extensions.vulkan_enable)
-    {
-      PFN_xrGetVulkanGraphicsRequirementsKHR GetVulkanGraphicsRequirements = NULL;
-      XrResult result =
-        xrGetInstanceProcAddr (self->instance,
-                               "xrGetVulkanGraphicsRequirementsKHR",
-                               (PFN_xrVoidFunction*)
-                               (&GetVulkanGraphicsRequirements));
-      if (!_check_xr_result (result,
-          "Failed to retrieve xrGetVulkanGraphicsRequirementsKHR pointer!"))
-        return FALSE;
-
-      result =
-        GetVulkanGraphicsRequirements (self->instance,
-                                       self->system_id,
-                                      &vk_reqs);
-      if (!_check_xr_result (result,
-        "Failed to get Vulkan graphics requirements!"))
-        return FALSE;
-    }
+  result = GetVulkanGraphicsRequirements2 (self->instance, self->system_id,
+                                          &vk_reqs);
+  if (!_check_xr_result (result, "Failed to get Vulkan graphics requirements!"))
+    return FALSE;
 
   if (self->desired_vk_version > vk_reqs.maxApiVersionSupported ||
       self->desired_vk_version < vk_reqs.minApiVersionSupported)
@@ -895,17 +855,6 @@ _init_session (GxrContext *self)
 }
 
 static void
-_add_missing_strings (GSList **target, GSList *source)
-{
-  for (GSList *l = source; l; l = l->next)
-    {
-      gchar *source_ext = l->data;
-      if (!g_slist_find_custom (*target, source_ext, (GCompareFunc) g_strcmp0))
-        *target = g_slist_append (*target, g_strdup (source_ext));
-    }
-}
-
-static void
 _remove_unsupported_exts (GSList               **target,
                           uint32_t               supported_count,
                           VkExtensionProperties *supported_props)
@@ -967,70 +916,6 @@ _remove_unsupported_device_exts (VkPhysicalDevice vk_physical_device,
 
   _remove_unsupported_exts (target, supported_count, supported_props);
   g_free (supported_props);
-}
-
-static gboolean
-init_vulkan_enable1 (GxrContext *self,
-                     GSList     *instance_ext_list,
-                     GSList     *device_ext_list)
-{
-  // we own the list and its data elements
-  GSList *instance_ext_list_combined = NULL;
-  gxr_context_get_runtime_instance_extensions (self,
-                                              &instance_ext_list_combined);
-  _add_missing_strings (&instance_ext_list_combined, instance_ext_list);
-  _remove_unsupported_instance_exts (&instance_ext_list_combined);
-
-  /* vk instance required for checking required device exts */
-  GulkanInstance *gki = gulkan_instance_new ();
-  gulkan_instance_create (gki, instance_ext_list);
-
-  if (!gki)
-    {
-      g_object_unref (self);
-      g_slist_free_full (instance_ext_list_combined, g_free);
-      g_printerr ("Could not init gulkan instance from instance exts.\n");
-      return FALSE;
-    }
-
-
-  PFN_xrGetVulkanGraphicsDeviceKHR GetVulkanGraphicsDeviceKHR;
-  XrResult result =
-    xrGetInstanceProcAddr (self->instance,
-                          "xrGetVulkanGraphicsDeviceKHR",
-                          (PFN_xrVoidFunction *)&GetVulkanGraphicsDeviceKHR);
-  if (!_check_xr_result (result,
-    "Failed to retrieve xrGetVulkanGraphicsDeviceKHR pointer!"))
-    return FALSE;
-
-  VkPhysicalDevice physical_device;
-  result = GetVulkanGraphicsDeviceKHR (self->instance,
-                                       self->system_id,
-                                       gulkan_instance_get_handle (gki),
-                                      &physical_device);
-  if (!_check_xr_result (result, "Failed to get get vulkan graphics device!"))
-    return FALSE;
-
-  GSList *device_ext_list_combined = NULL;
-  gxr_context_get_runtime_device_extensions (self, &device_ext_list_combined);
-  _add_missing_strings (&device_ext_list_combined, device_ext_list);
-  _remove_unsupported_device_exts (physical_device, &device_ext_list_combined);
-
-  self->gc =
-    gulkan_client_new_from_instance (gki,
-                                     device_ext_list_combined,
-                                     physical_device);
-
-  g_slist_free_full (instance_ext_list_combined, g_free);
-  g_slist_free_full (device_ext_list_combined, g_free);
-
-  if (!self->gc)
-    {
-      g_object_unref (self);
-      g_printerr ("Could not init gulkan client.\n");
-      return FALSE;
-    }
-  return TRUE;
 }
 
 static gpointer
@@ -1394,23 +1279,10 @@ _new (GSList     *instance_ext_list,
   device_ext_list = g_slist_append (device_ext_list,
                                     g_strdup (VK_KHR_MULTIVIEW_EXTENSION_NAME));
 
-  if (self->extensions.vulkan_enable2)
+  if (!init_vulkan_enable2 (self, instance_ext_list, device_ext_list))
     {
-      g_debug ("Initializing with vulkan_enable2");
-      if (!init_vulkan_enable2 (self, instance_ext_list, device_ext_list))
-        {
-          g_free (self);
-          return NULL;
-        }
-    }
-  else if (self->extensions.vulkan_enable)
-    {
-      g_debug ("Initializing with vulkan_enable1");
-      if (!init_vulkan_enable1 (self, instance_ext_list, device_ext_list))
-        {
-          g_free (self);
-          return NULL;
-        }
+      g_free (self);
+      return NULL;
     }
 
   if (!_init_session (self))
