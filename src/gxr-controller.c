@@ -107,30 +107,6 @@ gxr_controller_is_pointer_pose_valid (GxrController *self)
   return self->pointer_pose_valid;
 }
 
-static float
-_point_matrix_distance (graphene_point3d_t *intersection_point,
-                        graphene_matrix_t  *pose)
-{
-  graphene_vec3_t intersection_vec;
-  graphene_point3d_to_vec3 (intersection_point, &intersection_vec);
-
-  graphene_vec3_t pose_translation;
-  graphene_ext_matrix_get_translation_vec3 (pose, &pose_translation);
-
-  graphene_vec3_t distance_vec;
-  graphene_vec3_subtract (&pose_translation,
-                          &intersection_vec,
-                          &distance_vec);
-
-  return graphene_vec3_length (&distance_vec);
-}
-
-float
-gxr_controller_get_distance (GxrController *self, graphene_point3d_t *point)
-{
-  return _point_matrix_distance (point, &self->pointer_pose);
-}
-
 gboolean
 gxr_controller_get_pointer_pose (GxrController *self, graphene_matrix_t *pose)
 {

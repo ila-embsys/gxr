@@ -39,9 +39,6 @@ gxr_controller_update_hand_grip_pose (GxrController     *self,
 gboolean
 gxr_controller_is_pointer_pose_valid (GxrController *self);
 
-float
-gxr_controller_get_distance (GxrController *self, graphene_point3d_t *point);
-
 gboolean
 gxr_controller_get_pointer_pose (GxrController *self, graphene_matrix_t *pose);
 
