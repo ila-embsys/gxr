@@ -27,14 +27,12 @@ gxr_controller_get_hand_grip_pose (GxrController *self,
                                    graphene_matrix_t *pose);
 
 void
-gxr_controller_update_pointer_pose (GxrController     *self,
-                                    graphene_matrix_t *pose,
-                                    gboolean           valid);
+gxr_controller_update_pointer_pose (GxrController *self,
+                                    GxrPoseEvent  *event);
 
 void
-gxr_controller_update_hand_grip_pose (GxrController     *self,
-                                      graphene_matrix_t *pose,
-                                      gboolean           valid);
+gxr_controller_update_hand_grip_pose (GxrController *self,
+                                      GxrPoseEvent  *event);
 
 gboolean
 gxr_controller_is_pointer_pose_valid (GxrController *self);

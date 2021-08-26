@@ -83,21 +83,21 @@ gxr_controller_get_hand_grip_pose (GxrController *self,
 }
 
 void
-gxr_controller_update_pointer_pose (GxrController     *self,
-                                    graphene_matrix_t *pose,
-                                    gboolean           valid)
+gxr_controller_update_pointer_pose (GxrController *self,
+                                    GxrPoseEvent  *event)
 {
-  graphene_matrix_init_from_matrix (&self->pointer_pose, pose);
+  graphene_matrix_init_from_matrix (&self->pointer_pose, &event->pose);
+  gboolean valid = event->device_connected && event->active && event->valid;
   self->pointer_pose_valid = valid;
-  g_signal_emit (self, signals[MOVE], 0);
+  g_signal_emit (self, signals[MOVE], 0, event);
 }
 
 void
-gxr_controller_update_hand_grip_pose (GxrController     *self,
-                                      graphene_matrix_t *pose,
-                                      gboolean           valid)
+gxr_controller_update_hand_grip_pose (GxrController *self,
+                                      GxrPoseEvent  *event)
 {
-  graphene_matrix_init_from_matrix (&self->hand_grip_pose, pose);
+  graphene_matrix_init_from_matrix (&self->hand_grip_pose, &event->pose);
+  gboolean valid = event->device_connected && event->active && event->valid;
   self->hand_grip_pose_valid = valid;
 }
 

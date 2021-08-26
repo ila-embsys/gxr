@@ -246,8 +246,7 @@ _update_pointer_pose_cb (GxrAction        *action,
 
   g_mutex_lock (&self->device_mutex);
 
-  gboolean valid = event->device_connected && event->active && event->valid;
-  gxr_controller_update_pointer_pose (event->controller, &event->pose, valid);
+  gxr_controller_update_pointer_pose (event->controller, event);
 
   g_mutex_unlock (&self->device_mutex);
 }
@@ -262,8 +261,7 @@ _update_hand_grip_pose_cb (GxrAction        *action,
 
   g_mutex_lock (&self->device_mutex);
 
-  gboolean valid = event->device_connected && event->active && event->valid;
-  gxr_controller_update_hand_grip_pose (event->controller, &event->pose, valid);
+  gxr_controller_update_hand_grip_pose (event->controller, event);
 
   g_mutex_unlock (&self->device_mutex);
 }
