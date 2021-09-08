@@ -13,8 +13,8 @@ include:
 
 variables:
   FDO_UPSTREAM_REPO: xrdesktop/gxr
-  GULKAN_COMMIT: "5804d98551a125be1141a32cb075d93cdb71718a"
-  OPENXR_SDK_TAG: "release-1.0.17"
+  GULKAN_COMMIT: "3dd3d6e436d17260d52c600a9ec163b866ea12b5"
+  OPENXR_SDK_TAG: "release-1.0.19"
   # increment to easily rebuild all images
   GLOBAL_TAG_SUFFIX: 0
 
@@ -57,37 +57,37 @@ stages:
 # variables shared by container_prep and build jobs
 .xrdesktop.variables.arch:rolling:
   variables:
-    FDO_DISTRIBUTION_TAG: "2021-07-26.${GLOBAL_TAG_SUFFIX}.0"
+    FDO_DISTRIBUTION_TAG: "2021-09-08.${GLOBAL_TAG_SUFFIX}.0"
 
 .xrdesktop.variables.ubuntu:focal:
   variables:
     FDO_DISTRIBUTION_VERSION: "20.04"
-    FDO_DISTRIBUTION_TAG: "2021-07-26.${GLOBAL_TAG_SUFFIX}.0"
+    FDO_DISTRIBUTION_TAG: "2021-09-08.${GLOBAL_TAG_SUFFIX}.0"
 
 .xrdesktop.variables.ubuntu:groovy:
   variables:
     FDO_DISTRIBUTION_VERSION: "20.10"
-    FDO_DISTRIBUTION_TAG: "2021-07-26.${GLOBAL_TAG_SUFFIX}.0"
+    FDO_DISTRIBUTION_TAG: "2021-09-08.${GLOBAL_TAG_SUFFIX}.0"
 
 .xrdesktop.variables.ubuntu:hirsute:
   variables:
     FDO_DISTRIBUTION_VERSION: "21.04"
-    FDO_DISTRIBUTION_TAG: "2021-07-26.${GLOBAL_TAG_SUFFIX}.0"
+    FDO_DISTRIBUTION_TAG: "2021-09-08.${GLOBAL_TAG_SUFFIX}.0"
 
 .xrdesktop.variables.debian:buster:
   variables:
     FDO_DISTRIBUTION_VERSION: "buster"
-    FDO_DISTRIBUTION_TAG: "2021-07-26.${GLOBAL_TAG_SUFFIX}.0"
+    FDO_DISTRIBUTION_TAG: "2021-09-08.${GLOBAL_TAG_SUFFIX}.0"
 
 .xrdesktop.variables.debian:bullseye:
   variables:
     FDO_DISTRIBUTION_VERSION: "bullseye"
-    FDO_DISTRIBUTION_TAG: "2021-07-26.${GLOBAL_TAG_SUFFIX}.0"
+    FDO_DISTRIBUTION_TAG: "2021-09-08.${GLOBAL_TAG_SUFFIX}.0"
 
 .xrdesktop.variables.debian:sid:
   variables:
     FDO_DISTRIBUTION_VERSION: "sid"
-    FDO_DISTRIBUTION_TAG: "2021-07-26.${GLOBAL_TAG_SUFFIX}.0"
+    FDO_DISTRIBUTION_TAG: "2021-09-08.${GLOBAL_TAG_SUFFIX}.0"
 
 .xrdesktop.variables.debian-based-packages:
   variables:
