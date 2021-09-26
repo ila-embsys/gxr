@@ -23,6 +23,10 @@ G_BEGIN_DECLS
 #define GXR_TYPE_DEVICE gxr_device_get_type()
 G_DECLARE_DERIVABLE_TYPE (GxrDevice, gxr_device, GXR, DEVICE, GObject)
 
+/**
+ * GxrDeviceClass:
+ * @parent: The parent class
+ */
 struct _GxrDeviceClass
 {
   GObjectClass parent;
