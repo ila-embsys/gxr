@@ -61,6 +61,7 @@ typedef enum
  * @GXR_BINDING_COMPONENT_PULL: Pull.
  * @GXR_BINDING_COMPONENT_POSITION: Position.
  * @GXR_BINDING_COMPONENT_TOUCH: Touch.
+ * @GXR_BINDING_COMPONENT_FORCE: Force.
  *
  * The component of the GxrBindingPath.
  *
