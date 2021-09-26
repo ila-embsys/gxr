@@ -29,6 +29,10 @@ typedef struct _GxrContext GxrContext;
 typedef struct _GxrActionSet GxrActionSet;
 #endif
 
+/**
+ * GxrActionClass:
+ * @parent: The parent class
+ */
 struct _GxrActionClass
 {
   GObjectClass parent;
