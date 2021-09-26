@@ -37,7 +37,7 @@ gnome.gtkdoc('gxr',
   gobject_typesfile: 'gxr.types',
   scan_args: [
     '--rebuild-types',
-    #'--rebuild-sections',
+    '--rebuild-sections',
     '--ignore-headers=' + ' '.join(private_headers),
   ],
   mkdb_args: [
