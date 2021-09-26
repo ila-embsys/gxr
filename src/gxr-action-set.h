@@ -22,6 +22,10 @@ G_BEGIN_DECLS
 #define GXR_TYPE_ACTION_SET gxr_action_set_get_type()
 G_DECLARE_FINAL_TYPE (GxrActionSet, gxr_action_set, GXR, ACTION_SET, GObject)
 
+/**
+ * GxrActionSetClass:
+ * @parent: The parent class
+ */
 struct _GxrActionSetClass
 {
   GObjectClass parent;
