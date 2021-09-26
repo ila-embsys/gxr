@@ -74,11 +74,6 @@ stages:
     FDO_DISTRIBUTION_VERSION: "21.04"
     FDO_DISTRIBUTION_TAG: "2021-09-08.${GLOBAL_TAG_SUFFIX}.0"
 
-.xrdesktop.variables.debian:buster:
-  variables:
-    FDO_DISTRIBUTION_VERSION: "buster"
-    FDO_DISTRIBUTION_TAG: "2021-09-08.${GLOBAL_TAG_SUFFIX}.0"
-
 .xrdesktop.variables.debian:bullseye:
   variables:
     FDO_DISTRIBUTION_VERSION: "bullseye"
@@ -194,29 +189,6 @@ ubuntu:hirsute:gcc:
     CXX: g++
 
 
-# === Debian buster ===
-
-debian:buster:container_prep:
-  stage: container_prep
-  extends:
-    - .xrdesktop.variables.debian:buster
-    - .fdo.container-build@debian # from ci-templates
-    - .xrdesktop.base-job.build_deps
-    - .xrdesktop.variables.debian-based-packages
-  variables:
-    FDO_DISTRIBUTION_PACKAGES: "${CORE_REQUIRED_PACKAGES}"
-
-debian:buster:gcc:
-  extends:
-    - .xrdesktop.variables.debian:buster
-    - .fdo.distribution-image@debian # from ci-templates
-    - .xrdesktop.base-job.build-meson
-  variables:
-    MESON_ARGS: -Dapi_doc=false
-    CC: gcc
-    CXX: g++
-
-
 # === Debian bullseye ===
 
 debian:bullseye:container_prep:
@@ -307,17 +279,6 @@ debian:sid:gcc:
     expire_in: 2 days
 
 
-debian:buster:package:
-  extends:
-    - .xrdesktop.variables.debian:buster
-    - .fdo.distribution-image@debian # from ci-templates
-    - .xrdesktop.base-job.debuild
-  variables:
-    BACKPORT_SUFFIX: bpo8
-    PACKAGE_DIR:  .gitlab-ci/debian_sid
-    DISTRO: buster
-
-
 debian:bullseye:package:
   extends:
     - .xrdesktop.variables.debian:bullseye
@@ -380,7 +341,6 @@ reprepro:package:
     - .xrdesktop.packaging.conditions
     - .fdo.distribution-image@debian # from ci-templates
   dependencies:
-    - debian:buster:package
     - debian:bullseye:package
     - debian:sid:package
     - ubuntu:focal:package
