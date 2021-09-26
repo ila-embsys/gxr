@@ -18,11 +18,6 @@
 
 #include <gulkan.h>
 
-/* TODO: no idea why include doesn't work. There are no circular deps.
- * #include "gxr-model.h"
- */
-struct _GxrModel;
-
 G_BEGIN_DECLS
 
 #define GXR_TYPE_DEVICE gxr_device_get_type()
