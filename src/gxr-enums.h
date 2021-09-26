@@ -26,7 +26,7 @@
  * @GXR_STATE_RENDERING_STOP: The frame content will not be visible, expensive
  *  rendering work can be skipped, but  gxr_context_begin_frame /
  *   gxr_context_end_frame should be called.
- * @GXR_QUIT_SHUTDOWN: XR Runtime is shutting down.
+ * @GXR_STATE_SHUTDOWN: XR Runtime is shutting down.
  *
  **/
 typedef enum {
