@@ -21,12 +21,11 @@
 
 G_BEGIN_DECLS
 
-typedef struct _GxrContext GxrContext;
-
 #define GXR_TYPE_ACTION gxr_action_get_type()
 G_DECLARE_FINAL_TYPE (GxrAction, gxr_action, GXR, ACTION, GObject)
 
 #ifndef __GTK_DOC_IGNORE__
+typedef struct _GxrContext GxrContext;
 typedef struct _GxrActionSet GxrActionSet;
 #endif
 
