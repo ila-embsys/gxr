@@ -19,8 +19,10 @@
 
 #include "gxr-enums.h"
 
+#ifndef __GTK_DOC_IGNORE__
 struct _GxrController;
 typedef struct _GxrController GxrController;
+#endif
 
 /**
  * GxrDigitalEvent:
