@@ -29,7 +29,7 @@ typedef struct _GxrController GxrController;
  * @active: Whether or not this action is currently available to be bound in the active action set.
  * @state: Pressed or released.
  * @changed: Whether the state has changed since last event.
- * @controller_handle: The controller identifier.
+ * @controller: The controller identifier.
  * @time: The time of the event.
  *
  * Digital event.
@@ -47,7 +47,7 @@ typedef struct {
  * @active: Whether or not this action is currently available to be bound in the active action set.
  * @state: A #graphene_vec3_t analog state.
  * @delta: State delta since last event.
- * @controller_handle: The controller identifier.
+ * @controller: The controller identifier.
  * @time: The time of the event.
  *
  * Analog event.
@@ -68,7 +68,7 @@ typedef struct {
  * @angular_velocity: Angular velocity.
  * @valid: Whether the pose is valid.
  * @device_connected: Whether the device is currently connected.
- * @controller_handle: The controller identifier.
+ * @controller: The controller identifier.
  *
  * Pose event.
  **/
@@ -84,7 +84,7 @@ typedef struct {
 
 /**
  * GxrStateChangeEvent:
- * @reason: The #GxrQuitReason.
+ * @state_change: The #GxrStateChange.
  *
  * Event that is emitted when the application needs to quit.
  **/
