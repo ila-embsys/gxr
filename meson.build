@@ -1,5 +1,5 @@
 project('gxr', 'c', version: '0.16.0',
-        meson_version: '>= 0.49.0',
+        meson_version: '>= 0.52.0',
         default_options : [
           'c_std=c11',
           'warning_level=3',
