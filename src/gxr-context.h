@@ -35,6 +35,10 @@ G_BEGIN_DECLS
 #define GXR_TYPE_CONTEXT gxr_context_get_type()
 G_DECLARE_FINAL_TYPE (GxrContext, gxr_context, GXR, CONTEXT, GObject)
 
+/**
+ * GxrContextClass:
+ * @parent: The parent class
+ */
 struct _GxrContextClass
 {
   GObjectClass parent;
