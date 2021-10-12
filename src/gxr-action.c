@@ -156,7 +156,6 @@ gxr_action_new_from_type_url (GxrContext   *context,
   gxr_action_set_action_type (GXR_ACTION (self), type);
   gxr_action_set_url (GXR_ACTION (self), g_strdup (url));
   gxr_action_set_action_set(GXR_ACTION (self), action_set);
-  self->url = g_strdup (url);
 
   XrActionType action_type;
   switch (type)
