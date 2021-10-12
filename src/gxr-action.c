@@ -653,7 +653,7 @@ gxr_action_finalize (GObject *gobject)
 {
   GxrAction *self = GXR_ACTION (gobject);
   if (self->haptic_action)
-    g_object_unref (self->haptic_action);
+    g_clear_object (&self->haptic_action);
   g_free (self->url);
 }
 
@@ -725,7 +725,9 @@ void
 gxr_action_set_digital_from_float_haptic (GxrAction *self,
                                           GxrAction *haptic_action)
 {
-  self->haptic_action = haptic_action;
+  if (self->haptic_action)
+    g_clear_object (&self->haptic_action);
+  self->haptic_action = g_object_ref (haptic_action);
 }
 
 /* creates controllers with handles 0 for left hand and 1 for right hand.

@@ -118,7 +118,7 @@ static void
 gxr_action_set_finalize (GObject *gobject)
 {
   GxrActionSet *self = GXR_ACTION_SET (gobject);
-  g_slist_free (self->actions);
+  g_slist_free_full (self->actions, g_object_unref);
   g_free (self->url);
   G_OBJECT_CLASS (gxr_action_set_parent_class)->finalize (gobject);
 }
