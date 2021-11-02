@@ -13,7 +13,7 @@ include:
 
 variables:
   FDO_UPSTREAM_REPO: xrdesktop/gxr
-  GULKAN_COMMIT: "3dd3d6e436d17260d52c600a9ec163b866ea12b5"
+  GULKAN_COMMIT: "881b58e93c16f85613080725de4b5aa1cc5497a9"
   OPENXR_SDK_TAG: "release-1.0.19"
   # increment to easily rebuild all images
   GLOBAL_TAG_SUFFIX: 0
