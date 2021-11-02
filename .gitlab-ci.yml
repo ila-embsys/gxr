@@ -74,6 +74,11 @@ stages:
     FDO_DISTRIBUTION_VERSION: "21.04"
     FDO_DISTRIBUTION_TAG: "2021-09-08.${GLOBAL_TAG_SUFFIX}.0"
 
+.xrdesktop.variables.debian:bookworm:
+  variables:
+    FDO_DISTRIBUTION_VERSION: "bookworm"
+    FDO_DISTRIBUTION_TAG: "2021-09-08.${GLOBAL_TAG_SUFFIX}.0"
+
 .xrdesktop.variables.debian:bullseye:
   variables:
     FDO_DISTRIBUTION_VERSION: "bullseye"
@@ -189,6 +194,29 @@ ubuntu:hirsute:gcc:
     CXX: g++
 
 
+# === Debian bookworm ===
+
+debian:bookworm:container_prep:
+  stage: container_prep
+  extends:
+    - .xrdesktop.variables.debian:bookworm
+    - .fdo.container-build@debian # from ci-templates
+    - .xrdesktop.base-job.build_deps
+    - .xrdesktop.variables.debian-based-packages
+  variables:
+    FDO_DISTRIBUTION_PACKAGES: "${CORE_REQUIRED_PACKAGES}"
+
+debian:bookworm:gcc:
+  extends:
+    - .xrdesktop.variables.debian:bookworm
+    - .fdo.distribution-image@debian # from ci-templates
+    - .xrdesktop.base-job.build-meson
+  variables:
+    MESON_ARGS: -Dapi_doc=false
+    CC: gcc
+    CXX: g++
+
+
 # === Debian bullseye ===
 
 debian:bullseye:container_prep:
@@ -279,6 +307,17 @@ debian:sid:gcc:
     expire_in: 2 days
 
 
+debian:bookworm:package:
+  extends:
+    - .xrdesktop.variables.debian:bookworm
+    - .fdo.distribution-image@debian # from ci-templates
+    - .xrdesktop.base-job.debuild
+  variables:
+    BACKPORT_SUFFIX: bpo8
+    PACKAGE_DIR:  .gitlab-ci/debian_sid
+    DISTRO: bookworm
+
+
 debian:bullseye:package:
   extends:
     - .xrdesktop.variables.debian:bullseye
@@ -341,6 +380,7 @@ reprepro:package:
     - .xrdesktop.packaging.conditions
     - .fdo.distribution-image@debian # from ci-templates
   dependencies:
+    - debian:bookworm:package
     - debian:bullseye:package
     - debian:sid:package
     - ubuntu:focal:package
