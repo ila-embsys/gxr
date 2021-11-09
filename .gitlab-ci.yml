@@ -14,9 +14,9 @@ include:
 variables:
   FDO_UPSTREAM_REPO: xrdesktop/gxr
   GULKAN_COMMIT: "881b58e93c16f85613080725de4b5aa1cc5497a9"
-  OPENXR_SDK_TAG: "release-1.0.19"
+  OPENXR_SDK_TAG: "release-1.0.20"
   # increment to easily rebuild all images
-  GLOBAL_TAG_SUFFIX: 0
+  GLOBAL_TAG_SUFFIX: 1
 
 stages:
   - container_prep
@@ -26,24 +26,13 @@ stages:
   - pages
 
 # "Base" job for installing Gulkan, OpenXR SDK
+# Variables are already substituted when running script, so pass as args
 .xrdesktop.base-job.build_deps:
   stage: container_prep
   variables:
     FDO_DISTRIBUTION_EXEC: |
-      mkdir deps && \
-      cd deps && \
-      git clone https://gitlab.freedesktop.org/xrdesktop/gulkan.git && \
-      cd gulkan && \
-      git checkout $GULKAN_COMMIT && \
-      meson build --prefix /usr && \
-      ninja -C build install && \
-      cd .. && \
-      git clone --depth 1 --branch $OPENXR_SDK_TAG https://github.com/KhronosGroup/OpenXR-SDK-Source.git && \
-      cd OpenXR-SDK-Source && \
-      git checkout $OPENXR_SDK_TAG && \
-      CC=clang CXX=clang++ cmake . -G Ninja -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DDYNAMIC_LOADER=ON && \
-      ninja -C . install && \
-      cd ..
+      bash .gitlab-ci/dep_install/install_gulkan.sh $GULKAN_COMMIT && \
+      bash .gitlab-ci/dep_install/install_openxr.sh $OPENXR_SDK_TAG
 
 # "Base" job for a Meson build
 .xrdesktop.base-job.build-meson:
@@ -57,41 +46,41 @@ stages:
 # variables shared by container_prep and build jobs
 .xrdesktop.variables.arch:rolling:
   variables:
-    FDO_DISTRIBUTION_TAG: "2021-11-02.${GLOBAL_TAG_SUFFIX}.0"
+    FDO_DISTRIBUTION_TAG: "2021-11-10.${GLOBAL_TAG_SUFFIX}.0"
 
 .xrdesktop.variables.ubuntu:focal:
   variables:
     FDO_DISTRIBUTION_VERSION: "20.04"
-    FDO_DISTRIBUTION_TAG: "2021-11-02.${GLOBAL_TAG_SUFFIX}.0"
+    FDO_DISTRIBUTION_TAG: "2021-11-10.${GLOBAL_TAG_SUFFIX}.0"
 
 .xrdesktop.variables.ubuntu:groovy:
   variables:
     FDO_DISTRIBUTION_VERSION: "20.10"
-    FDO_DISTRIBUTION_TAG: "2021-11-02.${GLOBAL_TAG_SUFFIX}.0"
+    FDO_DISTRIBUTION_TAG: "2021-11-10.${GLOBAL_TAG_SUFFIX}.0"
 
 .xrdesktop.variables.ubuntu:hirsute:
   variables:
     FDO_DISTRIBUTION_VERSION: "21.04"
-    FDO_DISTRIBUTION_TAG: "2021-11-02.${GLOBAL_TAG_SUFFIX}.0"
+    FDO_DISTRIBUTION_TAG: "2021-11-10.${GLOBAL_TAG_SUFFIX}.0"
 
 .xrdesktop.variables.debian:bookworm:
   variables:
     FDO_DISTRIBUTION_VERSION: "bookworm"
-    FDO_DISTRIBUTION_TAG: "2021-11-02.${GLOBAL_TAG_SUFFIX}.0"
+    FDO_DISTRIBUTION_TAG: "2021-11-10.${GLOBAL_TAG_SUFFIX}.0"
 
 .xrdesktop.variables.debian:bullseye:
   variables:
     FDO_DISTRIBUTION_VERSION: "bullseye"
-    FDO_DISTRIBUTION_TAG: "2021-11-02.${GLOBAL_TAG_SUFFIX}.0"
+    FDO_DISTRIBUTION_TAG: "2021-11-10.${GLOBAL_TAG_SUFFIX}.0"
 
 .xrdesktop.variables.debian:sid:
   variables:
     FDO_DISTRIBUTION_VERSION: "sid"
-    FDO_DISTRIBUTION_TAG: "2021-11-02.${GLOBAL_TAG_SUFFIX}.0"
+    FDO_DISTRIBUTION_TAG: "2021-11-10.${GLOBAL_TAG_SUFFIX}.0"
 
 .xrdesktop.variables.debian-based-packages:
   variables:
-    CORE_REQUIRED_PACKAGES: "git gcc clang meson pkg-config libglib2.0-dev libgdk-pixbuf2.0-dev libvulkan-dev libgraphene-1.0-dev libcairo2-dev glslang-tools cmake libxxf86vm-dev libgl1-mesa-dev libvulkan-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-glx0-dev libxcb-icccm4-dev libxcb-keysyms1-dev libxcb-randr0-dev libxrandr-dev libxxf86vm-dev mesa-common-dev libgtk-3-dev libjson-glib-dev ca-certificates libdrm-dev apt-utils reprepro build-essential devscripts debhelper dput-ng gettext-base gtk-doc-tools libglew-dev libglfw3-dev"
+    CORE_REQUIRED_PACKAGES: "git gcc meson pkg-config libglib2.0-dev libgdk-pixbuf2.0-dev libvulkan-dev libgraphene-1.0-dev libcairo2-dev glslang-tools cmake libxxf86vm-dev libgl1-mesa-dev libx11-xcb-dev libxcb-dri2-0-dev libxcb-glx0-dev libxcb-icccm4-dev libxcb-keysyms1-dev libxcb-randr0-dev libxrandr-dev libxxf86vm-dev mesa-common-dev libgtk-3-dev libjson-glib-dev ca-certificates libdrm-dev apt-utils reprepro build-essential devscripts debhelper dput-ng gettext-base gtk-doc-tools libglew-dev libglfw3-dev"
 
 # === Archlinux ===
 
