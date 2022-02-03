@@ -93,15 +93,19 @@ pkg.generate(
   install_dir: join_paths(get_option('libdir'), 'pkgconfig')
 )
 
+gulkan_girdir = gulkan_dep.get_variable('girdir')
+
 if get_option('introspection')
   gxr_gir = gnome.generate_gir(
     gxr_lib,
+    dependencies: gulkan_dep,
     sources: gxr_sources + gxr_headers,
     namespace: 'Gxr',
     nsversion: api_version,
     identifier_prefix: 'Gxr',
     symbol_prefix: 'gxr',
     export_packages: api_path,
+    include_directories: gulkan_girdir,
     includes: [ 'cairo-1.0', 'GdkPixbuf-2.0', 'Gdk-3.0', 'Graphene-1.0', 'Gulkan-' + gulkan_dep_major_minor_ver],
     header: 'gxr.h',
     install: true,
