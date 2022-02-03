@@ -54,17 +54,19 @@ c = meson.get_compiler('c')
 ## Required
 m_dep = c.find_library('m')
 
-gulkan_version = ['>=0.15.0']
+gulkan_dep_major_minor_ver = '0.15'
+gulkan_dep_patch_ver = '.0'
+
 gulkan_proj = subproject('gulkan',
   default_options: ['api_doc=false', 'tests=false', 'examples=false'],
   required: false,
-  version: gulkan_version,
+  version: '>= ' + gulkan_dep_major_minor_ver + gulkan_dep_patch_ver,
 )
 
 if gulkan_proj.found()
   gulkan_dep = gulkan_proj.get_variable('gulkan_dep')
 else
-  gulkan_dep = dependency('gulkan-0.15', version: '>= 0.15.0',
+  gulkan_dep = dependency('gulkan-' + gulkan_dep_major_minor_ver, version: '>= ' + gulkan_dep_major_minor_ver + gulkan_dep_patch_ver,
     include_type: 'system')
 endif
 
