@@ -419,7 +419,7 @@ _init_vertex_buffer (CubeExample *self)
   GulkanDevice *device = gulkan_client_get_device (gc);
   self->vb = gulkan_vertex_buffer_new (device,
                                        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP);
-  GULKAN_VERTEX_BUFFER_ADD_ATTRIBUTE (self->vb, 3, positions);
+  gulkan_vertex_buffer_add_attribute (self->vb, 3, sizeof(positions), 0, (uint8_t*) positions);
 
   if (!gulkan_vertex_buffer_upload (self->vb))
     return FALSE;

@@ -360,9 +360,9 @@ _initialize (SceneCube *self,
 
   self->vb = gulkan_vertex_buffer_new (device,
                                        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP);
-  GULKAN_VERTEX_BUFFER_ADD_ATTRIBUTE (self->vb, 3, positions);
-  GULKAN_VERTEX_BUFFER_ADD_ATTRIBUTE (self->vb, 3, colors);
-  GULKAN_VERTEX_BUFFER_ADD_ATTRIBUTE (self->vb, 3, normals);
+  gulkan_vertex_buffer_add_attribute (self->vb, 3, sizeof(positions), 0, (uint8_t*) positions);
+  gulkan_vertex_buffer_add_attribute (self->vb, 3, sizeof(colors), 0, (uint8_t*) colors);
+  gulkan_vertex_buffer_add_attribute (self->vb, 3, sizeof(normals), 0, (uint8_t*) normals);
 
   if (!gulkan_vertex_buffer_upload (self->vb))
     return FALSE;
