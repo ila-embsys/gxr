@@ -11,7 +11,6 @@ cmake . \
   -DCMAKE_INSTALL_PREFIX=/usr \
   -DCMAKE_BUILD_TYPE=Release \
   -DBUILD_TESTS=OFF \
-  -DDYNAMIC_LOADER=ON \
-  -DBUILD_WITH_STD_FILESYSTEM=OFF
+  -DDYNAMIC_LOADER=ON
 ninja -C build install
 cd ../..
