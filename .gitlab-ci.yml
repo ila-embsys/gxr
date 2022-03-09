@@ -46,7 +46,7 @@ stages:
 # variables shared by container_prep and build jobs
 .xrdesktop.variables.arch:rolling:
   variables:
-    FDO_DISTRIBUTION_TAG: "2022-03-09.${GLOBAL_TAG_SUFFIX}.0"
+    FDO_DISTRIBUTION_TAG: "2022-03-09.${GLOBAL_TAG_SUFFIX}.1"
 
 .xrdesktop.variables.ubuntu:focal:
   variables:
