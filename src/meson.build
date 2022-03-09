@@ -93,7 +93,7 @@ pkg.generate(
   install_dir: join_paths(get_option('libdir'), 'pkgconfig')
 )
 
-gulkan_girdir = gulkan_dep.get_variable('girdir')
+gulkan_girdir = gulkan_dep.get_variable(pkgconfig: 'girdir')
 
 if get_option('introspection')
   gxr_gir = gnome.generate_gir(
