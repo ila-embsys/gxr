@@ -53,14 +53,9 @@ stages:
     FDO_DISTRIBUTION_VERSION: "20.04"
     FDO_DISTRIBUTION_TAG: "2022-03-09.${GLOBAL_TAG_SUFFIX}.0"
 
-.xrdesktop.variables.ubuntu:groovy:
+.xrdesktop.variables.ubuntu:impish:
   variables:
-    FDO_DISTRIBUTION_VERSION: "20.10"
-    FDO_DISTRIBUTION_TAG: "2022-03-09.${GLOBAL_TAG_SUFFIX}.0"
-
-.xrdesktop.variables.ubuntu:hirsute:
-  variables:
-    FDO_DISTRIBUTION_VERSION: "21.04"
+    FDO_DISTRIBUTION_VERSION: "21.10"
     FDO_DISTRIBUTION_TAG: "2022-03-09.${GLOBAL_TAG_SUFFIX}.0"
 
 .xrdesktop.variables.debian:bookworm:
@@ -137,44 +132,21 @@ ubuntu:focal:gcc:
     CXX: g++
 
 
-# === Ubuntu Groovy ===
+# === Ubuntu Impish ===
 
-ubuntu:groovy:container_prep:
+ubuntu:impish:container_prep:
   stage: container_prep
   extends:
-    - .xrdesktop.variables.ubuntu:groovy
+    - .xrdesktop.variables.ubuntu:impish
     - .fdo.container-build@ubuntu # from ci-templates
     - .xrdesktop.base-job.build_deps
     - .xrdesktop.variables.debian-based-packages
   variables:
     FDO_DISTRIBUTION_PACKAGES: "${CORE_REQUIRED_PACKAGES}"
 
-ubuntu:groovy:gcc:
+ubuntu:impish:gcc:
   extends:
-    - .xrdesktop.variables.ubuntu:groovy
-    - .fdo.distribution-image@ubuntu # from ci-templates
-    - .xrdesktop.base-job.build-meson
-  variables:
-    MESON_ARGS: -Dapi_doc=false
-    CC: gcc
-    CXX: g++
-
-
-# === Ubuntu Hirsute ===
-
-ubuntu:hirsute:container_prep:
-  stage: container_prep
-  extends:
-    - .xrdesktop.variables.ubuntu:hirsute
-    - .fdo.container-build@ubuntu # from ci-templates
-    - .xrdesktop.base-job.build_deps
-    - .xrdesktop.variables.debian-based-packages
-  variables:
-    FDO_DISTRIBUTION_PACKAGES: "${CORE_REQUIRED_PACKAGES}"
-
-ubuntu:hirsute:gcc:
-  extends:
-    - .xrdesktop.variables.ubuntu:hirsute
+    - .xrdesktop.variables.ubuntu:impish
     - .fdo.distribution-image@ubuntu # from ci-templates
     - .xrdesktop.base-job.build-meson
   variables:
@@ -340,26 +312,15 @@ ubuntu:focal:package:
     DISTRO: focal
 
 
-ubuntu:groovy:package:
+ubuntu:impish:package:
   extends:
-    - .xrdesktop.variables.ubuntu:groovy
-    - .fdo.distribution-image@ubuntu # from ci-templates
-    - .xrdesktop.base-job.debuild
-  variables:
-    BACKPORT_SUFFIX: ubuntu20.10
-    PACKAGE_DIR:  .gitlab-ci/debian_sid
-    DISTRO: groovy
-
-
-ubuntu:hirsute:package:
-  extends:
-    - .xrdesktop.variables.ubuntu:hirsute
+    - .xrdesktop.variables.ubuntu:impish
     - .fdo.distribution-image@ubuntu # from ci-templates
     - .xrdesktop.base-job.debuild
   variables:
     BACKPORT_SUFFIX: ubuntu21.04
     PACKAGE_DIR:  .gitlab-ci/debian_sid
-    DISTRO: hirsute
+    DISTRO: impish
 
 
 reprepro:package:
@@ -373,8 +334,7 @@ reprepro:package:
     - debian:bullseye:package
     - debian:sid:package
     - ubuntu:focal:package
-    - ubuntu:groovy:package
-    - ubuntu:hirsute:package
+    - ubuntu:impish:package
   before_script:
     # Convince gnupg to work properly in CI
     - mkdir -p ~/.gnupg && chmod 700 ~/.gnupg
