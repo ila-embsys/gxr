@@ -89,7 +89,11 @@ pkg.generate(
   install_dir: join_paths(get_option('libdir'), 'pkgconfig')
 )
 
-gulkan_girdir = gulkan_dep.get_variable(pkgconfig: 'girdir')
+if meson.version().version_compare('>=0.54')
+  gulkan_girdir = gulkan_dep.get_variable(pkgconfig: 'girdir', internal: 'girdir')
+else
+  gulkan_girdir = gulkan_dep.get_variable(pkgconfig: 'girdir')
+endif
 
 if get_option('introspection')
   gxr_gir = gnome.generate_gir(
