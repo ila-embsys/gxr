@@ -213,6 +213,23 @@ graphene_ext_matrix_interpolate_simple (const graphene_matrix_t *from,
 }
 
 gboolean
+graphene_ext_matrix_decompose_affine (const graphene_matrix_t *m,
+                                      graphene_vec3_t         *scale_r,
+                                      graphene_quaternion_t   *rotate_r,
+                                      graphene_vec3_t         *translate_r)
+{
+  graphene_ext_matrix_get_translation_vec3 (m, translate_r);
+
+  graphene_ext_matrix_get_scale (m, scale_r);
+
+  graphene_matrix_t rotation_matrix;
+  graphene_ext_matrix_get_rotation_matrix (m, &rotation_matrix);
+  graphene_ext_matrix_get_rotation_quaternion (&rotation_matrix, rotate_r);
+
+  return true;
+}
+
+gboolean
 graphene_ext_matrix_validate (const graphene_matrix_t *m)
 {
   float f[16];

@@ -8,6 +8,7 @@
 #ifndef XRD_GRAPHENE_EXT_H_
 #define XRD_GRAPHENE_EXT_H_
 
+#include <glib.h>
 #include <graphene.h>
 
 void
@@ -83,6 +84,12 @@ graphene_ext_matrix_interpolate_simple (const graphene_matrix_t *from,
 
 gboolean
 graphene_ext_matrix_validate (const graphene_matrix_t *m);
+
+gboolean
+graphene_ext_matrix_decompose_affine (const graphene_matrix_t *m,
+                                      graphene_vec3_t         *scale_r,
+                                      graphene_quaternion_t   *rotate_r,
+                                      graphene_vec3_t         *translate_r);
 
 gboolean
 graphene_ext_quaternion_validate (const graphene_quaternion_t *q);
