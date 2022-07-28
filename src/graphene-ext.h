@@ -81,4 +81,19 @@ graphene_ext_matrix_interpolate_simple (const graphene_matrix_t *from,
                                         float                    factor,
                                         graphene_matrix_t       *result);
 
+gboolean
+graphene_ext_matrix_validate (const graphene_matrix_t *m);
+
+gboolean
+graphene_ext_quaternion_validate (const graphene_quaternion_t *q);
+
+gboolean
+graphene_ext_point3d_validate (const graphene_point3d_t *p);
+
+gboolean
+graphene_ext_point3d_validate_all_nonzero (const graphene_point3d_t *p);
+
+gboolean
+graphene_ext_vec3_validate (const graphene_vec3_t *v);
+
 #endif /* XRD_GRAPHENE_QUATERNION_H_ */

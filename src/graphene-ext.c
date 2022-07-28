@@ -212,3 +212,132 @@ graphene_ext_matrix_interpolate_simple (const graphene_matrix_t *from,
   graphene_matrix_init_from_float (result, interpolated_f);
 }
 
+gboolean
+graphene_ext_matrix_validate (const graphene_matrix_t *m)
+{
+  float f[16];
+  graphene_matrix_to_float (m, f);
+  for (uint32_t i = 0; i < 16; i++)
+    {
+      if (isnan (f[i]))
+        {
+          g_assert ("Matrix component is NaN" && FALSE);
+          return FALSE;
+        }
+      if (isinf (f[i]))
+        {
+          g_assert ("Matrix component is inf" && FALSE);
+          return FALSE;
+        }
+    }
+  return TRUE;
+}
+
+gboolean
+graphene_ext_quaternion_validate (const graphene_quaternion_t *q)
+{
+  float f[4];
+  graphene_ext_quaternion_to_float (q, f);
+
+  gboolean all_zero = TRUE;
+  for (uint32_t i = 0; i < 4; i++)
+    {
+      if (isnan (f[i]))
+        {
+          g_assert ("Quaternion component is NaN" && FALSE);
+          return FALSE;
+        }
+      if (isinf (f[i]))
+        {
+          g_assert ("Quaternion component is inf" && FALSE);
+          return FALSE;
+        }
+      if (f[i] != 0)
+        {
+          all_zero = FALSE;
+        }
+    }
+
+  if (all_zero)
+    {
+      g_assert ("Quaternion is all zero" && FALSE);
+      return FALSE;
+    }
+  return TRUE;
+}
+
+gboolean
+graphene_ext_point3d_validate (const graphene_point3d_t *p)
+{
+  float f[3] = {
+    p->x, p->y, p->z
+  };
+
+  for (uint32_t i = 0; i < 3; i++)
+    {
+      if (isnan (f[i]))
+        {
+          g_assert ("Point component is NaN" && FALSE);
+          return FALSE;
+        }
+      if (isinf (f[i]))
+        {
+          g_assert ("Point component is inf" && FALSE);
+          return FALSE;
+        }
+    }
+  return TRUE;
+}
+
+gboolean
+graphene_ext_point3d_validate_all_nonzero (const graphene_point3d_t *p)
+{
+  float f[3] = {
+    p->x, p->y, p->z
+  };
+
+  for (uint32_t i = 0; i < 3; i++)
+    {
+      if (isnan (f[i]))
+        {
+          g_assert ("Point component is NaN" && FALSE);
+          return FALSE;
+        }
+      if (isinf (f[i]))
+        {
+          g_assert ("Point component is inf" && FALSE);
+          return FALSE;
+        }
+      if (f[i] == 0)
+        {
+          g_assert ("Point component is zero" && FALSE);
+          return FALSE;
+        }
+    }
+  return TRUE;
+}
+
+gboolean
+graphene_ext_vec3_validate (const graphene_vec3_t *v)
+{
+  float f[3] = {
+    graphene_vec3_get_x (v),
+    graphene_vec3_get_y (v),
+    graphene_vec3_get_z (v)
+  };
+
+  for (uint32_t i = 0; i < 3; i++)
+    {
+      if (isnan (f[i]))
+        {
+          g_assert ("Vec3 component is NaN" && FALSE);
+          return FALSE;
+        }
+      if (isinf (f[i]))
+        {
+          g_assert ("Vec3 component is inf" && FALSE);
+          return FALSE;
+        }
+    }
+  return TRUE;
+}
