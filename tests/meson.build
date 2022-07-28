@@ -27,3 +27,11 @@ test('test_actions',
      test_actions,
      suite: ['xr'],
      is_parallel : false)
+
+test_matrix_decomposition = executable(
+  'test_matrix_decomposition', 'test_matrix_decomposition.c',
+  dependencies: gxr_deps,
+  link_with: gxr_lib,
+  include_directories: gxr_inc,
+  install: false)
+test('test_matrix_decomposition', test_matrix_decomposition)
