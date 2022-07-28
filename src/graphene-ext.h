@@ -75,10 +75,6 @@ graphene_ext_vec4_print (const graphene_vec4_t *v);
 void
 graphene_ext_vec3_print (const graphene_vec3_t *v);
 
-bool
-graphene_ext_matrix_equals (graphene_matrix_t *a,
-                            graphene_matrix_t *b);
-
 void
 graphene_ext_matrix_interpolate_simple (const graphene_matrix_t *from,
                                         const graphene_matrix_t *to,

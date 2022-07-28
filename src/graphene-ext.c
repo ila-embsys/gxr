@@ -193,23 +193,6 @@ graphene_ext_vec3_print (const graphene_vec3_t *v)
   g_print ("| %f %f %f |\n", (double) f[0], (double) f[1], (double) f[2]);
 }
 
-bool
-graphene_ext_matrix_equals (graphene_matrix_t *a,
-                            graphene_matrix_t *b)
-{
-  float a_f[16];
-  float b_f[16];
-
-  graphene_matrix_to_float (a, a_f);
-  graphene_matrix_to_float (b, b_f);
-
-  for (uint32_t i = 0; i < 16; i++)
-    if (a_f[i] != b_f[i])
-      return FALSE;
-
-  return TRUE;
-}
-
 void
 graphene_ext_matrix_interpolate_simple (const graphene_matrix_t *from,
                                         const graphene_matrix_t *to,
