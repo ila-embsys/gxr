@@ -1203,6 +1203,7 @@ _create_vk_device2 (GxrContext      *self,
   VkResult vk_result;
   res = CreateVulkanDeviceKHR (self->instance, &info, vk_device, &vk_result);
 
+  g_free (extension_names);
   g_slist_free_full (device_ext_list_reduced, g_free);
 
   if (!_check_xr_result(res, "Failed to create Vulkan graphics device."))
