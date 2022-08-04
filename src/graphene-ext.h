@@ -36,15 +36,18 @@ graphene_ext_matrix_set_translation_point3d (graphene_matrix_t        *m,
 
 void
 graphene_ext_matrix_get_scale (const graphene_matrix_t *m,
-                               graphene_vec3_t         *res);
+                               graphene_point3d_t      *res);
 
 void
 graphene_ext_matrix_get_rotation_matrix (const graphene_matrix_t *m,
-                                         graphene_matrix_t *res);
+                                         graphene_point3d_t      *scale,
+                                         graphene_matrix_t       *rotation);
 
 void
 graphene_ext_matrix_get_rotation_quaternion (const graphene_matrix_t *m,
+                                             graphene_point3d_t      *scale,
                                              graphene_quaternion_t   *res);
+
 void
 graphene_ext_matrix_get_rotation_angles (const graphene_matrix_t *m,
                                          float                   *deg_x,
@@ -83,13 +86,13 @@ graphene_ext_matrix_interpolate_simple (const graphene_matrix_t *from,
                                         graphene_matrix_t       *result);
 
 gboolean
-graphene_ext_matrix_validate (const graphene_matrix_t *m);
+graphene_ext_matrix_decompose (const graphene_matrix_t *m,
+                               graphene_point3d_t      *scale,
+                               graphene_quaternion_t   *rotation,
+                               graphene_point3d_t      *translation);
 
 gboolean
-graphene_ext_matrix_decompose_affine (const graphene_matrix_t *m,
-                                      graphene_vec3_t         *scale_r,
-                                      graphene_quaternion_t   *rotate_r,
-                                      graphene_vec3_t         *translate_r);
+graphene_ext_matrix_validate (const graphene_matrix_t *m);
 
 gboolean
 graphene_ext_quaternion_validate (const graphene_quaternion_t *q);

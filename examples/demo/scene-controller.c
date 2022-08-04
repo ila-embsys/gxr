@@ -306,11 +306,15 @@ scene_controller_drag_start (SceneController *self,
   gxr_controller_get_pointer_pose (GXR_CONTROLLER (self->controller),
                                    &pointer_pose);
 
+  graphene_point3d_t unused_scale;
+
   graphene_quaternion_t controller_rotation;
   graphene_ext_matrix_get_rotation_quaternion (&pointer_pose,
+                                               &unused_scale,
                                                &controller_rotation);
 
   graphene_ext_matrix_get_rotation_quaternion (object_pose,
+                                               &unused_scale,
                                                &self->grab_state.object_rotation);
 
   graphene_point_init (

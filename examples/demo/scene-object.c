@@ -257,7 +257,9 @@ scene_object_set_transformation (SceneObject       *self,
                                  graphene_matrix_t *mat)
 {
   SceneObjectPrivate *priv = scene_object_get_instance_private (self);
-  graphene_ext_matrix_get_rotation_quaternion (mat, &priv->orientation);
+  graphene_point3d_t unused_scale;
+  graphene_ext_matrix_get_rotation_quaternion (mat, &unused_scale,
+                                               &priv->orientation);
   graphene_ext_matrix_get_translation_point3d (mat, &priv->position);
 
   // graphene_vec3_t scale;

@@ -73,7 +73,7 @@ graphene_ext_matrix_set_translation_point3d (graphene_matrix_t        *m,
 
 void
 graphene_ext_matrix_get_scale (const graphene_matrix_t *m,
-                               graphene_vec3_t         *res)
+                               graphene_point3d_t      *res)
 {
   float f[16];
   graphene_matrix_to_float (m, f);
@@ -83,39 +83,38 @@ graphene_ext_matrix_get_scale (const graphene_matrix_t *m,
   graphene_vec3_init (&sy, f[4], f[5], f[6]);
   graphene_vec3_init (&sz, f[8], f[9], f[10]);
 
-  graphene_vec3_init (res,
-                      graphene_vec3_length (&sx),
-                      graphene_vec3_length (&sy),
-                      graphene_vec3_length (&sz));
+  graphene_point3d_init (res,
+                         graphene_vec3_length (&sx),
+                         graphene_vec3_length (&sy),
+                         graphene_vec3_length (&sz));
 }
 
 void
 graphene_ext_matrix_get_rotation_matrix (const graphene_matrix_t *m,
-                                         graphene_matrix_t *res)
+                                         graphene_point3d_t      *scale,
+                                         graphene_matrix_t       *rotation)
 {
   float f[16];
   graphene_matrix_to_float (m, f);
 
-  graphene_vec3_t s_vec;
-  graphene_ext_matrix_get_scale (m, &s_vec);
-  float s[3];
-  graphene_vec3_to_float (&s_vec, s);
+  graphene_ext_matrix_get_scale (m, scale);
 
   float r[16] = {
-    f[0] / s[0], f[1] / s[0], f[2]  / s[0], 0,
-    f[4] / s[1], f[5] / s[1], f[6]  / s[1], 0,
-    f[8] / s[2], f[9] / s[2], f[10] / s[2], 0,
-    0,           0,           0,            1
+    f[0] / scale->x, f[1] / scale->x, f[2]  / scale->x, 0,
+    f[4] / scale->y, f[5] / scale->y, f[6]  / scale->y, 0,
+    f[8] / scale->z, f[9] / scale->z, f[10] / scale->z, 0,
+    0              , 0              , 0               , 1
   };
-  graphene_matrix_init_from_float (res, r);
+  graphene_matrix_init_from_float (rotation, r);
 }
 
 void
 graphene_ext_matrix_get_rotation_quaternion (const graphene_matrix_t *m,
+                                             graphene_point3d_t      *scale,
                                              graphene_quaternion_t   *res)
 {
   graphene_matrix_t rot_m;
-  graphene_ext_matrix_get_rotation_matrix (m, &rot_m);
+  graphene_ext_matrix_get_rotation_matrix (m, scale, &rot_m);
   graphene_quaternion_init_from_matrix (res, &rot_m);
 }
 
@@ -126,7 +125,9 @@ graphene_ext_matrix_get_rotation_angles (const graphene_matrix_t *m,
                                          float                   *deg_z)
 {
   graphene_quaternion_t q;
-  graphene_ext_matrix_get_rotation_quaternion (m, &q);
+
+  graphene_point3d_t unused_scale;
+  graphene_ext_matrix_get_rotation_quaternion (m, &unused_scale, &q);
   graphene_quaternion_to_angles (&q, deg_x, deg_y, deg_z);
 }
 
@@ -213,19 +214,13 @@ graphene_ext_matrix_interpolate_simple (const graphene_matrix_t *from,
 }
 
 gboolean
-graphene_ext_matrix_decompose_affine (const graphene_matrix_t *m,
-                                      graphene_vec3_t         *scale_r,
-                                      graphene_quaternion_t   *rotate_r,
-                                      graphene_vec3_t         *translate_r)
+graphene_ext_matrix_decompose (const graphene_matrix_t *m,
+                               graphene_point3d_t      *scale,
+                               graphene_quaternion_t   *rotation,
+                               graphene_point3d_t      *translation)
 {
-  graphene_ext_matrix_get_translation_vec3 (m, translate_r);
-
-  graphene_ext_matrix_get_scale (m, scale_r);
-
-  graphene_matrix_t rotation_matrix;
-  graphene_ext_matrix_get_rotation_matrix (m, &rotation_matrix);
-  graphene_ext_matrix_get_rotation_quaternion (&rotation_matrix, rotate_r);
-
+  graphene_ext_matrix_get_translation_point3d (m, translation);
+  graphene_ext_matrix_get_rotation_quaternion (m, scale, rotation);
   return true;
 }
 
