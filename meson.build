@@ -35,7 +35,10 @@ if compiler_id == 'clang'
     '-Wno-format-nonliteral',
     # variadic %f
     '-Wno-gnu-folding-constant',
-    '-Wno-cast-qual' # G_DEFINE_TYPE produces this
+    '-Wno-cast-qual', # G_DEFINE_TYPE produces this
+    '-Wno-declaration-after-statement',
+    '-Wno-reserved-identifier',
+    '-Wno-unused-macros', # GLib
   ]
 endif
 
