@@ -60,10 +60,6 @@ gxr_context_get_frustum_angles (GxrContext *self, GxrEye eye,
                                 float *left, float *right,
                                 float *top, float *bottom);
 
-void
-gxr_context_get_render_dimensions (GxrContext *self,
-                                   VkExtent2D *extent);
-
 gboolean
 gxr_context_init_framebuffers (GxrContext           *self,
                                VkExtent2D            extent,
@@ -123,10 +119,9 @@ gxr_context_get_acquired_framebuffer (GxrContext *self);
 GulkanFrameBuffer *
 gxr_context_get_framebuffer_at (GxrContext *self, uint32_t i);
 
-void
-gxr_context_get_swapchain_dimensions (GxrContext *self,
-                                      uint32_t i,
-                                      VkExtent2D *extent);
+VkExtent2D
+gxr_context_get_swapchain_extent (GxrContext *self,
+                                  uint32_t    view_index);
 
 uint32_t
 gxr_context_get_buffer_index (GxrContext *self);

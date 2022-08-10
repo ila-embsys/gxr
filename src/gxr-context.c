@@ -1419,14 +1419,6 @@ gxr_context_get_frustum_angles (GxrContext *self, GxrEye eye,
   // g_debug ("Fov angles L %f R %f T %f B %f", *left, *right, *top, *bottom);
 }
 
-// TODO: remove
-void
-gxr_context_get_render_dimensions (GxrContext *self,
-                                   VkExtent2D *extent)
-{
-  gxr_context_get_swapchain_dimensions (self, 0, extent);
-}
-
 static void
 _handle_visibility_changed (GxrContext *self,
                             XrEventDataBuffer *runtimeEvent)
@@ -2222,12 +2214,14 @@ gxr_context_get_tracked_space (GxrContext *self)
   return self->play_space;
 }
 
-void
-gxr_context_get_swapchain_dimensions (GxrContext *self,
-                                      uint32_t       i,
-                                      VkExtent2D    *extent)
+VkExtent2D
+gxr_context_get_swapchain_extent (GxrContext *self,
+                                  uint32_t    view_index)
 {
-  extent->width = self->configuration_views[i].recommendedImageRectWidth;
-  extent->height = self->configuration_views[i].recommendedImageRectHeight;
+  VkExtent2D extent = {
+    .width = self->configuration_views[view_index].recommendedImageRectWidth,
+    .height = self->configuration_views[view_index].recommendedImageRectHeight
+  };
+  return extent;
 }
 

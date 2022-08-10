@@ -473,9 +473,7 @@ _init (CubeExample *self)
   gulkan_renderer_set_context (GULKAN_RENDERER (self),
                                gxr_context_get_gulkan (self->context));
 
-  VkExtent2D extent;
-  gxr_context_get_render_dimensions (self->context, &extent);
-
+  VkExtent2D extent = gxr_context_get_swapchain_extent (self->context, 0);
   gulkan_renderer_set_extent (GULKAN_RENDERER (self), extent);
 
   if (!gxr_context_init_framebuffers (self->context, extent,

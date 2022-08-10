@@ -170,8 +170,7 @@ scene_renderer_new (void)
 static gboolean
 _init_framebuffers (SceneRenderer *self)
 {
-  VkExtent2D extent;
-  gxr_context_get_render_dimensions (self->context, &extent);
+  VkExtent2D extent = gxr_context_get_swapchain_extent (self->context, 0);
 
   extent.width = (uint32_t) (self->render_scale * (float) extent.width);
   extent.height = (uint32_t) (self->render_scale * (float) extent.height);
