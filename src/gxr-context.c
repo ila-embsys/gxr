@@ -1602,7 +1602,7 @@ _handle_interaction_profile_changed (GxrContext *self)
 }
 
 void
-gxr_context_poll_event (GxrContext *self)
+gxr_context_poll_events (GxrContext *self)
 {
   XrEventDataBuffer runtimeEvent = {
     .type = XR_TYPE_EVENT_DATA_BUFFER,

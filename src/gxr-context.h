@@ -71,7 +71,7 @@ gxr_context_init_framebuffers (GxrContext           *self,
                                GulkanRenderPass    **render_pass);
 
 void
-gxr_context_poll_event (GxrContext *self);
+gxr_context_poll_events (GxrContext *self);
 
 void
 gxr_context_get_projection (GxrContext *self,

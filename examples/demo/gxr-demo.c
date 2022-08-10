@@ -418,7 +418,7 @@ _poll_runtime_events (Example *self)
   if (!self->context)
     return FALSE;
 
-  gxr_context_poll_event (self->context);
+  gxr_context_poll_events (self->context);
 
   return TRUE;
 }
