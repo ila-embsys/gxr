@@ -434,18 +434,19 @@ _check_graphics_api_support (GxrContext* self)
   };
 
   PFN_xrGetVulkanGraphicsRequirementsKHR GetVulkanGraphicsRequirements2 = NULL;
-  XrResult result =
+  XrResult res;
+  res =
     xrGetInstanceProcAddr (self->instance,
                            "xrGetVulkanGraphicsRequirements2KHR",
                            (PFN_xrVoidFunction*)
                            (&GetVulkanGraphicsRequirements2));
-  if (!_check_xr_result (result,
+  if (!_check_xr_result (res,
       "Failed to retrieve xrGetVulkanGraphicsRequirements2KHR pointer!"))
     return FALSE;
 
-  result = GetVulkanGraphicsRequirements2 (self->instance, self->system_id,
-                                          &vk_reqs);
-  if (!_check_xr_result (result, "Failed to get Vulkan graphics requirements!"))
+  res = GetVulkanGraphicsRequirements2 (self->instance, self->system_id,
+                                        &vk_reqs);
+  if (!_check_xr_result (res, "Failed to get Vulkan graphics requirements!"))
     return FALSE;
 
   if (self->desired_vk_version > vk_reqs.maxApiVersionSupported ||
@@ -935,7 +936,7 @@ _create_vk_instance2 (GxrContext *self, GSList *instance_ext_list, VkInstance *i
   XrResult result =
     xrGetInstanceProcAddr(self->instance, "xrCreateVulkanInstanceKHR",
                           (PFN_xrVoidFunction*)&CreateVulkanInstanceKHR);
-  if (!_check_xr_result(result, "Failed to load xrCreateVulkanInstanceKHR."))
+  if (!_check_xr_result(res, "Failed to load xrCreateVulkanInstanceKHR."))
     {
       g_free (extension_names);
       g_slist_free_full (instance_ext_list_reduced, g_free);
@@ -943,13 +944,13 @@ _create_vk_instance2 (GxrContext *self, GSList *instance_ext_list, VkInstance *i
     }
 
   VkResult vk_result;
-  result = CreateVulkanInstanceKHR(self->instance, &xr_vk_instance_info,
+  res = CreateVulkanInstanceKHR(self->instance, &xr_vk_instance_info,
                                    instance, &vk_result);
 
   g_free (extension_names);
   g_slist_free_full (instance_ext_list_reduced, g_free);
 
-  if (!_check_xr_result(result, "Failed to create Vulkan instance!"))
+  if (!_check_xr_result(res, "Failed to create Vulkan instance!"))
     return FALSE;
 
   if (vk_result != VK_SUCCESS) {
@@ -966,7 +967,8 @@ _get_vk_physical_device2 (GxrContext *self,
                           VkPhysicalDevice* physical_device)
 {
   PFN_xrGetVulkanGraphicsDevice2KHR fun = NULL;
-  XrResult res = xrGetInstanceProcAddr(
+  XrResult res;
+  res = xrGetInstanceProcAddr(
     self->instance, "xrGetVulkanGraphicsDevice2KHR", (PFN_xrVoidFunction*)&fun);
 
   if (!_check_xr_result(res, "Failed to load xrGetVulkanGraphicsDevice2KHR."))
@@ -1082,7 +1084,8 @@ _create_vk_device2 (GxrContext      *self,
 {
 
   PFN_xrCreateVulkanDeviceKHR CreateVulkanDeviceKHR = NULL;
-  XrResult res =
+  XrResult res;
+  res =
     xrGetInstanceProcAddr(self->instance, "xrCreateVulkanDeviceKHR",
                           (PFN_xrVoidFunction*)&CreateVulkanDeviceKHR);
 
@@ -2046,35 +2049,36 @@ gboolean
 gxr_context_get_runtime_instance_extensions (GxrContext *self, GSList **out_list)
 {
   PFN_xrGetVulkanInstanceExtensionsKHR GetVulkanInstanceExtensionsKHR = NULL;
-  XrResult result =
+  XrResult res;
+  res =
     xrGetInstanceProcAddr (self->instance,
                           "xrGetVulkanInstanceExtensionsKHR",
                           (PFN_xrVoidFunction*)
                           (&GetVulkanInstanceExtensionsKHR));
-  if (!_check_xr_result (result,
+  if (!_check_xr_result (res,
     "Failed to retrieve xrGetVulkanGraphicsRequirements2KHR pointer!"))
     return FALSE;
 
   uint32_t ext_str_len = 0;
-  result =
+  res =
     GetVulkanInstanceExtensionsKHR (self->instance,
                                     self->system_id,
                                     0,
                                     &ext_str_len,
                                     NULL);
-  if (!_check_xr_result (result,
+  if (!_check_xr_result (res,
     "Failed to get Vulkan instance extension string size!"))
     return FALSE;
 
   gchar *ext_str = g_malloc (sizeof (gchar) * ext_str_len);
 
-  result =
+  res =
     GetVulkanInstanceExtensionsKHR (self->instance,
                                     self->system_id,
                                     ext_str_len,
                                     &ext_str_len,
                                     ext_str);
-  if (!_check_xr_result (result,
+  if (!_check_xr_result (res,
     "Failed to get Vulkan instance extension string!"))
     {
       g_free (ext_str);
@@ -2097,35 +2101,36 @@ gxr_context_get_runtime_device_extensions (GxrContext   *self,
                                            GSList      **out_list)
 {
   PFN_xrGetVulkanDeviceExtensionsKHR GetVulkanDeviceExtensionsKHR = NULL;
-  XrResult result =
+  XrResult res;
+  res =
     xrGetInstanceProcAddr (self->instance,
                           "xrGetVulkanDeviceExtensionsKHR",
                           (PFN_xrVoidFunction*)
                           (&GetVulkanDeviceExtensionsKHR));
-  if (!_check_xr_result (result,
+  if (!_check_xr_result (res,
     "Failed to retrieve xrGetVulkanGraphicsRequirements2KHR pointer!"))
     return FALSE;
 
   uint32_t ext_str_len = 0;
-  result =
+  res =
     GetVulkanDeviceExtensionsKHR (self->instance,
                                   self->system_id,
                                   0,
                                  &ext_str_len,
                                   NULL);
-  if (!_check_xr_result (result,
+  if (!_check_xr_result (res,
     "Failed to get Vulkan device extension string size!"))
     return FALSE;
 
   gchar *ext_str = g_malloc (sizeof (gchar) * ext_str_len);
 
-  result =
+  res =
     GetVulkanDeviceExtensionsKHR (self->instance,
                                     self->system_id,
                                     ext_str_len,
                                     &ext_str_len,
                                     ext_str);
-  if (!_check_xr_result (result,
+  if (!_check_xr_result (res,
     "Failed to get Vulkan device extension string!"))
     {
       g_free (ext_str);
