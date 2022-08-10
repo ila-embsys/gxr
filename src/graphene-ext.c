@@ -332,11 +332,8 @@ graphene_ext_point3d_validate_all_nonzero (const graphene_point3d_t *p)
 gboolean
 graphene_ext_vec3_validate (const graphene_vec3_t *v)
 {
-  float f[3] = {
-    graphene_vec3_get_x (v),
-    graphene_vec3_get_y (v),
-    graphene_vec3_get_z (v)
-  };
+  float f[3];
+  graphene_vec3_to_float (v, f);
 
   for (uint32_t i = 0; i < 3; i++)
     {
