@@ -111,9 +111,7 @@ gboolean
 gxr_context_get_runtime_device_extensions (GxrContext   *self,
                                            GSList      **out_list);
 
-struct _GxrDeviceManager;
-
-struct _GxrDeviceManager *
+GxrDeviceManager *
 gxr_context_get_device_manager (GxrContext *self);
 
 uint32_t
