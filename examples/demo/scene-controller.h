@@ -16,8 +16,6 @@
 #include "scene-pointer.h"
 #include <graphene.h>
 
-G_BEGIN_DECLS
-
 #define SCENE_TYPE_CONTROLLER scene_controller_get_type()
 G_DECLARE_FINAL_TYPE (SceneController, scene_controller, SCENE, CONTROLLER, GObject)
 
@@ -114,7 +112,5 @@ scene_controller_get_user_data (SceneController *self);
 
 GxrController *
 scene_controller_get_controller (SceneController *self);
-
-G_END_DECLS
 
 #endif /* SCENE_CONTROLLER_H_ */

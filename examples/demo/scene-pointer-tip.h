@@ -14,8 +14,6 @@
 #include "gxr.h"
 #include "scene-object.h"
 
-G_BEGIN_DECLS
-
 #define SCENE_TYPE_POINTER_TIP scene_pointer_tip_get_type()
 G_DECLARE_FINAL_TYPE (ScenePointerTip, scene_pointer_tip,
                       SCENE, POINTER_TIP, SceneObject)
@@ -101,7 +99,5 @@ scene_pointer_tip_update_keep_apparent_size (ScenePointerTip *self,
 void
 scene_pointer_tip_update_width_meters (ScenePointerTip *self,
                                        float          width);
-
-G_END_DECLS
 
 #endif /* SCENE_POINTER_TIP_H_ */

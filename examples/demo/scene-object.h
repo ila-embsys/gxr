@@ -14,8 +14,6 @@
 #include <graphene.h>
 #include <gxr.h>
 
-G_BEGIN_DECLS
-
 #define SCENE_TYPE_OBJECT scene_object_get_type()
 G_DECLARE_DERIVABLE_TYPE (SceneObject, scene_object,
                           SCENE, OBJECT, GObject)
@@ -101,7 +99,5 @@ scene_object_get_descriptor_set (SceneObject *self);
 void
 scene_object_update_ubo (SceneObject *self,
                          gpointer     uniform_buffer);
-
-G_END_DECLS
 
 #endif /* SCENE_OBJECT_H_ */

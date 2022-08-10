@@ -15,8 +15,6 @@
 
 #include "scene-object.h"
 
-G_BEGIN_DECLS
-
 #define SCENE_TYPE_BACKGROUND scene_background_get_type()
 G_DECLARE_FINAL_TYPE (SceneBackground, scene_background,
                       SCENE, BACKGROUND, SceneObject)
@@ -31,7 +29,5 @@ scene_background_render (SceneBackground    *self,
                          VkPipelineLayout    pipeline_layout,
                          VkCommandBuffer     cmd_buffer,
                          graphene_matrix_t  *vp);
-
-G_END_DECLS
 
 #endif /* SCENE_BACKGROUND_H_ */

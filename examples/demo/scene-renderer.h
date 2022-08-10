@@ -13,8 +13,6 @@
 
 #include <gxr.h>
 
-G_BEGIN_DECLS
-
 enum PipelineType
 {
   PIPELINE_WINDOWS = 0,
@@ -67,7 +65,5 @@ scene_renderer_update_lights (SceneRenderer *self,
 
 GulkanContext *
 scene_renderer_get_gulkan (SceneRenderer *self);
-
-G_END_DECLS
 
 #endif /* GXR_CUBE_RENDERER_H_ */

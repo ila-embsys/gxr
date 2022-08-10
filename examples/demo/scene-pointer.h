@@ -16,8 +16,6 @@
 
 #include "scene-object.h"
 
-G_BEGIN_DECLS
-
 #define SCENE_TYPE_POINTER scene_pointer_get_type()
 G_DECLARE_FINAL_TYPE (ScenePointer, scene_pointer,
                       SCENE, POINTER, SceneObject)
@@ -70,7 +68,5 @@ scene_pointer_is_visible (ScenePointer *self);
 
 void
 scene_pointer_update_render_ray (ScenePointer *self, gboolean render_ray);
-
-G_END_DECLS
 
 #endif /* SCENE_POINTER_H_ */

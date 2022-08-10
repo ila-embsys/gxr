@@ -15,8 +15,6 @@
 
 #include "scene-object.h"
 
-G_BEGIN_DECLS
-
 #define SCENE_TYPE_CUBE scene_cube_get_type()
 G_DECLARE_FINAL_TYPE (SceneCube, scene_cube, SCENE, CUBE, SceneObject)
 
@@ -38,7 +36,5 @@ scene_cube_override_position (SceneCube          *self,
 
 void
 scene_cube_resume_default_position (SceneCube *self);
-
-G_END_DECLS
 
 #endif /* SCENE_CUBE_H_ */
