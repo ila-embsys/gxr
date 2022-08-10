@@ -1427,12 +1427,185 @@ gxr_context_get_render_dimensions (GxrContext *self,
   gxr_context_get_swapchain_dimensions (self, 0, extent);
 }
 
+static void
+_handle_visibility_changed (GxrContext *self,
+                            XrEventDataBuffer *runtimeEvent)
+{
+  XrEventDataMainSessionVisibilityChangedEXTX* event =
+   (XrEventDataMainSessionVisibilityChangedEXTX*) runtimeEvent;
+
+  g_debug ("Event: main session visibility now: %d", event->visible);
+
+  GxrOverlayEvent overlay_event = {
+    .main_session_visible = event->visible,
+  };
+  g_signal_emit (self, context_signals[OVERLAY_EVENT], 0, &overlay_event);
+}
+
+static void
+_handle_state_changed (GxrContext *self,
+                       XrEventDataBuffer *runtimeEvent)
+{
+  XrEventDataSessionStateChanged* event =
+    (XrEventDataSessionStateChanged*) runtimeEvent;
+
+  self->session_state = event->state;
+  g_debug ("EVENT: session state changed to %d", event->state);
+
+  /*
+   * react to session state changes, see OpenXR spec 9.3 diagram. What we need to react to:
+   *
+   * * READY -> xrBeginSession STOPPING -> xrEndSession (note that the same session can be restarted)
+   * * EXITING -> xrDestroySession (EXITING only happens after we went through STOPPING and called xrEndSession)
+   *
+   * After exiting it is still possible to create a new session but we don't do that here.
+   *
+   * * IDLE -> don't run render loop, but keep polling for events
+   * * SYNCHRONIZED, VISIBLE, FOCUSED -> run render loop
+   */
+  gboolean should_submit_frames = FALSE;
+  switch (event->state) {
+    // skip render loop, keep polling
+    case XR_SESSION_STATE_MAX_ENUM: // must be a bug
+    case XR_SESSION_STATE_IDLE:
+    case XR_SESSION_STATE_UNKNOWN:
+      break; // state handling switch
+
+    // do nothing, run render loop normally
+    case XR_SESSION_STATE_FOCUSED:
+    case XR_SESSION_STATE_SYNCHRONIZED:
+    case XR_SESSION_STATE_VISIBLE:
+      should_submit_frames = TRUE;
+      break; // state handling switch
+
+    // begin session and then run render loop
+    case XR_SESSION_STATE_READY:
+    {
+      // start session only if it is not running, i.e. not when we already called xrBeginSession
+      // but the runtime did not switch to the next state yet
+      if (!self->session_running) {
+        if (!_begin_session (self))
+          g_printerr ("Failed to begin session\n");
+      }
+      should_submit_frames = TRUE;
+      break; // state handling switch
+    }
+
+    // end session, skip render loop, keep polling for next state change
+    case XR_SESSION_STATE_STOPPING:
+    {
+      // end session only if it is running, i.e. not when we already called xrEndSession but the
+      // runtime did not switch to the next state yet
+      if (self->session_running) {
+        if (!_end_session (self))
+          g_printerr ("Failed to end session\n");
+      }
+      break; // state handling switch
+    }
+
+    // destroy session, skip render loop, exit render loop and quit
+    case XR_SESSION_STATE_LOSS_PENDING:
+    case XR_SESSION_STATE_EXITING:
+      if (self->session)
+        {
+          if (!_destroy_session (self))
+            g_printerr ("Failed to destroy session\n");
+
+          GxrStateChangeEvent state_change_event = {
+            .state_change = GXR_STATE_SHUTDOWN,
+          };
+          g_debug ("Event: state is EXITING, sending VR_QUIT_SHUTDOWN");
+          g_signal_emit (self, context_signals[STATE_CHANGE_EVENT], 0,
+                         &state_change_event);
+
+        }
+      break; // state handling switch
+  }
+
+  if (!self->should_submit_frames && should_submit_frames)
+    {
+      GxrStateChangeEvent state_change_event = {
+        .state_change = GXR_STATE_FRAMECYCLE_START,
+      };
+      g_debug ("Event: start frame cycle");
+      g_signal_emit (self, context_signals[STATE_CHANGE_EVENT], 0,
+                     &state_change_event);
+    }
+  else if (self->should_submit_frames && ! should_submit_frames)
+    {
+      GxrStateChangeEvent state_change_event = {
+        .state_change = GXR_STATE_FRAMECYCLE_STOP,
+      };
+      g_debug ("Event: stop frame cycle");
+      g_signal_emit (self, context_signals[STATE_CHANGE_EVENT], 0,
+                     &state_change_event);
+    }
+
+  self->should_submit_frames = should_submit_frames;
+}
+
+static void
+_handle_instance_loss (GxrContext *self)
+{
+  GxrStateChangeEvent event = {
+    .state_change = GXR_STATE_SHUTDOWN,
+  };
+  g_debug ("Event: instance loss pending, sending VR_QUIT_SHUTDOWN");
+  g_signal_emit (self, context_signals[STATE_CHANGE_EVENT], 0, &event);
+}
+
+static void
+_handle_interaction_profile_changed (GxrContext *self)
+{
+  g_print ("Event: STUB: interaction profile changed\n");
+
+  XrInteractionProfileState state = {
+    .type = XR_TYPE_INTERACTION_PROFILE_STATE,
+  };
+
+  char *hand_str[2] = { "/user/hand/left", "/user/hand/right" };
+  XrPath hand_paths[2];
+  xrStringToPath(self->instance, hand_str[0], &hand_paths[0]);
+  xrStringToPath(self->instance, hand_str[1], &hand_paths[1]);
+  for (int i = 0; i < NUM_CONTROLLERS; i++)
+    {
+      XrResult res =
+        xrGetCurrentInteractionProfile (self->session,
+                                        hand_paths[i],
+                                        &state);
+      if (!_check_xr_result (res,
+        "Failed to get interaction profile for %s", hand_str[i]))
+        continue;
+
+      XrPath prof = state.interactionProfile;
+
+      if (prof == XR_NULL_PATH)
+        {
+          // perhaps no controller is present
+          g_debug ("Event: Interaction profile on %s: [none]",
+                   hand_str[i]);
+          continue;
+        }
+
+      uint32_t strl;
+      char profile_str[XR_MAX_PATH_LENGTH];
+      res = xrPathToString (self->instance, prof, XR_MAX_PATH_LENGTH,
+                            &strl, profile_str);
+      if (!_check_xr_result (res,
+        "Failed to get interaction profile path str for %s",
+        hand_str[i]))
+        continue;
+
+      g_debug ("Event: Interaction profile on %s: %s",
+               hand_str[i], profile_str);
+    }
+}
+
 void
 gxr_context_poll_event (GxrContext *self)
 {
   XrEventDataBuffer runtimeEvent = {
     .type = XR_TYPE_EVENT_DATA_BUFFER,
-    .next = NULL,
   };
 
   XrResult pollResult;
@@ -1446,195 +1619,30 @@ gxr_context_poll_event (GxrContext *self)
       switch (runtimeEvent.type)
       {
         case XR_TYPE_EVENT_DATA_EVENTS_LOST:
-        {
           /* We didnt poll enough */
           g_printerr ("Event: Events lost\n");
-        } break;
+          break;
         case XR_TYPE_EVENT_DATA_MAIN_SESSION_VISIBILITY_CHANGED_EXTX:
-        {
-          XrEventDataMainSessionVisibilityChangedEXTX* event =
-           (XrEventDataMainSessionVisibilityChangedEXTX*)&runtimeEvent;
-
-          g_debug ("Event: main session visibility now: %d", event->visible);
-
-          GxrOverlayEvent overlay_event = {
-            .main_session_visible =  event->visible,
-          };
-          g_signal_emit (self, context_signals[OVERLAY_EVENT], 0,
-                         &overlay_event);
-        } break;
+          _handle_visibility_changed (self, &runtimeEvent);
+          break;
         case XR_TYPE_EVENT_DATA_PERF_SETTINGS_EXT:
-        {
           g_debug ("Event: STUB: perf settings");
-        } break;
+          break;
         case XR_TYPE_EVENT_DATA_VISIBILITY_MASK_CHANGED_KHR:
-        {
           g_debug ("Event: STUB: visibility mask changed");
-        } break;
+          break;
         case XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED:
-        {
-          XrEventDataSessionStateChanged* event =
-            (XrEventDataSessionStateChanged*)&runtimeEvent;
-
-          self->session_state = event->state;
-          g_debug ("EVENT: session state changed to %d", event->state);
-
-          /*
-           * react to session state changes, see OpenXR spec 9.3 diagram. What we need to react to:
-           *
-           * * READY -> xrBeginSession STOPPING -> xrEndSession (note that the same session can be restarted)
-           * * EXITING -> xrDestroySession (EXITING only happens after we went through STOPPING and called xrEndSession)
-           *
-           * After exiting it is still possible to create a new session but we don't do that here.
-           *
-           * * IDLE -> don't run render loop, but keep polling for events
-           * * SYNCHRONIZED, VISIBLE, FOCUSED -> run render loop
-           */
-          gboolean should_submit_frames = FALSE;
-          switch (event->state) {
-            // skip render loop, keep polling
-            case XR_SESSION_STATE_MAX_ENUM: // must be a bug
-            case XR_SESSION_STATE_IDLE:
-            case XR_SESSION_STATE_UNKNOWN:
-              break; // state handling switch
-
-            // do nothing, run render loop normally
-            case XR_SESSION_STATE_FOCUSED:
-            case XR_SESSION_STATE_SYNCHRONIZED:
-            case XR_SESSION_STATE_VISIBLE:
-              should_submit_frames = TRUE;
-              break; // state handling switch
-
-            // begin session and then run render loop
-            case XR_SESSION_STATE_READY:
-            {
-              // start session only if it is not running, i.e. not when we already called xrBeginSession
-              // but the runtime did not switch to the next state yet
-              if (!self->session_running) {
-                if (!_begin_session (self))
-                  g_printerr ("Failed to begin session\n");
-              }
-              should_submit_frames = TRUE;
-              break; // state handling switch
-            }
-
-            // end session, skip render loop, keep polling for next state change
-            case XR_SESSION_STATE_STOPPING:
-            {
-              // end session only if it is running, i.e. not when we already called xrEndSession but the
-              // runtime did not switch to the next state yet
-              if (self->session_running) {
-                if (!_end_session (self))
-                  g_printerr ("Failed to end session\n");
-              }
-              break; // state handling switch
-            }
-
-            // destroy session, skip render loop, exit render loop and quit
-            case XR_SESSION_STATE_LOSS_PENDING:
-            case XR_SESSION_STATE_EXITING:
-              if (self->session)
-                {
-                  if (!_destroy_session (self))
-                    g_printerr ("Failed to destroy session\n");
-
-                  GxrStateChangeEvent state_change_event = {
-                    .state_change = GXR_STATE_SHUTDOWN,
-                  };
-                  g_debug ("Event: state is EXITING, sending VR_QUIT_SHUTDOWN");
-                  g_signal_emit (self, context_signals[STATE_CHANGE_EVENT], 0,
-                                 &state_change_event);
-
-                }
-              break; // state handling switch
-          }
-
-          if (!self->should_submit_frames && should_submit_frames)
-            {
-              GxrStateChangeEvent state_change_event = {
-                .state_change = GXR_STATE_FRAMECYCLE_START,
-              };
-              g_debug ("Event: start frame cycle");
-              g_signal_emit (self, context_signals[STATE_CHANGE_EVENT], 0,
-                             &state_change_event);
-            }
-          else if (self->should_submit_frames && ! should_submit_frames)
-            {
-              GxrStateChangeEvent state_change_event = {
-                .state_change = GXR_STATE_FRAMECYCLE_STOP,
-              };
-              g_debug ("Event: stop frame cycle");
-              g_signal_emit (self, context_signals[STATE_CHANGE_EVENT], 0,
-                             &state_change_event);
-            }
-
-          self->should_submit_frames = should_submit_frames;
-          break; // session event handling switch
-        }
+          _handle_state_changed (self, &runtimeEvent);
+          break;
         case XR_TYPE_EVENT_DATA_INSTANCE_LOSS_PENDING:
-        {
-          GxrStateChangeEvent state_change_event = {
-            .state_change = GXR_STATE_SHUTDOWN,
-          };
-          g_debug ("Event: instance loss pending, sending VR_QUIT_SHUTDOWN");
-          g_signal_emit (self, context_signals[STATE_CHANGE_EVENT], 0,
-                         &state_change_event);
+          _handle_instance_loss (self);
           break;
-        }
         case XR_TYPE_EVENT_DATA_INTERACTION_PROFILE_CHANGED:
-        {
-          g_print ("Event: STUB: interaction profile changed\n");
-
-          XrInteractionProfileState state = {
-            .type = XR_TYPE_INTERACTION_PROFILE_STATE
-          };
-
-          char *hand_str[2] = { "/user/hand/left", "/user/hand/right" };
-          XrPath hand_paths[2];
-          xrStringToPath(self->instance, hand_str[0], &hand_paths[0]);
-          xrStringToPath(self->instance, hand_str[1], &hand_paths[1]);
-          for (int i = 0; i < NUM_CONTROLLERS; i++)
-            {
-
-
-              XrResult res =
-                xrGetCurrentInteractionProfile (self->session,
-                                                hand_paths[i],
-                                                &state);
-              if (!_check_xr_result (res,
-                "Failed to get interaction profile for %s", hand_str[i]))
-                continue;
-
-              XrPath prof = state.interactionProfile;
-
-              if (prof == XR_NULL_PATH)
-                {
-                  // perhaps no controller is present
-                  g_debug ("Event: Interaction profile on %s: [none]",
-                           hand_str[i]);
-                  continue;
-                }
-
-              uint32_t strl;
-              char profile_str[XR_MAX_PATH_LENGTH];
-              res = xrPathToString (self->instance, prof, XR_MAX_PATH_LENGTH,
-                                    &strl, profile_str);
-              if (!_check_xr_result (res,
-                "Failed to get interaction profile path str for %s",
-                hand_str[i]))
-                continue;
-
-              g_debug ("Event: Interaction profile on %s: %s",
-                       hand_str[i], profile_str);
-            }
-
+          _handle_interaction_profile_changed (self);
           break;
-        }
         case XR_TYPE_EVENT_DATA_REFERENCE_SPACE_CHANGE_PENDING:
-        {
-          g_print ("Event: STUB: reference space change pending\n");
+          g_debug ("Event: STUB: reference space change pending\n");
           break;
-        }
         default:
         {
           char buffer[XR_MAX_STRUCTURE_NAME_SIZE];
@@ -1646,15 +1654,9 @@ gxr_context_poll_event (GxrContext *self)
       }
     }
 
-  if (pollResult == XR_EVENT_UNAVAILABLE)
-    {
-      // this is the usual case
-      // g_debug ("Poll events: No more events in queue");
-    }
-  else
+  if (pollResult != XR_EVENT_UNAVAILABLE)
     {
       g_printerr ("Failed to poll events!\n");
-      return;
     }
 }
 
