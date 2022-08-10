@@ -7,8 +7,8 @@
 
 #include "gxr-action-set.h"
 #include "gxr-action.h"
-#include "gxr-context-private.h"
 #include "gxr-manifest.h"
+#include "gxr-context.h"
 
 struct _GxrActionSet
 {

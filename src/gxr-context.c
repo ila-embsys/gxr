@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "gxr-context-private.h"
+#include "gxr-context.h"
 
 #include <openxr/openxr_reflection.h>
 
@@ -85,10 +85,6 @@ G_DEFINE_TYPE (GxrContext, gxr_context, G_TYPE_OBJECT)
 enum {
   STATE_CHANGE_EVENT,
   OVERLAY_EVENT,
-  DEVICE_UPDATE_EVENT,
-  BINDING_LOADED,
-  BINDINGS_UPDATE,
-  ACTIONSET_UPDATE,
   LAST_SIGNAL
 };
 
@@ -116,31 +112,6 @@ gxr_context_class_init (GxrContextClass *klass)
                 G_SIGNAL_RUN_LAST,
                 0, NULL, NULL, NULL, G_TYPE_NONE,
                 1, G_TYPE_POINTER | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  context_signals[DEVICE_UPDATE_EVENT] =
-  g_signal_new ("device-update-event",
-                G_TYPE_FROM_CLASS (klass),
-                G_SIGNAL_RUN_LAST,
-                0, NULL, NULL, NULL, G_TYPE_NONE,
-                1, G_TYPE_POINTER | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  context_signals[BINDINGS_UPDATE] =
-  g_signal_new ("bindings-update-event",
-                G_TYPE_FROM_CLASS (klass),
-                G_SIGNAL_RUN_FIRST,
-                0, NULL, NULL, NULL, G_TYPE_NONE, 0);
-
-  context_signals[BINDING_LOADED] =
-  g_signal_new ("binding-loaded-event",
-                G_TYPE_FROM_CLASS (klass),
-                G_SIGNAL_RUN_FIRST,
-                0, NULL, NULL, NULL, G_TYPE_NONE, 0);
-
-  context_signals[ACTIONSET_UPDATE] =
-  g_signal_new ("action-set-update-event",
-                G_TYPE_FROM_CLASS (klass),
-                G_SIGNAL_RUN_FIRST,
-                0, NULL, NULL, NULL, G_TYPE_NONE, 0);
 }
 
 static const char* viewport_config_name = "/viewport_configuration/vr";
@@ -1489,8 +1460,8 @@ gxr_context_poll_event (GxrContext *self)
           GxrOverlayEvent overlay_event = {
             .main_session_visible =  event->visible,
           };
-
-          gxr_context_emit_overlay_event (self, &overlay_event);
+          g_signal_emit (self, context_signals[OVERLAY_EVENT], 0,
+                         &overlay_event);
         } break;
         case XR_TYPE_EVENT_DATA_PERF_SETTINGS_EXT:
         {
@@ -1571,7 +1542,8 @@ gxr_context_poll_event (GxrContext *self)
                     .state_change = GXR_STATE_SHUTDOWN,
                   };
                   g_debug ("Event: state is EXITING, sending VR_QUIT_SHUTDOWN");
-                  gxr_context_emit_state_change (self, &state_change_event);
+                  g_signal_emit (self, context_signals[STATE_CHANGE_EVENT], 0,
+                                 &state_change_event);
 
                 }
               break; // state handling switch
@@ -1583,7 +1555,8 @@ gxr_context_poll_event (GxrContext *self)
                 .state_change = GXR_STATE_FRAMECYCLE_START,
               };
               g_debug ("Event: start frame cycle");
-              gxr_context_emit_state_change (self, &state_change_event);
+              g_signal_emit (self, context_signals[STATE_CHANGE_EVENT], 0,
+                             &state_change_event);
             }
           else if (self->should_submit_frames && ! should_submit_frames)
             {
@@ -1591,7 +1564,8 @@ gxr_context_poll_event (GxrContext *self)
                 .state_change = GXR_STATE_FRAMECYCLE_STOP,
               };
               g_debug ("Event: stop frame cycle");
-              gxr_context_emit_state_change (self, &state_change_event);
+              g_signal_emit (self, context_signals[STATE_CHANGE_EVENT], 0,
+                             &state_change_event);
             }
 
           self->should_submit_frames = should_submit_frames;
@@ -1599,11 +1573,12 @@ gxr_context_poll_event (GxrContext *self)
         }
         case XR_TYPE_EVENT_DATA_INSTANCE_LOSS_PENDING:
         {
-          GxrStateChangeEvent event = {
+          GxrStateChangeEvent state_change_event = {
             .state_change = GXR_STATE_SHUTDOWN,
           };
           g_debug ("Event: instance loss pending, sending VR_QUIT_SHUTDOWN");
-          gxr_context_emit_state_change (self, &event);
+          g_signal_emit (self, context_signals[STATE_CHANGE_EVENT], 0,
+                         &state_change_event);
           break;
         }
         case XR_TYPE_EVENT_DATA_INTERACTION_PROFILE_CHANGED:
@@ -1681,42 +1656,6 @@ gxr_context_poll_event (GxrContext *self)
       g_printerr ("Failed to poll events!\n");
       return;
     }
-}
-
-void
-gxr_context_emit_state_change (GxrContext *self, gpointer event)
-{
-  g_signal_emit (self, context_signals[STATE_CHANGE_EVENT], 0, event);
-}
-
-void
-gxr_context_emit_overlay_event (GxrContext *self, gpointer event)
-{
-  g_signal_emit (self, context_signals[OVERLAY_EVENT], 0, event);
-}
-
-void
-gxr_context_emit_device_update (GxrContext *self, gpointer event)
-{
-  g_signal_emit (self, context_signals[DEVICE_UPDATE_EVENT], 0, event);
-}
-
-void
-gxr_context_emit_bindings_update (GxrContext *self)
-{
-  g_signal_emit (self, context_signals[BINDINGS_UPDATE], 0);
-}
-
-void
-gxr_context_emit_binding_loaded (GxrContext *self)
-{
-  g_signal_emit (self, context_signals[BINDING_LOADED], 0);
-}
-
-void
-gxr_context_emit_actionset_update (GxrContext *self)
-{
-  g_signal_emit (self, context_signals[ACTIONSET_UPDATE], 0);
 }
 
 gboolean
@@ -1883,7 +1822,8 @@ _begin_frame (GxrContext* self)
         .state_change = GXR_STATE_RENDERING_START,
       };
       g_debug ("Event: start rendering");
-      gxr_context_emit_state_change (self, &state_change_event);
+      g_signal_emit (self, context_signals[STATE_CHANGE_EVENT], 0,
+                     &state_change_event);
     }
   else if (self->should_render && !frame_state.shouldRender)
     {
@@ -1891,7 +1831,8 @@ _begin_frame (GxrContext* self)
         .state_change = GXR_STATE_RENDERING_STOP,
       };
       g_debug ("Event: stop rendering");
-      gxr_context_emit_state_change (self, &state_change_event);
+      g_signal_emit (self, context_signals[STATE_CHANGE_EVENT], 0,
+                     &state_change_event);
     }
 
   self->should_render = frame_state.shouldRender == XR_TRUE;
