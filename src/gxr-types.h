@@ -8,7 +8,7 @@
 #ifndef GXR_TYPES_H_
 #define GXR_TYPES_H_
 
-#if !defined (GXR_INSIDE) && !defined (GXR_COMPILATION)
+#if !defined(GXR_INSIDE) && !defined(GXR_COMPILATION)
 #error "Only <gxr.h> can be included directly."
 #endif
 
@@ -26,7 +26,8 @@ typedef struct _GxrController GxrController;
 
 /**
  * GxrDigitalEvent:
- * @active: Whether or not this action is currently available to be bound in the active action set.
+ * @active: Whether or not this action is currently available to be bound in the
+ *active action set.
  * @state: Pressed or released.
  * @changed: Whether the state has changed since last event.
  * @controller: The controller identifier.
@@ -34,17 +35,19 @@ typedef struct _GxrController GxrController;
  *
  * Digital event.
  **/
-typedef struct {
-  gboolean active;
-  gboolean state;
-  gboolean changed;
+typedef struct
+{
+  gboolean       active;
+  gboolean       state;
+  gboolean       changed;
   GxrController *controller;
-  gfloat time;
+  gfloat         time;
 } GxrDigitalEvent;
 
 /**
  * GxrAnalogEvent:
- * @active: Whether or not this action is currently available to be bound in the active action set.
+ * @active: Whether or not this action is currently available to be bound in the
+ *active action set.
  * @state: A #graphene_vec3_t analog state.
  * @delta: State delta since last event.
  * @controller: The controller identifier.
@@ -52,17 +55,19 @@ typedef struct {
  *
  * Analog event.
  **/
-typedef struct {
-  gboolean active;
+typedef struct
+{
+  gboolean        active;
   graphene_vec3_t state;
   graphene_vec3_t delta;
-  GxrController *controller;
-  gfloat time;
+  GxrController  *controller;
+  gfloat          time;
 } GxrAnalogEvent;
 
 /**
  * GxrPoseEvent:
- * @active: Whether or not this action is currently available to be bound in the active action set.
+ * @active: Whether or not this action is currently available to be bound in the
+ *active action set.
  * @pose: The #graphene_matrix_t pose.
  * @velocity: Velocity
  * @angular_velocity: Angular velocity.
@@ -72,14 +77,15 @@ typedef struct {
  *
  * Pose event.
  **/
-typedef struct {
-  gboolean active;
+typedef struct
+{
+  gboolean          active;
   graphene_matrix_t pose;
-  graphene_vec3_t velocity;
-  graphene_vec3_t angular_velocity;
-  gboolean valid;
-  gboolean device_connected;
-  GxrController *controller;
+  graphene_vec3_t   velocity;
+  graphene_vec3_t   angular_velocity;
+  gboolean          valid;
+  gboolean          device_connected;
+  GxrController    *controller;
 } GxrPoseEvent;
 
 /**
@@ -88,7 +94,8 @@ typedef struct {
  *
  * Event that is emitted when the application needs to quit.
  **/
-typedef struct {
+typedef struct
+{
   GxrStateChange state_change;
 } GxrStateChangeEvent;
 
@@ -98,7 +105,8 @@ typedef struct {
  *
  * Event that is emitted when running in OpenXR overlay mode.
  **/
-typedef struct {
+typedef struct
+{
   bool main_session_visible;
 } GxrOverlayEvent;
 
@@ -109,9 +117,10 @@ typedef struct {
  *
  * A 4x4 matrix pose.
  **/
-typedef struct {
+typedef struct
+{
   graphene_matrix_t transformation;
-  gboolean is_valid;
+  gboolean          is_valid;
 } GxrPose;
 
 #endif /* GXR_TYPES_H_ */

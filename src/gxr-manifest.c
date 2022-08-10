@@ -97,25 +97,25 @@ _get_binding_component (const gchar *component_string)
 static gboolean
 _parse_default_binding_filenames (GxrManifest *self, JsonObject *joroot)
 {
-  JsonArray *jobindings =
-    json_object_get_array_member (joroot, "default_bindings");
+  JsonArray *jobindings = json_object_get_array_member (joroot,
+                                                        "default_bindings");
 
   guint len = json_array_get_length (jobindings);
   g_debug ("parsing %d default binding filenames", len);
 
   for (guint i = 0; i < len; i++)
     {
-      JsonObject *jobinding = json_array_get_object_element (jobindings, i);
-      const gchar *controller_type =
-        json_object_get_string_member (jobinding, "controller_type");
-      const gchar *binding_url =
-        json_object_get_string_member (jobinding, "binding_url");
+      JsonObject  *jobinding = json_array_get_object_element (jobindings, i);
+      const gchar *controller_type
+        = json_object_get_string_member (jobinding, "controller_type");
+      const gchar *binding_url = json_object_get_string_member (jobinding,
+                                                                "binding_url");
 
-      g_debug ("Parsed default binding filename %s: %s",
-               controller_type, binding_url);
+      g_debug ("Parsed default binding filename %s: %s", controller_type,
+               binding_url);
 
-      self->binding_filenames =
-        g_slist_append (self->binding_filenames, g_strdup (binding_url));
+      self->binding_filenames = g_slist_append (self->binding_filenames,
+                                                g_strdup (binding_url));
     }
   return TRUE;
 }
@@ -149,20 +149,20 @@ _parse_actions (GxrManifest *self, GInputStream *stream)
 
   for (guint i = 0; i < len; i++)
     {
-      JsonObject *joaction = json_array_get_object_element (joactions, i);
+      JsonObject  *joaction = json_array_get_object_element (joactions, i);
       const gchar *name = json_object_get_string_member (joaction, "name");
-      const gchar *binding_type =
-        json_object_get_string_member (joaction, "type");
+      const gchar *binding_type = json_object_get_string_member (joaction,
+                                                                 "type");
 
       g_debug ("\tParsed action %s: %s", name, binding_type);
 
-      GxrActionManifestEntry *action =
-        g_malloc (sizeof (GxrActionManifestEntry));
+      GxrActionManifestEntry *action
+        = g_malloc (sizeof (GxrActionManifestEntry));
       action->name = g_strdup (name);
       action->type = _get_binding_type (binding_type);
 
-      self->action_manifest_entries =
-        g_slist_append (self->action_manifest_entries, action);
+      self->action_manifest_entries
+        = g_slist_append (self->action_manifest_entries, action);
     }
   g_object_unref (parser);
 
@@ -199,15 +199,15 @@ _find_binding_for_action (GxrBindingManifest     *bindings,
 }
 
 static void
-_add_input_path_or_binding (GxrManifest *self,
+_add_input_path_or_binding (GxrManifest        *self,
                             GxrBindingManifest *bindings,
-                            const gchar *action_name,
-                            GxrBindingMode mode,
+                            const gchar        *action_name,
+                            GxrBindingMode      mode,
                             GxrBindingComponent component,
-                            const gchar *input_path)
+                            const gchar        *input_path)
 {
-  GxrActionManifestEntry *action =
-    _find_action_manifest_entry (self, action_name);
+  GxrActionManifestEntry *action = _find_action_manifest_entry (self,
+                                                                action_name);
 
   if (action == NULL)
     {
@@ -257,16 +257,16 @@ _parse_sources (GxrManifest        *self,
       for (GList *m = input_list; m != NULL; m = m->next)
         {
           const gchar *component = m->data;
-          JsonObject *joinput =
-            json_object_get_object_member (joinputs, component);
-          const gchar *action_name =
-            json_object_get_string_member (joinput, "output");
-          g_debug ("\t%s: Parsed output %s for component %s",
-                   path, action_name, component);
+          JsonObject  *joinput = json_object_get_object_member (joinputs,
+                                                                component);
+          const gchar *action_name = json_object_get_string_member (joinput,
+                                                                    "output");
+          g_debug ("\t%s: Parsed output %s for component %s", path, action_name,
+                   component);
 
-          _add_input_path_or_binding (self, bindings, (gchar*)action_name,
-                                      _get_binding_mode(mode),
-                                      _get_binding_component(component), path);
+          _add_input_path_or_binding (self, bindings, (gchar *) action_name,
+                                      _get_binding_mode (mode),
+                                      _get_binding_component (component), path);
         }
       g_list_free (input_list);
     }
@@ -282,14 +282,13 @@ _parse_haptics (GxrManifest        *self,
     {
       JsonObject *johaptics = json_array_get_object_element (jahaptics, i);
 
-      const gchar *path =
-        json_object_get_string_member (johaptics, "path");
-      const gchar *action_name =
-        json_object_get_string_member (johaptics, "output");
+      const gchar *path = json_object_get_string_member (johaptics, "path");
+      const gchar *action_name = json_object_get_string_member (johaptics,
+                                                                "output");
 
       g_debug ("\t%s: Parsed haptics %s", path, action_name);
 
-      _add_input_path_or_binding (self, bindings, (gchar*)action_name,
+      _add_input_path_or_binding (self, bindings, (gchar *) action_name,
                                   GXR_BINDING_MODE_NONE,
                                   GXR_BINDING_COMPONENT_NONE, path);
     }
@@ -305,14 +304,13 @@ _parse_poses (GxrManifest        *self,
     {
       JsonObject *jopose = json_array_get_object_element (japose, i);
 
-      const gchar *path =
-        json_object_get_string_member (jopose, "path");
-      const gchar *action_name =
-        json_object_get_string_member (jopose, "output");
+      const gchar *path = json_object_get_string_member (jopose, "path");
+      const gchar *action_name = json_object_get_string_member (jopose,
+                                                                "output");
 
       g_debug ("\t%s: Parsed pose %s", path, action_name);
 
-      _add_input_path_or_binding (self, bindings, (gchar*)action_name,
+      _add_input_path_or_binding (self, bindings, (gchar *) action_name,
                                   GXR_BINDING_MODE_NONE,
                                   GXR_BINDING_COMPONENT_NONE, path);
     }
@@ -343,8 +341,9 @@ _parse_bindings (GxrManifest        *self,
   JsonObject *jobinding = json_object_get_object_member (joroot, "bindings");
 
   if (json_object_has_member (joroot, "interaction_profile"))
-    bindings->interaction_profile =
-      g_strdup (json_object_get_string_member (joroot, "interaction_profile"));
+    bindings->interaction_profile
+      = g_strdup (json_object_get_string_member (joroot,
+                                                 "interaction_profile"));
 
   GList *binding_list = json_object_get_members (jobinding);
   for (GList *l = binding_list; l != NULL; l = l->next)
@@ -352,27 +351,27 @@ _parse_bindings (GxrManifest        *self,
       const gchar *actionset = l->data;
       g_debug ("Parsing Action Set %s", actionset);
 
-      JsonObject *joactionset =
-        json_object_get_object_member (jobinding, actionset);
+      JsonObject *joactionset = json_object_get_object_member (jobinding,
+                                                               actionset);
 
       if (json_object_has_member (joactionset, "sources"))
         {
-          JsonArray *jasources =
-            json_object_get_array_member (joactionset, "sources");
+          JsonArray *jasources = json_object_get_array_member (joactionset,
+                                                               "sources");
           _parse_sources (self, jasources, bindings);
         }
 
       if (json_object_has_member (joactionset, "haptics"))
         {
-          JsonArray *jahaptics =
-            json_object_get_array_member (joactionset, "haptics");
+          JsonArray *jahaptics = json_object_get_array_member (joactionset,
+                                                               "haptics");
           _parse_haptics (self, jahaptics, bindings);
         }
 
       if (json_object_has_member (joactionset, "poses"))
         {
-          JsonArray *japose =
-            json_object_get_array_member (joactionset, "poses");
+          JsonArray *japose = json_object_get_array_member (joactionset,
+                                                            "poses");
           _parse_poses (self, japose, bindings);
         }
     }
@@ -384,8 +383,7 @@ _parse_bindings (GxrManifest        *self,
 }
 
 gboolean
-gxr_manifest_load_actions (GxrManifest *self,
-                           GInputStream *action_stream)
+gxr_manifest_load_actions (GxrManifest *self, GInputStream *action_stream)
 {
   if (!_parse_actions (self, action_stream))
     return FALSE;
@@ -406,14 +404,13 @@ gxr_manifest_load_bindings (GxrManifest *self, const char *resource_path)
       GError *error = NULL;
 
       GString *bindings_res_path = g_string_new ("");
-      g_string_printf (bindings_res_path, "%s/%s",
-                       resource_path, binding_filename);
+      g_string_printf (bindings_res_path, "%s/%s", resource_path,
+                       binding_filename);
       g_debug ("Parsing bindings file %s", bindings_res_path->str);
 
-      GInputStream *bindings_res_input_stream =
-        g_resources_open_stream (bindings_res_path->str,
-                                 G_RESOURCE_LOOKUP_FLAGS_NONE,
-                                &error);
+      GInputStream *bindings_res_input_stream
+        = g_resources_open_stream (bindings_res_path->str,
+                                   G_RESOURCE_LOOKUP_FLAGS_NONE, &error);
       if (error)
         {
           g_printerr ("skipping %s: %s\n", binding_filename, error->message);
@@ -423,7 +420,6 @@ gxr_manifest_load_bindings (GxrManifest *self, const char *resource_path)
             g_object_unref (bindings_res_input_stream);
           continue;
         }
-
 
       GxrBindingManifest *bindings = g_malloc (sizeof (GxrBindingManifest));
       bindings->gxr_bindings = NULL;
@@ -482,7 +478,7 @@ gxr_manifest_finalize (GObject *gobject)
 
   g_slist_free_full (self->binding_filenames, g_free);
 
-  for (GSList *l = self->bindings ; l; l = l->next)
+  for (GSList *l = self->bindings; l; l = l->next)
     {
       GxrBindingManifest *binding_manifest = l->data;
       for (GSList *m = binding_manifest->gxr_bindings; m; m = m->next)

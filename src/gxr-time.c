@@ -14,6 +14,5 @@ gxr_time_age_secs_to_monotonic_msecs (float age)
   gint64 event_age = (gint64) (age * SEC_IN_USEC_D);
   gint64 time_usec = mono_time - event_age;
 
-  return (guint32) (((double)time_usec / SEC_IN_USEC_D) * SEC_IN_MSEC_D);
+  return (guint32) (((double) time_usec / SEC_IN_USEC_D) * SEC_IN_MSEC_D);
 }
-

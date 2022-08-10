@@ -15,7 +15,7 @@
 static gboolean
 _cache_bindings (GString *actions_path)
 {
-  GString* cache_path = gxr_io_get_cache_path (CACHE_DIR);
+  GString *cache_path = gxr_io_get_cache_path (CACHE_DIR);
 
   if (g_mkdir_with_parents (cache_path->str, 0700) == -1)
     {

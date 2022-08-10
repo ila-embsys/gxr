@@ -16,13 +16,19 @@
 #include "scene-pointer.h"
 #include <graphene.h>
 
-#define SCENE_TYPE_CONTROLLER scene_controller_get_type()
-G_DECLARE_FINAL_TYPE (SceneController, scene_controller, SCENE, CONTROLLER, GObject)
+#define SCENE_TYPE_CONTROLLER scene_controller_get_type ()
+G_DECLARE_FINAL_TYPE (SceneController,
+                      scene_controller,
+                      SCENE,
+                      CONTROLLER,
+                      GObject)
 
 /**
  * GxrTransformLock:
- * @GXR_TRANSFORM_LOCK_NONE: The grab action does not currently have a transformation it is locked to.
- * @GXR_TRANSFORM_LOCK_PUSH_PULL: Only push pull transformation can be performed.
+ * @GXR_TRANSFORM_LOCK_NONE: The grab action does not currently have a
+ *transformation it is locked to.
+ * @GXR_TRANSFORM_LOCK_PUSH_PULL: Only push pull transformation can be
+ *performed.
  * @GXR_TRANSFORM_LOCK_SCALE: Only a scale transformation can be performed.
  *
  * The type of transformation the grab action is currently locked to.
@@ -30,19 +36,22 @@ G_DECLARE_FINAL_TYPE (SceneController, scene_controller, SCENE, CONTROLLER, GObj
  * and reset after the transformation is done.
  *
  **/
-typedef enum {
+typedef enum
+{
   GXR_TRANSFORM_LOCK_NONE,
   GXR_TRANSFORM_LOCK_PUSH_PULL,
   GXR_TRANSFORM_LOCK_SCALE
 } GxrTransformLock;
 
-typedef struct {
-  gpointer          hovered_object;
-  float             distance;
-  graphene_point_t  intersection_2d;
+typedef struct
+{
+  gpointer         hovered_object;
+  float            distance;
+  graphene_point_t intersection_2d;
 } GxrHoverState;
 
-typedef struct {
+typedef struct
+{
   gpointer              grabbed_object;
   graphene_quaternion_t object_rotation;
   graphene_quaternion_t inverse_controller_rotation;
@@ -50,8 +59,8 @@ typedef struct {
   GxrTransformLock      transform_lock;
 } GxrGrabState;
 
-SceneController *scene_controller_new (GxrController *controller,
-                                       GxrContext *context);
+SceneController *
+scene_controller_new (GxrController *controller, GxrContext *context);
 
 ScenePointer *
 scene_controller_get_pointer (SceneController *self);
@@ -87,22 +96,22 @@ gboolean
 scene_controller_is_pointer_visible (SceneController *self);
 
 void
-scene_controller_update_hovered_object (SceneController *self,
-                                      gpointer last_object,
-                                      gpointer object,
-                                      graphene_matrix_t *object_pose,
-                                      graphene_point3d_t *intersection_point,
-                                      graphene_point_t *intersection_2d,
-                                      float intersection_distance);
+scene_controller_update_hovered_object (SceneController    *self,
+                                        gpointer            last_object,
+                                        gpointer            object,
+                                        graphene_matrix_t  *object_pose,
+                                        graphene_point3d_t *intersection_point,
+                                        graphene_point_t   *intersection_2d,
+                                        float intersection_distance);
 
 void
-scene_controller_drag_start (SceneController *self,
-                           gpointer grabbed_object,
-                           graphene_matrix_t *object_pose);
+scene_controller_drag_start (SceneController   *self,
+                             gpointer           grabbed_object,
+                             graphene_matrix_t *object_pose);
 
 gboolean
-scene_controller_get_drag_pose (SceneController     *self,
-                              graphene_matrix_t *drag_pose);
+scene_controller_get_drag_pose (SceneController   *self,
+                                graphene_matrix_t *drag_pose);
 
 void
 scene_controller_set_user_data (SceneController *self, gpointer data);

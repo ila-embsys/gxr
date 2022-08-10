@@ -5,15 +5,14 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <glib.h>
 #include "graphene-ext.h"
+#include <glib.h>
 #include <inttypes.h>
 
 // TODO: Move to upstream
 
 void
-graphene_ext_quaternion_to_float (const graphene_quaternion_t *q,
-                                  float                       *dest)
+graphene_ext_quaternion_to_float (const graphene_quaternion_t *q, float *dest)
 {
   graphene_vec4_t v;
   graphene_quaternion_to_vec4 (q, &v);
@@ -25,8 +24,8 @@ graphene_ext_quaternion_print (const graphene_quaternion_t *q)
 {
   float f[4];
   graphene_ext_quaternion_to_float (q, f);
-  g_print ("| %f %f %f %f |\n",
-           (double) f[0], (double) f[1], (double) f[2], (double) f[3]);
+  g_print ("| %f %f %f %f |\n", (double) f[0], (double) f[1], (double) f[2],
+           (double) f[3]);
 }
 
 void
@@ -83,8 +82,7 @@ graphene_ext_matrix_get_scale (const graphene_matrix_t *m,
   graphene_vec3_init (&sy, f[4], f[5], f[6]);
   graphene_vec3_init (&sz, f[8], f[9], f[10]);
 
-  graphene_point3d_init (res,
-                         graphene_vec3_length (&sx),
+  graphene_point3d_init (res, graphene_vec3_length (&sx),
                          graphene_vec3_length (&sy),
                          graphene_vec3_length (&sz));
 }
@@ -161,8 +159,7 @@ graphene_ext_ray_get_origin_vec4 (const graphene_ray_t *r,
 }
 
 void
-graphene_ext_ray_get_origin_vec3 (const graphene_ray_t *r,
-                                  graphene_vec3_t      *res)
+graphene_ext_ray_get_origin_vec3 (const graphene_ray_t *r, graphene_vec3_t *res)
 {
   graphene_point3d_t o;
   graphene_ray_get_origin (r, &o);
@@ -184,8 +181,8 @@ graphene_ext_vec4_print (const graphene_vec4_t *v)
 {
   float f[4];
   graphene_vec4_to_float (v, f);
-  g_print ("| %f %f %f %f |\n",
-           (double) f[0], (double) f[1], (double) f[2], (double) f[3]);
+  g_print ("| %f %f %f %f |\n", (double) f[0], (double) f[1], (double) f[2],
+           (double) f[3]);
 }
 
 void
@@ -283,9 +280,7 @@ graphene_ext_quaternion_validate (const graphene_quaternion_t *q)
 gboolean
 graphene_ext_point3d_validate (const graphene_point3d_t *p)
 {
-  float f[3] = {
-    p->x, p->y, p->z
-  };
+  float f[3] = {p->x, p->y, p->z};
 
   for (uint32_t i = 0; i < 3; i++)
     {
@@ -306,9 +301,7 @@ graphene_ext_point3d_validate (const graphene_point3d_t *p)
 gboolean
 graphene_ext_point3d_validate_all_nonzero (const graphene_point3d_t *p)
 {
-  float f[3] = {
-    p->x, p->y, p->z
-  };
+  float f[3] = {p->x, p->y, p->z};
 
   for (uint32_t i = 0; i < 3; i++)
     {

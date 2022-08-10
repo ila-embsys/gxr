@@ -8,12 +8,12 @@
 #ifndef GXR_TIME_H_
 #define GXR_TIME_H_
 
-#if !defined (GXR_INSIDE) && !defined (GXR_COMPILATION)
+#if !defined(GXR_INSIDE) && !defined(GXR_COMPILATION)
 #error "Only <gxr.h> can be included directly."
 #endif
 
-#include <time.h>
 #include <glib.h>
+#include <time.h>
 
 #define SEC_IN_MSEC_D 1000.0
 #define SEC_IN_USEC_D 1000000.0

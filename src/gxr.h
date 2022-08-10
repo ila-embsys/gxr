@@ -14,18 +14,18 @@
 
 #define GXR_INSIDE
 
-#include "gxr-version.h"
-#include "gxr-enums.h"
-#include "gxr-types.h"
-#include "gxr-time.h"
-#include "gxr-context.h"
-#include "gxr-action.h"
 #include "gxr-action-set.h"
+#include "gxr-action.h"
+#include "gxr-context.h"
+#include "gxr-controller.h"
+#include "gxr-device-manager.h"
+#include "gxr-device.h"
+#include "gxr-enums.h"
 #include "gxr-io.h"
 #include "gxr-manifest.h"
-#include "gxr-controller.h"
-#include "gxr-device.h"
-#include "gxr-device-manager.h"
+#include "gxr-time.h"
+#include "gxr-types.h"
+#include "gxr-version.h"
 
 #undef GXR_INSIDE
 

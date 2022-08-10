@@ -7,8 +7,8 @@
 
 #include "gxr-device.h"
 
-#include <gxr.h>
 #include <gulkan.h>
+#include <gxr.h>
 
 typedef struct _GxrDevicePrivate
 {
@@ -45,7 +45,7 @@ gxr_device_init (GxrDevice *self)
 GxrDevice *
 gxr_device_new (guint64 device_id)
 {
-  GxrDevice *self = (GxrDevice*) g_object_new (GXR_TYPE_DEVICE, 0);
+  GxrDevice        *self = (GxrDevice *) g_object_new (GXR_TYPE_DEVICE, 0);
   GxrDevicePrivate *priv = gxr_device_get_instance_private (self);
   priv->device_id = device_id;
   return self;
@@ -83,16 +83,14 @@ gxr_device_is_pose_valid (GxrDevice *self)
  */
 
 void
-gxr_device_set_transformation_direct (GxrDevice         *self,
-                                      graphene_matrix_t *mat)
+gxr_device_set_transformation_direct (GxrDevice *self, graphene_matrix_t *mat)
 {
   GxrDevicePrivate *priv = gxr_device_get_instance_private (self);
   graphene_matrix_init_from_matrix (&priv->transformation, mat);
 }
 
 void
-gxr_device_get_transformation_direct (GxrDevice         *self,
-                                      graphene_matrix_t *mat)
+gxr_device_get_transformation_direct (GxrDevice *self, graphene_matrix_t *mat)
 {
   GxrDevicePrivate *priv = gxr_device_get_instance_private (self);
   graphene_matrix_init_from_matrix (mat, &priv->transformation);

@@ -14,18 +14,19 @@
 
 #include <stdalign.h>
 
-typedef struct {
-  alignas(32) float mvp[2][16];
+typedef struct
+{
+  alignas (32) float mvp[2][16];
 } ScenePointerUniformBuffer;
 
 struct _ScenePointer
 {
-  SceneObject parent;
+  SceneObject         parent;
   GulkanVertexBuffer *vertex_buffer;
 
-  float start_offset;
-  float length;
-  float default_length;
+  float    start_offset;
+  float    length;
+  float    default_length;
   gboolean visible;
   gboolean render_ray;
 };
@@ -55,12 +56,12 @@ scene_pointer_init (ScenePointer *self)
 
 static gboolean
 _initialize (ScenePointer          *self,
-             GulkanContext          *gulkan,
+             GulkanContext         *gulkan,
              VkDescriptorSetLayout *layout)
 {
   GulkanDevice *device = gulkan_context_get_device (gulkan);
-  self->vertex_buffer =
-    gulkan_vertex_buffer_new (device, VK_PRIMITIVE_TOPOLOGY_LINE_LIST);
+  self->vertex_buffer
+    = gulkan_vertex_buffer_new (device, VK_PRIMITIVE_TOPOLOGY_LINE_LIST);
   gulkan_vertex_buffer_reset (self->vertex_buffer);
 
   graphene_vec4_t start;
@@ -69,11 +70,11 @@ _initialize (ScenePointer          *self,
   graphene_matrix_t identity;
   graphene_matrix_init_identity (&identity);
 
-  gulkan_geometry_append_ray (self->vertex_buffer,
-                              &start, self->length, &identity);
+  gulkan_geometry_append_ray (self->vertex_buffer, &start, self->length,
+                              &identity);
 
   if (!gulkan_vertex_buffer_alloc_empty (self->vertex_buffer,
-    GXR_DEVICE_INDEX_MAX))
+                                         GXR_DEVICE_INDEX_MAX))
     return FALSE;
 
   gulkan_vertex_buffer_map_array (self->vertex_buffer);
@@ -91,11 +92,9 @@ _initialize (ScenePointer          *self,
 }
 
 ScenePointer *
-scene_pointer_new (GulkanContext          *gulkan,
-                   VkDescriptorSetLayout *layout)
+scene_pointer_new (GulkanContext *gulkan, VkDescriptorSetLayout *layout)
 {
-  ScenePointer *self =
-    (ScenePointer*) g_object_new (SCENE_TYPE_POINTER, 0);
+  ScenePointer *self = (ScenePointer *) g_object_new (SCENE_TYPE_POINTER, 0);
 
   _initialize (self, gulkan, layout);
   return self;
@@ -148,15 +147,13 @@ scene_pointer_render (ScenePointer      *self,
 }
 
 void
-scene_pointer_move (ScenePointer        *self,
-                    graphene_matrix_t *transform)
+scene_pointer_move (ScenePointer *self, graphene_matrix_t *transform)
 {
   scene_object_set_transformation_direct (SCENE_OBJECT (self), transform);
 }
 
 void
-scene_pointer_set_length (ScenePointer *self,
-                          float       length)
+scene_pointer_set_length (ScenePointer *self, float length)
 {
   if (length == self->length)
     return;
@@ -188,8 +185,7 @@ scene_pointer_reset_length (ScenePointer *self)
 }
 
 void
-scene_pointer_get_ray (ScenePointer     *self,
-                       graphene_ray_t *res)
+scene_pointer_get_ray (ScenePointer *self, graphene_ray_t *res)
 {
   graphene_matrix_t mat;
   scene_object_get_transformation (SCENE_OBJECT (self), &mat);
@@ -206,7 +202,7 @@ scene_pointer_get_ray (ScenePointer     *self,
   graphene_vec4_subtract (&end, &start, &direction_vec4);
 
   graphene_point3d_t origin;
-  graphene_vec3_t direction;
+  graphene_vec3_t    direction;
 
   graphene_vec3_t vec3_start;
   graphene_vec4_get_xyz (&start, &vec3_start);
@@ -218,7 +214,7 @@ scene_pointer_get_ray (ScenePointer     *self,
 }
 
 gboolean
-scene_pointer_get_plane_intersection (ScenePointer        *self,
+scene_pointer_get_plane_intersection (ScenePointer      *self,
                                       graphene_plane_t  *plane,
                                       graphene_matrix_t *plane_transform,
                                       float              plane_aspect,
@@ -247,8 +243,7 @@ scene_pointer_get_plane_intersection (ScenePointer        *self,
   graphene_vec4_init_from_vec3 (&intersection_vec4, res, 1.0f);
 
   graphene_vec4_t intersection_origin;
-  graphene_matrix_transform_vec4 (&inverse_plane_transform,
-                                  &intersection_vec4,
+  graphene_matrix_transform_vec4 (&inverse_plane_transform, &intersection_vec4,
                                   &intersection_origin);
 
   float f[4];

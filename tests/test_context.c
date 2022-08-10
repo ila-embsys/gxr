@@ -5,9 +5,9 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include "gxr.h"
 #include <glib.h>
 #include <gulkan.h>
-#include "gxr.h"
 
 static void
 _test_init_context ()

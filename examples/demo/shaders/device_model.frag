@@ -15,8 +15,8 @@ layout (binding = 1) uniform sampler2D image;
 
 layout (location = 0) out vec4 out_color;
 
-void main ()
+void
+main ()
 {
   out_color = texture (image, uv);
 }
-

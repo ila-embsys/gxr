@@ -12,8 +12,7 @@
 #include <graphene.h>
 
 void
-graphene_ext_quaternion_to_float (const graphene_quaternion_t *q,
-                                  float                       *dest);
+graphene_ext_quaternion_to_float (const graphene_quaternion_t *q, float *dest);
 
 void
 graphene_ext_quaternion_print (const graphene_quaternion_t *q);

@@ -8,7 +8,7 @@
 #ifndef GXR_ENUMS_H_
 #define GXR_ENUMS_H_
 
-#if !defined (GXR_INSIDE) && !defined (GXR_COMPILATION)
+#if !defined(GXR_INSIDE) && !defined(GXR_COMPILATION)
 #error "Only <gxr.h> can be included directly."
 #endif
 
@@ -29,7 +29,8 @@
  * @GXR_STATE_SHUTDOWN: XR Runtime is shutting down.
  *
  **/
-typedef enum {
+typedef enum
+{
   GXR_STATE_FRAMECYCLE_START,
   GXR_STATE_FRAMECYCLE_STOP,
   GXR_STATE_RENDERING_START,
@@ -45,7 +46,8 @@ typedef enum {
  * Type of Gxr viewport.
  *
  **/
-typedef enum {
+typedef enum
+{
   GXR_EYE_LEFT = 0,
   GXR_EYE_RIGHT = 1
 } GxrEye;
@@ -53,7 +55,8 @@ typedef enum {
 /**
  * GxrActionType:
  * @GXR_ACTION_DIGITAL: A digital action.
- * @GXR_ACTION_DIGITAL_FROM_FLOAT: A digital action constructed from float thresholds.
+ * @GXR_ACTION_DIGITAL_FROM_FLOAT: A digital action constructed from float
+ *thresholds.
  * @GXR_ACTION_VEC2F: An analog action with floats x,y.
  * @GXR_ACTION_FLOAT: An analog action.
  * @GXR_ACTION_POSE: A pose action.
@@ -62,7 +65,8 @@ typedef enum {
  * The type of the GxrAction.
  *
  **/
-typedef enum {
+typedef enum
+{
   GXR_ACTION_DIGITAL,
   GXR_ACTION_DIGITAL_FROM_FLOAT,
   GXR_ACTION_VEC2F,

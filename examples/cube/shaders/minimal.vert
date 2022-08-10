@@ -9,10 +9,7 @@
 
 #extension GL_EXT_multiview : enable
 
-layout (std140, set = 0, binding = 0) uniform block
-{
-  uniform mat4 mvp[2];
-};
+layout (std140, set = 0, binding = 0) uniform block { uniform mat4 mvp[2]; };
 
 layout (location = 0) in vec4 in_position;
 

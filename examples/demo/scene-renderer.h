@@ -23,16 +23,18 @@ enum PipelineType
   PIPELINE_COUNT
 };
 
-#define SCENE_TYPE_RENDERER scene_renderer_get_type()
-G_DECLARE_FINAL_TYPE (SceneRenderer, scene_renderer,
-                      SCENE, RENDERER, GulkanRenderer)
+#define SCENE_TYPE_RENDERER scene_renderer_get_type ()
+G_DECLARE_FINAL_TYPE (SceneRenderer,
+                      scene_renderer,
+                      SCENE,
+                      RENDERER,
+                      GulkanRenderer)
 
 SceneRenderer *
 scene_renderer_new (void);
 
 gboolean
-scene_renderer_init_vulkan (SceneRenderer *self,
-                            GxrContext    *context);
+scene_renderer_init_vulkan (SceneRenderer *self, GxrContext *context);
 
 VkDescriptorSetLayout *
 scene_renderer_get_descriptor_set_layout (SceneRenderer *self);
@@ -60,8 +62,7 @@ VkBuffer
 scene_renderer_get_lights_buffer_handle (SceneRenderer *self);
 
 void
-scene_renderer_update_lights (SceneRenderer *self,
-                              GList         *controllers);
+scene_renderer_update_lights (SceneRenderer *self, GList *controllers);
 
 GulkanContext *
 scene_renderer_get_gulkan (SceneRenderer *self);

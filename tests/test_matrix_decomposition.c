@@ -18,9 +18,7 @@ _print_translation (graphene_matrix_t *m)
   float f[3];
   graphene_vec3_to_float (&t, f);
 
-  g_print ("Translation: [%f %f %f]\n",
-           (double) f[0],
-           (double) f[1],
+  g_print ("Translation: [%f %f %f]\n", (double) f[0], (double) f[1],
            (double) f[2]);
 }
 
@@ -30,10 +28,7 @@ _print_scale (graphene_matrix_t *m)
   graphene_point3d_t s;
   graphene_ext_matrix_get_scale (m, &s);
 
-  g_print ("Scale: [%f %f %f]\n",
-           (double) s.x,
-           (double) s.y,
-           (double) s.z);
+  g_print ("Scale: [%f %f %f]\n", (double) s.x, (double) s.y, (double) s.z);
 }
 
 static void
@@ -64,9 +59,7 @@ _test_translation_rotation_scale ()
   _print_scale (&mat);
   _print_rotation (&mat);
 
-  graphene_point3d_t point = {
-    .x = 1, .y = 2, .z = 3
-  };
+  graphene_point3d_t point = {.x = 1, .y = 2, .z = 3};
   graphene_matrix_init_translate (&mat, &point);
   g_print ("Translation:\n");
   graphene_matrix_print (&mat);
@@ -94,7 +87,6 @@ _test_translation_rotation_scale ()
   graphene_ext_matrix_get_rotation_quaternion (&mat, &unused_scale, &q);
   g_print ("Result quat: ");
   graphene_ext_quaternion_print (&q);
-
 
   graphene_quaternion_init_from_angles (&orientation, 1, 2, 3);
   graphene_matrix_init_identity (&mat);

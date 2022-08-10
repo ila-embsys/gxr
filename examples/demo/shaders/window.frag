@@ -16,38 +16,45 @@ layout (location = 0) in vec4 world_position;
 layout (location = 1) in vec4 view_position;
 layout (location = 2) in vec2 uv;
 
-layout (binding = 0) uniform Transformation {
+layout (binding = 0) uniform Transformation
+{
   mat4 mvp[2];
   mat4 mv[2];
   mat4 m;
   bool receive_light;
-} transformation;
+}
+transformation;
 
 layout (binding = 1) uniform sampler2D image;
-layout (binding = 2) uniform Window {
+layout (binding = 2) uniform Window
+{
   vec4 color;
   bool flip_y;
-} window;
+}
+window;
 
-struct Light {
-  vec4 position;
-  vec3 color;
+struct Light
+{
+  vec4  position;
+  vec3  color;
   float radius;
 };
 
 layout (binding = 3) uniform Lights
 {
   Light lights[2];
-  int active_lights;
-} lights;
+  int   active_lights;
+}
+lights;
 
 layout (location = 0) out vec4 out_color;
 
 const float intensity = 2.0f;
-const vec3 light_color_max = vec3(1.0f, 1.0f, 1.0f);
+const vec3  light_color_max = vec3 (1.0f, 1.0f, 1.0f);
 
 // "Lighten only" blending
-vec3 lighten (vec3 a, vec3 b)
+vec3
+lighten (vec3 a, vec3 b)
 {
   vec3 c;
   c.r = max (a.r, b.r);
@@ -56,7 +63,8 @@ vec3 lighten (vec3 a, vec3 b)
   return c;
 }
 
-void main ()
+void
+main ()
 {
   vec2 uv_b = window.flip_y ? vec2 (uv.x, 1.0f - uv.y) : uv;
   vec4 texture_color = texture (image, uv_b);
@@ -75,18 +83,16 @@ void main ()
 
   for (int i = 0; i < lights.active_lights; i++)
     {
-      vec3 L = lights.lights[i].position.xyz - world_position.xyz;
+      vec3  L = lights.lights[i].position.xyz - world_position.xyz;
       float d = length (L);
 
       float radius = lights.lights[i].radius * view_distance;
 
       float atten = intensity / ((d / radius) + 1.0);
-      vec3 light_gradient = mix (lights.lights[i].color.xyz,
-                                 light_color_max,
-                                 atten * 0.5f);
+      vec3  light_gradient = mix (lights.lights[i].color.xyz, light_color_max,
+                                  atten * 0.5f);
       lit += light_gradient * diffuse.rgb * atten;
     }
 
   out_color = vec4 (lighten (lit, diffuse.rgb), 1.0f);
 }
-

@@ -15,27 +15,30 @@
 #include "gxr-enums.h"
 #include "gxr-types.h"
 
-#include "gxr-device.h"
 #include "gxr-action-set.h"
+#include "gxr-device.h"
 
 struct _GxrContext;
 
 G_BEGIN_DECLS
 
-#define GXR_TYPE_DEVICE_MANAGER gxr_device_manager_get_type()
-G_DECLARE_FINAL_TYPE (GxrDeviceManager, gxr_device_manager,
-                      GXR, DEVICE_MANAGER, GObject)
+#define GXR_TYPE_DEVICE_MANAGER gxr_device_manager_get_type ()
+G_DECLARE_FINAL_TYPE (GxrDeviceManager,
+                      gxr_device_manager,
+                      GXR,
+                      DEVICE_MANAGER,
+                      GObject)
 
-GxrDeviceManager *gxr_device_manager_new (void);
+GxrDeviceManager *
+gxr_device_manager_new (void);
 
 gboolean
-gxr_device_manager_add (GxrDeviceManager   *self,
-                        guint64             device_id,
-                        bool                is_controller);
+gxr_device_manager_add (GxrDeviceManager *self,
+                        guint64           device_id,
+                        bool              is_controller);
 
 void
-gxr_device_manager_remove (GxrDeviceManager *self,
-                           guint64           device_id);
+gxr_device_manager_remove (GxrDeviceManager *self, guint64 device_id);
 
 void
 gxr_device_manager_update_poses (GxrDeviceManager *self, GxrPose *poses);
@@ -54,7 +57,7 @@ gxr_device_manager_connect_pose_actions (GxrDeviceManager   *self,
                                          struct _GxrContext *context,
                                          GxrActionSet       *action_set,
                                          gchar              *pointer_pose_url,
-                                         gchar              *hand_grip_pose_url);
+                                         gchar *hand_grip_pose_url);
 
 G_END_DECLS
 

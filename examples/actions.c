@@ -9,7 +9,8 @@
 
 #include "gxr.h"
 
-enum {
+enum
+{
   WM_ACTIONSET,
   SYNTH_ACTIONSET,
   LAST_ACTIONSET
@@ -17,8 +18,8 @@ enum {
 
 typedef struct Example
 {
-  GMainLoop *loop;
-  GxrAction *haptic;
+  GMainLoop  *loop;
+  GxrAction  *haptic;
   GxrContext *context;
 
   /* array of action sets */
@@ -28,7 +29,7 @@ typedef struct Example
 static gboolean
 _sigint_cb (gpointer _self)
 {
-  Example *self = (Example*) _self;
+  Example *self = (Example *) _self;
   g_main_loop_quit (self->loop);
   return TRUE;
 }
@@ -36,7 +37,7 @@ _sigint_cb (gpointer _self)
 static gboolean
 _poll_events_cb (gpointer _self)
 {
-  Example *self = (Example*) _self;
+  Example *self = (Example *) _self;
 
   if (!gxr_action_sets_poll (self->action_sets, 2))
     {
@@ -48,9 +49,7 @@ _poll_events_cb (gpointer _self)
 }
 
 static void
-_digital_cb (GxrAction       *action,
-             GxrDigitalEvent *event,
-             Example         *self)
+_digital_cb (GxrAction *action, GxrDigitalEvent *event, Example *self)
 {
   (void) action;
   (void) self;
@@ -61,25 +60,23 @@ _digital_cb (GxrAction       *action,
 
   if (event->changed)
     {
-      gxr_action_trigger_haptic (self->haptic, 0.0f ,.2f, 160.f, 1.0f,
-                                 gxr_device_get_handle (GXR_DEVICE (event->controller)));
+      gxr_action_trigger_haptic (
+        self->haptic, 0.0f, .2f, 160.f, 1.0f,
+        gxr_device_get_handle (GXR_DEVICE (event->controller)));
     }
 
   g_free (event);
 }
 #include <stdio.h>
 static void
-_hand_pose_cb (GxrAction    *action,
-               GxrPoseEvent *event,
-               Example      *self)
+_hand_pose_cb (GxrAction *action, GxrPoseEvent *event, Example *self)
 {
   (void) action;
   (void) self;
 
   g_print ("POSE (%lu): %d | %f %f %f | %f %f %f\n",
            gxr_device_get_handle (GXR_DEVICE (event->controller)),
-           event->active,
-           graphene_vec3_get_x (&event->velocity),
+           event->active, graphene_vec3_get_x (&event->velocity),
            graphene_vec3_get_y (&event->velocity),
            graphene_vec3_get_z (&event->velocity),
            graphene_vec3_get_x (&event->angular_velocity),
@@ -112,30 +109,26 @@ main ()
     .context = gxr_context_new ("Actions Example", 1),
   };
 
-  if (!gxr_context_load_action_manifest (
-        self.context,
-        "gxr",
-        "/res/bindings/openxr",
-        "actions.json"))
+  if (!gxr_context_load_action_manifest (self.context, "gxr",
+                                         "/res/bindings/openxr",
+                                         "actions.json"))
     {
       g_print ("Failed to load action bindings!\n");
       return 1;
     }
 
-  self.action_sets[WM_ACTIONSET] =
-    gxr_action_set_new_from_url (self.context, "/actions/wm");
-  self.action_sets[SYNTH_ACTIONSET] =
-    gxr_action_set_new_from_url (self.context, "/actions/mouse_synth");
+  self.action_sets[WM_ACTIONSET] = gxr_action_set_new_from_url (self.context,
+                                                                "/actions/wm");
+  self.action_sets[SYNTH_ACTIONSET]
+    = gxr_action_set_new_from_url (self.context, "/actions/mouse_synth");
 
-  self.haptic =
-    gxr_action_new_from_type_url (self.context,
-                                  self.action_sets[WM_ACTIONSET],
-                                  GXR_ACTION_HAPTIC,
-                                  "/actions/wm/out/haptic");
+  self.haptic = gxr_action_new_from_type_url (self.context,
+                                              self.action_sets[WM_ACTIONSET],
+                                              GXR_ACTION_HAPTIC,
+                                              "/actions/wm/out/haptic");
 
   gxr_action_set_connect (self.action_sets[WM_ACTIONSET], self.context,
-                          GXR_ACTION_POSE,
-                          "/actions/wm/in/hand_pose",
+                          GXR_ACTION_POSE, "/actions/wm/in/hand_pose",
                           (GCallback) _hand_pose_cb, &self);
 
   gxr_action_set_connect (self.action_sets[SYNTH_ACTIONSET], self.context,

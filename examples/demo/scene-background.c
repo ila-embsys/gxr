@@ -6,18 +6,19 @@
  */
 
 #include "scene-background.h"
-#include <gulkan.h>
 #include "graphene-ext.h"
+#include <gulkan.h>
 
 #include <stdalign.h>
 
-typedef struct {
-  alignas(32) float mvp[2][16];
+typedef struct
+{
+  alignas (32) float mvp[2][16];
 } SceneBackgroundUniformBuffer;
 
 struct _SceneBackground
 {
-  SceneObject parent;
+  SceneObject         parent;
   GulkanVertexBuffer *vertex_buffer;
 };
 
@@ -42,15 +43,14 @@ scene_background_init (SceneBackground *self)
 
 static gboolean
 _initialize (SceneBackground       *self,
-             GulkanContext          *gulkan,
+             GulkanContext         *gulkan,
              VkDescriptorSetLayout *layout);
 
 SceneBackground *
-scene_background_new (GulkanContext          *gulkan,
-                      VkDescriptorSetLayout *layout)
+scene_background_new (GulkanContext *gulkan, VkDescriptorSetLayout *layout)
 {
-  SceneBackground *self =
-    (SceneBackground*) g_object_new (SCENE_TYPE_BACKGROUND, 0);
+  SceneBackground *self = (SceneBackground *)
+    g_object_new (SCENE_TYPE_BACKGROUND, 0);
 
   _initialize (self, gulkan, layout);
 
@@ -72,9 +72,9 @@ _append_star (GulkanVertexBuffer *self,
               uint32_t            sections,
               graphene_vec3_t    *color)
 {
-  graphene_vec4_t *points = g_malloc (sizeof(graphene_vec4_t) * sections);
+  graphene_vec4_t *points = g_malloc (sizeof (graphene_vec4_t) * sections);
 
-  graphene_vec4_init (&points[0],  radius, y, 0, 1);
+  graphene_vec4_init (&points[0], radius, y, 0, 1);
   graphene_vec4_init (&points[1], -radius, y, 0, 1);
 
   graphene_matrix_t rotation;
@@ -84,8 +84,9 @@ _append_star (GulkanVertexBuffer *self,
   for (uint32_t i = 0; i < sections / 2 - 1; i++)
     {
       uint32_t j = i * 2;
-      graphene_matrix_transform_vec4 (&rotation, &points[j],     &points[j + 2]);
-      graphene_matrix_transform_vec4 (&rotation, &points[j + 1], &points[j + 3]);
+      graphene_matrix_transform_vec4 (&rotation, &points[j], &points[j + 2]);
+      graphene_matrix_transform_vec4 (&rotation, &points[j + 1],
+                                      &points[j + 3]);
     }
 
   for (uint32_t i = 0; i < sections; i++)
@@ -101,7 +102,7 @@ _append_circle (GulkanVertexBuffer *self,
                 uint32_t            edges,
                 graphene_vec3_t    *color)
 {
-  graphene_vec4_t *points = g_malloc (sizeof(graphene_vec4_t) * edges * 2);
+  graphene_vec4_t *points = g_malloc (sizeof (graphene_vec4_t) * edges * 2);
 
   graphene_vec4_init (&points[0], radius, y, 0, 1);
 
@@ -120,7 +121,7 @@ _append_circle (GulkanVertexBuffer *self,
   for (uint32_t i = 0; i < edges * 2; i++)
     gulkan_vertex_buffer_append_with_color (self, &points[i], color);
 
-  g_free(points);
+  g_free (points);
 }
 
 static void
@@ -137,12 +138,12 @@ _append_floor (GulkanVertexBuffer *self,
 
 static gboolean
 _initialize (SceneBackground       *self,
-             GulkanContext          *gulkan,
+             GulkanContext         *gulkan,
              VkDescriptorSetLayout *layout)
 {
   GulkanDevice *device = gulkan_context_get_device (gulkan);
-  self->vertex_buffer =
-    gulkan_vertex_buffer_new (device, VK_PRIMITIVE_TOPOLOGY_LINE_LIST);
+  self->vertex_buffer
+    = gulkan_vertex_buffer_new (device, VK_PRIMITIVE_TOPOLOGY_LINE_LIST);
 
   gulkan_vertex_buffer_reset (self->vertex_buffer);
 
@@ -170,11 +171,11 @@ _initialize (SceneBackground       *self,
 }
 
 void
-scene_background_render (SceneBackground    *self,
-                         VkPipeline          pipeline,
-                         VkPipelineLayout    pipeline_layout,
-                         VkCommandBuffer     cmd_buffer,
-                         graphene_matrix_t  *vp)
+scene_background_render (SceneBackground   *self,
+                         VkPipeline         pipeline,
+                         VkPipelineLayout   pipeline_layout,
+                         VkCommandBuffer    cmd_buffer,
+                         graphene_matrix_t *vp)
 {
   if (!gulkan_vertex_buffer_is_initialized (self->vertex_buffer))
     return;

@@ -9,8 +9,8 @@
 
 #include "gxr-io.h"
 
-GString*
-gxr_io_get_cache_path (const gchar* dir_name)
+GString *
+gxr_io_get_cache_path (const gchar *dir_name)
 {
   GString *string = g_string_new ("");
   g_string_printf (string, "%s/%s", g_get_user_cache_dir (), dir_name);
@@ -19,9 +19,9 @@ gxr_io_get_cache_path (const gchar* dir_name)
 
 gboolean
 gxr_io_write_resource_to_file (const gchar *res_base_path,
-                               gchar *cache_path,
+                               gchar       *cache_path,
                                const gchar *file_name,
-                               GString *file_path)
+                               GString     *file_path)
 {
   GError *error = NULL;
 
@@ -29,10 +29,9 @@ gxr_io_write_resource_to_file (const gchar *res_base_path,
 
   g_string_printf (res_path, "%s/%s", res_base_path, file_name);
 
-  GInputStream * res_input_stream =
-    g_resources_open_stream (res_path->str,
-                             G_RESOURCE_LOOKUP_FLAGS_NONE,
-                            &error);
+  GInputStream *res_input_stream
+    = g_resources_open_stream (res_path->str, G_RESOURCE_LOOKUP_FLAGS_NONE,
+                               &error);
 
   g_string_free (res_path, TRUE);
 
@@ -41,10 +40,9 @@ gxr_io_write_resource_to_file (const gchar *res_base_path,
   GFile *out_file = g_file_new_for_path (file_path->str);
 
   GFileOutputStream *output_stream;
-  output_stream = g_file_replace (out_file,
-                                  NULL, FALSE,
-                                  G_FILE_CREATE_REPLACE_DESTINATION,
-                                  NULL, &error);
+  output_stream = g_file_replace (out_file, NULL, FALSE,
+                                  G_FILE_CREATE_REPLACE_DESTINATION, NULL,
+                                  &error);
 
   if (error != NULL)
     {
@@ -53,13 +51,11 @@ gxr_io_write_resource_to_file (const gchar *res_base_path,
       return FALSE;
     }
 
-  gssize n_bytes_written =
-    g_output_stream_splice (G_OUTPUT_STREAM (output_stream),
-                            res_input_stream,
-                            (GOutputStreamSpliceFlags)
-                              (G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET |
-                               G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE),
-                            NULL, &error);
+  gssize n_bytes_written = g_output_stream_splice (
+    G_OUTPUT_STREAM (output_stream), res_input_stream,
+    (GOutputStreamSpliceFlags) (G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET
+                                | G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE),
+    NULL, &error);
 
   g_object_unref (output_stream);
   g_object_unref (res_input_stream);
@@ -78,7 +74,5 @@ gxr_io_write_resource_to_file (const gchar *res_base_path,
       return FALSE;
     }
 
-
   return TRUE;
 }
-

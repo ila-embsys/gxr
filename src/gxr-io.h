@@ -8,7 +8,7 @@
 #ifndef GXR_IO_H_
 #define GXR_IO_H_
 
-#if !defined (GXR_INSIDE) && !defined (GXR_COMPILATION)
+#if !defined(GXR_INSIDE) && !defined(GXR_COMPILATION)
 #error "Only <gxr.h> can be included directly."
 #endif
 
@@ -19,11 +19,11 @@ gxr_io_create_directory_if_needed (gchar *path);
 
 gboolean
 gxr_io_write_resource_to_file (const gchar *res_base_path,
-                               gchar *cache_path,
+                               gchar       *cache_path,
                                const gchar *file_name,
-                               GString *file_path);
+                               GString     *file_path);
 
-GString*
-gxr_io_get_cache_path (const gchar* dir_name);
+GString *
+gxr_io_get_cache_path (const gchar *dir_name);
 
 #endif /* GXR_IO_H_ */

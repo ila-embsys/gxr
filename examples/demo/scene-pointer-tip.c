@@ -10,34 +10,38 @@
 
 #include "scene-object.h"
 
-#include <stdalign.h>
 #include <gdk/gdk.h>
+#include <stdalign.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
 
-typedef struct {
-  alignas(32) float mvp[2][16];
-  alignas(32) float mv[2][16];
-  alignas(32) float m[16];
-  alignas(4) bool receive_light;
+typedef struct
+{
+  alignas (32) float mvp[2][16];
+  alignas (32) float mv[2][16];
+  alignas (32) float m[16];
+  alignas (4) bool receive_light;
 } ScenePointerTipUniformBuffer;
 
-typedef struct {
-  alignas(16) float color[4];
-  alignas(4) bool flip_y;
+typedef struct
+{
+  alignas (16) float color[4];
+  alignas (4) bool flip_y;
 } WindowUniformBuffer;
 
-typedef struct {
+typedef struct
+{
   ScenePointerTip *tip;
-  float progress;
-  guint callback_id;
+  float            progress;
+  guint            callback_id;
 } ScenePointerTipAnimation;
 
-typedef struct {
+typedef struct
+{
   gboolean keep_apparent_size;
-  float width_meters;
+  float    width_meters;
 
   graphene_point3d_t active_color;
   graphene_point3d_t passive_color;
@@ -53,22 +57,22 @@ struct _ScenePointerTip
   GObject parent;
 
   GulkanContext *gulkan;
-  VkBuffer lights;
+  VkBuffer       lights;
 
   GulkanVertexBuffer *vertex_buffer;
-  VkSampler sampler;
-  float aspect_ratio;
+  VkSampler           sampler;
+  float               aspect_ratio;
 
-  gboolean flip_y;
+  gboolean        flip_y;
   graphene_vec3_t color;
 
   /* separate ubo used in fragment shader */
   GulkanUniformBuffer *shading_buffer;
-  WindowUniformBuffer shading_buffer_data;
+  WindowUniformBuffer  shading_buffer_data;
 
   GulkanTexture *texture;
-  uint32_t texture_width;
-  uint32_t texture_height;
+  uint32_t       texture_width;
+  uint32_t       texture_height;
 
   float initial_width_meter;
   float initial_height_meter;
@@ -119,8 +123,7 @@ scene_pointer_tip_init (ScenePointerTip *self)
 }
 
 static void
-_set_color (ScenePointerTip       *self,
-            const graphene_vec3_t *color)
+_set_color (ScenePointerTip *self, const graphene_vec3_t *color)
 {
   graphene_vec3_init_from_vec3 (&self->color, color);
 
@@ -142,21 +145,21 @@ _append_plane (GulkanVertexBuffer *vbo, float aspect_ratio)
   graphene_matrix_t mat_scale;
   graphene_matrix_init_scale (&mat_scale, aspect_ratio, 1.0f, 1.0f);
 
-  graphene_point_t from = { .x = -0.5, .y = -0.5 };
-  graphene_point_t to = { .x = 0.5, .y = 0.5 };
+  graphene_point_t from = {.x = -0.5, .y = -0.5};
+  graphene_point_t to = {.x = 0.5, .y = 0.5};
 
   gulkan_geometry_append_plane (vbo, &from, &to, &mat_scale);
 }
 
 static gboolean
-_initialize (ScenePointerTip* self, VkDescriptorSetLayout *layout)
+_initialize (ScenePointerTip *self, VkDescriptorSetLayout *layout)
 {
   SceneObject *obj = SCENE_OBJECT (self);
 
   GulkanDevice *device = gulkan_context_get_device (self->gulkan);
 
-  self->vertex_buffer =
-    gulkan_vertex_buffer_new (device, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+  self->vertex_buffer
+    = gulkan_vertex_buffer_new (device, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
   _append_plane (self->vertex_buffer, self->aspect_ratio);
   if (!gulkan_vertex_buffer_alloc_array (self->vertex_buffer))
     return FALSE;
@@ -165,8 +168,8 @@ _initialize (ScenePointerTip* self, VkDescriptorSetLayout *layout)
   if (!scene_object_initialize (obj, self->gulkan, layout, ubo_size))
     return FALSE;
 
-  self->shading_buffer =
-    gulkan_uniform_buffer_new (device, sizeof (WindowUniformBuffer));
+  self->shading_buffer
+    = gulkan_uniform_buffer_new (device, sizeof (WindowUniformBuffer));
   if (!self->shading_buffer)
     return FALSE;
 
@@ -178,8 +181,7 @@ _initialize (ScenePointerTip* self, VkDescriptorSetLayout *layout)
 }
 
 void
-scene_pointer_tip_set_width_meters (ScenePointerTip *self,
-                                    float            width_meters)
+scene_pointer_tip_set_width_meters (ScenePointerTip *self, float width_meters)
 {
   float height_meters = width_meters / self->aspect_ratio;
 
@@ -191,12 +193,12 @@ scene_pointer_tip_set_width_meters (ScenePointerTip *self,
 }
 
 ScenePointerTip *
-scene_pointer_tip_new (GulkanContext          *gulkan,
+scene_pointer_tip_new (GulkanContext         *gulkan,
                        VkDescriptorSetLayout *layout,
                        VkBuffer               lights)
 {
-  ScenePointerTip* self =
-    (ScenePointerTip*) g_object_new (SCENE_TYPE_POINTER_TIP, 0);
+  ScenePointerTip *self = (ScenePointerTip *)
+    g_object_new (SCENE_TYPE_POINTER_TIP, 0);
 
   self->gulkan = g_object_ref (gulkan);
   self->lights = lights;
@@ -232,17 +234,16 @@ scene_pointer_tip_finalize (GObject *gobject)
   G_OBJECT_CLASS (scene_pointer_tip_parent_class)->finalize (gobject);
 }
 
-
 static void
 _update_descriptors (ScenePointerTip *self)
 {
   VkDevice device = gulkan_context_get_device_handle (self->gulkan);
 
-  VkBuffer transformation_buffer =
-  scene_object_get_transformation_buffer (SCENE_OBJECT (self));
+  VkBuffer transformation_buffer
+    = scene_object_get_transformation_buffer (SCENE_OBJECT (self));
 
-  VkDescriptorSet descriptor_set =
-    scene_object_get_descriptor_set (SCENE_OBJECT (self));
+  VkDescriptorSet descriptor_set
+    = scene_object_get_descriptor_set (SCENE_OBJECT (self));
 
   VkWriteDescriptorSet *write_descriptor_sets = (VkWriteDescriptorSet []) {
     {
@@ -305,16 +306,15 @@ _update_descriptors (ScenePointerTip *self)
 
 void
 scene_pointer_tip_set_and_submit_texture (ScenePointerTip *tip,
-                                          GulkanTexture *texture)
+                                          GulkanTexture   *texture)
 {
   ScenePointerTip *self = SCENE_POINTER_TIP (tip);
   if (texture == self->texture)
     {
-      g_debug ("Texture %p was already set on tip %p.",
-                (void*) texture, (void*) self);
+      g_debug ("Texture %p was already set on tip %p.", (void *) texture,
+               (void *) self);
       return;
     }
-
 
   uint32_t previous_texture_width = self->texture_width;
   uint32_t previous_Texture_height = self->texture_height;
@@ -362,36 +362,35 @@ scene_pointer_tip_set_and_submit_texture (ScenePointerTip *tip,
 
   _update_descriptors (self);
 
-  if (previous_texture_width != extent.width ||
-    previous_Texture_height != extent.height)
-  {
-    /* initial-dims are respective the texture size and ppm.
-     * Now that the texture size changed, initial dims need to be
-     * updated, using the original ppm used to create this window. */
-    float initial_width_meter = self->initial_width_meter;
-    /* float initial_height_meter = self->initial_height_meter; */
+  if (previous_texture_width != extent.width
+      || previous_Texture_height != extent.height)
+    {
+      /* initial-dims are respective the texture size and ppm.
+       * Now that the texture size changed, initial dims need to be
+       * updated, using the original ppm used to create this window. */
+      float initial_width_meter = self->initial_width_meter;
+      /* float initial_height_meter = self->initial_height_meter; */
 
-    float previous_ppm = (float)previous_texture_width / initial_width_meter;
-    float new_initial_width_meter = (float) extent.width / previous_ppm;
+      float previous_ppm = (float) previous_texture_width / initial_width_meter;
+      float new_initial_width_meter = (float) extent.width / previous_ppm;
 
-    /* updates "initial-width-meters"  and "initial height-meters"! */
-    scene_pointer_tip_set_width_meters (self, new_initial_width_meter);
-  }
-
+      /* updates "initial-width-meters"  and "initial height-meters"! */
+      scene_pointer_tip_set_width_meters (self, new_initial_width_meter);
+    }
 }
 
 void
-scene_pointer_tip_render (ScenePointerTip    *self,
-                          VkPipeline          pipeline,
-                          VkPipelineLayout    pipeline_layout,
-                          VkCommandBuffer     cmd_buffer,
-                          graphene_matrix_t  *vp)
+scene_pointer_tip_render (ScenePointerTip   *self,
+                          VkPipeline         pipeline,
+                          VkPipelineLayout   pipeline_layout,
+                          VkCommandBuffer    cmd_buffer,
+                          graphene_matrix_t *vp)
 {
   if (!self->texture)
-  {
-    /* g_warning ("Trying to draw window with no texture.\n"); */
-    return;
-  }
+    {
+      /* g_warning ("Trying to draw window with no texture.\n"); */
+      return;
+    }
 
   SceneObject *obj = SCENE_OBJECT (self);
   if (!scene_object_is_visible (obj))
@@ -401,7 +400,7 @@ scene_pointer_tip_render (ScenePointerTip    *self,
 
   //_update_ubo (self, eye, vp);
 
-  ScenePointerTipUniformBuffer ub  = {0};
+  ScenePointerTipUniformBuffer ub = {0};
 
   ub.receive_light = FALSE;
 
@@ -424,8 +423,6 @@ scene_pointer_tip_render (ScenePointerTip    *self,
   scene_object_bind (obj, cmd_buffer, pipeline_layout);
   gulkan_vertex_buffer_draw (self->vertex_buffer, cmd_buffer);
 }
-
-
 
 /* TODO */
 static void
@@ -450,7 +447,6 @@ graphene_ext_matrix_get_translation_point3d (const graphene_matrix_t *m,
 }
 /* TODO */
 
-
 void
 scene_pointer_tip_update (ScenePointerTip    *self,
                           GxrContext         *context,
@@ -471,7 +467,7 @@ scene_pointer_tip_get_texture (ScenePointerTip *self)
   return self->texture;
 }
 
-GulkanContext*
+GulkanContext *
 scene_pointer_tip_get_gulkan_context (ScenePointerTip *self)
 {
   return self->gulkan;
@@ -499,13 +495,11 @@ _init_texture (ScenePointerTip *self)
 {
   GulkanContext *client = scene_pointer_tip_get_gulkan_context (self);
 
-  GdkPixbuf* pixbuf = scene_pointer_tip_update_pixbuf (self, 1.0f);
+  GdkPixbuf *pixbuf = scene_pointer_tip_update_pixbuf (self, 1.0f);
 
-  GulkanTexture *texture =
-    gulkan_texture_new_from_pixbuf (client, pixbuf,
-                                    VK_FORMAT_R8G8B8A8_SRGB,
-                                    self->upload_layout,
-                                    false);
+  GulkanTexture *texture
+    = gulkan_texture_new_from_pixbuf (client, pixbuf, VK_FORMAT_R8G8B8A8_SRGB,
+                                      self->upload_layout, false);
   g_object_unref (pixbuf);
 
   scene_pointer_tip_set_and_submit_texture (self, texture);
@@ -533,37 +527,34 @@ scene_pointer_tip_init_settings (ScenePointerTip *self)
  * scale affects the radius of the circle and should be in [0,2].
  * a_in is the alpha value at the center, a_out at the outer border. */
 static void
-_draw_gradient_circle (cairo_t              *cr,
-                       int                   w,
-                       int                   h,
-                       double                radius,
-                       graphene_point3d_t   *color,
-                       double                a_in,
-                       double                a_out)
+_draw_gradient_circle (cairo_t            *cr,
+                       int                 w,
+                       int                 h,
+                       double              radius,
+                       graphene_point3d_t *color,
+                       double              a_in,
+                       double              a_out)
 {
   double center_x = w / 2;
   double center_y = h / 2;
 
   cairo_pattern_t *pat = cairo_pattern_create_radial (center_x, center_y,
-                                                      0.75 * radius,
-                                                      center_x, center_y,
-                                                      radius);
-  cairo_pattern_add_color_stop_rgba (pat, 0,
-                                     (double) color->x,
-                                     (double) color->y,
-                                     (double) color->z, a_in);
+                                                      0.75 * radius, center_x,
+                                                      center_y, radius);
+  cairo_pattern_add_color_stop_rgba (pat, 0, (double) color->x,
+                                     (double) color->y, (double) color->z,
+                                     a_in);
 
-  cairo_pattern_add_color_stop_rgba (pat, 1,
-                                     (double) color->x,
-                                     (double) color->y,
-                                     (double) color->z, a_out);
+  cairo_pattern_add_color_stop_rgba (pat, 1, (double) color->x,
+                                     (double) color->y, (double) color->z,
+                                     a_out);
   cairo_set_source (cr, pat);
   cairo_arc (cr, center_x, center_y, radius, 0, 2 * M_PI);
   cairo_fill (cr);
   cairo_pattern_destroy (pat);
 }
 
-static GdkPixbuf*
+static GdkPixbuf *
 _render_cairo (int                 w,
                int                 h,
                double              radius,
@@ -571,8 +562,8 @@ _render_cairo (int                 w,
                double              pulse_alpha,
                float               progress)
 {
-  cairo_surface_t *surface =
-      cairo_image_surface_create (CAIRO_FORMAT_ARGB32, w, h);
+  cairo_surface_t *surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, w,
+                                                         h);
 
   cairo_t *cr = cairo_create (surface);
   cairo_set_source_rgba (cr, 0, 0, 0, 0);
@@ -583,7 +574,7 @@ _render_cairo (int                 w,
   if (progress != 1.0f)
     {
       float pulse_scale = GXR_TIP_VIEWPORT_SCALE * (1.0f - progress);
-      graphene_point3d_t white = { 1.0f, 1.0f, 1.0f };
+      graphene_point3d_t white = {1.0f, 1.0f, 1.0f};
       _draw_gradient_circle (cr, w, h, radius * (double) pulse_scale, &white,
                              pulse_alpha, 0.0);
     }
@@ -608,20 +599,19 @@ _render_cairo (int                 w,
  * Renders the pointer tip with the desired colors.
  * If background scale is > 1, a transparent white background circle is rendered
  * behind the pointer tip. */
-GdkPixbuf*
-scene_pointer_tip_update_pixbuf (ScenePointerTip *self,
-                                 float          progress)
+GdkPixbuf *
+scene_pointer_tip_update_pixbuf (ScenePointerTip *self, float progress)
 {
   int w = self->settings.texture_width * GXR_TIP_VIEWPORT_SCALE;
   int h = self->settings.texture_height * GXR_TIP_VIEWPORT_SCALE;
 
-  graphene_point3d_t *color = self->active ? &self->settings.active_color :
-                                             &self->settings.passive_color;
+  graphene_point3d_t *color = self->active ? &self->settings.active_color
+                                           : &self->settings.passive_color;
 
   double radius = self->settings.texture_width / 2.0;
 
-  GdkPixbuf *pixbuf =
-    _render_cairo (w, h, radius, color, self->settings.pulse_alpha, progress);
+  GdkPixbuf *pixbuf = _render_cairo (w, h, radius, color,
+                                     self->settings.pulse_alpha, progress);
 
   return pixbuf;
 }
@@ -630,11 +620,12 @@ static gboolean
 _animate_cb (gpointer _animation)
 {
   ScenePointerTipAnimation *animation = (ScenePointerTipAnimation *) _animation;
-  ScenePointerTip *self = animation->tip;
+  ScenePointerTip          *self = animation->tip;
 
   GulkanTexture *texture = scene_pointer_tip_get_texture (self);
 
-  GdkPixbuf* pixbuf = scene_pointer_tip_update_pixbuf (self, animation->progress);
+  GdkPixbuf *pixbuf = scene_pointer_tip_update_pixbuf (self,
+                                                       animation->progress);
 
   gulkan_texture_upload_pixbuf (texture, pixbuf, self->upload_layout);
 
@@ -668,7 +659,7 @@ scene_pointer_tip_animate_pulse (ScenePointerTip *self)
 static void
 _update_texture (ScenePointerTip *self)
 {
-  GdkPixbuf* pixbuf = scene_pointer_tip_update_pixbuf (self, 1.0f);
+  GdkPixbuf     *pixbuf = scene_pointer_tip_update_pixbuf (self, 1.0f);
   GulkanTexture *texture = scene_pointer_tip_get_texture (self);
 
   gulkan_texture_upload_pixbuf (texture, pixbuf, self->upload_layout);
@@ -684,8 +675,7 @@ _update_texture (ScenePointerTip *self)
  * Also cancels animations.
  */
 void
-scene_pointer_tip_set_active (ScenePointerTip *self,
-                              gboolean       active)
+scene_pointer_tip_set_active (ScenePointerTip *self, gboolean active)
 {
   if (scene_pointer_tip_get_texture (self) == NULL)
     return;
@@ -713,7 +703,7 @@ scene_pointer_tip_set_active (ScenePointerTip *self,
  */
 void
 scene_pointer_tip_update_apparent_size (ScenePointerTip *self,
-                                      GxrContext    *context)
+                                        GxrContext      *context)
 {
   if (!self->settings.keep_apparent_size)
     return;
@@ -725,7 +715,7 @@ scene_pointer_tip_update_apparent_size (ScenePointerTip *self,
   graphene_ext_matrix_get_translation_point3d (&tip_pose, &tip_point);
 
   graphene_matrix_t hmd_pose;
-  gboolean has_pose = gxr_context_get_head_pose (context, &hmd_pose);
+  gboolean          has_pose = gxr_context_get_head_pose (context, &hmd_pose);
   if (!has_pose)
     {
       scene_pointer_tip_set_width_meters (self, self->settings.width_meters);
@@ -737,16 +727,16 @@ scene_pointer_tip_update_apparent_size (ScenePointerTip *self,
 
   float distance = graphene_point3d_distance (&tip_point, &hmd_point, NULL);
 
-  float w = self->settings.width_meters
-            / GXR_TIP_APPARENT_SIZE_DISTANCE * distance;
+  float w = self->settings.width_meters / GXR_TIP_APPARENT_SIZE_DISTANCE
+            * distance;
 
   scene_pointer_tip_set_width_meters (self, w);
 }
 
 void
 scene_pointer_tip_update_texture_resolution (ScenePointerTip *self,
-                                           int            width,
-                                           int            height)
+                                             int              width,
+                                             int              height)
 {
   ScenePointerTipSettings *s = &self->settings;
   s->texture_width = width;
@@ -756,7 +746,7 @@ scene_pointer_tip_update_texture_resolution (ScenePointerTip *self,
 }
 
 void
-scene_pointer_tip_update_color (ScenePointerTip      *self,
+scene_pointer_tip_update_color (ScenePointerTip    *self,
                                 gboolean            active_color,
                                 graphene_point3d_t *color)
 
@@ -776,23 +766,21 @@ scene_pointer_tip_update_color (ScenePointerTip      *self,
 }
 
 void
-scene_pointer_tip_update_pulse_alpha (ScenePointerTip *self,
-                                      double         alpha)
+scene_pointer_tip_update_pulse_alpha (ScenePointerTip *self, double alpha)
 {
   self->settings.pulse_alpha = alpha;
 }
 
 void
 scene_pointer_tip_update_keep_apparent_size (ScenePointerTip *self,
-                                             gboolean       keep_apparent_size)
+                                             gboolean keep_apparent_size)
 {
   self->settings.keep_apparent_size = keep_apparent_size;
   scene_pointer_tip_set_width_meters (self, self->settings.width_meters);
 }
 
 void
-scene_pointer_tip_update_width_meters (ScenePointerTip *self,
-                                     float          width)
+scene_pointer_tip_update_width_meters (ScenePointerTip *self, float width)
 {
   self->settings.width_meters = width * GXR_TIP_VIEWPORT_SCALE;
   scene_pointer_tip_set_width_meters (self, self->settings.width_meters);

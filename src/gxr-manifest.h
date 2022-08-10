@@ -8,8 +8,8 @@
 #ifndef GXR_MANIFEST_H_
 #define GXR_MANIFEST_H_
 
-#include <glib-object.h>
 #include <gio/gio.h>
+#include <glib-object.h>
 
 /**
  * GxrBindingType:
@@ -79,21 +79,21 @@ typedef enum
 
 typedef struct
 {
-  gchar *name;
+  gchar         *name;
   GxrBindingType type;
 } GxrActionManifestEntry;
 
 typedef struct
 {
   GxrBindingComponent component;
-  gchar *path;
-  GxrBindingMode mode;
+  gchar              *path;
+  GxrBindingMode      mode;
 } GxrBindingPath;
 
 typedef struct
 {
   GxrActionManifestEntry *action;
-  GSList *input_paths;
+  GSList                 *input_paths;
 } GxrBinding;
 
 typedef struct
@@ -112,11 +112,11 @@ G_BEGIN_DECLS
 #define GXR_TYPE_MANIFEST gxr_manifest_get_type ()
 G_DECLARE_FINAL_TYPE (GxrManifest, gxr_manifest, GXR, MANIFEST, GObject)
 
-GxrManifest *gxr_manifest_new (void);
+GxrManifest *
+gxr_manifest_new (void);
 
 gboolean
-gxr_manifest_load_actions (GxrManifest  *self,
-                           GInputStream *action_stream);
+gxr_manifest_load_actions (GxrManifest *self, GInputStream *action_stream);
 
 gboolean
 gxr_manifest_load_bindings (GxrManifest *self, const char *resource_path);

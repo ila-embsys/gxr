@@ -15,20 +15,21 @@ struct _GxrController
   GxrDevice parent;
 
   graphene_matrix_t pointer_pose;
-  gboolean pointer_pose_valid;
+  gboolean          pointer_pose_valid;
 
   graphene_matrix_t hand_grip_pose;
-  gboolean hand_grip_pose_valid;
+  gboolean          hand_grip_pose_valid;
 };
 
 G_DEFINE_TYPE (GxrController, gxr_controller, GXR_TYPE_DEVICE)
 
-enum {
+enum
+{
   MOVE,
   LAST_SIGNAL
 };
 
-static guint signals[LAST_SIGNAL] = { 0 };
+static guint signals[LAST_SIGNAL] = {0};
 
 static void
 gxr_controller_finalize (GObject *gobject);
@@ -40,11 +41,10 @@ gxr_controller_class_init (GxrControllerClass *klass)
 
   object_class->finalize = gxr_controller_finalize;
 
-  signals[MOVE] = g_signal_new ("move",
-                                G_TYPE_FROM_CLASS (klass),
-                                G_SIGNAL_RUN_FIRST,
-                                0, NULL, NULL, NULL, G_TYPE_NONE,
-                                1, G_TYPE_POINTER | G_SIGNAL_TYPE_STATIC_SCOPE);
+  signals[MOVE] = g_signal_new ("move", G_TYPE_FROM_CLASS (klass),
+                                G_SIGNAL_RUN_FIRST, 0, NULL, NULL, NULL,
+                                G_TYPE_NONE, 1,
+                                G_TYPE_POINTER | G_SIGNAL_TYPE_STATIC_SCOPE);
 }
 
 static void
@@ -60,8 +60,8 @@ gxr_controller_init (GxrController *self)
 GxrController *
 gxr_controller_new (guint64 controller_handle)
 {
-  GxrController *controller =
-    (GxrController*) g_object_new (GXR_TYPE_CONTROLLER, 0);
+  GxrController *controller = (GxrController *)
+    g_object_new (GXR_TYPE_CONTROLLER, 0);
 
   GxrDevice *device = GXR_DEVICE (controller);
   gxr_device_set_handle (device, controller_handle);
@@ -76,15 +76,13 @@ gxr_controller_finalize (GObject *gobject)
 }
 
 void
-gxr_controller_get_hand_grip_pose (GxrController *self,
-                                   graphene_matrix_t *pose)
+gxr_controller_get_hand_grip_pose (GxrController *self, graphene_matrix_t *pose)
 {
   graphene_matrix_init_from_matrix (pose, &self->hand_grip_pose);
 }
 
 void
-gxr_controller_update_pointer_pose (GxrController *self,
-                                    GxrPoseEvent  *event)
+gxr_controller_update_pointer_pose (GxrController *self, GxrPoseEvent *event)
 {
   graphene_matrix_init_from_matrix (&self->pointer_pose, &event->pose);
   gboolean valid = event->device_connected && event->active && event->valid;
@@ -93,8 +91,7 @@ gxr_controller_update_pointer_pose (GxrController *self,
 }
 
 void
-gxr_controller_update_hand_grip_pose (GxrController *self,
-                                      GxrPoseEvent  *event)
+gxr_controller_update_hand_grip_pose (GxrController *self, GxrPoseEvent *event)
 {
   graphene_matrix_init_from_matrix (&self->hand_grip_pose, &event->pose);
   gboolean valid = event->device_connected && event->active && event->valid;

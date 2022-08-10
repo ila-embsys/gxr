@@ -5,9 +5,9 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include "gxr.h"
 #include <glib.h>
 #include <gulkan.h>
-#include "gxr.h"
 
 static void
 _test_load_action_manifest ()
@@ -18,15 +18,13 @@ _test_load_action_manifest ()
   GulkanContext *gc = gulkan_context_new ();
   g_assert_nonnull (gc);
 
-  if (!gxr_context_load_action_manifest (
-    context,
-    "xrdesktop.openxr",
-    "/res/bindings/openxr",
-    "actions.json"))
-  {
-    g_print ("Failed to load action bindings!\n");
-    return;
-  }
+  if (!gxr_context_load_action_manifest (context, "xrdesktop.openxr",
+                                         "/res/bindings/openxr",
+                                         "actions.json"))
+    {
+      g_print ("Failed to load action bindings!\n");
+      return;
+    }
 
   g_object_unref (context);
 }

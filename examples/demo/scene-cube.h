@@ -15,11 +15,11 @@
 
 #include "scene-object.h"
 
-#define SCENE_TYPE_CUBE scene_cube_get_type()
+#define SCENE_TYPE_CUBE scene_cube_get_type ()
 G_DECLARE_FINAL_TYPE (SceneCube, scene_cube, SCENE, CUBE, SceneObject)
 
 SceneCube *
-scene_cube_new (GulkanContext         *gulkan,
+scene_cube_new (GulkanContext        *gulkan,
                 GulkanRenderer       *renderer,
                 GulkanRenderPass     *render_pass,
                 VkSampleCountFlagBits sample_count);
@@ -31,8 +31,7 @@ scene_cube_render (SceneCube         *self,
                    graphene_matrix_t *projection);
 
 void
-scene_cube_override_position (SceneCube          *self,
-                              graphene_point3d_t *position);
+scene_cube_override_position (SceneCube *self, graphene_point3d_t *position);
 
 void
 scene_cube_resume_default_position (SceneCube *self);

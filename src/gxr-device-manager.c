@@ -7,10 +7,10 @@
 
 #include "gxr-device-manager.h"
 
-#include <gxr.h>
-#include "gxr-device.h"
 #include "gxr-context.h"
 #include "gxr-controller.h"
+#include "gxr-device.h"
+#include <gxr.h>
 
 struct _GxrDeviceManager
 {
@@ -26,13 +26,14 @@ struct _GxrDeviceManager
 
 G_DEFINE_TYPE (GxrDeviceManager, gxr_device_manager, G_TYPE_OBJECT)
 
-enum {
+enum
+{
   DEVICE_ACTIVATE_EVENT,
   DEVICE_DEACTIVATE_EVENT,
   LAST_SIGNAL
 };
 
-static guint dm_signals[LAST_SIGNAL] = { 0 };
+static guint dm_signals[LAST_SIGNAL] = {0};
 
 static void
 gxr_device_manager_finalize (GObject *gobject);
@@ -43,26 +44,22 @@ gxr_device_manager_class_init (GxrDeviceManagerClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   object_class->finalize = gxr_device_manager_finalize;
 
-  dm_signals[DEVICE_ACTIVATE_EVENT] =
-    g_signal_new ("device-activate-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_LAST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE,
-                  1, G_TYPE_POINTER | G_SIGNAL_TYPE_STATIC_SCOPE);
+  dm_signals[DEVICE_ACTIVATE_EVENT]
+    = g_signal_new ("device-activate-event", G_TYPE_FROM_CLASS (klass),
+                    G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL, G_TYPE_NONE, 1,
+                    G_TYPE_POINTER | G_SIGNAL_TYPE_STATIC_SCOPE);
 
-  dm_signals[DEVICE_DEACTIVATE_EVENT] =
-    g_signal_new ("device-deactivate-event",
-                  G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_LAST,
-                  0, NULL, NULL, NULL, G_TYPE_NONE,
-                  1, G_TYPE_POINTER | G_SIGNAL_TYPE_STATIC_SCOPE);
+  dm_signals[DEVICE_DEACTIVATE_EVENT]
+    = g_signal_new ("device-deactivate-event", G_TYPE_FROM_CLASS (klass),
+                    G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL, G_TYPE_NONE, 1,
+                    G_TYPE_POINTER | G_SIGNAL_TYPE_STATIC_SCOPE);
 }
 
 static void
 gxr_device_manager_init (GxrDeviceManager *self)
 {
-  self->devices = g_hash_table_new_full (g_int64_hash, g_int64_equal,
-                                         g_free, g_object_unref);
+  self->devices = g_hash_table_new_full (g_int64_hash, g_int64_equal, g_free,
+                                         g_object_unref);
   self->controllers = NULL;
 
   g_mutex_init (&self->device_mutex);
@@ -71,7 +68,7 @@ gxr_device_manager_init (GxrDeviceManager *self)
 GxrDeviceManager *
 gxr_device_manager_new (void)
 {
-  return (GxrDeviceManager*) g_object_new (GXR_TYPE_DEVICE_MANAGER, 0);
+  return (GxrDeviceManager *) g_object_new (GXR_TYPE_DEVICE_MANAGER, 0);
 }
 
 static void
@@ -141,8 +138,8 @@ gxr_device_manager_add (GxrDeviceManager *self,
       device = gxr_device_new (device_id);
     }
 
-  g_debug ("Created device for %lu, is controller: %d",
-           device_id, is_controller);
+  g_debug ("Created device for %lu, is controller: %d", device_id,
+           is_controller);
 
   if (is_controller)
     self->controllers = g_slist_append (self->controllers, device);
@@ -155,8 +152,7 @@ gxr_device_manager_add (GxrDeviceManager *self,
 }
 
 void
-gxr_device_manager_remove (GxrDeviceManager *self,
-                           guint64           device_id)
+gxr_device_manager_remove (GxrDeviceManager *self, guint64 device_id)
 {
   g_mutex_lock (&self->device_mutex);
 
@@ -189,7 +185,7 @@ gxr_device_manager_update_poses (GxrDeviceManager *self, GxrPose *poses)
   for (GList *l = device_keys; l; l = l->next)
     {
       guint64 *key = l->data;
-      guint64 i = *key;
+      guint64  i = *key;
 
       GxrDevice *device = g_hash_table_lookup (self->devices, &i);
 
@@ -253,8 +249,8 @@ _update_pointer_pose_cb (GxrAction        *action,
 
 static void
 _update_hand_grip_pose_cb (GxrAction        *action,
-                          GxrPoseEvent     *event,
-                          GxrDeviceManager *self)
+                           GxrPoseEvent     *event,
+                           GxrDeviceManager *self)
 {
   (void) action;
   (void) self;

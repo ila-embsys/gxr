@@ -14,17 +14,18 @@
 #include <gxr.h>
 
 #include "scene-controller.h"
-#include "scene-pointer-tip.h"
 #include "scene-object.h"
+#include "scene-pointer-tip.h"
 
 #include "graphene-ext.h"
 
 #if defined(RENDERDOC)
-#include <dlfcn.h>
 #include "renderdoc_app.h"
+#include <dlfcn.h>
 static RENDERDOC_API_1_1_2 *rdoc_api = NULL;
 
-static void _init_renderdoc ()
+static void
+_init_renderdoc ()
 {
   if (rdoc_api != NULL)
     return;
@@ -32,28 +33,33 @@ static void _init_renderdoc ()
   void *mod = dlopen ("librenderdoc.so", RTLD_NOW | RTLD_NOLOAD);
   if (mod)
     {
-      pRENDERDOC_GetAPI RENDERDOC_GetAPI = (pRENDERDOC_GetAPI)dlsym(mod, "RENDERDOC_GetAPI");
-      int ret = RENDERDOC_GetAPI(eRENDERDOC_API_Version_1_1_2, (void **)&rdoc_api);
+      pRENDERDOC_GetAPI RENDERDOC_GetAPI = (pRENDERDOC_GetAPI)
+        dlsym (mod, "RENDERDOC_GetAPI");
+      int ret = RENDERDOC_GetAPI (eRENDERDOC_API_Version_1_1_2,
+                                  (void **) &rdoc_api);
       if (ret != 1)
         g_debug ("Failed to init renderdoc");
     }
 }
 #endif
 
-typedef struct {
+typedef struct
+{
   graphene_point3d_t position;
   graphene_point_t   uv;
 } SceneVertex;
 
-typedef struct {
+typedef struct
+{
   float position[4];
   float color[3];
   float radius;
 } SceneLight;
 
-typedef struct {
+typedef struct
+{
   SceneLight lights[2];
-  int active_lights;
+  int        active_lights;
 } SceneLights;
 
 struct _SceneRenderer
@@ -61,28 +67,27 @@ struct _SceneRenderer
   GulkanRenderer parent;
 
   VkSampleCountFlagBits sample_count;
-  float render_scale;
+  float                 render_scale;
 
-  VkShaderModule shader_modules[PIPELINE_COUNT * 2];
-  VkPipeline pipelines[PIPELINE_COUNT];
+  VkShaderModule        shader_modules[PIPELINE_COUNT * 2];
+  VkPipeline            pipelines[PIPELINE_COUNT];
   VkDescriptorSetLayout descriptor_set_layout;
-  VkPipelineLayout pipeline_layout;
-  VkPipelineCache pipeline_cache;
+  VkPipelineLayout      pipeline_layout;
+  VkPipelineCache       pipeline_cache;
 
   GulkanRenderPass *render_pass;
 
   gpointer scene_client;
 
-  SceneLights lights;
+  SceneLights          lights;
   GulkanUniformBuffer *lights_buffer;
 
   GxrContext *context;
 
-  void
-  (*render) (VkCommandBuffer  cmd_buffer,
-             VkPipelineLayout pipeline_layout,
-             VkPipeline      *pipelines,
-             gpointer         data);
+  void (*render) (VkCommandBuffer  cmd_buffer,
+                  VkPipelineLayout pipeline_layout,
+                  VkPipeline      *pipelines,
+                  gpointer         data);
 
   void (*update_lights) (gpointer data);
 };
@@ -111,7 +116,7 @@ scene_renderer_init (SceneRenderer *self)
   graphene_vec4_init (&position, 0, 0, 0, 1);
 
   graphene_vec4_t color;
-  graphene_vec4_init (&color,.078f, .471f, .675f, 1);
+  graphene_vec4_init (&color, .078f, .471f, .675f, 1);
 
   for (uint32_t i = 0; i < 2; i++)
     {
@@ -164,7 +169,7 @@ scene_renderer_finalize (GObject *gobject)
 SceneRenderer *
 scene_renderer_new (void)
 {
-  return (SceneRenderer*) g_object_new (SCENE_TYPE_RENDERER, 0);
+  return (SceneRenderer *) g_object_new (SCENE_TYPE_RENDERER, 0);
 }
 
 static gboolean
@@ -198,9 +203,9 @@ _init_shaders (SceneRenderer *self)
         char path[1024];
         sprintf (path, "/shaders/%s.%s.spv", shader_names[i], stage_names[j]);
 
-        if (!gulkan_renderer_create_shader_module (GULKAN_RENDERER (self),
-                                                   path,
-                                                  &self->shader_modules[i * 2 + j]))
+        if (!gulkan_renderer_create_shader_module (GULKAN_RENDERER (self), path,
+                                                   &self->shader_modules[i * 2
+                                                                         + j]))
           return FALSE;
       }
   return TRUE;
@@ -246,10 +251,9 @@ _init_descriptor_layout (SceneRenderer *self)
   };
 
   GulkanContext *gc = gxr_context_get_gulkan (self->context);
-  VkDevice device = gulkan_context_get_device_handle (gc);
-  VkResult res = vkCreateDescriptorSetLayout (device,
-                                             &info, NULL,
-                                             &self->descriptor_set_layout);
+  VkDevice       device = gulkan_context_get_device_handle (gc);
+  VkResult       res = vkCreateDescriptorSetLayout (device, &info, NULL,
+                                                    &self->descriptor_set_layout);
   vk_check_error ("vkCreateDescriptorSetLayout", res, FALSE);
 
   return TRUE;
@@ -269,7 +273,7 @@ _init_pipeline_layout (SceneRenderer *self)
   GulkanContext *gc = gxr_context_get_gulkan (self->context);
 
   VkResult res = vkCreatePipelineLayout (gulkan_context_get_device_handle (gc),
-                                        &info, NULL, &self->pipeline_layout);
+                                         &info, NULL, &self->pipeline_layout);
   vk_check_error ("vkCreatePipelineLayout", res, FALSE);
 
   return TRUE;
@@ -285,13 +289,14 @@ _init_pipeline_cache (SceneRenderer *self)
   GulkanContext *gc = gxr_context_get_gulkan (self->context);
 
   VkResult res = vkCreatePipelineCache (gulkan_context_get_device_handle (gc),
-                                       &info, NULL, &self->pipeline_cache);
+                                        &info, NULL, &self->pipeline_cache);
   vk_check_error ("vkCreatePipelineCache", res, FALSE);
 
   return TRUE;
 }
 
-typedef struct __attribute__((__packed__)) {
+typedef struct __attribute__ ((__packed__))
+{
   VkPrimitiveTopology                           topology;
   uint32_t                                      stride;
   const VkVertexInputAttributeDescription      *attribs;
@@ -517,8 +522,8 @@ _init_graphics_pipelines (SceneRenderer *self)
       VkDevice device = gulkan_context_get_device_handle (gc);
       VkResult res;
       res = vkCreateGraphicsPipelines (device, self->pipeline_cache, 1,
-                                      &pipeline_info, NULL,
-                                      &self->pipelines[i]);
+                                       &pipeline_info, NULL,
+                                       &self->pipelines[i]);
       vk_check_error ("vkCreateGraphicsPipelines", res, FALSE);
     }
 
@@ -526,8 +531,7 @@ _init_graphics_pipelines (SceneRenderer *self)
 }
 
 gboolean
-scene_renderer_init_vulkan (SceneRenderer *self,
-                            GxrContext    *context)
+scene_renderer_init_vulkan (SceneRenderer *self, GxrContext *context)
 {
   if (self->context)
     {
@@ -549,12 +553,11 @@ scene_renderer_init_vulkan (SceneRenderer *self,
   if (!_init_shaders (self))
     return FALSE;
 
-
   GulkanContext *gc = gxr_context_get_gulkan (context);
-  GulkanDevice *device = gulkan_context_get_device (gc);
+  GulkanDevice  *device = gulkan_context_get_device (gc);
 
-  self->lights_buffer =
-    gulkan_uniform_buffer_new (device, sizeof (SceneLights));
+  self->lights_buffer = gulkan_uniform_buffer_new (device,
+                                                   sizeof (SceneLights));
 
   if (!self->lights_buffer)
     return FALSE;
@@ -582,46 +585,40 @@ _render_stereo (SceneRenderer *self, VkCommandBuffer cmd_buffer)
 {
   VkExtent2D extent = gulkan_renderer_get_extent (GULKAN_RENDERER (self));
 
-  VkViewport viewport = {
-    .x = 0.0f,
-    .y = (float) extent.height,
-    .width = (float) extent.width,
-    .height = - (float) extent.height,
-    .minDepth = 0.0f,
-    .maxDepth = 1.0f
-  };
+  VkViewport viewport = {.x = 0.0f,
+                         .y = (float) extent.height,
+                         .width = (float) extent.width,
+                         .height = -(float) extent.height,
+                         .minDepth = 0.0f,
+                         .maxDepth = 1.0f};
   vkCmdSetViewport (cmd_buffer, 0, 1, &viewport);
-  VkRect2D scissor = {
-    .offset = {0, 0},
-    .extent = extent
-  };
+  VkRect2D scissor = {.offset = {0, 0}, .extent = extent};
   vkCmdSetScissor (cmd_buffer, 0, 1, &scissor);
 
   VkClearColorValue black = {
-    .float32 = { 0.0f, 0.0f, 0.0f, .0f },
+    .float32 = {0.0f, 0.0f, 0.0f, .0f},
   };
 
-  GulkanFrameBuffer *framebuffer =
-    gxr_context_get_acquired_framebuffer (self->context);
+  GulkanFrameBuffer *framebuffer
+    = gxr_context_get_acquired_framebuffer (self->context);
 
   if (!GULKAN_IS_FRAME_BUFFER (framebuffer))
     {
       g_printerr ("framebuffer invalid\n");
     }
 
-  gulkan_render_pass_begin (self->render_pass, extent, black,
-                            framebuffer, cmd_buffer);
+  gulkan_render_pass_begin (self->render_pass, extent, black, framebuffer,
+                            cmd_buffer);
 
   if (self->render)
-    self->render (cmd_buffer, self->pipeline_layout,
-                  self->pipelines, self->scene_client);
+    self->render (cmd_buffer, self->pipeline_layout, self->pipelines,
+                  self->scene_client);
 
   vkCmdEndRenderPass (cmd_buffer);
 }
 
 void
-scene_renderer_update_lights (SceneRenderer *self,
-                              GList         *controllers)
+scene_renderer_update_lights (SceneRenderer *self, GList *controllers)
 {
   self->lights.active_lights = (int) g_list_length (controllers);
   if (self->lights.active_lights > 2)
@@ -632,11 +629,11 @@ scene_renderer_update_lights (SceneRenderer *self,
 
   for (int i = 0; i < self->lights.active_lights; i++)
     {
-      SceneController *controller =
-        SCENE_CONTROLLER (g_list_nth_data (controllers, (guint) i));
+      SceneController *controller
+        = SCENE_CONTROLLER (g_list_nth_data (controllers, (guint) i));
 
-      ScenePointerTip *scene_tip =
-        SCENE_POINTER_TIP (scene_controller_get_pointer_tip (controller));
+      ScenePointerTip *scene_tip
+        = SCENE_POINTER_TIP (scene_controller_get_pointer_tip (controller));
 
       graphene_point3d_t tip_position;
       scene_object_get_position (SCENE_OBJECT (scene_tip), &tip_position);
@@ -646,20 +643,21 @@ scene_renderer_update_lights (SceneRenderer *self,
       self->lights.lights[i].position[2] = tip_position.z;
     }
 
-  gulkan_uniform_buffer_update (self->lights_buffer,
-                                (gpointer) &self->lights);
+  gulkan_uniform_buffer_update (self->lights_buffer, (gpointer) &self->lights);
 }
 
 static void
 _draw (SceneRenderer *self)
 {
 #if defined(RENDERDOC)
-  if (rdoc_api) rdoc_api->StartFrameCapture(NULL, NULL);
-  else _init_renderdoc ();
+  if (rdoc_api)
+    rdoc_api->StartFrameCapture (NULL, NULL);
+  else
+    _init_renderdoc ();
 #endif
 
   GulkanContext *gc = gxr_context_get_gulkan (self->context);
-  GulkanDevice *device = gulkan_context_get_device (gc);
+  GulkanDevice  *device = gulkan_context_get_device (gc);
 
   GulkanQueue *queue = gulkan_device_get_graphics_queue (device);
 
@@ -677,7 +675,8 @@ _draw (SceneRenderer *self)
   gulkan_queue_free_cmd_buffer (queue, cmd_buffer);
 
 #if defined(RENDERDOC)
-  if(rdoc_api) rdoc_api->EndFrameCapture(NULL, NULL);
+  if (rdoc_api)
+    rdoc_api->EndFrameCapture (NULL, NULL);
 #endif
 }
 

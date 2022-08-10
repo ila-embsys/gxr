@@ -6,17 +6,19 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <gulkan.h>
-#include "graphene-ext.h"
 #include "scene-cube.h"
+#include "graphene-ext.h"
+#include <gulkan.h>
 
-typedef struct __attribute__((__packed__)) {
+typedef struct __attribute__ ((__packed__))
+{
   float mv_matrix[2][16];
   float mvp_matrix[2][16];
   float normal_matrix[2][12];
 } SceneCubeUniformBuffer;
 
-typedef struct {
+typedef struct
+{
   const gchar *vert;
   const gchar *frag;
 } ShaderResources;
@@ -124,9 +126,9 @@ struct _SceneCube
 {
   SceneObject parent;
 
-  GulkanVertexBuffer *vb;
-  GulkanContext *gulkan;
-  GulkanRenderer *renderer;
+  GulkanVertexBuffer   *vb;
+  GulkanContext        *gulkan;
+  GulkanRenderer       *renderer;
   VkSampleCountFlagBits sample_count;
 
   VkDescriptorSetLayout descriptor_set_layout;
@@ -143,7 +145,7 @@ G_DEFINE_TYPE (SceneCube, scene_cube, SCENE_TYPE_OBJECT)
 static void
 _set_default_position (SceneCube *self)
 {
-  self->pos = (graphene_point3d_t){ 0.0f, 0.0f, -6.0f };
+  self->pos = (graphene_point3d_t){0.0f, 0.0f, -6.0f};
 }
 
 static void
@@ -160,9 +162,9 @@ scene_cube_class_init (SceneCubeClass *klass)
 static gboolean
 _init_pipeline (SceneCube        *self,
                 GulkanRenderPass *render_pass,
-                gconstpointer      data)
+                gconstpointer     data)
 {
-  const ShaderResources *resources = (const ShaderResources*) data;
+  const ShaderResources *resources = (const ShaderResources *) data;
 
   VkDevice device = gulkan_context_get_device_handle (self->gulkan);
 
@@ -210,13 +212,13 @@ _init_pipeline (SceneCube        *self,
   };
 
   VkShaderModule vs_module;
-  if (!gulkan_renderer_create_shader_module (
-        self->renderer, resources->vert, &vs_module))
+  if (!gulkan_renderer_create_shader_module (self->renderer, resources->vert,
+                                             &vs_module))
     return FALSE;
 
   VkShaderModule fs_module;
-  if (!gulkan_renderer_create_shader_module (
-        self->renderer, resources->frag, &fs_module))
+  if (!gulkan_renderer_create_shader_module (self->renderer, resources->frag,
+                                             &fs_module))
     return FALSE;
 
   VkRenderPass pass = gulkan_render_pass_get_handle (render_pass);
@@ -290,8 +292,9 @@ _init_pipeline (SceneCube        *self,
     .renderPass = pass,
   };
 
-  VkResult res = vkCreateGraphicsPipelines (
-    device, VK_NULL_HANDLE, 1, &pipeline_info, NULL, &self->pipeline);
+  VkResult res = vkCreateGraphicsPipelines (device, VK_NULL_HANDLE, 1,
+                                            &pipeline_info, NULL,
+                                            &self->pipeline);
 
   vkDestroyShaderModule (device, vs_module, NULL);
   vkDestroyShaderModule (device, fs_module, NULL);
@@ -344,18 +347,18 @@ _init_descriptor_set_layout (SceneCube *self)
   };
 
   VkResult res;
-  res = vkCreateDescriptorSetLayout (device, &descriptor_info,
-                                     NULL, &self->descriptor_set_layout);
+  res = vkCreateDescriptorSetLayout (device, &descriptor_info, NULL,
+                                     &self->descriptor_set_layout);
   vk_check_error ("vkCreateDescriptorSetLayout", res, FALSE);
 
   return TRUE;
 }
 
 static gboolean
-_initialize (SceneCube *self,
-             GulkanContext *gulkan,
-             GulkanRenderer *renderer,
-             GulkanRenderPass *render_pass,
+_initialize (SceneCube            *self,
+             GulkanContext        *gulkan,
+             GulkanRenderer       *renderer,
+             GulkanRenderPass     *render_pass,
              VkSampleCountFlagBits sample_count)
 {
   self->gulkan = g_object_ref (gulkan);
@@ -367,9 +370,12 @@ _initialize (SceneCube *self,
 
   self->vb = gulkan_vertex_buffer_new (device,
                                        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP);
-  gulkan_vertex_buffer_add_attribute (self->vb, 3, sizeof(positions), 0, (uint8_t*) positions);
-  gulkan_vertex_buffer_add_attribute (self->vb, 3, sizeof(colors), 0, (uint8_t*) colors);
-  gulkan_vertex_buffer_add_attribute (self->vb, 3, sizeof(normals), 0, (uint8_t*) normals);
+  gulkan_vertex_buffer_add_attribute (self->vb, 3, sizeof (positions), 0,
+                                      (uint8_t *) positions);
+  gulkan_vertex_buffer_add_attribute (self->vb, 3, sizeof (colors), 0,
+                                      (uint8_t *) colors);
+  gulkan_vertex_buffer_add_attribute (self->vb, 3, sizeof (normals), 0,
+                                      (uint8_t *) normals);
 
   if (!gulkan_vertex_buffer_upload (self->vb))
     return FALSE;
@@ -394,8 +400,8 @@ _initialize (SceneCube *self,
     return FALSE;
 
   VkDeviceSize ubo_size = sizeof (SceneCubeUniformBuffer);
-  if (!scene_object_initialize (obj, gulkan,
-                                &self->descriptor_set_layout, ubo_size))
+  if (!scene_object_initialize (obj, gulkan, &self->descriptor_set_layout,
+                                ubo_size))
     return FALSE;
 
   scene_object_update_descriptors (obj);
@@ -412,12 +418,12 @@ scene_cube_init (SceneCube *self)
 }
 
 SceneCube *
-scene_cube_new (GulkanContext         *gulkan,
+scene_cube_new (GulkanContext        *gulkan,
                 GulkanRenderer       *renderer,
                 GulkanRenderPass     *render_pass,
                 VkSampleCountFlagBits sample_count)
 {
-  SceneCube *self = (SceneCube*) g_object_new (SCENE_TYPE_CUBE, 0);
+  SceneCube *self = (SceneCube *) g_object_new (SCENE_TYPE_CUBE, 0);
   _initialize (self, gulkan, renderer, render_pass, sample_count);
   return self;
 }
@@ -458,10 +464,10 @@ _set_transformation (SceneCube *self)
 }
 
 void
-scene_cube_render (SceneCube          *self,
-                   VkCommandBuffer     cmd_buffer,
-                   graphene_matrix_t  *view,
-                   graphene_matrix_t  *projection)
+scene_cube_render (SceneCube         *self,
+                   VkCommandBuffer    cmd_buffer,
+                   graphene_matrix_t *view,
+                   graphene_matrix_t *projection)
 {
   if (!gulkan_vertex_buffer_is_initialized (self->vb))
     {
@@ -525,8 +531,7 @@ scene_cube_render (SceneCube          *self,
 }
 
 void
-scene_cube_override_position (SceneCube          *self,
-                              graphene_point3d_t *position)
+scene_cube_override_position (SceneCube *self, graphene_point3d_t *position)
 {
   self->pos = *position;
 }

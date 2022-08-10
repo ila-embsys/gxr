@@ -10,13 +10,12 @@
 #define SCENE_OBJECT_H_
 
 #include "glib.h"
-#include <gulkan.h>
 #include <graphene.h>
+#include <gulkan.h>
 #include <gxr.h>
 
-#define SCENE_TYPE_OBJECT scene_object_get_type()
-G_DECLARE_DERIVABLE_TYPE (SceneObject, scene_object,
-                          SCENE, OBJECT, GObject)
+#define SCENE_TYPE_OBJECT scene_object_get_type ()
+G_DECLARE_DERIVABLE_TYPE (SceneObject, scene_object, SCENE, OBJECT, GObject)
 
 /**
  * SceneObjectClass:
@@ -34,16 +33,13 @@ void
 scene_object_set_scale (SceneObject *self, float scale);
 
 void
-scene_object_set_position (SceneObject        *self,
-                           graphene_point3d_t *position);
+scene_object_set_position (SceneObject *self, graphene_point3d_t *position);
 
 void
-scene_object_get_position (SceneObject        *self,
-                           graphene_point3d_t *position);
+scene_object_get_position (SceneObject *self, graphene_point3d_t *position);
 
 void
-scene_object_set_rotation_euler (SceneObject      *self,
-                                 graphene_euler_t *euler);
+scene_object_set_rotation_euler (SceneObject *self, graphene_euler_t *euler);
 
 void
 scene_object_get_transformation (SceneObject       *self,
@@ -56,7 +52,7 @@ scene_object_bind (SceneObject     *self,
 
 gboolean
 scene_object_initialize (SceneObject           *self,
-                         GulkanContext          *gulkan,
+                         GulkanContext         *gulkan,
                          VkDescriptorSetLayout *layout,
                          VkDeviceSize           uniform_buffer_size);
 
@@ -69,8 +65,7 @@ void
 scene_object_update_descriptors (SceneObject *self);
 
 void
-scene_object_set_transformation (SceneObject       *self,
-                                 graphene_matrix_t *mat);
+scene_object_set_transformation (SceneObject *self, graphene_matrix_t *mat);
 
 graphene_matrix_t
 scene_object_get_transformation_no_scale (SceneObject *self);
@@ -97,7 +92,6 @@ VkDescriptorSet
 scene_object_get_descriptor_set (SceneObject *self);
 
 void
-scene_object_update_ubo (SceneObject *self,
-                         gpointer     uniform_buffer);
+scene_object_update_ubo (SceneObject *self, gpointer uniform_buffer);
 
 #endif /* SCENE_OBJECT_H_ */

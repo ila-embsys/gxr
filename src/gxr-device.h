@@ -8,7 +8,7 @@
 #ifndef GXR_DEVICE_H_
 #define GXR_DEVICE_H_
 
-#if !defined (GXR_INSIDE) && !defined (GXR_COMPILATION)
+#if !defined(GXR_INSIDE) && !defined(GXR_COMPILATION)
 #error "Only <gxr.h> can be included directly."
 #endif
 
@@ -20,7 +20,7 @@
 
 G_BEGIN_DECLS
 
-#define GXR_TYPE_DEVICE gxr_device_get_type()
+#define GXR_TYPE_DEVICE gxr_device_get_type ()
 G_DECLARE_DERIVABLE_TYPE (GxrDevice, gxr_device, GXR, DEVICE, GObject)
 
 /**
@@ -48,19 +48,16 @@ gboolean
 gxr_device_is_pose_valid (GxrDevice *self);
 
 void
-gxr_device_set_transformation_direct (GxrDevice         *self,
-                                      graphene_matrix_t *mat);
+gxr_device_set_transformation_direct (GxrDevice *self, graphene_matrix_t *mat);
 
 void
-gxr_device_get_transformation_direct (GxrDevice         *self,
-                                      graphene_matrix_t *mat);
+gxr_device_get_transformation_direct (GxrDevice *self, graphene_matrix_t *mat);
 
 guint64
 gxr_device_get_handle (GxrDevice *self);
 
 void
 gxr_device_set_handle (GxrDevice *self, guint64 handle);
-
 
 G_END_DECLS
 

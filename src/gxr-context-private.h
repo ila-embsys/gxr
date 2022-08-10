@@ -29,4 +29,3 @@ XrSessionState
 gxr_context_get_session_state (GxrContext *self);
 
 #endif /* GXR_CONTEXT_PRIVATE_H_ */
-
