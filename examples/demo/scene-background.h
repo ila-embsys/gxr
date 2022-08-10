@@ -22,7 +22,7 @@ G_DECLARE_FINAL_TYPE (SceneBackground, scene_background,
                       SCENE, BACKGROUND, SceneObject)
 
 SceneBackground *
-scene_background_new (GulkanClient          *gulkan,
+scene_background_new (GulkanContext          *gulkan,
                       VkDescriptorSetLayout *layout);
 
 void

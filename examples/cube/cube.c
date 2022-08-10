@@ -102,10 +102,10 @@ cube_example_finalize (GObject *gobject)
   g_source_remove (self->render_source);
   g_source_remove (self->sigint_signal);
 
-  GulkanClient *gc = gxr_context_get_gulkan (self->context);
-  GulkanDevice *gd = gulkan_client_get_device (gc);
+  GulkanContext *gc = gxr_context_get_gulkan (self->context);
+  GulkanDevice *gd = gulkan_context_get_device (gc);
 
-  VkDevice device = gulkan_client_get_device_handle (gc);
+  VkDevice device = gulkan_context_get_device_handle (gc);
   GulkanQueue *queue = gulkan_device_get_graphics_queue (gd);
 
   vkDeviceWaitIdle (device);
@@ -146,8 +146,8 @@ cube_example_class_init (CubeExampleClass *klass)
 static gboolean
 _init_pipeline (CubeExample *self)
 {
-  GulkanClient *gc = gxr_context_get_gulkan (self->context);
-  VkDevice device = gulkan_client_get_device_handle (gc);
+  GulkanContext *gc = gxr_context_get_gulkan (self->context);
+  VkDevice device = gulkan_context_get_device_handle (gc);
   VkExtent2D extent = gulkan_renderer_get_extent (GULKAN_RENDERER (self));
 
   VkPipelineVertexInputStateCreateInfo vi_create_info = {
@@ -283,8 +283,8 @@ _init_pipeline_layout (CubeExample *self)
     .pPushConstantRanges = NULL
   };
 
-  GulkanClient *gc = gxr_context_get_gulkan (self->context);
-  VkDevice device = gulkan_client_get_device_handle (gc);
+  GulkanContext *gc = gxr_context_get_gulkan (self->context);
+  VkDevice device = gulkan_context_get_device_handle (gc);
 
   VkResult res = vkCreatePipelineLayout (device, &info, NULL,
                                          &self->pipeline_layout);
@@ -305,8 +305,8 @@ _init_descriptor_set_layout (CubeExample *self)
     },
   };
 
-  GulkanClient *gc = gxr_context_get_gulkan (self->context);
-  GulkanDevice *gulkan_device = gulkan_client_get_device (gc);
+  GulkanContext *gc = gxr_context_get_gulkan (self->context);
+  GulkanDevice *gulkan_device = gulkan_context_get_device (gc);
 
   VkDevice device = gulkan_device_get_handle (gulkan_device);
 
@@ -327,8 +327,8 @@ _init_descriptor_set_layout (CubeExample *self)
 static void
 _update_descriptors (CubeExample *self)
 {
-  GulkanClient *gc = gxr_context_get_gulkan (self->context);
-  VkDevice device = gulkan_client_get_device_handle (gc);
+  GulkanContext *gc = gxr_context_get_gulkan (self->context);
+  VkDevice device = gulkan_context_get_device_handle (gc);
 
   VkWriteDescriptorSet *write_descriptor_sets = (VkWriteDescriptorSet []) {
     {
@@ -356,9 +356,9 @@ _init_pipeline_cache (CubeExample *self)
     .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO
   };
 
-  GulkanClient *gc = gxr_context_get_gulkan (self->context);
+  GulkanContext *gc = gxr_context_get_gulkan (self->context);
 
-  VkResult res = vkCreatePipelineCache (gulkan_client_get_device_handle (gc),
+  VkResult res = vkCreatePipelineCache (gulkan_context_get_device_handle (gc),
                                        &info, NULL, &self->pipeline_cache);
   vk_check_error ("vkCreatePipelineCache", res, FALSE);
 
@@ -369,10 +369,10 @@ static GxrContext *
 _create_gxr_context ()
 {
   GSList *instance_ext_list =
-    gulkan_client_get_external_memory_instance_extensions ();
+    gulkan_context_get_external_memory_instance_extensions ();
 
   GSList *device_ext_list =
-    gulkan_client_get_external_memory_device_extensions ();
+    gulkan_context_get_external_memory_device_extensions ();
 
   device_ext_list =
     g_slist_append (device_ext_list,
@@ -390,8 +390,8 @@ _create_gxr_context ()
 static gboolean
 _init_descriptor_pool (CubeExample *self)
 {
-  GulkanClient *gc = gxr_context_get_gulkan (self->context);
-  GulkanDevice *gulkan_device = gulkan_client_get_device (gc);
+  GulkanContext *gc = gxr_context_get_gulkan (self->context);
+  GulkanDevice *gulkan_device = gulkan_context_get_device (gc);
 
   uint32_t set_count = 2;
 
@@ -422,8 +422,8 @@ _init_descriptor_pool (CubeExample *self)
 static gboolean
 _init_vertex_buffer (CubeExample *self)
 {
-  GulkanClient *gc = gxr_context_get_gulkan (self->context);
-  GulkanDevice *device = gulkan_client_get_device (gc);
+  GulkanContext *gc = gxr_context_get_gulkan (self->context);
+  GulkanDevice *device = gulkan_context_get_device (gc);
   self->vb = gulkan_vertex_buffer_new (device,
                                        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP);
   gulkan_vertex_buffer_add_attribute (self->vb, 3, sizeof(positions), 0, (uint8_t*) positions);
@@ -440,8 +440,8 @@ _init_vertex_buffer (CubeExample *self)
 static gboolean
 _init_uniform_buffer (CubeExample *self)
 {
-  GulkanClient *gc = gxr_context_get_gulkan (self->context);
-  GulkanDevice *gulkan_device = gulkan_client_get_device (gc);
+  GulkanContext *gc = gxr_context_get_gulkan (self->context);
+  GulkanDevice *gulkan_device = gulkan_context_get_device (gc);
   /* Create uniform buffer to hold a matrix per eye */
   self->uniform_buffer = gulkan_uniform_buffer_new (gulkan_device,
                                                     sizeof (UniformBuffer));
@@ -470,8 +470,8 @@ _init (CubeExample *self)
   self->cmd_buffers = g_malloc (sizeof(GulkanCmdBuffer*) *
                                 gxr_context_get_swapchain_length(self->context));
 
-  gulkan_renderer_set_client (GULKAN_RENDERER (self),
-                              gxr_context_get_gulkan (self->context));
+  gulkan_renderer_set_context (GULKAN_RENDERER (self),
+                               gxr_context_get_gulkan (self->context));
 
   VkExtent2D extent;
   gxr_context_get_render_dimensions (self->context, &extent);
@@ -588,8 +588,8 @@ _render_stereo (CubeExample *self, VkCommandBuffer cmd_buffer,
 
 static void
 _build_cmd_buffers (CubeExample *self) {
-  GulkanClient *gc = gxr_context_get_gulkan (self->context);
-  GulkanDevice *device = gulkan_client_get_device (gc);
+  GulkanContext *gc = gxr_context_get_gulkan (self->context);
+  GulkanDevice *device = gulkan_context_get_device (gc);
   GulkanQueue *queue = gulkan_device_get_graphics_queue (device);
 
   uint32_t swapchain_length = gxr_context_get_swapchain_length(self->context);
@@ -608,8 +608,8 @@ static gboolean
 _iterate_cb (gpointer _self)
 {
   CubeExample *self = (CubeExample*) _self;
-  GulkanClient *gc = gxr_context_get_gulkan (self->context);
-  GulkanDevice *device = gulkan_client_get_device (gc);
+  GulkanContext *gc = gxr_context_get_gulkan (self->context);
+  GulkanDevice *device = gulkan_context_get_device (gc);
   GulkanQueue *queue = gulkan_device_get_graphics_queue (device);
 
   gxr_context_poll_event (self->context);

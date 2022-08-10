@@ -21,7 +21,7 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (SceneCube, scene_cube, SCENE, CUBE, SceneObject)
 
 SceneCube *
-scene_cube_new (GulkanClient         *gulkan,
+scene_cube_new (GulkanContext         *gulkan,
                 GulkanRenderer       *renderer,
                 GulkanRenderPass     *render_pass,
                 VkSampleCountFlagBits sample_count);

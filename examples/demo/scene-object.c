@@ -16,7 +16,7 @@ typedef struct _SceneObjectPrivate
 {
   GObject parent;
 
-  GulkanClient *gulkan;
+  GulkanContext *gulkan;
 
   GulkanUniformBuffer *uniform_buffer;
 
@@ -133,14 +133,14 @@ scene_object_set_rotation_euler (SceneObject      *self,
 
 gboolean
 scene_object_initialize (SceneObject           *self,
-                         GulkanClient          *gulkan,
+                         GulkanContext          *gulkan,
                          VkDescriptorSetLayout *layout,
                          VkDeviceSize           uniform_buffer_size)
 {
   SceneObjectPrivate *priv = scene_object_get_instance_private (self);
   priv->gulkan = g_object_ref (gulkan);
 
-  GulkanDevice *device = gulkan_client_get_device (gulkan);
+  GulkanDevice *device = gulkan_context_get_device (gulkan);
   VkDevice vk_device = gulkan_device_get_handle (device);
 
   /* Create uniform buffer to hold a matrix per eye */
@@ -192,7 +192,7 @@ scene_object_update_descriptors_texture (SceneObject *self,
                                          VkImageView  image_view)
 {
   SceneObjectPrivate *priv = scene_object_get_instance_private (self);
-  VkDevice device = gulkan_client_get_device_handle (priv->gulkan);
+  VkDevice device = gulkan_context_get_device_handle (priv->gulkan);
 
   VkWriteDescriptorSet *write_descriptor_sets = (VkWriteDescriptorSet []) {
     {
@@ -231,7 +231,7 @@ void
 scene_object_update_descriptors (SceneObject *self)
 {
   SceneObjectPrivate *priv = scene_object_get_instance_private (self);
-  VkDevice device = gulkan_client_get_device_handle (priv->gulkan);
+  VkDevice device = gulkan_context_get_device_handle (priv->gulkan);
 
   VkWriteDescriptorSet *write_descriptor_sets = (VkWriteDescriptorSet []) {
     {

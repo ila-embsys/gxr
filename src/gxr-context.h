@@ -104,7 +104,7 @@ gxr_context_load_action_manifest (GxrContext *self,
 void
 gxr_context_request_quit (GxrContext *self);
 
-GulkanClient*
+GulkanContext*
 gxr_context_get_gulkan (GxrContext *self);
 
 gboolean

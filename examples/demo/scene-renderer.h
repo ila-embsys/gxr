@@ -65,7 +65,7 @@ void
 scene_renderer_update_lights (SceneRenderer *self,
                               GList         *controllers);
 
-GulkanClient *
+GulkanContext *
 scene_renderer_get_gulkan (SceneRenderer *self);
 
 G_END_DECLS

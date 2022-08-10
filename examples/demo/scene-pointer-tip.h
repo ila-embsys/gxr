@@ -32,7 +32,7 @@ G_DECLARE_FINAL_TYPE (ScenePointerTip, scene_pointer_tip,
 #define GXR_TIP_APPARENT_SIZE_DISTANCE 3.0f
 
 ScenePointerTip *
-scene_pointer_tip_new (GulkanClient          *gulkan,
+scene_pointer_tip_new (GulkanContext          *gulkan,
                        VkDescriptorSetLayout *layout,
                        VkBuffer               lights);
 
@@ -78,8 +78,8 @@ GdkPixbuf*
 scene_pointer_tip_update_pixbuf (ScenePointerTip *self,
                                  float          progress);
 
-GulkanClient*
-scene_pointer_tip_get_gulkan_client (ScenePointerTip *self);
+GulkanContext*
+scene_pointer_tip_get_gulkan_context (ScenePointerTip *self);
 
 void
 scene_pointer_tip_update_texture_resolution (ScenePointerTip *self,

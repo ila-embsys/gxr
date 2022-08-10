@@ -42,11 +42,11 @@ scene_background_init (SceneBackground *self)
 
 static gboolean
 _initialize (SceneBackground       *self,
-             GulkanClient          *gulkan,
+             GulkanContext          *gulkan,
              VkDescriptorSetLayout *layout);
 
 SceneBackground *
-scene_background_new (GulkanClient          *gulkan,
+scene_background_new (GulkanContext          *gulkan,
                       VkDescriptorSetLayout *layout)
 {
   SceneBackground *self =
@@ -137,10 +137,10 @@ _append_floor (GulkanVertexBuffer *self,
 
 static gboolean
 _initialize (SceneBackground       *self,
-             GulkanClient          *gulkan,
+             GulkanContext          *gulkan,
              VkDescriptorSetLayout *layout)
 {
-  GulkanDevice *device = gulkan_client_get_device (gulkan);
+  GulkanDevice *device = gulkan_context_get_device (gulkan);
   self->vertex_buffer =
     gulkan_vertex_buffer_new (device, VK_PRIMITIVE_TOPOLOGY_LINE_LIST);
 

@@ -139,10 +139,10 @@ static GxrContext *
 _create_gxr_context ()
 {
   GSList *instance_ext_list =
-    gulkan_client_get_external_memory_instance_extensions ();
+    gulkan_context_get_external_memory_instance_extensions ();
 
   GSList *device_ext_list =
-    gulkan_client_get_external_memory_device_extensions ();
+    gulkan_context_get_external_memory_device_extensions ();
 
   device_ext_list =
     g_slist_append (device_ext_list,
@@ -259,7 +259,7 @@ _update_lights_cb (gpointer _self)
 static gboolean
 _init_vulkan (Example       *self,
               SceneRenderer *renderer,
-              GulkanClient  *gc)
+              GulkanContext  *gc)
 {
   GxrContext *context = self->context;
   if (!scene_renderer_init_vulkan (renderer, context))
@@ -297,7 +297,7 @@ _device_activate_cb (GxrDeviceManager *dm,
 
   VkDescriptorSetLayout *descriptor_set_layout =
     scene_renderer_get_descriptor_set_layout (self->renderer);
-  GulkanClient *client = gxr_context_get_gulkan (self->context);
+  GulkanContext *client = gxr_context_get_gulkan (self->context);
 
   VkBuffer lights =
     scene_renderer_get_lights_buffer_handle (self->renderer);
@@ -544,7 +544,7 @@ _init_example (Example *self)
     g_signal_connect (dm, "device-deactivate-event",
                       (GCallback) _device_deactivate_cb, self);
 
-  GulkanClient *gc = gxr_context_get_gulkan (self->context);
+  GulkanContext *gc = gxr_context_get_gulkan (self->context);
 
   self->renderer = scene_renderer_new ();
 

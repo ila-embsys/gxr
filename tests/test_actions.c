@@ -15,7 +15,7 @@ _test_load_action_manifest ()
   GxrContext *context = gxr_context_new ("Test Actions", 1);
   g_assert_nonnull (context);
 
-  GulkanClient *gc = gulkan_client_new ();
+  GulkanContext *gc = gulkan_context_new ();
   g_assert_nonnull (gc);
 
   if (!gxr_context_load_action_manifest (

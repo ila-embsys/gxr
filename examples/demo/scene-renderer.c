@@ -132,9 +132,9 @@ scene_renderer_finalize (GObject *gobject)
 {
   SceneRenderer *self = SCENE_RENDERER (gobject);
 
-  GulkanClient *gc = gxr_context_get_gulkan (self->context);
+  GulkanContext *gc = gxr_context_get_gulkan (self->context);
 
-  VkDevice device = gulkan_client_get_device_handle (gc);
+  VkDevice device = gulkan_context_get_device_handle (gc);
   if (device != VK_NULL_HANDLE)
     vkDeviceWaitIdle (device);
 
@@ -246,8 +246,8 @@ _init_descriptor_layout (SceneRenderer *self)
     }
   };
 
-  GulkanClient *gc = gxr_context_get_gulkan (self->context);
-  VkDevice device = gulkan_client_get_device_handle (gc);
+  GulkanContext *gc = gxr_context_get_gulkan (self->context);
+  VkDevice device = gulkan_context_get_device_handle (gc);
   VkResult res = vkCreateDescriptorSetLayout (device,
                                              &info, NULL,
                                              &self->descriptor_set_layout);
@@ -267,9 +267,9 @@ _init_pipeline_layout (SceneRenderer *self)
     .pPushConstantRanges = NULL
   };
 
-  GulkanClient *gc = gxr_context_get_gulkan (self->context);
+  GulkanContext *gc = gxr_context_get_gulkan (self->context);
 
-  VkResult res = vkCreatePipelineLayout (gulkan_client_get_device_handle (gc),
+  VkResult res = vkCreatePipelineLayout (gulkan_context_get_device_handle (gc),
                                         &info, NULL, &self->pipeline_layout);
   vk_check_error ("vkCreatePipelineLayout", res, FALSE);
 
@@ -283,9 +283,9 @@ _init_pipeline_cache (SceneRenderer *self)
     .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO
   };
 
-  GulkanClient *gc = gxr_context_get_gulkan (self->context);
+  GulkanContext *gc = gxr_context_get_gulkan (self->context);
 
-  VkResult res = vkCreatePipelineCache (gulkan_client_get_device_handle (gc),
+  VkResult res = vkCreatePipelineCache (gulkan_context_get_device_handle (gc),
                                        &info, NULL, &self->pipeline_cache);
   vk_check_error ("vkCreatePipelineCache", res, FALSE);
 
@@ -513,9 +513,9 @@ _init_graphics_pipelines (SceneRenderer *self)
         .subpass = 0
       };
 
-      GulkanClient *gc = gxr_context_get_gulkan (self->context);
+      GulkanContext *gc = gxr_context_get_gulkan (self->context);
 
-      VkDevice device = gulkan_client_get_device_handle (gc);
+      VkDevice device = gulkan_context_get_device_handle (gc);
       VkResult res;
       res = vkCreateGraphicsPipelines (device, self->pipeline_cache, 1,
                                       &pipeline_info, NULL,
@@ -539,8 +539,8 @@ scene_renderer_init_vulkan (SceneRenderer *self,
   self->context = context;
   g_object_ref (self->context);
 
-  gulkan_renderer_set_client (GULKAN_RENDERER (self),
-                              gxr_context_get_gulkan (context));
+  gulkan_renderer_set_context (GULKAN_RENDERER (self),
+                               gxr_context_get_gulkan (context));
 
   self->sample_count = VK_SAMPLE_COUNT_1_BIT;
 
@@ -551,8 +551,8 @@ scene_renderer_init_vulkan (SceneRenderer *self,
     return FALSE;
 
 
-  GulkanClient *gc = gxr_context_get_gulkan (context);
-  GulkanDevice *device = gulkan_client_get_device (gc);
+  GulkanContext *gc = gxr_context_get_gulkan (context);
+  GulkanDevice *device = gulkan_context_get_device (gc);
 
   self->lights_buffer =
     gulkan_uniform_buffer_new (device, sizeof (SceneLights));
@@ -659,8 +659,8 @@ _draw (SceneRenderer *self)
   else _init_renderdoc ();
 #endif
 
-  GulkanClient *gc = gxr_context_get_gulkan (self->context);
-  GulkanDevice *device = gulkan_client_get_device (gc);
+  GulkanContext *gc = gxr_context_get_gulkan (self->context);
+  GulkanDevice *device = gulkan_context_get_device (gc);
 
   GulkanQueue *queue = gulkan_device_get_graphics_queue (device);
 
@@ -716,7 +716,7 @@ scene_renderer_get_lights_buffer_handle (SceneRenderer *self)
   return gulkan_uniform_buffer_get_handle (self->lights_buffer);
 }
 
-GulkanClient *
+GulkanContext *
 scene_renderer_get_gulkan (SceneRenderer *self)
 {
   return gxr_context_get_gulkan (self->context);

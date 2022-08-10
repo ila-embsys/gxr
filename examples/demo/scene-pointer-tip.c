@@ -52,7 +52,7 @@ struct _ScenePointerTip
 {
   GObject parent;
 
-  GulkanClient *gulkan;
+  GulkanContext *gulkan;
   VkBuffer lights;
 
   GulkanVertexBuffer *vertex_buffer;
@@ -153,7 +153,7 @@ _initialize (ScenePointerTip* self, VkDescriptorSetLayout *layout)
 {
   SceneObject *obj = SCENE_OBJECT (self);
 
-  GulkanDevice *device = gulkan_client_get_device (self->gulkan);
+  GulkanDevice *device = gulkan_context_get_device (self->gulkan);
 
   self->vertex_buffer =
     gulkan_vertex_buffer_new (device, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
@@ -191,7 +191,7 @@ scene_pointer_tip_set_width_meters (ScenePointerTip *self,
 }
 
 ScenePointerTip *
-scene_pointer_tip_new (GulkanClient          *gulkan,
+scene_pointer_tip_new (GulkanContext          *gulkan,
                        VkDescriptorSetLayout *layout,
                        VkBuffer               lights)
 {
@@ -219,7 +219,7 @@ scene_pointer_tip_finalize (GObject *gobject)
   /* cancels potentially running animation */
   scene_pointer_tip_set_active (SCENE_POINTER_TIP (self), FALSE);
 
-  VkDevice device = gulkan_client_get_device_handle (self->gulkan);
+  VkDevice device = gulkan_context_get_device_handle (self->gulkan);
   vkDestroySampler (device, self->sampler, NULL);
 
   g_object_unref (self->vertex_buffer);
@@ -236,7 +236,7 @@ scene_pointer_tip_finalize (GObject *gobject)
 static void
 _update_descriptors (ScenePointerTip *self)
 {
-  VkDevice device = gulkan_client_get_device_handle (self->gulkan);
+  VkDevice device = gulkan_context_get_device_handle (self->gulkan);
 
   VkBuffer transformation_buffer =
   scene_object_get_transformation_buffer (SCENE_OBJECT (self));
@@ -323,7 +323,7 @@ scene_pointer_tip_set_and_submit_texture (ScenePointerTip *tip,
   self->texture_width = extent.width;
   self->texture_height = extent.height;
 
-  VkDevice device = gulkan_client_get_device_handle (self->gulkan);
+  VkDevice device = gulkan_context_get_device_handle (self->gulkan);
 
   float aspect_ratio = (float) extent.width / (float) extent.height;
 
@@ -471,8 +471,8 @@ scene_pointer_tip_get_texture (ScenePointerTip *self)
   return self->texture;
 }
 
-GulkanClient*
-scene_pointer_tip_get_gulkan_client (ScenePointerTip *self)
+GulkanContext*
+scene_pointer_tip_get_gulkan_context (ScenePointerTip *self)
 {
   return self->gulkan;
 }
@@ -497,7 +497,7 @@ _cancel_animation (ScenePointerTip *self)
 static void
 _init_texture (ScenePointerTip *self)
 {
-  GulkanClient *client = scene_pointer_tip_get_gulkan_client (self);
+  GulkanContext *client = scene_pointer_tip_get_gulkan_context (self);
 
   GdkPixbuf* pixbuf = scene_pointer_tip_update_pixbuf (self, 1.0f);
 

@@ -23,7 +23,7 @@ G_DECLARE_FINAL_TYPE (ScenePointer, scene_pointer,
                       SCENE, POINTER, SceneObject)
 
 ScenePointer *
-scene_pointer_new (GulkanClient          *gulkan,
+scene_pointer_new (GulkanContext          *gulkan,
                    VkDescriptorSetLayout *layout);
 
 void

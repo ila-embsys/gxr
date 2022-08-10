@@ -55,10 +55,10 @@ scene_pointer_init (ScenePointer *self)
 
 static gboolean
 _initialize (ScenePointer          *self,
-             GulkanClient          *gulkan,
+             GulkanContext          *gulkan,
              VkDescriptorSetLayout *layout)
 {
-  GulkanDevice *device = gulkan_client_get_device (gulkan);
+  GulkanDevice *device = gulkan_context_get_device (gulkan);
   self->vertex_buffer =
     gulkan_vertex_buffer_new (device, VK_PRIMITIVE_TOPOLOGY_LINE_LIST);
   gulkan_vertex_buffer_reset (self->vertex_buffer);
@@ -91,7 +91,7 @@ _initialize (ScenePointer          *self,
 }
 
 ScenePointer *
-scene_pointer_new (GulkanClient          *gulkan,
+scene_pointer_new (GulkanContext          *gulkan,
                    VkDescriptorSetLayout *layout)
 {
   ScenePointer *self =

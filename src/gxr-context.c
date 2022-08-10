@@ -20,7 +20,7 @@
 struct _GxrContext
 {
   GObject parent;
-  GulkanClient *gc;
+  GulkanContext *gc;
 
   struct {
     gboolean vulkan_enable2;
@@ -806,15 +806,15 @@ _create_projection_views (GxrContext* self)
 static gboolean
 _init_session (GxrContext *self)
 {
-  GulkanClient *gc = gxr_context_get_gulkan (self);
-  GulkanDevice *gd = gulkan_client_get_device (gc);
+  GulkanContext *gc = gxr_context_get_gulkan (self);
+  GulkanDevice *gd = gulkan_context_get_device (gc);
   GulkanQueue *queue = gulkan_device_get_graphics_queue (gd);
 
   uint32_t family_index = gulkan_queue_get_family_index (queue);
 
   self->graphics_binding = (XrGraphicsBindingVulkanKHR){
     .type = XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR,
-    .instance = gulkan_client_get_instance_handle (gc),
+    .instance = gulkan_context_get_instance_handle (gc),
     .physicalDevice = gulkan_device_get_physical_handle (gd),
     .device = gulkan_device_get_handle (gd),
     .queueFamilyIndex = family_index,
@@ -1244,7 +1244,7 @@ init_vulkan_enable2 (GxrContext *self,
                           &transfer_queue_index))
     return TRUE;
 
-  self->gc = gulkan_client_new_from_vk (vk_instance,
+  self->gc = gulkan_context_new_from_vk (vk_instance,
                                         physical_device,
                                         vk_device,
                                         graphics_queue_index,
@@ -1369,7 +1369,7 @@ gxr_context_finalize (GObject *gobject)
   _cleanup (self);
   g_clear_object (&self->manifest);
 
-  GulkanClient *gulkan = gxr_context_get_gulkan (GXR_CONTEXT (gobject));
+  GulkanContext *gulkan = gxr_context_get_gulkan (GXR_CONTEXT (gobject));
 
   if (gulkan)
     g_object_unref (gulkan);
@@ -1384,7 +1384,7 @@ gxr_context_finalize (GObject *gobject)
   G_OBJECT_CLASS (gxr_context_parent_class)->finalize (gobject);
 }
 
-GulkanClient*
+GulkanContext*
 gxr_context_get_gulkan (GxrContext *self)
 {
   return self->gc;
@@ -1754,8 +1754,8 @@ gxr_context_init_framebuffers (GxrContext           *self,
 {
   VkFormat format = gxr_context_get_swapchain_format (self);
 
-  GulkanClient *gc = gxr_context_get_gulkan (self);
-  GulkanDevice *device = gulkan_client_get_device (gc);
+  GulkanContext *gc = gxr_context_get_gulkan (self);
+  GulkanDevice *device = gulkan_context_get_device (gc);
 
   self->framebuffer_extent = extent;
   self->framebuffer_sample_count = sample_count;

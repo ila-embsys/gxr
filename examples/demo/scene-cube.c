@@ -125,7 +125,7 @@ struct _SceneCube
   SceneObject parent;
 
   GulkanVertexBuffer *vb;
-  GulkanClient *gulkan;
+  GulkanContext *gulkan;
   GulkanRenderer *renderer;
   VkSampleCountFlagBits sample_count;
 
@@ -164,7 +164,7 @@ _init_pipeline (SceneCube        *self,
 {
   const ShaderResources *resources = (const ShaderResources*) data;
 
-  VkDevice device = gulkan_client_get_device_handle (self->gulkan);
+  VkDevice device = gulkan_context_get_device_handle (self->gulkan);
 
   VkPipelineVertexInputStateCreateInfo vi_create_info = {
     .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
@@ -305,7 +305,7 @@ _init_pipeline_layout (SceneCube *self)
     .pPushConstantRanges = NULL
   };
 
-  VkDevice device = gulkan_client_get_device_handle (self->gulkan);
+  VkDevice device = gulkan_context_get_device_handle (self->gulkan);
 
   VkResult res = vkCreatePipelineLayout (device, &info, NULL,
                                          &self->pipeline_layout);
@@ -326,7 +326,7 @@ _init_descriptor_set_layout (SceneCube *self)
     },
   };
 
-  GulkanDevice *gulkan_device = gulkan_client_get_device (self->gulkan);
+  GulkanDevice *gulkan_device = gulkan_context_get_device (self->gulkan);
 
   VkDevice device = gulkan_device_get_handle (gulkan_device);
 
@@ -346,7 +346,7 @@ _init_descriptor_set_layout (SceneCube *self)
 
 static gboolean
 _initialize (SceneCube *self,
-             GulkanClient *gulkan,
+             GulkanContext *gulkan,
              GulkanRenderer *renderer,
              GulkanRenderPass *render_pass,
              VkSampleCountFlagBits sample_count)
@@ -356,7 +356,7 @@ _initialize (SceneCube *self,
 
   self->sample_count = sample_count;
 
-  GulkanDevice *device = gulkan_client_get_device (gulkan);
+  GulkanDevice *device = gulkan_context_get_device (gulkan);
 
   self->vb = gulkan_vertex_buffer_new (device,
                                        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP);
@@ -405,7 +405,7 @@ scene_cube_init (SceneCube *self)
 }
 
 SceneCube *
-scene_cube_new (GulkanClient         *gulkan,
+scene_cube_new (GulkanContext         *gulkan,
                 GulkanRenderer       *renderer,
                 GulkanRenderPass     *render_pass,
                 VkSampleCountFlagBits sample_count)
@@ -420,7 +420,7 @@ scene_cube_finalize (GObject *gobject)
 {
   SceneCube *self = SCENE_CUBE (gobject);
 
-  VkDevice device = gulkan_client_get_device_handle (self->gulkan);
+  VkDevice device = gulkan_context_get_device_handle (self->gulkan);
   vkDestroyPipelineLayout (device, self->pipeline_layout, NULL);
   vkDestroyDescriptorSetLayout (device, self->descriptor_set_layout, NULL);
   vkDestroyPipeline (device, self->pipeline, NULL);

@@ -58,7 +58,7 @@ scene_object_bind (SceneObject     *self,
 
 gboolean
 scene_object_initialize (SceneObject           *self,
-                         GulkanClient          *gulkan,
+                         GulkanContext          *gulkan,
                          VkDescriptorSetLayout *layout,
                          VkDeviceSize           uniform_buffer_size);
 
