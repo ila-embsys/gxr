@@ -117,10 +117,6 @@ struct _GxrDeviceManager *
 gxr_context_get_device_manager (GxrContext *self);
 
 uint32_t
-gxr_context_get_view_count (GxrContext *self);
-
-
-uint32_t
 gxr_context_get_swapchain_length (GxrContext *self);
 
 GulkanFrameBuffer *
@@ -130,30 +126,9 @@ GulkanFrameBuffer *
 gxr_context_get_framebuffer_at (GxrContext *self, uint32_t i);
 
 void
-gxr_context_cleanup(GxrContext *self);
-
-gboolean
-gxr_context_aquire_swapchain(GxrContext *self, uint32_t i,
-                             uint32_t *buffer_index);
-
-gboolean
-gxr_context_release_swapchain(GxrContext *self);
-
-XrSwapchainImageVulkanKHR*
-gxr_context_get_images(GxrContext *self);
-
-void
 gxr_context_get_swapchain_dimensions (GxrContext *self,
                                       uint32_t i,
                                       VkExtent2D *extent);
-
-void
-gxr_context_get_position (GxrContext *self,
-                             uint32_t i,
-                             graphene_vec4_t *v);
-
-VkFormat
-gxr_context_get_swapchain_format (GxrContext *self);
 
 XrInstance
 gxr_context_get_openxr_instance (GxrContext *self);

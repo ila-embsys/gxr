@@ -1664,14 +1664,13 @@ gxr_context_init_framebuffers (GxrContext           *self,
                                VkSampleCountFlagBits sample_count,
                                GulkanRenderPass    **render_pass)
 {
-  VkFormat format = gxr_context_get_swapchain_format (self);
-
   GulkanContext *gc = gxr_context_get_gulkan (self);
   GulkanDevice *device = gulkan_context_get_device (gc);
 
   self->framebuffer_extent = extent;
   self->framebuffer_sample_count = sample_count;
 
+  VkFormat format = (VkFormat) self->swapchain_format;
   *render_pass =
     gulkan_render_pass_new_multiview (device, sample_count, format,
       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, TRUE);
@@ -1968,11 +1967,24 @@ _end_frame (GxrContext *self)
   return TRUE;
 }
 
+static gboolean
+_release_swapchain (GxrContext * self)
+{
+  XrSwapchainImageReleaseInfo swapchainImageReleaseInfo = {
+    .type = XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO,
+  };
+  XrResult result =
+    xrReleaseSwapchainImage (self->swapchain, &swapchainImageReleaseInfo);
+  if (!_check_xr_result (result, "failed to release swapchain image!"))
+    return FALSE;
+
+  return TRUE;
+}
 
 gboolean
 gxr_context_end_frame (GxrContext *self)
 {
-  if (!gxr_context_release_swapchain (self)) {
+  if (!_release_swapchain (self)) {
     g_printerr ("Could not release xr swapchain\n");
     return FALSE;
   }
@@ -1983,7 +1995,6 @@ gxr_context_end_frame (GxrContext *self)
 
   return TRUE;
 }
-
 
 gboolean
 gxr_context_load_action_manifest (GxrContext *self,
@@ -2146,12 +2157,6 @@ gxr_context_get_device_manager (GxrContext *self)
 }
 
 uint32_t
-gxr_context_get_view_count (GxrContext *self)
-{
-  return self->view_count;
-}
-
-uint32_t
 gxr_context_get_swapchain_length (GxrContext *self)
 {
   return self->swapchain_length;
@@ -2215,26 +2220,6 @@ gxr_context_get_tracked_space (GxrContext *self)
   return self->play_space;
 }
 
-VkFormat
-gxr_context_get_swapchain_format (GxrContext *self)
-{
-  return (VkFormat) self->swapchain_format;
-}
-
-gboolean
-gxr_context_release_swapchain (GxrContext * self)
-{
-  XrSwapchainImageReleaseInfo swapchainImageReleaseInfo = {
-    .type = XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO,
-  };
-  XrResult result =
-    xrReleaseSwapchainImage (self->swapchain, &swapchainImageReleaseInfo);
-  if (!_check_xr_result (result, "failed to release swapchain image!"))
-    return FALSE;
-
-  return TRUE;
-}
-
 void
 gxr_context_get_swapchain_dimensions (GxrContext *self,
                                       uint32_t       i,
@@ -2244,20 +2229,3 @@ gxr_context_get_swapchain_dimensions (GxrContext *self,
   extent->height = self->configuration_views[i].recommendedImageRectHeight;
 }
 
-XrSwapchainImageVulkanKHR*
-gxr_context_get_images (GxrContext *self)
-{
-  return self->images;
-}
-
-void
-gxr_context_get_position (GxrContext   *self,
-                          uint32_t         i,
-                          graphene_vec4_t *v)
-{
-  graphene_vec4_init (v,
-                      self->views[i].pose.position.x,
-                      self->views[i].pose.position.y,
-                      self->views[i].pose.position.z,
-                      1.0f);
-}
