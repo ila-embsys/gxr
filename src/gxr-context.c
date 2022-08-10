@@ -83,8 +83,6 @@ struct _GxrContext
 G_DEFINE_TYPE (GxrContext, gxr_context, G_TYPE_OBJECT)
 
 enum {
-  KEYBOARD_PRESS_EVENT,
-  KEYBOARD_CLOSE_EVENT,
   STATE_CHANGE_EVENT,
   OVERLAY_EVENT,
   DEVICE_UPDATE_EVENT,
@@ -104,19 +102,6 @@ gxr_context_class_init (GxrContextClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   object_class->finalize = gxr_context_finalize;
-
-  context_signals[KEYBOARD_PRESS_EVENT] =
-  g_signal_new ("keyboard-press-event",
-                G_TYPE_FROM_CLASS (klass),
-                G_SIGNAL_RUN_LAST,
-                0, NULL, NULL, NULL, G_TYPE_NONE,
-                1, G_TYPE_POINTER | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  context_signals[KEYBOARD_CLOSE_EVENT] =
-  g_signal_new ("keyboard-close-event",
-                G_TYPE_FROM_CLASS (klass),
-                G_SIGNAL_RUN_FIRST,
-                0, NULL, NULL, NULL, G_TYPE_NONE, 0);
 
   context_signals[STATE_CHANGE_EVENT] =
   g_signal_new ("state-change-event",
@@ -1696,18 +1681,6 @@ gxr_context_poll_event (GxrContext *self)
       g_printerr ("Failed to poll events!\n");
       return;
     }
-}
-
-void
-gxr_context_emit_keyboard_press (GxrContext *self, gpointer event)
-{
-  g_signal_emit (self, context_signals[KEYBOARD_PRESS_EVENT], 0, event);
-}
-
-void
-gxr_context_emit_keyboard_close (GxrContext *self)
-{
-  g_signal_emit (self, context_signals[KEYBOARD_CLOSE_EVENT], 0);
 }
 
 void

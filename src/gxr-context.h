@@ -91,10 +91,6 @@ gxr_context_begin_frame (GxrContext *self);
 gboolean
 gxr_context_end_frame (GxrContext *self);
 
-void
-gxr_context_set_keyboard_transform (GxrContext        *self,
-                                    graphene_matrix_t *transform);
-
 gboolean
 gxr_context_load_action_manifest (GxrContext *self,
                                   const char *cache_name,
