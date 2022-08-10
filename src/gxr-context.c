@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "gxr-context.h"
+#include "gxr-context-private.h"
 
 #include <openxr/openxr_reflection.h>
 

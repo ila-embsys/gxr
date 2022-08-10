@@ -10,7 +10,7 @@
 #include <gdk/gdk.h>
 
 #include "gxr-types.h"
-#include "gxr-context.h"
+#include "gxr-context-private.h"
 #include "gxr-action-set.h"
 #include "gxr-controller.h"
 

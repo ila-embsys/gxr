@@ -130,24 +130,6 @@ gxr_context_get_swapchain_dimensions (GxrContext *self,
                                       uint32_t i,
                                       VkExtent2D *extent);
 
-XrInstance
-gxr_context_get_openxr_instance (GxrContext *self);
-
-XrSession
-gxr_context_get_openxr_session (GxrContext *self);
-
-XrSpace
-gxr_context_get_tracked_space (GxrContext *self);
-
-GxrManifest *
-gxr_context_get_manifest (GxrContext *self);
-
-XrTime
-gxr_context_get_predicted_display_time (GxrContext *self);
-
-XrSessionState
-gxr_context_get_session_state (GxrContext *self);
-
 uint32_t
 gxr_context_get_buffer_index (GxrContext *self);
 
