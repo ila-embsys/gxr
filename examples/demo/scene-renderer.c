@@ -188,7 +188,7 @@ static gboolean
 _init_shaders (SceneRenderer *self)
 {
   const char *shader_names[PIPELINE_COUNT] = {
-    "window", "window", "pointer", "pointer", "pointer"
+    "window", "window", "pointer", "pointer", "pointer",
   };
   const char *stage_names[2] = {"vert", "frag"};
 
@@ -219,30 +219,30 @@ _init_descriptor_layout (SceneRenderer *self)
         .binding = 0,
         .descriptorCount = 1,
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
       },
       // Window and device texture
       {
         .binding = 1,
         .descriptorCount = 1,
         .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
       },
       // Window buffer
       {
         .binding = 2,
         .descriptorCount = 1,
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
       },
       // Lights buffer
       {
         .binding = 3,
         .descriptorCount = 1,
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
       },
-    }
+    },
   };
 
   GulkanContext *gc = gxr_context_get_gulkan (self->context);
@@ -263,7 +263,7 @@ _init_pipeline_layout (SceneRenderer *self)
     .setLayoutCount = 1,
     .pSetLayouts = &self->descriptor_set_layout,
     .pushConstantRangeCount = 0,
-    .pPushConstantRanges = NULL
+    .pPushConstantRanges = NULL,
   };
 
   GulkanContext *gc = gxr_context_get_gulkan (self->context);
@@ -279,7 +279,7 @@ static gboolean
 _init_pipeline_cache (SceneRenderer *self)
 {
   VkPipelineCacheCreateInfo info = {
-    .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO
+    .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
   };
 
   GulkanContext *gc = gxr_context_get_gulkan (self->context);
@@ -315,22 +315,22 @@ _init_graphics_pipelines (SceneRenderer *self)
       },
       .attrib_count = 2,
       .depth_stencil_state = &(VkPipelineDepthStencilStateCreateInfo) {
-          .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
-          .depthTestEnable = VK_TRUE,
-          .depthWriteEnable = VK_TRUE,
-          .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .depthTestEnable = VK_TRUE,
+        .depthWriteEnable = VK_TRUE,
+        .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
       },
       .blend_attachments = &(VkPipelineColorBlendAttachmentState) {
         .blendEnable = VK_FALSE,
-        .colorWriteMask = 0xf
+        .colorWriteMask = 0xf,
       },
       .rasterization_state = &(VkPipelineRasterizationStateCreateInfo) {
-          .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-          .polygonMode = VK_POLYGON_MODE_FILL,
-          .cullMode = VK_CULL_MODE_BACK_BIT,
-          .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
-          .lineWidth = 1.0f
-      }
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+        .polygonMode = VK_POLYGON_MODE_FILL,
+        .cullMode = VK_CULL_MODE_BACK_BIT,
+        .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+        .lineWidth = 1.0f,
+      },
     },
     // PIPELINE_TIP
     {
@@ -342,9 +342,9 @@ _init_graphics_pipelines (SceneRenderer *self)
       },
       .attrib_count = 2,
       .depth_stencil_state = &(VkPipelineDepthStencilStateCreateInfo) {
-          .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
-          .depthTestEnable = VK_FALSE,
-          .depthWriteEnable = VK_FALSE
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .depthTestEnable = VK_FALSE,
+        .depthWriteEnable = VK_FALSE,
       },
       .blend_attachments = &(VkPipelineColorBlendAttachmentState) {
         .blendEnable = VK_TRUE,
@@ -359,11 +359,11 @@ _init_graphics_pipelines (SceneRenderer *self)
                           VK_COLOR_COMPONENT_B_BIT,
       },
       .rasterization_state = &(VkPipelineRasterizationStateCreateInfo) {
-          .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-          .polygonMode = VK_POLYGON_MODE_FILL,
-          .cullMode = VK_CULL_MODE_BACK_BIT,
-          .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE
-      }
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+        .polygonMode = VK_POLYGON_MODE_FILL,
+        .cullMode = VK_CULL_MODE_BACK_BIT,
+        .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+      },
     },
     // PIPELINE_POINTER
     {
@@ -374,22 +374,22 @@ _init_graphics_pipelines (SceneRenderer *self)
         {1, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof (float) * 3},
       },
       .depth_stencil_state = &(VkPipelineDepthStencilStateCreateInfo) {
-          .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
-          .depthTestEnable = VK_TRUE,
-          .depthWriteEnable = VK_TRUE,
-          .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .depthTestEnable = VK_TRUE,
+        .depthWriteEnable = VK_TRUE,
+        .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
       },
       .attrib_count = 2,
       .blend_attachments = &(VkPipelineColorBlendAttachmentState) {
         .blendEnable = VK_FALSE,
-        .colorWriteMask = 0xf
+        .colorWriteMask = 0xf,
       },
       .rasterization_state = &(VkPipelineRasterizationStateCreateInfo) {
-          .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-          .polygonMode = VK_POLYGON_MODE_LINE,
-          .cullMode = VK_CULL_MODE_BACK_BIT,
-          .lineWidth = 4.0f
-      }
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+        .polygonMode = VK_POLYGON_MODE_LINE,
+        .cullMode = VK_CULL_MODE_BACK_BIT,
+        .lineWidth = 4.0f,
+      },
     },
     // PIPELINE_SELECTION
     {
@@ -400,21 +400,21 @@ _init_graphics_pipelines (SceneRenderer *self)
         {1, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof (float) * 3},
       },
       .depth_stencil_state = &(VkPipelineDepthStencilStateCreateInfo) {
-          .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
-          .depthTestEnable = VK_TRUE,
-          .depthWriteEnable = VK_TRUE,
-          .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .depthTestEnable = VK_TRUE,
+        .depthWriteEnable = VK_TRUE,
+        .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
       },
       .attrib_count = 2,
       .blend_attachments = &(VkPipelineColorBlendAttachmentState) {
         .blendEnable = VK_FALSE,
-        .colorWriteMask = 0xf
+        .colorWriteMask = 0xf,
       },
       .rasterization_state = &(VkPipelineRasterizationStateCreateInfo) {
-          .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-          .polygonMode = VK_POLYGON_MODE_LINE,
-          .lineWidth = 2.0f
-      }
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+        .polygonMode = VK_POLYGON_MODE_LINE,
+        .lineWidth = 2.0f,
+      },
     },
     // PIPELINE_BACKGROUND
     {
@@ -425,20 +425,20 @@ _init_graphics_pipelines (SceneRenderer *self)
         {1, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof (float) * 3},
       },
       .depth_stencil_state = &(VkPipelineDepthStencilStateCreateInfo) {
-          .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
-          .depthTestEnable = VK_TRUE,
-          .depthWriteEnable = VK_TRUE,
-          .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .depthTestEnable = VK_TRUE,
+        .depthWriteEnable = VK_TRUE,
+        .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
       },
       .attrib_count = 2,
       .blend_attachments = &(VkPipelineColorBlendAttachmentState) {
         .blendEnable = VK_FALSE,
-        .colorWriteMask = 0xf
+        .colorWriteMask = 0xf,
       },
       .rasterization_state = &(VkPipelineRasterizationStateCreateInfo) {
-          .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-          .polygonMode = VK_POLYGON_MODE_LINE,
-          .lineWidth = 1.0f
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+        .polygonMode = VK_POLYGON_MODE_LINE,
+        .lineWidth = 1.0f,
       }
     },
   };
@@ -455,19 +455,19 @@ _init_graphics_pipelines (SceneRenderer *self)
           .pVertexBindingDescriptions = &(VkVertexInputBindingDescription) {
             .binding = 0,
             .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-            .stride = config[i].stride
+            .stride = config[i].stride,
           },
-          .vertexAttributeDescriptionCount = config[i].attrib_count
+          .vertexAttributeDescriptionCount = config[i].attrib_count,
         },
         .pInputAssemblyState = &(VkPipelineInputAssemblyStateCreateInfo) {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
           .topology = config[i].topology,
-          .primitiveRestartEnable = VK_FALSE
+          .primitiveRestartEnable = VK_FALSE,
         },
         .pViewportState = &(VkPipelineViewportStateCreateInfo) {
           .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
           .viewportCount = 1,
-          .scissorCount = 1
+          .scissorCount = 1,
         },
         .pRasterizationState = config[i].rasterization_state,
         .pMultisampleState = &(VkPipelineMultisampleStateCreateInfo) {
@@ -475,7 +475,7 @@ _init_graphics_pipelines (SceneRenderer *self)
           .rasterizationSamples = self->sample_count,
           .minSampleShading = 0.0f,
           .pSampleMask = &(uint32_t) { 0xFFFFFFFF },
-          .alphaToCoverageEnable = VK_FALSE
+          .alphaToCoverageEnable = VK_FALSE,
         },
         .pDepthStencilState = config[i].depth_stencil_state,
         .pColorBlendState = &(VkPipelineColorBlendStateCreateInfo) {
@@ -491,13 +491,13 @@ _init_graphics_pipelines (SceneRenderer *self)
             .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
             .stage = VK_SHADER_STAGE_VERTEX_BIT,
             .module = self->shader_modules[i * 2],
-            .pName = "main"
+            .pName = "main",
           },
           {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
             .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
             .module = self->shader_modules[i * 2 + 1],
-            .pName = "main"
+            .pName = "main",
           }
         },
         .renderPass = gulkan_render_pass_get_handle (self->render_pass),
@@ -507,9 +507,9 @@ _init_graphics_pipelines (SceneRenderer *self)
           .pDynamicStates = (VkDynamicState[]) {
             VK_DYNAMIC_STATE_VIEWPORT,
             VK_DYNAMIC_STATE_SCISSOR,
-          }
+          },
         },
-        .subpass = 0
+        .subpass = 0,
       };
 
       GulkanContext *gc = gxr_context_get_gulkan (self->context);

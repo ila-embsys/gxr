@@ -154,20 +154,20 @@ scene_object_initialize (SceneObject           *self,
   VkDescriptorPoolSize pool_sizes[] = {
     {
       .descriptorCount = set_count,
-      .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER
+      .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
     },
     {
       .descriptorCount = set_count,
-      .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
+      .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
     },
     {
       .descriptorCount = set_count,
-      .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER
+      .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
     },
     {
       .descriptorCount = set_count,
-      .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER
-    }
+      .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+    },
   };
 
   priv->descriptor_pool =
@@ -204,9 +204,9 @@ scene_object_update_descriptors_texture (SceneObject *self,
       .pBufferInfo = &(VkDescriptorBufferInfo) {
         .buffer = gulkan_uniform_buffer_get_handle (priv->uniform_buffer),
         .offset = 0,
-        .range = VK_WHOLE_SIZE
+        .range = VK_WHOLE_SIZE,
       },
-      .pTexelBufferView = NULL
+      .pTexelBufferView = NULL,
     },
     {
       .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -217,11 +217,11 @@ scene_object_update_descriptors_texture (SceneObject *self,
       .pImageInfo = &(VkDescriptorImageInfo) {
         .sampler = sampler,
         .imageView = image_view,
-        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
       },
       .pBufferInfo = NULL,
-      .pTexelBufferView = NULL
-    }
+      .pTexelBufferView = NULL,
+    },
   };
 
   vkUpdateDescriptorSets (device, 2, write_descriptor_sets, 0, NULL);
@@ -243,10 +243,10 @@ scene_object_update_descriptors (SceneObject *self)
       .pBufferInfo = &(VkDescriptorBufferInfo) {
         .buffer = gulkan_uniform_buffer_get_handle (priv->uniform_buffer),
         .offset = 0,
-        .range = VK_WHOLE_SIZE
+        .range = VK_WHOLE_SIZE,
       },
-      .pTexelBufferView = NULL
-    }
+      .pTexelBufferView = NULL,
+    },
   };
 
   vkUpdateDescriptorSets (device, 1, write_descriptor_sets, 0, NULL);

@@ -16,6 +16,7 @@ typedef struct {
   alignas(32) float mvp[2][16];
 } UniformBuffer;
 
+// clang-format off
 static const float positions[] = {
   -1.f, +1.f, +1.f,
   +1.f, +1.f, +1.f,
@@ -32,6 +33,7 @@ static const float positions[] = {
   -1.f, +1.f, -1.f,
   +1.f, +1.f, -1.f
 };
+// clang-format on
 
 #define CUBE_TYPE_EXAMPLE cube_example_get_type()
 G_DECLARE_FINAL_TYPE (CubeExample, cube_example,
@@ -157,14 +159,14 @@ _init_pipeline (CubeExample *self)
       (VkVertexInputBindingDescription[]){
         { .binding = 0,
           .stride = 3 * sizeof (float),
-          .inputRate = VK_VERTEX_INPUT_RATE_VERTEX } },
+          .inputRate = VK_VERTEX_INPUT_RATE_VERTEX, }, },
     .vertexAttributeDescriptionCount = 1,
     .pVertexAttributeDescriptions =
       (VkVertexInputAttributeDescription[]){
         { .location = 0,
           .binding = 0,
           .format = VK_FORMAT_R32G32B32_SFLOAT,
-          .offset = 0 } }
+          .offset = 0, }, },
   };
 
   VkShaderModule vs_module;
@@ -210,13 +212,13 @@ _init_pipeline (CubeExample *self)
         .width = (float) extent.width,
         .height = - (float) extent.height,
         .minDepth = 0.0f,
-        .maxDepth = 1.0f
+        .maxDepth = 1.0f,
       },
       .scissorCount = 1,
       .pScissors = &(VkRect2D) {
         .offset = {0, 0},
-        .extent = extent
-      }
+        .extent = extent,
+      },
     },
     .pRasterizationState =
       &(VkPipelineRasterizationStateCreateInfo){
@@ -231,7 +233,7 @@ _init_pipeline (CubeExample *self)
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
         .depthTestEnable = VK_TRUE,
         .depthWriteEnable = VK_TRUE,
-        .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL
+        .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
       },
     .pMultisampleState =
       &(VkPipelineMultisampleStateCreateInfo){
@@ -254,9 +256,9 @@ _init_pipeline (CubeExample *self)
                 .colorBlendOp=VK_BLEND_OP_ADD,
                 .srcAlphaBlendFactor=VK_BLEND_FACTOR_ONE,
                 .dstAlphaBlendFactor=VK_BLEND_FACTOR_ZERO,
-                .alphaBlendOp=VK_BLEND_OP_ADD
-            }
-          } },
+                .alphaBlendOp=VK_BLEND_OP_ADD,
+            },
+          }, },
     .layout = self->pipeline_layout,
     .renderPass = gulkan_render_pass_get_handle (self->render_pass),
   };
@@ -280,7 +282,7 @@ _init_pipeline_layout (CubeExample *self)
     .setLayoutCount = 1,
     .pSetLayouts = &self->descriptor_set_layout,
     .pushConstantRangeCount = 0,
-    .pPushConstantRanges = NULL
+    .pPushConstantRanges = NULL,
   };
 
   GulkanContext *gc = gxr_context_get_gulkan (self->context);
@@ -340,10 +342,10 @@ _update_descriptors (CubeExample *self)
       .pBufferInfo = &(VkDescriptorBufferInfo) {
         .buffer = gulkan_uniform_buffer_get_handle (self->uniform_buffer),
         .offset = 0,
-        .range = VK_WHOLE_SIZE
+        .range = VK_WHOLE_SIZE,
       },
-      .pTexelBufferView = NULL
-    }
+      .pTexelBufferView = NULL,
+    },
   };
 
   vkUpdateDescriptorSets (device, 1, write_descriptor_sets, 0, NULL);
@@ -353,7 +355,7 @@ static gboolean
 _init_pipeline_cache (CubeExample *self)
 {
   VkPipelineCacheCreateInfo info = {
-    .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO
+    .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
   };
 
   GulkanContext *gc = gxr_context_get_gulkan (self->context);
@@ -398,7 +400,7 @@ _init_descriptor_pool (CubeExample *self)
   VkDescriptorPoolSize pool_sizes[] = {
     {
       .descriptorCount = set_count,
-      .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER
+      .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
     },
   };
 
@@ -561,7 +563,7 @@ _render_stereo (CubeExample *self, VkCommandBuffer cmd_buffer,
 
   if (self->render_background)
     clear_color = (VkClearColorValue) {
-      .float32 = {0.1f, 0.1f, 0.7f, 1.0f}
+      .float32 = {0.1f, 0.1f, 0.7f, 1.0f},
     };
 
   GulkanFrameBuffer *framebuffer =

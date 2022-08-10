@@ -109,7 +109,7 @@ main ()
 {
   Example self = {
     .loop = g_main_loop_new (NULL, FALSE),
-    .context = gxr_context_new ("Actions Example", 1)
+    .context = gxr_context_new ("Actions Example", 1),
   };
 
   if (!gxr_context_load_action_manifest (

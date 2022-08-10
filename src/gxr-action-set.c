@@ -90,7 +90,7 @@ gxr_action_set_new_from_url (GxrContext *context, gchar *url)
   XrActionSetCreateInfo set_info = {
     .type = XR_TYPE_ACTION_SET_CREATE_INFO,
     .next = NULL,
-    .priority = 0
+    .priority = 0,
   };
 
   /* TODO: proper names, localized name */
@@ -150,7 +150,7 @@ _update (GxrActionSet **sets, uint32_t count)
   XrActionsSyncInfo syncInfo = {
     .type = XR_TYPE_ACTIONS_SYNC_INFO,
     .countActiveActionSets = count,
-    .activeActionSets = active_action_sets
+    .activeActionSets = active_action_sets,
   };
 
 
@@ -401,7 +401,7 @@ _suggest_for_interaction_profile (GxrActionSet **sets, uint32_t count,
     .next = NULL,
     .interactionProfile = profile_path,
     .countSuggestedBindings = num_suggestion,
-    .suggestedBindings = suggested_bindings
+    .suggestedBindings = suggested_bindings,
   };
 
   XrResult result =
@@ -466,7 +466,7 @@ gxr_action_sets_attach_bindings (GxrActionSet **sets,
     .type = XR_TYPE_SESSION_ACTION_SETS_ATTACH_INFO,
     .next = NULL,
     .countActionSets = count,
-    .actionSets = handles
+    .actionSets = handles,
   };
 
   GxrActionSet *self = sets[0];

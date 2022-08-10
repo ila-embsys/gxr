@@ -185,7 +185,7 @@ gxr_action_new_from_type_url (GxrContext   *context,
     .next = NULL,
     .actionType = action_type,
     .countSubactionPaths = NUM_HANDS,
-    .subactionPaths = self->hand_paths
+    .subactionPaths = self->hand_paths,
   };
 
   /* TODO: proper names, localized name */
@@ -219,7 +219,7 @@ gxr_action_new_from_type_url (GxrContext   *context,
             .next = NULL,
             .action = self->handle,
             .poseInActionSpace.orientation.w = 1.f,
-            .subactionPath = self->hand_paths[i]
+            .subactionPath = self->hand_paths[i],
           };
 
           result = xrCreateActionSpace(self->session,
@@ -271,12 +271,11 @@ _action_poll_digital (GxrAction *self)
         .type = XR_TYPE_ACTION_STATE_GET_INFO,
         .next = NULL,
         .action = self->handle,
-        .subactionPath = subaction_path
+        .subactionPath = subaction_path,
       };
 
       XrActionStateBoolean value = {
         .type = XR_TYPE_ACTION_STATE_BOOLEAN,
-        .next = NULL
       };
 
       XrResult result = xrGetActionStateBoolean(self->session, &get_info, &value);
@@ -298,7 +297,7 @@ _action_poll_digital (GxrAction *self)
         .active = (gboolean)value.isActive,
         .state = (gboolean)value.currentState,
         .changed = (gboolean)value.changedSinceLastSync,
-        .time = _get_time_diff (value.lastChangeTime)
+        .time = _get_time_diff (value.lastChangeTime),
       };
 
       gxr_action_emit_digital (GXR_ACTION (self), &event);
@@ -332,12 +331,11 @@ _action_poll_digital_from_float (GxrAction *self)
         .type = XR_TYPE_ACTION_STATE_GET_INFO,
         .next = NULL,
         .action = self->handle,
-        .subactionPath = subaction_path
+        .subactionPath = subaction_path,
       };
 
       XrActionStateFloat value = {
         .type = XR_TYPE_ACTION_STATE_FLOAT,
-        .next = NULL
       };
 
       XrResult result = xrGetActionStateFloat(self->session, &get_info, &value);
@@ -395,12 +393,11 @@ _action_poll_analog (GxrAction *self)
         .type = XR_TYPE_ACTION_STATE_GET_INFO,
         .next = NULL,
         .action = self->handle,
-        .subactionPath = subaction_path
+        .subactionPath = subaction_path,
       };
 
       XrActionStateFloat value = {
         .type = XR_TYPE_ACTION_STATE_FLOAT,
-        .next = NULL
       };
 
       XrResult result = xrGetActionStateFloat(self->session, &get_info, &value);
@@ -447,12 +444,11 @@ _action_poll_vec2f (GxrAction *self)
         .type = XR_TYPE_ACTION_STATE_GET_INFO,
         .next = NULL,
         .action = self->handle,
-        .subactionPath = subaction_path
+        .subactionPath = subaction_path,
       };
 
       XrActionStateVector2f value = {
         .type = XR_TYPE_ACTION_STATE_VECTOR2F,
-        .next = NULL
       };
 
       XrResult result = xrGetActionStateVector2f(self->session, &get_info, &value);
@@ -501,7 +497,7 @@ _get_model_matrix_from_pose (XrPosef *pose,
 
   graphene_matrix_init_identity (mat);
   graphene_matrix_rotate_quaternion (mat, &q);
-  graphene_point3d_t translation = { .x = pose->position.x, pose->position.y, pose->position.z };
+  graphene_point3d_t translation = { pose->position.x, pose->position.y, pose->position.z, };
   graphene_matrix_translate(mat, &translation);
 }
 
@@ -523,14 +519,12 @@ _action_poll_pose_secs_from_now (GxrAction *self,
 
       XrActionStateGetInfo get_info = {
         .type = XR_TYPE_ACTION_STATE_GET_INFO,
-        .next = NULL,
         .action = self->handle,
-        .subactionPath = subaction_path
+        .subactionPath = subaction_path,
       };
 
       XrActionStatePose value = {
         .type = XR_TYPE_ACTION_STATE_POSE,
-        .next = NULL
       };
 
       XrResult result = xrGetActionStatePose (self->session, &get_info, &value);
@@ -544,7 +538,6 @@ _action_poll_pose_secs_from_now (GxrAction *self,
       gboolean spaceLocationValid;
       XrSpaceLocation space_location = {
         .type = XR_TYPE_SPACE_LOCATION,
-        .next = NULL
       };
 
       /* TODO: secs from now ignored, API not appropriate for OpenXR */
@@ -629,14 +622,14 @@ gxr_action_trigger_haptic (GxrAction *self,
     .next = NULL,
     .amplitude = amplitude,
     .duration = duration,
-    .frequency = frequency
+    .frequency = frequency,
   };
 
   XrHapticActionInfo hapticActionInfo = {
     .type = XR_TYPE_HAPTIC_ACTION_INFO,
     .next = NULL,
     .action = self->handle,
-    .subactionPath = self->hand_paths[controller_handle]
+    .subactionPath = self->hand_paths[controller_handle],
   };
 
   XrResult result =

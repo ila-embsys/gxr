@@ -273,7 +273,7 @@ _create_instance (GxrContext* self, char *app_name, uint32_t app_version)
   // list will need to be dynamic when more optional extensions are used.
   const char* const enabled_extensions[] = {
     XR_KHR_VULKAN_ENABLE2_EXTENSION_NAME,
-    XR_EXTX_OVERLAY_EXTENSION_NAME
+    XR_EXTX_OVERLAY_EXTENSION_NAME,
   };
 
   XrInstanceCreateInfo instanceCreateInfo = {
@@ -929,11 +929,12 @@ _create_vk_instance2 (GxrContext *self, GSList *instance_ext_list, VkInstance *i
     .pfnGetInstanceProcAddr = vkGetInstanceProcAddr,
     .systemId = self->system_id,
     .vulkanCreateInfo = &instance_info,
-    .vulkanAllocator = NULL
+    .vulkanAllocator = NULL,
   };
 
   PFN_xrCreateVulkanInstanceKHR CreateVulkanInstanceKHR = NULL;
-  XrResult result =
+  XrResult res;
+  res =
     xrGetInstanceProcAddr(self->instance, "xrCreateVulkanInstanceKHR",
                           (PFN_xrVoidFunction*)&CreateVulkanInstanceKHR);
   if (!_check_xr_result(res, "Failed to load xrCreateVulkanInstanceKHR."))
@@ -978,7 +979,7 @@ _get_vk_physical_device2 (GxrContext *self,
     .type = XR_TYPE_VULKAN_GRAPHICS_DEVICE_GET_INFO_KHR,
     .next = NULL,
     .systemId = self->system_id,
-    .vulkanInstance = vk_instance
+    .vulkanInstance = vk_instance,
   };
 
   res = fun(self->instance, &info, physical_device);
@@ -1125,13 +1126,13 @@ _create_vk_device2 (GxrContext      *self,
             .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
             .queueFamilyIndex = *graphics_queue_index,
             .queueCount = 1,
-            .pQueuePriorities = (const float[]) { 1.0f }
+            .pQueuePriorities = (const float[]) { 1.0f },
           },
           {
             .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
             .queueFamilyIndex = *transfer_queue_index,
             .queueCount = 1,
-            .pQueuePriorities = (const float[]) { 0.8f }
+            .pQueuePriorities = (const float[]) { 0.8f },
           },
         },
     .pEnabledFeatures = &physical_device_features,
@@ -1142,7 +1143,7 @@ _create_vk_device2 (GxrContext      *self,
 #ifdef VK_API_VERSION_1_2
   VkPhysicalDeviceVulkan11Features enabled_vulkan11_features = {
     .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
-    .multiview = VK_TRUE
+    .multiview = VK_TRUE,
   };
   if (self->desired_vk_version >= XR_MAKE_VERSION(1, 2, 0))
     device_info.pNext = &enabled_vulkan11_features;
@@ -1372,7 +1373,7 @@ _get_model_matrix_from_pose (XrPosef           *pose,
   graphene_point3d_t position = {
     pose->position.x,
     pose->position.y,
-    pose->position.z
+    pose->position.z,
   };
 
   graphene_matrix_t translation;
@@ -1386,7 +1387,6 @@ gxr_context_get_head_pose (GxrContext *self, graphene_matrix_t *pose)
 {
   XrSpaceLocation space_location = {
     .type = XR_TYPE_SPACE_LOCATION,
-    .next = NULL
   };
 
   XrResult result = xrLocateSpace (self->view_space, self->play_space,
@@ -1763,7 +1763,7 @@ _get_view_matrix_from_pose (XrPosef           *pose,
 
   graphene_point3d_t position = { pose->position.x,
                                   pose->position.y,
-                                  pose->position.z };
+                                  pose->position.z, };
 
   graphene_matrix_t translation;
   graphene_matrix_init_translate (&translation, &position);
@@ -1801,11 +1801,9 @@ _begin_frame (GxrContext* self)
 
   XrFrameState frame_state = {
     .type = XR_TYPE_FRAME_STATE,
-    .next = NULL
   };
   XrFrameWaitInfo frameWaitInfo = {
     .type = XR_TYPE_FRAME_WAIT_INFO,
-    .next = NULL
   };
   result = xrWaitFrame (self->session, &frameWaitInfo, &frame_state);
   if (!_check_xr_result
@@ -1846,7 +1844,7 @@ _begin_frame (GxrContext* self)
     .type = XR_TYPE_VIEW_LOCATE_INFO,
     .displayTime = frame_state.predictedDisplayTime,
     .space = self->play_space,
-    .viewConfigurationType = self->view_config_type
+    .viewConfigurationType = self->view_config_type,
   };
 
   XrViewState viewState = {
@@ -2225,7 +2223,7 @@ gxr_context_get_swapchain_extent (GxrContext *self,
 {
   VkExtent2D extent = {
     .width = self->configuration_views[view_index].recommendedImageRectWidth,
-    .height = self->configuration_views[view_index].recommendedImageRectHeight
+    .height = self->configuration_views[view_index].recommendedImageRectHeight,
   };
   return extent;
 }

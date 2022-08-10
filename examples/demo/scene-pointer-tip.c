@@ -254,9 +254,9 @@ _update_descriptors (ScenePointerTip *self)
       .pBufferInfo = &(VkDescriptorBufferInfo) {
         .buffer = transformation_buffer,
         .offset = 0,
-        .range = VK_WHOLE_SIZE
+        .range = VK_WHOLE_SIZE,
       },
-      .pTexelBufferView = NULL
+      .pTexelBufferView = NULL,
     },
     {
       .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -267,10 +267,10 @@ _update_descriptors (ScenePointerTip *self)
       .pImageInfo = &(VkDescriptorImageInfo) {
         .sampler = self->sampler,
         .imageView = gulkan_texture_get_image_view (self->texture),
-        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
       },
       .pBufferInfo = NULL,
-      .pTexelBufferView = NULL
+      .pTexelBufferView = NULL,
     },
     {
       .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -281,9 +281,9 @@ _update_descriptors (ScenePointerTip *self)
       .pBufferInfo = &(VkDescriptorBufferInfo) {
         .buffer = gulkan_uniform_buffer_get_handle (self->shading_buffer),
         .offset = 0,
-        .range = VK_WHOLE_SIZE
+        .range = VK_WHOLE_SIZE,
       },
-      .pTexelBufferView = NULL
+      .pTexelBufferView = NULL,
     },
     {
       .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -294,9 +294,9 @@ _update_descriptors (ScenePointerTip *self)
       .pBufferInfo = &(VkDescriptorBufferInfo) {
         .buffer = self->lights,
         .offset = 0,
-        .range = VK_WHOLE_SIZE
+        .range = VK_WHOLE_SIZE,
       },
-      .pTexelBufferView = NULL
+      .pTexelBufferView = NULL,
     }
   };
 
@@ -352,7 +352,7 @@ scene_pointer_tip_set_and_submit_texture (ScenePointerTip *tip,
     .anisotropyEnable = VK_TRUE,
     .maxAnisotropy = 16.0f,
     .minLod = 0.0f,
-    .maxLod = (float) mip_levels
+    .maxLod = (float) mip_levels,
   };
 
   if (self->sampler != VK_NULL_HANDLE)

@@ -99,12 +99,14 @@ graphene_ext_matrix_get_rotation_matrix (const graphene_matrix_t *m,
 
   graphene_ext_matrix_get_scale (m, scale);
 
+  // clang-format off
   float r[16] = {
     f[0] / scale->x, f[1] / scale->x, f[2]  / scale->x, 0,
     f[4] / scale->y, f[5] / scale->y, f[6]  / scale->y, 0,
     f[8] / scale->z, f[9] / scale->z, f[10] / scale->z, 0,
     0              , 0              , 0               , 1
   };
+  // clang-format on
   graphene_matrix_init_from_float (rotation, r);
 }
 
