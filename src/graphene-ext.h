@@ -106,4 +106,14 @@ graphene_ext_point3d_validate_all_nonzero (const graphene_point3d_t *p);
 gboolean
 graphene_ext_vec3_validate (const graphene_vec3_t *v);
 
+bool
+graphene_ext_quaternion_near (const graphene_quaternion_t *a,
+                              const graphene_quaternion_t *b,
+                              float                        epsilon);
+
+bool
+graphene_ext_point3d_near (const graphene_point3d_t *a,
+                           const graphene_point3d_t *b,
+                           float                     epsilon);
+
 #endif /* XRD_GRAPHENE_QUATERNION_H_ */

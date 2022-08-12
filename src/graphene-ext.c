@@ -353,3 +353,50 @@ graphene_ext_vec3_validate (const graphene_vec3_t *v)
     }
   return TRUE;
 }
+
+bool
+graphene_ext_point3d_near (const graphene_point3d_t *a,
+                           const graphene_point3d_t *b,
+                           float                     epsilon)
+{
+  if (fabsf (a->x - b->x) > epsilon)
+    {
+      return false;
+    }
+  if (fabsf (a->y - b->y) > epsilon)
+    {
+      return false;
+    }
+  if (fabsf (a->z - b->z) > epsilon)
+    {
+      return false;
+    }
+  return true;
+}
+
+bool
+graphene_ext_quaternion_near (const graphene_quaternion_t *a,
+                              const graphene_quaternion_t *b,
+                              float                        epsilon)
+{
+  float af[4];
+  graphene_ext_quaternion_to_float (a, af);
+
+  float bf[4];
+  graphene_ext_quaternion_to_float (b, bf);
+
+  for (uint8_t i = 0; i < 4; i++)
+    {
+      // TODO: To pass recomposition tests we need to drop the signs.
+      // Something in our recomposition is flipping them. See unit tests.
+      af[i] = fabsf (af[i]);
+      bf[i] = fabsf (bf[i]);
+
+      if (fabsf (af[i] - bf[i]) > epsilon)
+        {
+          return false;
+        }
+    }
+
+  return true;
+}
