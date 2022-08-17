@@ -57,7 +57,7 @@ c = meson.get_compiler('c')
 ## Required
 m_dep = c.find_library('m')
 
-gulkan_dep_major_minor_ver = '0.15'
+gulkan_dep_major_minor_ver = '0.16'
 gulkan_dep_patch_ver = '.0'
 
 gulkan_proj = subproject('gulkan',
