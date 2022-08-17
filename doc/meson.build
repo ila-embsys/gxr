@@ -4,24 +4,7 @@ private_headers = [
   'gxr-config.h',
   'gxr.h',
   'gxr-version.h',
-  'gxr-backend-private.h',
   'gxr-context-private.h',
-  'gxr-overlay-private.h',
-
-  'openvr-action.h',
-  'openvr-action-set.h',
-  'openvr-compositor.h',
-  'openvr-context.h',
-  'openvr-functions.h',
-  'openvr-math.h',
-  'openvr-model.h',
-  'openvr-overlay.h',
-  'openvr-system.h',
-  'openvr-wrapper.h',
-  'openxr-action.h',
-  'openxr-action-set.h',
-  'openxr-context.h',
-  'openxr-overlay.h'
 ]
 
 glib_prefix = dependency('glib-2.0').get_pkgconfig_variable('prefix')
