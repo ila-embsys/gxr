@@ -13,7 +13,7 @@ else
 endif
 
 foreach s : shaders
-  r = run_command(cmd + ['-o', s + '.spv', s])
+  r = run_command(cmd + ['-o', s + '.spv', s], check: true)
   if r.returncode() != 0
     message('Could not compile shaders:')
     message(r.stderr().strip())
