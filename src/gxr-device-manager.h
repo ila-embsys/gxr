@@ -33,11 +33,13 @@ G_DECLARE_FINAL_TYPE (GxrDeviceManager,
  *
  * A 4x4 matrix pose.
  **/
-typedef struct
-{
+// clang-format off
+// https://gitlab.gnome.org/GNOME/gtk-doc/-/issues/91
+typedef struct {
   graphene_matrix_t transformation;
   gboolean          is_valid;
 } GxrPose;
+// clang-format on
 
 GxrDeviceManager *
 gxr_device_manager_new (void);

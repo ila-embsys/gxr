@@ -30,14 +30,16 @@ G_DECLARE_FINAL_TYPE (GxrController, gxr_controller, GXR, CONTROLLER, GxrDevice)
  *
  * Digital event.
  **/
-typedef struct
-{
+// clang-format off
+// https://gitlab.gnome.org/GNOME/gtk-doc/-/issues/91
+typedef struct {
   gboolean       active;
   gboolean       state;
   gboolean       changed;
   GxrController *controller;
   gfloat         time;
 } GxrDigitalEvent;
+// clang-format on
 
 /**
  * GxrAnalogEvent:
@@ -50,14 +52,16 @@ typedef struct
  *
  * Analog event.
  **/
-typedef struct
-{
+// clang-format off
+// https://gitlab.gnome.org/GNOME/gtk-doc/-/issues/91
+typedef struct {
   gboolean        active;
   graphene_vec3_t state;
   graphene_vec3_t delta;
   GxrController  *controller;
   gfloat          time;
 } GxrAnalogEvent;
+// clang-format on
 
 /**
  * GxrPoseEvent:
@@ -72,8 +76,9 @@ typedef struct
  *
  * Pose event.
  **/
-typedef struct
-{
+// clang-format off
+// https://gitlab.gnome.org/GNOME/gtk-doc/-/issues/91
+typedef struct {
   gboolean          active;
   graphene_matrix_t pose;
   graphene_vec3_t   velocity;
@@ -82,6 +87,7 @@ typedef struct
   gboolean          device_connected;
   GxrController    *controller;
 } GxrPoseEvent;
+// clang-format on
 
 GxrController *
 gxr_controller_new (guint64 controller_handle);
