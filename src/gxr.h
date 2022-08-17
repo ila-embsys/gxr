@@ -22,7 +22,6 @@
 #include "gxr-device.h"
 #include "gxr-io.h"
 #include "gxr-manifest.h"
-#include "gxr-time.h"
 #include "gxr-version.h"
 
 #undef GXR_INSIDE

@@ -3,7 +3,6 @@ api_version = '0.16'
 api_path = 'gxr-' + api_version
 
 gxr_sources = [
-  'gxr-time.c',
   'gxr-context.c',
   'gxr-action.c',
   'gxr-action-set.c',
@@ -17,7 +16,6 @@ gxr_sources = [
 
 gxr_headers = [
   'gxr.h',
-  'gxr-time.h',
   'gxr-context.h',
   'gxr-action.h',
   'gxr-action-set.h',
