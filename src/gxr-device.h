@@ -13,10 +13,7 @@
 #endif
 
 #include <glib-object.h>
-
 #include <graphene.h>
-
-#include <gulkan.h>
 
 G_BEGIN_DECLS
 

@@ -12,9 +12,6 @@
 
 #include <gulkan.h>
 
-#include "gxr-enums.h"
-#include "gxr-types.h"
-
 #include "gxr-action-set.h"
 #include "gxr-device.h"
 
@@ -28,6 +25,19 @@ G_DECLARE_FINAL_TYPE (GxrDeviceManager,
                       GXR,
                       DEVICE_MANAGER,
                       GObject)
+
+/**
+ * GxrPose:
+ * @transformation: The #graphene_matrix_t.
+ * @is_valid: Validity of the pose.
+ *
+ * A 4x4 matrix pose.
+ **/
+typedef struct
+{
+  graphene_matrix_t transformation;
+  gboolean          is_valid;
+} GxrPose;
 
 GxrDeviceManager *
 gxr_device_manager_new (void);

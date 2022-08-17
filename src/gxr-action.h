@@ -13,11 +13,9 @@
 #endif
 
 #include <glib-object.h>
-#include <graphene.h>
 #include <openxr/openxr.h>
 
-#include "gxr-enums.h"
-#include "gxr-types.h"
+#include "gxr-controller.h"
 
 G_BEGIN_DECLS
 
@@ -37,6 +35,29 @@ struct _GxrActionClass
 {
   GObjectClass parent;
 };
+
+/**
+ * GxrActionType:
+ * @GXR_ACTION_DIGITAL: A digital action.
+ * @GXR_ACTION_DIGITAL_FROM_FLOAT: A digital action constructed from float
+ *thresholds.
+ * @GXR_ACTION_VEC2F: An analog action with floats x,y.
+ * @GXR_ACTION_FLOAT: An analog action.
+ * @GXR_ACTION_POSE: A pose action.
+ * @GXR_ACTION_HAPTIC: A haptic action.
+ *
+ * The type of the GxrAction.
+ *
+ **/
+typedef enum
+{
+  GXR_ACTION_DIGITAL,
+  GXR_ACTION_DIGITAL_FROM_FLOAT,
+  GXR_ACTION_VEC2F,
+  GXR_ACTION_FLOAT,
+  GXR_ACTION_POSE,
+  GXR_ACTION_HAPTIC
+} GxrActionType;
 
 GxrAction *
 gxr_action_new (GxrContext *context);

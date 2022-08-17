@@ -7,11 +7,13 @@
 
 #include "gxr-context-private.h"
 
+#define XR_USE_PLATFORM_XLIB 1
+#define XR_USE_GRAPHICS_API_VULKAN 1
+#include <openxr/openxr.h>
+#include <openxr/openxr_platform.h>
 #include <openxr/openxr_reflection.h>
 
 #include "gxr-controller.h"
-#include "gxr-device-manager.h"
-#include "gxr-manifest.h"
 #include "gxr-version.h"
 
 // TODO: Do not hardcode this

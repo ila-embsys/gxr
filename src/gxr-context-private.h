@@ -10,6 +10,8 @@
 
 #include "gxr-context.h"
 
+#include "gxr-manifest.h"
+
 XrInstance
 gxr_context_get_openxr_instance (GxrContext *self);
 

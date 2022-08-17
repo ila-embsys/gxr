@@ -17,20 +17,11 @@
 #include <gulkan.h>
 #include <stdint.h>
 
-#include <vulkan/vulkan.h>
-
-#define XR_USE_PLATFORM_XLIB 1
-#define XR_USE_GRAPHICS_API_VULKAN 1
-#include <openxr/openxr.h>
-#include <openxr/openxr_platform.h>
-
-#include "gxr-action-set.h"
 #include "gxr-device-manager.h"
-#include "gxr-enums.h"
-#include "gxr-manifest.h"
-#include "gxr-types.h"
 
 G_BEGIN_DECLS
+
+#define GXR_DEVICE_INDEX_MAX 64
 
 #define GXR_TYPE_CONTEXT gxr_context_get_type ()
 G_DECLARE_FINAL_TYPE (GxrContext, gxr_context, GXR, CONTEXT, GObject)
@@ -43,6 +34,64 @@ struct _GxrContextClass
 {
   GObjectClass parent;
 };
+
+/**
+ * GxrEye:
+ * @GXR_EYE_LEFT: Left eye.
+ * @GXR_EYE_RIGHT: Right eye.
+ *
+ * Type of Gxr viewport.
+ *
+ **/
+typedef enum
+{
+  GXR_EYE_LEFT = 0,
+  GXR_EYE_RIGHT = 1
+} GxrEye;
+
+/**
+ * GxrStateChange:
+ * @GXR_STATE_FRAMECYCLE_START: Ready to call gxr_context_begin_frame /
+ *  gxr_context_end_frame.
+ * @GXR_STATE_FRAMECYCLE_STOP: Not ready to call gxr_context_begin_frame /
+ *  gxr_context_end_frame.
+ * @GXR_STATE_RENDERING_START: The frame content will be shown in XR.
+ * @GXR_STATE_RENDERING_STOP: The frame content will not be visible, expensive
+ *  rendering work can be skipped, but  gxr_context_begin_frame /
+ *   gxr_context_end_frame should be called.
+ * @GXR_STATE_SHUTDOWN: XR Runtime is shutting down.
+ *
+ **/
+typedef enum
+{
+  GXR_STATE_FRAMECYCLE_START,
+  GXR_STATE_FRAMECYCLE_STOP,
+  GXR_STATE_RENDERING_START,
+  GXR_STATE_RENDERING_STOP,
+  GXR_STATE_SHUTDOWN,
+} GxrStateChange;
+
+/**
+ * GxrStateChangeEvent:
+ * @state_change: The #GxrStateChange.
+ *
+ * Event that is emitted when the application needs to quit.
+ **/
+typedef struct
+{
+  GxrStateChange state_change;
+} GxrStateChangeEvent;
+
+/**
+ * GxrOverlayEvent:
+ * @main_session_visible: If a Main session is visible after this event.
+ *
+ * Event that is emitted when running in OpenXR overlay mode.
+ **/
+typedef struct
+{
+  bool main_session_visible;
+} GxrOverlayEvent;
 
 GxrContext *
 gxr_context_new (char *app_name, uint32_t app_version);

@@ -12,7 +12,6 @@
 #include "gxr-action-set.h"
 #include "gxr-context-private.h"
 #include "gxr-controller.h"
-#include "gxr-types.h"
 
 // TODO: Do not hardcode this
 #define NUM_HANDS 2
