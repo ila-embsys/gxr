@@ -872,9 +872,15 @@ _copy_str (gconstpointer src, gpointer data)
 static uint32_t
 _xr_to_vk_version (XrVersion version)
 {
+#if VK_HEADER_VERSION >= 175
   return VK_MAKE_API_VERSION (0, XR_VERSION_MAJOR (version),
                               XR_VERSION_MINOR (version),
                               XR_VERSION_PATCH (version));
+#else
+  return VK_MAKE_VERSION (XR_VERSION_MAJOR (version),
+                          XR_VERSION_MINOR (version),
+                          XR_VERSION_PATCH (version));
+#endif
 }
 
 static gboolean
