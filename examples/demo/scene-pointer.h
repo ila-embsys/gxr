@@ -20,11 +20,11 @@
 G_DECLARE_FINAL_TYPE (ScenePointer, scene_pointer, SCENE, POINTER, SceneObject)
 
 ScenePointer *
-scene_pointer_new (GulkanContext *gulkan, VkDescriptorSetLayout *layout);
+scene_pointer_new (GulkanContext *gulkan, GulkanDescriptorSet *descriptor_set);
 
 void
 scene_pointer_render (ScenePointer      *self,
-                      VkPipeline         pipeline,
+                      GulkanPipeline    *pipeline,
                       VkPipelineLayout   pipeline_layout,
                       VkCommandBuffer    cmd_buffer,
                       graphene_matrix_t *vp);

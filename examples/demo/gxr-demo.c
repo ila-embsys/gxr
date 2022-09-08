@@ -90,9 +90,8 @@ struct _GxrDemo
 
   VkSampleCountFlagBits sample_count;
 
-  VkPipeline            line_pipeline;
-  VkDescriptorSetLayout descriptor_set_layout;
-  VkPipelineLayout      pipeline_layout;
+  GulkanDescriptorPool *descriptor_pool;
+  GulkanPipeline       *line_pipeline;
 
   GulkanRenderPass *render_pass;
 };
@@ -142,21 +141,13 @@ _finalize (GObject *gobject)
   g_clear_object (&self->cube);
 
   GulkanContext *gc = gxr_context_get_gulkan (self->context);
-
-  VkDevice device = gulkan_context_get_device_handle (gc);
+  VkDevice       device = gulkan_context_get_device_handle (gc);
   if (device != VK_NULL_HANDLE)
     vkDeviceWaitIdle (device);
 
-  if (device != VK_NULL_HANDLE)
-    {
-      vkDestroyPipelineLayout (device, self->pipeline_layout, NULL);
-      vkDestroyDescriptorSetLayout (device, self->descriptor_set_layout, NULL);
-      vkDestroyPipeline (device, self->line_pipeline, NULL);
-
-      if (self->render_pass)
-        g_clear_object (&self->render_pass);
-    }
-
+  g_object_unref (self->descriptor_pool);
+  g_object_unref (self->line_pipeline);
+  g_clear_object (&self->render_pass);
   g_clear_object (&self->context);
   g_hash_table_unref (self->controller_map);
 
@@ -195,7 +186,6 @@ _create_gxr_context ()
 static void
 _render_pointers (GxrDemo           *self,
                   VkCommandBuffer    cmd_buffer,
-                  VkPipeline         line_pipeline,
                   VkPipelineLayout   pipeline_layout,
                   graphene_matrix_t *vp)
 {
@@ -216,8 +206,8 @@ _render_pointers (GxrDemo           *self,
 
       ScenePointer *pointer = SCENE_POINTER (scene_controller_get_pointer (sc));
 
-      scene_pointer_render (pointer, line_pipeline, pipeline_layout, cmd_buffer,
-                            vp);
+      scene_pointer_render (pointer, self->line_pipeline, pipeline_layout,
+                            cmd_buffer, vp);
     }
 }
 
@@ -251,12 +241,14 @@ _render (GxrDemo *self, VkCommandBuffer cmd_buffer)
     graphene_matrix_multiply (&self->mat_view[eye], &self->mat_projection[eye],
                               &vp[eye]);
 
-  if (self->render_background)
-    scene_background_render (self->background, self->line_pipeline,
-                             self->pipeline_layout, cmd_buffer, vp);
+  VkPipelineLayout layout
+    = gulkan_descriptor_pool_get_pipeline_layout (self->descriptor_pool);
 
-  _render_pointers (self, cmd_buffer, self->line_pipeline,
-                    self->pipeline_layout, vp);
+  if (self->render_background)
+    scene_background_render (self->background, self->line_pipeline, layout,
+                             cmd_buffer, vp);
+
+  _render_pointers (self, cmd_buffer, layout, vp);
 
   _cube_set_position (self);
   scene_cube_render (self->cube, cmd_buffer, self->mat_view,
@@ -267,16 +259,6 @@ static void
 _render_stereo (GxrDemo *self, VkCommandBuffer cmd_buffer)
 {
   VkExtent2D extent = gulkan_renderer_get_extent (GULKAN_RENDERER (self));
-
-  VkViewport viewport = {.x = 0.0f,
-                         .y = (float) extent.height,
-                         .width = (float) extent.width,
-                         .height = -(float) extent.height,
-                         .minDepth = 0.0f,
-                         .maxDepth = 1.0f};
-  vkCmdSetViewport (cmd_buffer, 0, 1, &viewport);
-  VkRect2D scissor = {.offset = {0, 0}, .extent = extent};
-  vkCmdSetScissor (cmd_buffer, 0, 1, &scissor);
 
   VkClearColorValue black = {
     .float32 = {0.0f, 0.0f, 0.0f, .0f},
@@ -375,8 +357,10 @@ _device_activate_cb (GxrDeviceManager *dm,
 
   SceneController *sc = scene_controller_new (controller, self->context);
 
-  ScenePointer *pointer = scene_pointer_new (client,
-                                             &self->descriptor_set_layout);
+  GulkanDescriptorSet *descriptor_set
+    = gulkan_descriptor_pool_create_set (self->descriptor_pool);
+
+  ScenePointer *pointer = scene_pointer_new (client, descriptor_set);
   scene_controller_set_pointer (sc, pointer);
 
   g_hash_table_insert (self->controller_map, controller, sc);
@@ -558,79 +542,46 @@ _init_framebuffers (GxrDemo *self)
 
 /* Create a descriptor set layout compatible with all shaders. */
 static gboolean
-_init_descriptor_layout (GxrDemo *self)
+_init_descriptor_pool (GxrDemo *self)
 {
-  VkDescriptorSetLayoutCreateInfo info = {
-    .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-    .bindingCount = 1,
-    .pBindings = (VkDescriptorSetLayoutBinding[]) {
-      // mvp buffer
-      {
-        .binding = 0,
-        .descriptorCount = 1,
-        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-      },
+  VkDescriptorSetLayoutBinding bindings[] = {
+    // mvp buffer
+    {
+      .binding = 0,
+      .descriptorCount = 1,
+      .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+      .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
     },
   };
 
-  GulkanContext *gc = gxr_context_get_gulkan (self->context);
-  VkDevice       device = gulkan_context_get_device_handle (gc);
-  VkResult       res = vkCreateDescriptorSetLayout (device, &info, NULL,
-                                                    &self->descriptor_set_layout);
-  vk_check_error ("vkCreateDescriptorSetLayout", res, FALSE);
+  GulkanContext *gulkan = gxr_context_get_gulkan (self->context);
+  self->descriptor_pool = GULKAN_DESCRIPTOR_POOL_NEW (gulkan, bindings, 8);
+  if (!self->descriptor_pool)
+    return FALSE;
 
   return TRUE;
 }
-
-static gboolean
-_init_pipeline_layout (GxrDemo *self)
-{
-  VkPipelineLayoutCreateInfo info = {
-    .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-    .setLayoutCount = 1,
-    .pSetLayouts = &self->descriptor_set_layout,
-    .pushConstantRangeCount = 0,
-    .pPushConstantRanges = NULL,
-  };
-
-  GulkanContext *gc = gxr_context_get_gulkan (self->context);
-
-  VkResult res = vkCreatePipelineLayout (gulkan_context_get_device_handle (gc),
-                                         &info, NULL, &self->pipeline_layout);
-  vk_check_error ("vkCreatePipelineLayout", res, FALSE);
-
-  return TRUE;
-}
-
-typedef struct __attribute__ ((__packed__))
-{
-  VkPrimitiveTopology                           topology;
-  uint32_t                                      stride;
-  const VkVertexInputAttributeDescription      *attribs;
-  uint32_t                                      attrib_count;
-  const VkPipelineDepthStencilStateCreateInfo  *depth_stencil_state;
-  const VkPipelineColorBlendAttachmentState    *blend_attachments;
-  const VkPipelineRasterizationStateCreateInfo *rasterization_state;
-} XrdPipelineConfig;
 
 static gboolean
 _init_graphics_pipelines (GxrDemo *self)
 {
-  XrdPipelineConfig config = {
+  GulkanPipelineConfig config = {
+    .extent = gulkan_renderer_get_extent (GULKAN_RENDERER (self)),
+    .sample_count = VK_SAMPLE_COUNT_1_BIT,
+    .vertex_shader_uri = "/shaders/pointer.vert.spv",
+    .fragment_shader_uri = "/shaders/pointer.frag.spv",
     .topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
-    .stride = sizeof (float) * 6,
     .attribs = (VkVertexInputAttributeDescription []) {
       {0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0},
       {1, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof (float) * 3},
     },
-    .depth_stencil_state = &(VkPipelineDepthStencilStateCreateInfo) {
-      .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
-      .depthTestEnable = VK_TRUE,
-      .depthWriteEnable = VK_TRUE,
-      .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
-    },
     .attrib_count = 2,
+    .bindings = &(VkVertexInputBindingDescription) {
+        .binding = 0,
+        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+        .stride = sizeof (float) * 6,
+    },
+    .binding_count = 1,
     .blend_attachments = &(VkPipelineColorBlendAttachmentState) {
       .blendEnable = VK_FALSE,
       .colorWriteMask = 0xf,
@@ -641,97 +592,18 @@ _init_graphics_pipelines (GxrDemo *self)
       .cullMode = VK_CULL_MODE_BACK_BIT,
       .lineWidth = 2.0f,
     },
+    .depth_stencil_state = &(VkPipelineDepthStencilStateCreateInfo) {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+      .depthTestEnable = VK_TRUE,
+      .depthWriteEnable = VK_TRUE,
+      .depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
+    },
+    .flip_y = TRUE,
   };
 
-  VkShaderModule vert;
-  if (!gulkan_renderer_create_shader_module (GULKAN_RENDERER (self),
-                                             "/shaders/pointer.vert.spv",
-                                             &vert))
-    return FALSE;
-
-  VkShaderModule frag;
-  if (!gulkan_renderer_create_shader_module (GULKAN_RENDERER (self),
-                                             "/shaders/pointer.frag.spv",
-                                             &frag))
-    return FALSE;
-
-  VkGraphicsPipelineCreateInfo pipeline_info = {
-    .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-    .layout = self->pipeline_layout,
-    .pVertexInputState = &(VkPipelineVertexInputStateCreateInfo) {
-      .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-      .pVertexAttributeDescriptions = config.attribs,
-      .vertexBindingDescriptionCount = 1,
-      .pVertexBindingDescriptions = &(VkVertexInputBindingDescription) {
-        .binding = 0,
-        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-        .stride = config.stride,
-      },
-      .vertexAttributeDescriptionCount = config.attrib_count,
-    },
-    .pInputAssemblyState = &(VkPipelineInputAssemblyStateCreateInfo) {
-    .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-      .topology = config.topology,
-      .primitiveRestartEnable = VK_FALSE,
-    },
-    .pViewportState = &(VkPipelineViewportStateCreateInfo) {
-      .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-      .viewportCount = 1,
-      .scissorCount = 1,
-    },
-    .pRasterizationState = config.rasterization_state,
-    .pMultisampleState = &(VkPipelineMultisampleStateCreateInfo) {
-      .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-      .rasterizationSamples = self->sample_count,
-      .minSampleShading = 0.0f,
-      .pSampleMask = &(uint32_t) { 0xFFFFFFFF },
-      .alphaToCoverageEnable = VK_FALSE,
-    },
-    .pDepthStencilState = config.depth_stencil_state,
-    .pColorBlendState = &(VkPipelineColorBlendStateCreateInfo) {
-      .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
-      .logicOpEnable = VK_FALSE,
-      .attachmentCount = 1,
-      .blendConstants = {0,0,0,0},
-      .pAttachments = config.blend_attachments,
-    },
-    .stageCount = 2,
-    .pStages = (VkPipelineShaderStageCreateInfo []) {
-      {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        .stage = VK_SHADER_STAGE_VERTEX_BIT,
-        .module = vert,
-        .pName = "main",
-      },
-      {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-        .module = frag,
-        .pName = "main",
-      }
-    },
-    .renderPass = gulkan_render_pass_get_handle (self->render_pass),
-    .pDynamicState = &(VkPipelineDynamicStateCreateInfo) {
-      .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
-      .dynamicStateCount = 2,
-      .pDynamicStates = (VkDynamicState[]) {
-        VK_DYNAMIC_STATE_VIEWPORT,
-        VK_DYNAMIC_STATE_SCISSOR,
-      },
-    },
-    .subpass = 0,
-  };
-
-  GulkanContext *gc = gxr_context_get_gulkan (self->context);
-
-  VkDevice device = gulkan_context_get_device_handle (gc);
-  VkResult res;
-  res = vkCreateGraphicsPipelines (device, VK_NULL_HANDLE, 1, &pipeline_info,
-                                   NULL, &self->line_pipeline);
-  vk_check_error ("vkCreateGraphicsPipelines", res, FALSE);
-
-  vkDestroyShaderModule (device, vert, NULL);
-  vkDestroyShaderModule (device, frag, NULL);
+  GulkanContext *gulkan = gulkan_renderer_get_context (GULKAN_RENDERER (self));
+  self->line_pipeline = gulkan_pipeline_new (gulkan, self->descriptor_pool,
+                                             self->render_pass, &config);
 
   return TRUE;
 }
@@ -747,9 +619,7 @@ _init_vulkan (GxrDemo *self)
 
   if (!_init_framebuffers (self))
     return FALSE;
-  if (!_init_descriptor_layout (self))
-    return FALSE;
-  if (!_init_pipeline_layout (self))
+  if (!_init_descriptor_pool (self))
     return FALSE;
   if (!_init_graphics_pipelines (self))
     return FALSE;
@@ -757,8 +627,9 @@ _init_vulkan (GxrDemo *self)
   self->cube = scene_cube_new (gulkan, GULKAN_RENDERER (self),
                                self->render_pass, self->sample_count);
 
-  self->background = scene_background_new (gulkan,
-                                           &self->descriptor_set_layout);
+  GulkanDescriptorSet *descriptor_set
+    = gulkan_descriptor_pool_create_set (self->descriptor_pool);
+  self->background = scene_background_new (gulkan, descriptor_set);
 
   return TRUE;
 }
@@ -808,8 +679,6 @@ gxr_demo_init (GxrDemo *self)
   graphene_vec4_t color;
   graphene_vec4_init (&color, .078f, .471f, .675f, 1);
 
-  self->descriptor_set_layout = VK_NULL_HANDLE;
-  self->pipeline_layout = VK_NULL_HANDLE;
   self->render_background = TRUE;
 
   g_assert (_init_vulkan (self));

@@ -42,17 +42,18 @@ scene_background_init (SceneBackground *self)
 }
 
 static gboolean
-_initialize (SceneBackground       *self,
-             GulkanContext         *gulkan,
-             VkDescriptorSetLayout *layout);
+_initialize (SceneBackground     *self,
+             GulkanContext       *gulkan,
+             GulkanDescriptorSet *descriptor_set);
 
 SceneBackground *
-scene_background_new (GulkanContext *gulkan, VkDescriptorSetLayout *layout)
+scene_background_new (GulkanContext       *gulkan,
+                      GulkanDescriptorSet *descriptor_set)
 {
   SceneBackground *self = (SceneBackground *)
     g_object_new (SCENE_TYPE_BACKGROUND, 0);
 
-  _initialize (self, gulkan, layout);
+  _initialize (self, gulkan, descriptor_set);
 
   return self;
 }
@@ -137,9 +138,9 @@ _append_floor (GulkanVertexBuffer *self,
 }
 
 static gboolean
-_initialize (SceneBackground       *self,
-             GulkanContext         *gulkan,
-             VkDescriptorSetLayout *layout)
+_initialize (SceneBackground     *self,
+             GulkanContext       *gulkan,
+             GulkanDescriptorSet *descriptor_set)
 {
   GulkanDevice *device = gulkan_context_get_device (gulkan);
   self->vertex_buffer
@@ -162,7 +163,7 @@ _initialize (SceneBackground       *self,
   SceneObject *obj = SCENE_OBJECT (self);
 
   VkDeviceSize ub_size = sizeof (SceneBackgroundUniformBuffer);
-  if (!scene_object_initialize (obj, gulkan, layout, ub_size))
+  if (!scene_object_initialize (obj, gulkan, ub_size, descriptor_set))
     return FALSE;
 
   scene_object_update_descriptors (obj);
@@ -172,7 +173,7 @@ _initialize (SceneBackground       *self,
 
 void
 scene_background_render (SceneBackground   *self,
-                         VkPipeline         pipeline,
+                         GulkanPipeline    *pipeline,
                          VkPipelineLayout   pipeline_layout,
                          VkCommandBuffer    cmd_buffer,
                          graphene_matrix_t *vp)
@@ -182,7 +183,7 @@ scene_background_render (SceneBackground   *self,
 
   SceneObject *obj = SCENE_OBJECT (self);
 
-  vkCmdBindPipeline (cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+  gulkan_pipeline_bind (pipeline, cmd_buffer);
 
   SceneBackgroundUniformBuffer ub = {0};
 

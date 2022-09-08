@@ -50,9 +50,9 @@ scene_pointer_init (ScenePointer *self)
 }
 
 static gboolean
-_initialize (ScenePointer          *self,
-             GulkanContext         *gulkan,
-             VkDescriptorSetLayout *layout)
+_initialize (ScenePointer        *self,
+             GulkanContext       *gulkan,
+             GulkanDescriptorSet *descriptor_set)
 {
   GulkanDevice *device = gulkan_context_get_device (gulkan);
   self->vertex_buffer
@@ -78,7 +78,7 @@ _initialize (ScenePointer          *self,
 
   VkDeviceSize ubo_size = sizeof (ScenePointerUniformBuffer);
 
-  if (!scene_object_initialize (obj, gulkan, layout, ubo_size))
+  if (!scene_object_initialize (obj, gulkan, ubo_size, descriptor_set))
     return FALSE;
 
   scene_object_update_descriptors (obj);
@@ -87,11 +87,11 @@ _initialize (ScenePointer          *self,
 }
 
 ScenePointer *
-scene_pointer_new (GulkanContext *gulkan, VkDescriptorSetLayout *layout)
+scene_pointer_new (GulkanContext *gulkan, GulkanDescriptorSet *descriptor_set)
 {
   ScenePointer *self = (ScenePointer *) g_object_new (SCENE_TYPE_POINTER, 0);
 
-  _initialize (self, gulkan, layout);
+  _initialize (self, gulkan, descriptor_set);
   return self;
 }
 
@@ -105,7 +105,7 @@ scene_pointer_finalize (GObject *gobject)
 
 void
 scene_pointer_render (ScenePointer      *self,
-                      VkPipeline         pipeline,
+                      GulkanPipeline    *pipeline,
                       VkPipelineLayout   pipeline_layout,
                       VkCommandBuffer    cmd_buffer,
                       graphene_matrix_t *vp)
@@ -133,7 +133,7 @@ scene_pointer_render (ScenePointer      *self,
 
   scene_object_update_ubo (SCENE_OBJECT (self), &ub);
 
-  vkCmdBindPipeline (cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+  gulkan_pipeline_bind (pipeline, cmd_buffer);
 
   scene_object_bind (obj, cmd_buffer, pipeline_layout);
   gulkan_vertex_buffer_draw (self->vertex_buffer, cmd_buffer);

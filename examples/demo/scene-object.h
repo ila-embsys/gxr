@@ -39,10 +39,10 @@ scene_object_bind (SceneObject     *self,
                    VkPipelineLayout pipeline_layout);
 
 gboolean
-scene_object_initialize (SceneObject           *self,
-                         GulkanContext         *gulkan,
-                         VkDescriptorSetLayout *layout,
-                         VkDeviceSize           uniform_buffer_size);
+scene_object_initialize (SceneObject         *self,
+                         GulkanContext       *gulkan,
+                         VkDeviceSize         uniform_buffer_size,
+                         GulkanDescriptorSet *descriptor_set);
 
 void
 scene_object_update_descriptors (SceneObject *self);

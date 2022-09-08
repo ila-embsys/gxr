@@ -23,11 +23,12 @@ G_DECLARE_FINAL_TYPE (SceneBackground,
                       SceneObject)
 
 SceneBackground *
-scene_background_new (GulkanContext *gulkan, VkDescriptorSetLayout *layout);
+scene_background_new (GulkanContext       *gulkan,
+                      GulkanDescriptorSet *descriptor_set);
 
 void
 scene_background_render (SceneBackground   *self,
-                         VkPipeline         pipeline,
+                         GulkanPipeline    *pipeline,
                          VkPipelineLayout   pipeline_layout,
                          VkCommandBuffer    cmd_buffer,
                          graphene_matrix_t *vp);

@@ -19,8 +19,7 @@ typedef struct _SceneObjectPrivate
 
   GulkanUniformBuffer *uniform_buffer;
 
-  GulkanDescriptorPool *descriptor_pool;
-  VkDescriptorSet       descriptor_set;
+  GulkanDescriptorSet *descriptor_set;
 
   graphene_matrix_t model_matrix;
 
@@ -47,7 +46,6 @@ scene_object_init (SceneObject *self)
 {
   SceneObjectPrivate *priv = scene_object_get_instance_private (self);
 
-  priv->descriptor_pool = NULL;
   graphene_matrix_init_identity (&priv->model_matrix);
   priv->scale = 1.0f;
   priv->gulkan = NULL;
@@ -59,7 +57,6 @@ scene_object_finalize (GObject *gobject)
   SceneObject        *self = SCENE_OBJECT (gobject);
   SceneObjectPrivate *priv = scene_object_get_instance_private (self);
 
-  g_object_unref (priv->descriptor_pool);
   g_object_unref (priv->uniform_buffer);
 
   g_clear_object (&priv->gulkan);
@@ -80,25 +77,22 @@ _update_model_matrix (SceneObject *self)
 void
 scene_object_bind (SceneObject     *self,
                    VkCommandBuffer  cmd_buffer,
-                   VkPipelineLayout pipeline_layout)
+                   VkPipelineLayout layout)
 {
   SceneObjectPrivate *priv = scene_object_get_instance_private (self);
-  vkCmdBindDescriptorSets (cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                           pipeline_layout, 0, 1, &priv->descriptor_set, 0,
-                           NULL);
+  gulkan_descriptor_set_bind (priv->descriptor_set, layout, cmd_buffer);
 }
 
 gboolean
-scene_object_initialize (SceneObject           *self,
-                         GulkanContext         *gulkan,
-                         VkDescriptorSetLayout *layout,
-                         VkDeviceSize           uniform_buffer_size)
+scene_object_initialize (SceneObject         *self,
+                         GulkanContext       *gulkan,
+                         VkDeviceSize         uniform_buffer_size,
+                         GulkanDescriptorSet *descriptor_set)
 {
   SceneObjectPrivate *priv = scene_object_get_instance_private (self);
   priv->gulkan = g_object_ref (gulkan);
 
   GulkanDevice *device = gulkan_context_get_device (gulkan);
-  VkDevice      vk_device = gulkan_device_get_handle (device);
 
   /* Create uniform buffer to hold a matrix per eye */
   priv->uniform_buffer = gulkan_uniform_buffer_new (device,
@@ -106,37 +100,7 @@ scene_object_initialize (SceneObject           *self,
   if (!priv->uniform_buffer)
     return FALSE;
 
-  uint32_t set_count = 2;
-
-  VkDescriptorPoolSize pool_sizes[] = {
-    {
-      .descriptorCount = set_count,
-      .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-    },
-    {
-      .descriptorCount = set_count,
-      .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-    },
-    {
-      .descriptorCount = set_count,
-      .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-    },
-    {
-      .descriptorCount = set_count,
-      .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-    },
-  };
-
-  priv->descriptor_pool
-    = gulkan_descriptor_pool_new_from_layout (vk_device, *layout, pool_sizes,
-                                              G_N_ELEMENTS (pool_sizes),
-                                              set_count);
-  if (!priv->descriptor_pool)
-    return FALSE;
-
-  if (!gulkan_descriptor_pool_allocate_sets (priv->descriptor_pool, 1,
-                                             &priv->descriptor_set))
-    return FALSE;
+  priv->descriptor_set = descriptor_set;
 
   return TRUE;
 }
@@ -145,25 +109,8 @@ void
 scene_object_update_descriptors (SceneObject *self)
 {
   SceneObjectPrivate *priv = scene_object_get_instance_private (self);
-  VkDevice            device = gulkan_context_get_device_handle (priv->gulkan);
-
-  VkWriteDescriptorSet *write_descriptor_sets = (VkWriteDescriptorSet []) {
-    {
-      .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-      .dstSet = priv->descriptor_set,
-      .dstBinding = 0,
-      .descriptorCount = 1,
-      .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-      .pBufferInfo = &(VkDescriptorBufferInfo) {
-        .buffer = gulkan_uniform_buffer_get_handle (priv->uniform_buffer),
-        .offset = 0,
-        .range = VK_WHOLE_SIZE,
-      },
-      .pTexelBufferView = NULL,
-    },
-  };
-
-  vkUpdateDescriptorSets (device, 1, write_descriptor_sets, 0, NULL);
+  gulkan_descriptor_set_update_buffer (priv->descriptor_set, 0,
+                                       priv->uniform_buffer);
 }
 
 void
@@ -197,13 +144,6 @@ scene_object_get_transformation (SceneObject       *self,
 {
   SceneObjectPrivate *priv = scene_object_get_instance_private (self);
   graphene_matrix_init_from_matrix (transformation, &priv->model_matrix);
-}
-
-VkDescriptorSet
-scene_object_get_descriptor_set (SceneObject *self)
-{
-  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
-  return priv->descriptor_set;
 }
 
 void
