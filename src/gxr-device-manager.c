@@ -88,19 +88,6 @@ _insert_at_key (GHashTable *table, guint64 key, gpointer value)
   g_hash_table_insert (table, keyp, value);
 }
 
-static void
-gxr_device_manager_emit_device_activate (GxrDeviceManager *self, gpointer event)
-{
-  g_signal_emit (self, dm_signals[DEVICE_ACTIVATE_EVENT], 0, event);
-}
-
-static void
-gxr_device_manager_emit_device_deactivate (GxrDeviceManager *self,
-                                           gpointer          event)
-{
-  g_signal_emit (self, dm_signals[DEVICE_DEACTIVATE_EVENT], 0, event);
-}
-
 GSList *
 gxr_device_manager_get_controllers (GxrDeviceManager *self)
 {
@@ -131,7 +118,7 @@ gxr_device_manager_add (GxrDeviceManager *self,
   if (is_controller)
     {
       device = GXR_DEVICE (gxr_controller_new (device_id));
-      gxr_device_manager_emit_device_activate (self, device);
+      g_signal_emit (self, dm_signals[DEVICE_ACTIVATE_EVENT], 0, device);
     }
   else
     {
@@ -165,7 +152,7 @@ gxr_device_manager_remove (GxrDeviceManager *self, guint64 device_id)
     }
 
   /* g_hash_table_remove destroys device */
-  gxr_device_manager_emit_device_deactivate (self, device);
+  g_signal_emit (self, dm_signals[DEVICE_DEACTIVATE_EVENT], 0, device);
 
   if (gxr_device_is_controller (device))
     self->controllers = g_slist_remove (self->controllers, device);
