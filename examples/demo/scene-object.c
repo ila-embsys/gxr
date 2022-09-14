@@ -10,7 +10,6 @@
 #include <gulkan.h>
 
 #include "graphene-ext.h"
-#include "scene-renderer.h"
 
 typedef struct _SceneObjectPrivate
 {
@@ -28,10 +27,6 @@ typedef struct _SceneObjectPrivate
   graphene_point3d_t    position;
   float                 scale;
   graphene_quaternion_t orientation;
-
-  gboolean visible;
-
-  gboolean initialized;
 } SceneObjectPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (SceneObject, scene_object, G_TYPE_OBJECT)
@@ -55,8 +50,6 @@ scene_object_init (SceneObject *self)
   priv->descriptor_pool = NULL;
   graphene_matrix_init_identity (&priv->model_matrix);
   priv->scale = 1.0f;
-  priv->visible = TRUE;
-  priv->initialized = FALSE;
   priv->gulkan = NULL;
 }
 
@@ -65,8 +58,6 @@ scene_object_finalize (GObject *gobject)
 {
   SceneObject        *self = SCENE_OBJECT (gobject);
   SceneObjectPrivate *priv = scene_object_get_instance_private (self);
-  if (!priv->initialized)
-    return;
 
   g_object_unref (priv->descriptor_pool);
   g_object_unref (priv->uniform_buffer);
@@ -95,37 +86,6 @@ scene_object_bind (SceneObject     *self,
   vkCmdBindDescriptorSets (cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                            pipeline_layout, 0, 1, &priv->descriptor_set, 0,
                            NULL);
-}
-
-void
-scene_object_set_scale (SceneObject *self, float scale)
-{
-  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
-  priv->scale = scale;
-  _update_model_matrix (self);
-}
-
-void
-scene_object_set_position (SceneObject *self, graphene_point3d_t *position)
-{
-  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
-  graphene_point3d_init_from_point (&priv->position, position);
-  _update_model_matrix (self);
-}
-
-void
-scene_object_get_position (SceneObject *self, graphene_point3d_t *position)
-{
-  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
-  graphene_point3d_init_from_point (position, &priv->position);
-}
-
-void
-scene_object_set_rotation_euler (SceneObject *self, graphene_euler_t *euler)
-{
-  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
-  graphene_quaternion_init_from_euler (&priv->orientation, euler);
-  _update_model_matrix (self);
 }
 
 gboolean
@@ -178,50 +138,7 @@ scene_object_initialize (SceneObject           *self,
                                              &priv->descriptor_set))
     return FALSE;
 
-  priv->initialized = TRUE;
-
   return TRUE;
-}
-
-void
-scene_object_update_descriptors_texture (SceneObject *self,
-                                         VkSampler    sampler,
-                                         VkImageView  image_view)
-{
-  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
-  VkDevice            device = gulkan_context_get_device_handle (priv->gulkan);
-
-  VkWriteDescriptorSet *write_descriptor_sets = (VkWriteDescriptorSet []) {
-    {
-      .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-      .dstSet = priv->descriptor_set,
-      .dstBinding = 0,
-      .descriptorCount = 1,
-      .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-      .pBufferInfo = &(VkDescriptorBufferInfo) {
-        .buffer = gulkan_uniform_buffer_get_handle (priv->uniform_buffer),
-        .offset = 0,
-        .range = VK_WHOLE_SIZE,
-      },
-      .pTexelBufferView = NULL,
-    },
-    {
-      .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-      .dstSet = priv->descriptor_set,
-      .dstBinding = 1,
-      .descriptorCount = 1,
-      .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-      .pImageInfo = &(VkDescriptorImageInfo) {
-        .sampler = sampler,
-        .imageView = image_view,
-        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-      },
-      .pBufferInfo = NULL,
-      .pTexelBufferView = NULL,
-    },
-  };
-
-  vkUpdateDescriptorSets (device, 2, write_descriptor_sets, 0, NULL);
 }
 
 void
@@ -258,9 +175,6 @@ scene_object_set_transformation (SceneObject *self, graphene_matrix_t *mat)
                                                &priv->orientation);
   graphene_ext_matrix_get_translation_point3d (mat, &priv->position);
 
-  // graphene_vec3_t scale;
-  // graphene_matrix_get_scale (mat, &scale);
-
   _update_model_matrix (self);
 }
 
@@ -283,53 +197,6 @@ scene_object_get_transformation (SceneObject       *self,
 {
   SceneObjectPrivate *priv = scene_object_get_instance_private (self);
   graphene_matrix_init_from_matrix (transformation, &priv->model_matrix);
-}
-
-graphene_matrix_t
-scene_object_get_transformation_no_scale (SceneObject *self)
-{
-  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
-
-  graphene_matrix_t mat;
-  graphene_matrix_init_identity (&mat);
-  graphene_matrix_rotate_quaternion (&mat, &priv->orientation);
-  graphene_matrix_translate (&mat, &priv->position);
-  return mat;
-}
-
-gboolean
-scene_object_is_visible (SceneObject *self)
-{
-  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
-  return priv->visible;
-}
-
-void
-scene_object_show (SceneObject *self)
-{
-  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
-  priv->visible = TRUE;
-}
-
-void
-scene_object_hide (SceneObject *self)
-{
-  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
-  priv->visible = FALSE;
-}
-
-GulkanUniformBuffer *
-scene_object_get_ubo (SceneObject *self)
-{
-  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
-  return priv->uniform_buffer;
-}
-
-VkBuffer
-scene_object_get_transformation_buffer (SceneObject *self)
-{
-  SceneObjectPrivate *priv = scene_object_get_instance_private (self);
-  return gulkan_uniform_buffer_get_handle (priv->uniform_buffer);
 }
 
 VkDescriptorSet

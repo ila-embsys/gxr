@@ -12,7 +12,6 @@
 
 #include <gxr.h>
 
-#include "scene-pointer-tip.h"
 #include "scene-pointer.h"
 #include <graphene.h>
 
@@ -65,59 +64,8 @@ scene_controller_new (GxrController *controller, GxrContext *context);
 ScenePointer *
 scene_controller_get_pointer (SceneController *self);
 
-ScenePointerTip *
-scene_controller_get_pointer_tip (SceneController *self);
-
 void
 scene_controller_set_pointer (SceneController *self, ScenePointer *pointer);
-
-void
-scene_controller_set_pointer_tip (SceneController *self, ScenePointerTip *tip);
-
-GxrHoverState *
-scene_controller_get_hover_state (SceneController *self);
-
-GxrGrabState *
-scene_controller_get_grab_state (SceneController *self);
-
-void
-scene_controller_reset_grab_state (SceneController *self);
-
-void
-scene_controller_reset_hover_state (SceneController *self);
-
-void
-scene_controller_hide_pointer (SceneController *self);
-
-void
-scene_controller_show_pointer (SceneController *self);
-
-gboolean
-scene_controller_is_pointer_visible (SceneController *self);
-
-void
-scene_controller_update_hovered_object (SceneController    *self,
-                                        gpointer            last_object,
-                                        gpointer            object,
-                                        graphene_matrix_t  *object_pose,
-                                        graphene_point3d_t *intersection_point,
-                                        graphene_point_t   *intersection_2d,
-                                        float intersection_distance);
-
-void
-scene_controller_drag_start (SceneController   *self,
-                             gpointer           grabbed_object,
-                             graphene_matrix_t *object_pose);
-
-gboolean
-scene_controller_get_drag_pose (SceneController   *self,
-                                graphene_matrix_t *drag_pose);
-
-void
-scene_controller_set_user_data (SceneController *self, gpointer data);
-
-gpointer
-scene_controller_get_user_data (SceneController *self);
 
 GxrController *
 scene_controller_get_controller (SceneController *self);

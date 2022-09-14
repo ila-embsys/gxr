@@ -1,6 +1,4 @@
 shaders = ['pointer.vert', 'pointer.frag',
-           'window.vert', 'window.frag',
-           'device_model.vert', 'device_model.frag',
            'cube.frag', 'cube.vert' ]
 
 glslc = find_program('glslc', required : false)

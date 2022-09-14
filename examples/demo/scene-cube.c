@@ -143,12 +143,6 @@ struct _SceneCube
 G_DEFINE_TYPE (SceneCube, scene_cube, SCENE_TYPE_OBJECT)
 
 static void
-_set_default_position (SceneCube *self)
-{
-  self->pos = (graphene_point3d_t){0.0f, 0.0f, -6.0f};
-}
-
-static void
 scene_cube_finalize (GObject *gobject);
 
 static void
@@ -406,7 +400,7 @@ _initialize (SceneCube            *self,
 
   scene_object_update_descriptors (obj);
 
-  _set_default_position (self);
+  self->pos = (graphene_point3d_t){0.0f, 0.0f, -6.0f};
 
   return TRUE;
 }
@@ -476,11 +470,6 @@ scene_cube_render (SceneCube         *self,
     }
 
   SceneObject *obj = SCENE_OBJECT (self);
-  if (!scene_object_is_visible (obj))
-    {
-      // g_debug ("Cube not visible");
-      return;
-    }
 
   _set_transformation (self);
 
@@ -534,10 +523,4 @@ void
 scene_cube_override_position (SceneCube *self, graphene_point3d_t *position)
 {
   self->pos = *position;
-}
-
-void
-scene_cube_resume_default_position (SceneCube *self)
-{
-  _set_default_position (self);
 }

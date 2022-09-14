@@ -33,7 +33,4 @@ scene_cube_render (SceneCube         *self,
 void
 scene_cube_override_position (SceneCube *self, graphene_point3d_t *position);
 
-void
-scene_cube_resume_default_position (SceneCube *self);
-
 #endif /* SCENE_CUBE_H_ */

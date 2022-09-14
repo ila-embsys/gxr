@@ -29,39 +29,7 @@ scene_pointer_render (ScenePointer      *self,
                       VkCommandBuffer    cmd_buffer,
                       graphene_matrix_t *vp);
 
-void
-scene_pointer_move (ScenePointer *self, graphene_matrix_t *transform);
-
-void
-scene_pointer_set_length (ScenePointer *self, float length);
-
 float
-scene_pointer_get_default_length (ScenePointer *self);
-
-void
-scene_pointer_reset_length (ScenePointer *self);
-
-void
-scene_pointer_get_ray (ScenePointer *self, graphene_ray_t *res);
-
-gboolean
-scene_pointer_get_plane_intersection (ScenePointer      *self,
-                                      graphene_plane_t  *plane,
-                                      graphene_matrix_t *plane_transform,
-                                      float              plane_aspect,
-                                      float             *distance,
-                                      graphene_vec3_t   *res);
-
-void
-scene_pointer_show (ScenePointer *self);
-
-void
-scene_pointer_hide (ScenePointer *self);
-
-gboolean
-scene_pointer_is_visible (ScenePointer *self);
-
-void
-scene_pointer_update_render_ray (ScenePointer *self, gboolean render_ray);
+scene_pointer_get_length (ScenePointer *self);
 
 #endif /* SCENE_POINTER_H_ */

@@ -181,8 +181,6 @@ scene_background_render (SceneBackground   *self,
     return;
 
   SceneObject *obj = SCENE_OBJECT (self);
-  if (!scene_object_is_visible (obj))
-    return;
 
   vkCmdBindPipeline (cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 

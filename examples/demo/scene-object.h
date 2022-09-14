@@ -30,18 +30,6 @@ struct _SceneObjectClass
 };
 
 void
-scene_object_set_scale (SceneObject *self, float scale);
-
-void
-scene_object_set_position (SceneObject *self, graphene_point3d_t *position);
-
-void
-scene_object_get_position (SceneObject *self, graphene_point3d_t *position);
-
-void
-scene_object_set_rotation_euler (SceneObject *self, graphene_euler_t *euler);
-
-void
 scene_object_get_transformation (SceneObject       *self,
                                  graphene_matrix_t *transformation);
 
@@ -57,26 +45,10 @@ scene_object_initialize (SceneObject           *self,
                          VkDeviceSize           uniform_buffer_size);
 
 void
-scene_object_update_descriptors_texture (SceneObject *self,
-                                         VkSampler    sampler,
-                                         VkImageView  image_view);
-
-void
 scene_object_update_descriptors (SceneObject *self);
 
 void
 scene_object_set_transformation (SceneObject *self, graphene_matrix_t *mat);
-
-graphene_matrix_t
-scene_object_get_transformation_no_scale (SceneObject *self);
-
-gboolean
-scene_object_is_visible (SceneObject *self);
-void
-scene_object_show (SceneObject *self);
-
-void
-scene_object_hide (SceneObject *self);
 
 void
 scene_object_set_transformation_direct (SceneObject       *self,
@@ -84,12 +56,6 @@ scene_object_set_transformation_direct (SceneObject       *self,
 
 GulkanUniformBuffer *
 scene_object_get_ubo (SceneObject *self);
-
-VkBuffer
-scene_object_get_transformation_buffer (SceneObject *self);
-
-VkDescriptorSet
-scene_object_get_descriptor_set (SceneObject *self);
 
 void
 scene_object_update_ubo (SceneObject *self, gpointer uniform_buffer);
