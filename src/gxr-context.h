@@ -132,6 +132,9 @@ gxr_context_get_projection (GxrContext        *self,
 void
 gxr_context_get_view (GxrContext *self, GxrEye eye, graphene_matrix_t *mat);
 
+void
+gxr_context_get_eye_position (GxrContext *self, GxrEye eye, graphene_vec3_t *v);
+
 gboolean
 gxr_context_begin_frame (GxrContext *self);
 

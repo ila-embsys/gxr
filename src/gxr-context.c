@@ -1768,6 +1768,15 @@ gxr_context_get_view (GxrContext *self, GxrEye eye, graphene_matrix_t *mat)
   _get_view_matrix_from_pose (&self->views[eye].pose, mat);
 }
 
+void
+gxr_context_get_eye_position (GxrContext *self, GxrEye eye, graphene_vec3_t *v)
+{
+  graphene_vec3_init (v,
+                      self->views[eye].pose.position.x,
+                      self->views[eye].pose.position.y,
+                      self->views[eye].pose.position.z);
+}
+
 static gboolean
 _begin_frame (GxrContext *self)
 {
