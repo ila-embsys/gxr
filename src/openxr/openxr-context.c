@@ -584,6 +584,13 @@ _create_swapchains (OpenXRContext* self)
       self->images[i] =
         g_malloc (sizeof(XrSwapchainImageVulkanKHR) * self->swapchain_length[i]);
 
+      for (uint32_t j = 0; j < self->swapchain_length[i]; j++)
+        {
+          // ...IMAGE_VULKAN2_KHR = ...IMAGE_VULKAN_KHR
+          self->images[i][j].type = XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR;
+          self->images[i][j].next = NULL;
+       }
+
       result = xrEnumerateSwapchainImages(
         self->swapchains[i], self->swapchain_length[i],
         &self->swapchain_length[i],
