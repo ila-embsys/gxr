@@ -2293,21 +2293,37 @@ _suggest_for_interaction_profile (GxrActionSet      **sets,
 gboolean
 gxr_context_attach_action_sets (GxrContext    *self,
                                 GxrActionSet **sets,
-                                GxrManifest   *manifest,
                                 uint32_t       count)
 {
-  GSList *binding_manifests = gxr_manifest_get_binding_manifests (manifest);
-
-  for (GSList *l = binding_manifests; l; l = l->next)
+  for (uint32_t i = 0; i < count; i++)
     {
-      GxrBindingManifest *binding_manifest = l->data;
+      uint32_t j;
+      for (j = 0; j < i; j++)
+        {
+          GxrManifest *manifest_i = gxr_action_set_get_manifest (sets[i]);
+          GxrManifest *manifest_j = gxr_action_set_get_manifest (sets[i]);
+          if (manifest_i == manifest_j)
+            break;
+        }
+      if (i == j)
+        {
+          // do for every unique manifest
+          GxrManifest *manifest = gxr_action_set_get_manifest (sets[i]);
+          GSList      *binding_manifests
+            = gxr_manifest_get_binding_manifests (manifest);
 
-      g_debug ("===");
-      g_debug ("Suggesting for profile %s",
-               binding_manifest->interaction_profile);
+          for (GSList *l = binding_manifests; l; l = l->next)
+            {
+              GxrBindingManifest *binding_manifest = l->data;
 
-      _suggest_for_interaction_profile (sets, count, self->instance,
-                                        binding_manifest);
+              g_debug ("===");
+              g_debug ("Suggesting for profile %s",
+                       binding_manifest->interaction_profile);
+
+              _suggest_for_interaction_profile (sets, count, self->instance,
+                                                binding_manifest);
+            }
+        }
     }
 
   XrActionSet *handles = g_malloc (sizeof (XrActionSet) * count);

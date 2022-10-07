@@ -417,6 +417,7 @@ static GxrActionSet *
 _create_wm_action_set (GxrDemo *self)
 {
   GxrActionSet *set = gxr_action_set_new_from_url (self->context,
+                                                   self->manifest,
                                                    "/actions/wm");
 
   gxr_action_set_connect_digital_from_float (set, self->context,
@@ -489,8 +490,7 @@ _init_input_callbacks (GxrDemo *self)
     }
 
   self->actionset = _create_wm_action_set (self);
-  gxr_context_attach_action_sets (self->context, &self->actionset,
-                                  self->manifest, 1);
+  gxr_context_attach_action_sets (self->context, &self->actionset, 1);
 
   self->poll_input_source_id = g_timeout_add (3,
                                               (GSourceFunc) _poll_input_events,

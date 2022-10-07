@@ -19,6 +19,8 @@ struct _GxrActionSet
   GxrContext *context;
   char       *url;
 
+  GxrManifest *manifest;
+
   XrActionSet handle;
 };
 
@@ -40,6 +42,7 @@ gxr_action_set_init (GxrActionSet *self)
 {
   self->actions = NULL;
   self->handle = XR_NULL_HANDLE;
+  self->manifest = NULL;
 }
 
 static gboolean
@@ -66,11 +69,14 @@ _printerr_xr_result (XrInstance instance, XrResult result)
 }
 
 GxrActionSet *
-gxr_action_set_new_from_url (GxrContext *context, gchar *url)
+gxr_action_set_new_from_url (GxrContext  *context,
+                             GxrManifest *manifest,
+                             gchar       *url)
 {
   GxrActionSet *self = (GxrActionSet *) g_object_new (GXR_TYPE_ACTION_SET, 0);
 
   self->context = context;
+  self->manifest = g_object_ref (manifest);
   self->url = g_strdup (url);
 
   XrActionSetCreateInfo set_info = {
@@ -106,6 +112,7 @@ gxr_action_set_finalize (GObject *gobject)
   GxrActionSet *self = GXR_ACTION_SET (gobject);
   g_slist_free_full (self->actions, g_object_unref);
   g_free (self->url);
+  g_clear_object (&self->manifest);
   G_OBJECT_CLASS (gxr_action_set_parent_class)->finalize (gobject);
 }
 
@@ -269,4 +276,10 @@ XrActionSet
 gxr_action_set_get_handle (GxrActionSet *self)
 {
   return self->handle;
+}
+
+GxrManifest *
+gxr_action_set_get_manifest (GxrActionSet *self)
+{
+  return self->manifest;
 }

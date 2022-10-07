@@ -33,7 +33,9 @@ struct _GxrActionSetClass
 };
 
 GxrActionSet *
-gxr_action_set_new_from_url (GxrContext *context, gchar *url);
+gxr_action_set_new_from_url (GxrContext  *context,
+                             GxrManifest *manifest,
+                             gchar       *url);
 
 gboolean
 gxr_action_sets_poll (GxrActionSet **sets, uint32_t count);
@@ -60,6 +62,9 @@ gxr_action_set_get_actions (GxrActionSet *self);
 
 XrActionSet
 gxr_action_set_get_handle (GxrActionSet *self);
+
+GxrManifest *
+gxr_action_set_get_manifest (GxrActionSet *self);
 
 G_END_DECLS
 

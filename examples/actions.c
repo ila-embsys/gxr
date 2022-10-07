@@ -119,9 +119,11 @@ main ()
     }
 
   self.action_sets[WM_ACTIONSET] = gxr_action_set_new_from_url (self.context,
+                                                                self.manifest,
                                                                 "/actions/wm");
   self.action_sets[SYNTH_ACTIONSET]
-    = gxr_action_set_new_from_url (self.context, "/actions/mouse_synth");
+    = gxr_action_set_new_from_url (self.context, self.manifest,
+                                   "/actions/mouse_synth");
 
   self.haptic = gxr_action_new_from_type_url (self.context,
                                               self.action_sets[WM_ACTIONSET],
