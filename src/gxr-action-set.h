@@ -42,7 +42,6 @@ gxr_action_sets_poll (GxrActionSet **sets, uint32_t count);
 
 gboolean
 gxr_action_set_connect (GxrActionSet *self,
-                        GxrContext   *context,
                         GxrActionType type,
                         gchar        *url,
                         GCallback     callback,
@@ -50,7 +49,6 @@ gxr_action_set_connect (GxrActionSet *self,
 
 GxrAction *
 gxr_action_set_connect_digital_from_float (GxrActionSet *self,
-                                           GxrContext   *context,
                                            gchar        *url,
                                            float         threshold,
                                            char         *haptic_url,

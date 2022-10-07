@@ -192,7 +192,6 @@ gxr_action_sets_poll (GxrActionSet **sets, uint32_t count)
 
 GxrAction *
 gxr_action_set_connect_digital_from_float (GxrActionSet *self,
-                                           GxrContext   *context,
                                            gchar        *url,
                                            float         threshold,
                                            char         *haptic_url,
@@ -200,7 +199,7 @@ gxr_action_set_connect_digital_from_float (GxrActionSet *self,
                                            gpointer      data)
 {
   GxrAction *action
-    = gxr_action_new_from_type_url (context, self,
+    = gxr_action_new_from_type_url (self->context, self,
                                     GXR_ACTION_DIGITAL_FROM_FLOAT, url);
 
   if (action != NULL)
@@ -209,7 +208,7 @@ gxr_action_set_connect_digital_from_float (GxrActionSet *self,
   GxrAction *haptic_action = NULL;
   if (haptic_url)
     {
-      haptic_action = gxr_action_new_from_type_url (context, self,
+      haptic_action = gxr_action_new_from_type_url (self->context, self,
                                                     GXR_ACTION_HAPTIC,
                                                     haptic_url);
       if (haptic_action != NULL)
@@ -227,13 +226,13 @@ gxr_action_set_connect_digital_from_float (GxrActionSet *self,
 
 gboolean
 gxr_action_set_connect (GxrActionSet *self,
-                        GxrContext   *context,
                         GxrActionType type,
                         gchar        *url,
                         GCallback     callback,
                         gpointer      data)
 {
-  GxrAction *action = gxr_action_new_from_type_url (context, self, type, url);
+  GxrAction *action = gxr_action_new_from_type_url (self->context, self, type,
+                                                    url);
 
   if (action != NULL)
     self->actions = g_slist_append (self->actions, action);

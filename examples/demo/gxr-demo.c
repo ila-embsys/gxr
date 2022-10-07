@@ -420,19 +420,17 @@ _create_wm_action_set (GxrDemo *self)
                                                    self->manifest,
                                                    "/actions/wm");
 
-  gxr_action_set_connect_digital_from_float (set, self->context,
-                                             "/actions/wm/in/grab_window",
+  gxr_action_set_connect_digital_from_float (set, "/actions/wm/in/grab_window",
                                              0.25f, "/actions/wm/out/haptic",
                                              (GCallback) _action_grab_cb, self);
 
-  gxr_action_set_connect (set, self->context, GXR_ACTION_DIGITAL,
-                          "/actions/wm/in/menu", (GCallback) _action_quit_cb,
-                          self);
+  gxr_action_set_connect (set, GXR_ACTION_DIGITAL, "/actions/wm/in/menu",
+                          (GCallback) _action_quit_cb, self);
 
   GxrDeviceManager *dm = gxr_context_get_device_manager (self->context);
 
-  gxr_device_manager_connect_pose_actions (dm, self->context, set,
-                                           "/actions/wm/in/hand_pose", NULL);
+  gxr_device_manager_connect_pose_actions (dm, set, "/actions/wm/in/hand_pose",
+                                           NULL);
 
   return set;
 }

@@ -68,7 +68,6 @@ gxr_device_manager_get_devices (GxrDeviceManager *self);
 
 void
 gxr_device_manager_connect_pose_actions (GxrDeviceManager *self,
-                                         GxrContext       *context,
                                          GxrActionSet     *action_set,
                                          gchar            *pointer_pose_url,
                                          gchar            *hand_grip_pose_url);

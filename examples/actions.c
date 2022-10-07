@@ -130,12 +130,11 @@ main ()
                                               GXR_ACTION_HAPTIC,
                                               "/actions/wm/out/haptic");
 
-  gxr_action_set_connect (self.action_sets[WM_ACTIONSET], self.context,
-                          GXR_ACTION_POSE, "/actions/wm/in/hand_pose",
-                          (GCallback) _hand_pose_cb, &self);
+  gxr_action_set_connect (self.action_sets[WM_ACTIONSET], GXR_ACTION_POSE,
+                          "/actions/wm/in/hand_pose", (GCallback) _hand_pose_cb,
+                          &self);
 
-  gxr_action_set_connect (self.action_sets[SYNTH_ACTIONSET], self.context,
-                          GXR_ACTION_DIGITAL,
+  gxr_action_set_connect (self.action_sets[SYNTH_ACTIONSET], GXR_ACTION_DIGITAL,
                           "/actions/mouse_synth/in/left_click",
                           (GCallback) _digital_cb, &self);
 

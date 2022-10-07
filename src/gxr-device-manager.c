@@ -251,18 +251,15 @@ _update_hand_grip_pose_cb (GxrAction        *action,
 
 void
 gxr_device_manager_connect_pose_actions (GxrDeviceManager *self,
-                                         GxrContext       *context,
                                          GxrActionSet     *action_set,
                                          gchar            *pointer_pose_url,
                                          gchar            *hand_grip_pose_url)
 {
   if (pointer_pose_url)
-    gxr_action_set_connect (action_set, context, GXR_ACTION_POSE,
-                            pointer_pose_url,
+    gxr_action_set_connect (action_set, GXR_ACTION_POSE, pointer_pose_url,
                             (GCallback) _update_pointer_pose_cb, self);
 
   if (hand_grip_pose_url)
-    gxr_action_set_connect (action_set, context, GXR_ACTION_POSE,
-                            hand_grip_pose_url,
+    gxr_action_set_connect (action_set, GXR_ACTION_POSE, hand_grip_pose_url,
                             (GCallback) _update_hand_grip_pose_cb, self);
 }
