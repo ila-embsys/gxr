@@ -172,6 +172,12 @@ gxr_context_get_swapchain_extent (GxrContext *self, uint32_t view_index);
 uint32_t
 gxr_context_get_buffer_index (GxrContext *self);
 
+gboolean
+gxr_context_attach_action_sets (GxrContext    *self,
+                                GxrActionSet **sets,
+                                GxrManifest   *manifest,
+                                uint32_t       count);
+
 G_END_DECLS
 
 #endif /* GXR_CONTEXT_H_ */

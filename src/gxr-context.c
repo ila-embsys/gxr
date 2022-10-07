@@ -2144,3 +2144,201 @@ gxr_context_get_swapchain_extent (GxrContext *self, uint32_t view_index)
   };
   return extent;
 }
+
+static GxrAction *
+_find_openxr_action_from_url (GxrActionSet **sets, uint32_t count, gchar *url)
+{
+  for (uint32_t i = 0; i < count; i++)
+    {
+      GSList *actions = gxr_action_set_get_actions (GXR_ACTION_SET (sets[i]));
+      for (GSList *l = actions; l != NULL; l = l->next)
+        {
+          GxrAction *action = GXR_ACTION (l->data);
+          gchar     *action_url = gxr_action_get_url (action);
+          if (g_strcmp0 (action_url, url) == 0)
+            return action;
+        }
+    }
+  g_debug ("Skipping action %s not connected by application", url);
+  return NULL;
+}
+
+static uint32_t
+_count_input_paths (GxrBindingManifest *binding_manifest)
+{
+  uint32_t num = 0;
+  for (GSList *l = binding_manifest->gxr_bindings; l; l = l->next)
+    {
+      GxrBinding *binding = l->data;
+      num += g_slist_length (binding->input_paths);
+    }
+  return num;
+}
+
+static void
+_update_controllers (GxrActionSet *self)
+{
+  GSList *actions = gxr_action_set_get_actions (GXR_ACTION_SET (self));
+  for (GSList *l = actions; l != NULL; l = l->next)
+    {
+      GxrAction *action = GXR_ACTION (l->data);
+      gxr_action_update_controllers (action);
+    }
+}
+
+static gchar *
+_component_to_str (GxrBindingComponent c)
+{
+  switch (c)
+    {
+      case GXR_BINDING_COMPONENT_CLICK:
+        return "click";
+      case GXR_BINDING_COMPONENT_PULL:
+        return "value";
+      case GXR_BINDING_COMPONENT_TOUCH:
+        return "touch";
+      case GXR_BINDING_COMPONENT_FORCE:
+        return "force";
+      case GXR_BINDING_COMPONENT_POSITION:
+        /* use .../trackpad instead of .../trackpad/x etc. */
+        return NULL;
+      default:
+        return NULL;
+    }
+}
+
+static gboolean
+_suggest_for_interaction_profile (GxrActionSet      **sets,
+                                  uint32_t            count,
+                                  XrInstance          instance,
+                                  GxrBindingManifest *binding_manifest)
+{
+  uint32_t num_bindings = _count_input_paths (binding_manifest);
+
+  XrActionSuggestedBinding *suggested_bindings
+    = g_malloc (sizeof (XrActionSuggestedBinding)
+                * (unsigned long) num_bindings);
+
+  uint32_t num_suggestion = 0;
+  for (GSList *l = binding_manifest->gxr_bindings; l != NULL; l = l->next)
+    {
+      GxrBinding *binding = l->data;
+      gchar      *action_url = binding->action->name;
+      GxrAction  *action = _find_openxr_action_from_url (sets, count,
+                                                         action_url);
+      if (!action)
+        continue;
+
+      XrAction handle = gxr_action_get_handle (action);
+      char    *url = gxr_action_get_url (action);
+
+      g_debug ("Action %s has %d inputs", url,
+               g_slist_length (binding->input_paths));
+
+      for (GSList *m = binding->input_paths; m; m = m->next)
+        {
+          GxrBindingPath *input_path = m->data;
+
+          gchar *component_str = _component_to_str (input_path->component);
+
+          GString *full_path = g_string_new ("");
+          if (component_str)
+            g_string_printf (full_path, "%s/%s", input_path->path,
+                             component_str);
+          else
+            g_string_append (full_path, input_path->path);
+
+          g_debug ("\t%s ", full_path->str);
+
+          XrPath component_path;
+          xrStringToPath (instance, full_path->str, &component_path);
+
+          suggested_bindings[num_suggestion].action = handle;
+          suggested_bindings[num_suggestion].binding = component_path;
+
+          num_suggestion++;
+
+          g_string_free (full_path, TRUE);
+        }
+    }
+
+  g_debug ("Suggested %d/%d bindings!", num_suggestion, num_bindings);
+  XrPath profile_path;
+  xrStringToPath (instance, binding_manifest->interaction_profile,
+                  &profile_path);
+
+  const XrInteractionProfileSuggestedBinding suggestion_info = {
+    .type = XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING,
+    .next = NULL,
+    .interactionProfile = profile_path,
+    .countSuggestedBindings = num_suggestion,
+    .suggestedBindings = suggested_bindings,
+  };
+
+  XrResult result = xrSuggestInteractionProfileBindings (instance,
+                                                         &suggestion_info);
+  g_free (suggested_bindings);
+  if (result != XR_SUCCESS)
+    {
+      char buffer[XR_MAX_RESULT_STRING_SIZE];
+      xrResultToString (instance, result, buffer);
+      g_printerr ("ERROR: Suggesting actions for profile %s: %s\n",
+                  binding_manifest->interaction_profile, buffer);
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+gboolean
+gxr_context_attach_action_sets (GxrContext    *self,
+                                GxrActionSet **sets,
+                                GxrManifest   *manifest,
+                                uint32_t       count)
+{
+  GSList *binding_manifests = gxr_manifest_get_binding_manifests (manifest);
+
+  for (GSList *l = binding_manifests; l; l = l->next)
+    {
+      GxrBindingManifest *binding_manifest = l->data;
+
+      g_debug ("===");
+      g_debug ("Suggesting for profile %s",
+               binding_manifest->interaction_profile);
+
+      _suggest_for_interaction_profile (sets, count, self->instance,
+                                        binding_manifest);
+    }
+
+  XrActionSet *handles = g_malloc (sizeof (XrActionSet) * count);
+  for (uint32_t i = 0; i < count; i++)
+    {
+      handles[i] = gxr_action_set_get_handle (sets[i]);
+    }
+
+  XrSessionActionSetsAttachInfo attachInfo = {
+    .type = XR_TYPE_SESSION_ACTION_SETS_ATTACH_INFO,
+    .next = NULL,
+    .countActionSets = count,
+    .actionSets = handles,
+  };
+
+  XrResult result = xrAttachSessionActionSets (self->session, &attachInfo);
+  g_free (handles);
+  if (result != XR_SUCCESS)
+    {
+      char buffer[XR_MAX_RESULT_STRING_SIZE];
+      xrResultToString (self->instance, result, buffer);
+      g_printerr ("ERROR: attaching action set: %s\n", buffer);
+      return FALSE;
+    }
+
+  g_debug ("Attached %d action sets", count);
+  for (uint32_t i = 0; i < count; i++)
+    {
+      _update_controllers (sets[i]);
+    }
+  g_debug ("Updating controllers based on actions");
+
+  return TRUE;
+}

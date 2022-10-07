@@ -61,11 +61,6 @@ gxr_action_set_connect_digital_from_float (GxrActionSet *self,
 GSList *
 gxr_action_set_get_actions (GxrActionSet *self);
 
-gboolean
-gxr_action_sets_attach_bindings (GxrActionSet **sets,
-                                 GxrManifest   *manifest,
-                                 uint32_t       count);
-
 XrActionSet
 gxr_action_set_get_handle (GxrActionSet *self);
 

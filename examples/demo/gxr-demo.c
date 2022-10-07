@@ -489,7 +489,8 @@ _init_input_callbacks (GxrDemo *self)
     }
 
   self->actionset = _create_wm_action_set (self);
-  gxr_action_sets_attach_bindings (&self->actionset, self->manifest, 1);
+  gxr_context_attach_action_sets (self->context, &self->actionset,
+                                  self->manifest, 1);
 
   self->poll_input_source_id = g_timeout_add (3,
                                               (GSourceFunc) _poll_input_events,
