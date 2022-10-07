@@ -516,7 +516,8 @@ gxr_manifest_new (const char *resource_path, const char *manifest_name)
 
   if (!gxr_manifest_load_actions (self, actions_res_input_stream))
     {
-      g_printerr ("Failed to load action manifest\n");
+      g_printerr ("Failed to load action manifest %s/%s\n", resource_path,
+                  manifest_name);
       g_object_unref (self);
       return NULL;
     }
