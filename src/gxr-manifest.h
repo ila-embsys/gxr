@@ -113,7 +113,7 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (GxrManifest, gxr_manifest, GXR, MANIFEST, GObject)
 
 GxrManifest *
-gxr_manifest_new (void);
+gxr_manifest_new (const char *resource_path, const char *manifest_name);
 
 gboolean
 gxr_manifest_load_actions (GxrManifest *self, GInputStream *action_stream);

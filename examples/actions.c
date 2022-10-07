@@ -18,9 +18,10 @@ enum
 
 typedef struct Example
 {
-  GMainLoop  *loop;
-  GxrAction  *haptic;
-  GxrContext *context;
+  GMainLoop   *loop;
+  GxrAction   *haptic;
+  GxrContext  *context;
+  GxrManifest *manifest;
 
   /* array of action sets */
   GxrActionSet *action_sets[LAST_ACTIONSET];
@@ -109,9 +110,9 @@ main ()
     .context = gxr_context_new ("Actions Example", 1),
   };
 
-  if (!gxr_context_load_action_manifest (self.context, "gxr",
-                                         "/res/bindings/openxr",
-                                         "actions.json"))
+  self.manifest = gxr_manifest_new ("/res/bindings/openxr", "actions.json");
+
+  if (!self.manifest)
     {
       g_print ("Failed to load action bindings!\n");
       return 1;

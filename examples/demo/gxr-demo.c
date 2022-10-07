@@ -93,6 +93,8 @@ struct _GxrDemo
   GulkanDescriptorPool *descriptor_pool;
   GulkanPipeline       *line_pipeline;
 
+  GxrManifest *manifest;
+
   GulkanRenderPass *render_pass;
 };
 
@@ -137,6 +139,7 @@ _finalize (GObject *gobject)
   g_source_remove (self->sigint_signal);
 
   g_clear_object (&self->actionset);
+  g_clear_object (&self->manifest);
   g_clear_object (&self->background);
   g_clear_object (&self->cube);
 
@@ -476,16 +479,17 @@ _poll_input_events (GxrDemo *self)
 static void
 _init_input_callbacks (GxrDemo *self)
 {
-  if (!gxr_context_load_action_manifest (self->context, "xrdesktop.openxr",
-                                         "/res/bindings/openxr",
-                                         "actions.json"))
+
+  self->manifest = gxr_manifest_new ("/res/bindings/openxr", "actions.json");
+
+  if (!self->manifest)
     {
       g_print ("Failed to load action bindings!\n");
       return;
     }
 
   self->actionset = _create_wm_action_set (self);
-  gxr_action_sets_attach_bindings (&self->actionset, self->context, 1);
+  gxr_action_sets_attach_bindings (&self->actionset, self->manifest, 1);
 
   self->poll_input_source_id = g_timeout_add (3,
                                               (GSourceFunc) _poll_input_events,
@@ -649,6 +653,7 @@ gxr_demo_init (GxrDemo *self)
   self->cube_grabbed = NULL;
   self->device_activate_signal = 0;
   self->device_deactivate_signal = 0;
+  self->manifest = NULL;
   graphene_matrix_init_identity (&self->pointer_pose);
 
   self->loop = g_main_loop_new (NULL, FALSE),

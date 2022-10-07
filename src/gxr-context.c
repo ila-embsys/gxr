@@ -78,8 +78,6 @@ struct _GxrContext
 
   int64_t swapchain_format;
 
-  GxrManifest *manifest;
-
   XrVersion desired_vk_version;
 };
 
@@ -1254,7 +1252,6 @@ gxr_context_init (GxrContext *self)
   self->device_manager = gxr_device_manager_new ();
   self->view_count = 0;
   self->views = NULL;
-  self->manifest = NULL;
   self->predicted_display_time = 0;
   self->predicted_display_period = 0;
   self->framebuffers = NULL;
@@ -1302,7 +1299,6 @@ gxr_context_finalize (GObject *gobject)
   GxrContext *self = GXR_CONTEXT (gobject);
 
   _cleanup (self);
-  g_clear_object (&self->manifest);
 
   GulkanContext *gulkan = gxr_context_get_gulkan (GXR_CONTEXT (gobject));
 
@@ -1771,8 +1767,7 @@ gxr_context_get_view (GxrContext *self, GxrEye eye, graphene_matrix_t *mat)
 void
 gxr_context_get_eye_position (GxrContext *self, GxrEye eye, graphene_vec3_t *v)
 {
-  graphene_vec3_init (v,
-                      self->views[eye].pose.position.x,
+  graphene_vec3_init (v, self->views[eye].pose.position.x,
                       self->views[eye].pose.position.y,
                       self->views[eye].pose.position.z);
 }
@@ -1986,50 +1981,6 @@ gxr_context_end_frame (GxrContext *self)
   return TRUE;
 }
 
-gboolean
-gxr_context_load_action_manifest (GxrContext *self,
-                                  const char *cache_name,
-                                  const char *resource_path,
-                                  const char *manifest_name)
-{
-  (void) self;
-  (void) cache_name;
-
-  GError  *error = NULL;
-  GString *actions_res_path = g_string_new ("");
-  g_string_printf (actions_res_path, "%s/%s", resource_path, manifest_name);
-
-  /* stream can not be reset/reused, has to be recreated */
-  GInputStream *actions_res_input_stream
-    = g_resources_open_stream (actions_res_path->str,
-                               G_RESOURCE_LOOKUP_FLAGS_NONE, &error);
-  if (error)
-    {
-      g_print ("Unable to open stream: %s\n", error->message);
-      g_error_free (error);
-      return FALSE;
-    }
-
-  self->manifest = gxr_manifest_new ();
-  if (!gxr_manifest_load_actions (self->manifest, actions_res_input_stream))
-    {
-      g_printerr ("Failed to load action manifest\n");
-      return FALSE;
-    }
-
-  if (!gxr_manifest_load_bindings (self->manifest, resource_path))
-    {
-      g_printerr ("Failed to load action binding manifests\n");
-      return FALSE;
-    }
-
-  g_object_unref (actions_res_input_stream);
-  g_string_free (actions_res_path, TRUE);
-  g_debug ("Loaded action manifest");
-
-  return TRUE;
-}
-
 void
 gxr_context_request_quit (GxrContext *self)
 {
@@ -2158,12 +2109,6 @@ XrSessionState
 gxr_context_get_session_state (GxrContext *self)
 {
   return self->session_state;
-}
-
-GxrManifest *
-gxr_context_get_manifest (GxrContext *self)
-{
-  return self->manifest;
 }
 
 XrTime

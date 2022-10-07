@@ -424,10 +424,9 @@ _update_controllers (GxrActionSet *self)
 
 gboolean
 gxr_action_sets_attach_bindings (GxrActionSet **sets,
-                                 GxrContext    *context,
+                                 GxrManifest   *manifest,
                                  uint32_t       count)
 {
-  GxrManifest *manifest = gxr_context_get_manifest (GXR_CONTEXT (context));
   GSList *binding_manifests = gxr_manifest_get_binding_manifests (manifest);
 
   for (GSList *l = binding_manifests; l; l = l->next)

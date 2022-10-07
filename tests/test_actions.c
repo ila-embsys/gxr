@@ -18,14 +18,10 @@ _test_load_action_manifest ()
   GulkanContext *gc = gulkan_context_new ();
   g_assert_nonnull (gc);
 
-  if (!gxr_context_load_action_manifest (context, "xrdesktop.openxr",
-                                         "/res/bindings/openxr",
-                                         "actions.json"))
-    {
-      g_print ("Failed to load action bindings!\n");
-      return;
-    }
-
+  GxrManifest *manifest = gxr_manifest_new ("/res/bindings/openxr",
+                                            "actions.json");
+  g_assert (manifest);
+  g_object_unref (manifest);
   g_object_unref (context);
 }
 

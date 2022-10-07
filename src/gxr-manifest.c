@@ -452,12 +452,6 @@ gxr_manifest_get_binding_filenames (GxrManifest *self)
   return self->binding_filenames;
 }
 
-GxrManifest *
-gxr_manifest_new (void)
-{
-  return (GxrManifest *) g_object_new (GXR_TYPE_MANIFEST, 0);
-}
-
 GSList *
 gxr_manifest_get_binding_manifests (GxrManifest *self)
 {
@@ -497,4 +491,46 @@ gxr_manifest_finalize (GObject *gobject)
     }
 
   g_slist_free_full (self->bindings, g_free);
+}
+
+GxrManifest *
+gxr_manifest_new (const char *resource_path, const char *manifest_name)
+{
+  GxrManifest *self = (GxrManifest *) g_object_new (GXR_TYPE_MANIFEST, 0);
+
+  GError  *error = NULL;
+  GString *actions_res_path = g_string_new ("");
+  g_string_printf (actions_res_path, "%s/%s", resource_path, manifest_name);
+
+  /* stream can not be reset/reused, has to be recreated */
+  GInputStream *actions_res_input_stream
+    = g_resources_open_stream (actions_res_path->str,
+                               G_RESOURCE_LOOKUP_FLAGS_NONE, &error);
+  if (error)
+    {
+      g_print ("Unable to open stream: %s\n", error->message);
+      g_error_free (error);
+      g_object_unref (self);
+      return NULL;
+    }
+
+  if (!gxr_manifest_load_actions (self, actions_res_input_stream))
+    {
+      g_printerr ("Failed to load action manifest\n");
+      g_object_unref (self);
+      return NULL;
+    }
+
+  if (!gxr_manifest_load_bindings (self, resource_path))
+    {
+      g_printerr ("Failed to load action binding manifests\n");
+      g_object_unref (self);
+      return NULL;
+    }
+
+  g_object_unref (actions_res_input_stream);
+  g_string_free (actions_res_path, TRUE);
+  g_debug ("Loaded action manifest");
+
+  return self;
 }

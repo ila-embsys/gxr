@@ -16,6 +16,7 @@
 #include <stdint.h>
 
 #include "gxr-action.h"
+#include "gxr-manifest.h"
 
 G_BEGIN_DECLS
 
@@ -62,7 +63,7 @@ gxr_action_set_get_actions (GxrActionSet *self);
 
 gboolean
 gxr_action_sets_attach_bindings (GxrActionSet **sets,
-                                 GxrContext    *context,
+                                 GxrManifest   *manifest,
                                  uint32_t       count);
 
 XrActionSet

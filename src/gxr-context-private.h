@@ -21,9 +21,6 @@ gxr_context_get_openxr_session (GxrContext *self);
 XrSpace
 gxr_context_get_tracked_space (GxrContext *self);
 
-GxrManifest *
-gxr_context_get_manifest (GxrContext *self);
-
 XrTime
 gxr_context_get_predicted_display_time (GxrContext *self);
 
