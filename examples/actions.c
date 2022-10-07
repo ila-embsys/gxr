@@ -110,7 +110,7 @@ main ()
     .context = gxr_context_new ("Actions Example", 1),
   };
 
-  self.manifest = gxr_manifest_new ("/res/bindings/openxr", "actions.json");
+  self.manifest = gxr_manifest_new ("/res/bindings", "actions.json");
 
   if (!self.manifest)
     {

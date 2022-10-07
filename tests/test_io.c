@@ -10,7 +10,7 @@
 #include "gxr.h"
 
 #define CACHE_DIR "gxr"
-#define RES_BASE_PATH "/res/bindings/openxr"
+#define RES_BASE_PATH "/res/bindings"
 
 static gboolean
 _cache_bindings (GString *actions_path)

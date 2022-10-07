@@ -10,8 +10,7 @@
 int
 main ()
 {
-  GxrManifest *manifest = gxr_manifest_new ("/res/bindings/openxr",
-                                            "actions.json");
+  GxrManifest *manifest = gxr_manifest_new ("/res/bindings", "actions.json");
   g_assert (manifest);
   g_object_unref (manifest);
 }

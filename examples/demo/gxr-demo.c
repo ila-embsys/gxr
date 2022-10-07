@@ -480,7 +480,7 @@ static void
 _init_input_callbacks (GxrDemo *self)
 {
 
-  self->manifest = gxr_manifest_new ("/res/bindings/openxr", "actions.json");
+  self->manifest = gxr_manifest_new ("/res/bindings", "actions.json");
 
   if (!self->manifest)
     {
