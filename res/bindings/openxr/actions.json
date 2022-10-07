@@ -5,10 +5,6 @@
       "binding_url":"bindings_khronos_simple_controller.json"
     },
     {
-      "controller_type":"mnd_psmv",
-      "binding_url":"bindings_mnd_psmv_controller.json"
-    },
-    {
       "controller_type": "index",
       "binding_url": "bindings_valve_index_controller.json"
     },
