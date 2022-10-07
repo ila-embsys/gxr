@@ -17,10 +17,7 @@ struct _GxrActionSet
   GSList *actions;
 
   GxrContext *context;
-  XrInstance  instance;
-  XrSession   session;
-
-  char *url;
+  char       *url;
 
   XrActionSet handle;
 };
@@ -43,18 +40,6 @@ gxr_action_set_init (GxrActionSet *self)
 {
   self->actions = NULL;
   self->handle = XR_NULL_HANDLE;
-}
-
-GxrActionSet *
-gxr_action_set_new (GxrContext *context)
-{
-  GxrActionSet *self = (GxrActionSet *) g_object_new (GXR_TYPE_ACTION_SET, 0);
-
-  self->instance = gxr_context_get_openxr_instance (context);
-  self->session = gxr_context_get_openxr_session (context);
-  self->context = context;
-
-  return self;
 }
 
 static gboolean
@@ -83,7 +68,9 @@ _printerr_xr_result (XrInstance instance, XrResult result)
 GxrActionSet *
 gxr_action_set_new_from_url (GxrContext *context, gchar *url)
 {
-  GxrActionSet *self = gxr_action_set_new (context);
+  GxrActionSet *self = (GxrActionSet *) g_object_new (GXR_TYPE_ACTION_SET, 0);
+
+  self->context = context;
   self->url = g_strdup (url);
 
   XrActionSetCreateInfo set_info = {
@@ -99,13 +86,14 @@ gxr_action_set_new_from_url (GxrContext *context, gchar *url)
   strcpy (set_info.actionSetName, name);
   strcpy (set_info.localizedActionSetName, name);
 
-  XrResult result = xrCreateActionSet (self->instance, &set_info,
-                                       &self->handle);
+  XrInstance instance = gxr_context_get_openxr_instance (context);
+
+  XrResult result = xrCreateActionSet (instance, &set_info, &self->handle);
 
   if (result != XR_SUCCESS)
     {
       g_printerr ("Failed to create action set: ");
-      _printerr_xr_result (self->instance, result);
+      _printerr_xr_result (instance, result);
       g_clear_object (&self);
     }
 
@@ -128,8 +116,8 @@ _update (GxrActionSet **sets, uint32_t count)
     return TRUE;
 
   /* All actionsets must be attached to the same session */
-  XrInstance instance = sets[0]->instance;
-  XrSession  session = sets[0]->session;
+  XrInstance instance = gxr_context_get_openxr_instance (sets[0]->context);
+  XrSession  session = gxr_context_get_openxr_session (sets[0]->context);
 
   XrSessionState state = gxr_context_get_session_state (sets[0]->context);
   /* just pretend no input happens when we're not focused */
