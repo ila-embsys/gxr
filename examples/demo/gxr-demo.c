@@ -655,7 +655,7 @@ gxr_demo_init (GxrDemo *self)
   self->manifest = NULL;
   graphene_matrix_init_identity (&self->pointer_pose);
 
-  self->loop = g_main_loop_new (NULL, FALSE),
+  self->loop = g_main_loop_new (NULL, FALSE);
 
   self->render_source = g_timeout_add (1, _iterate_cb, self);
 
