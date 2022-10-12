@@ -7,8 +7,7 @@
 
 #include "gxr-device.h"
 
-#include <gulkan.h>
-#include <gxr.h>
+#include "gxr-controller.h"
 
 typedef struct _GxrDevicePrivate
 {

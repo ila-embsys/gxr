@@ -6,7 +6,6 @@
  */
 
 #include "graphene-ext.h"
-#include <glib.h>
 #include <inttypes.h>
 
 // TODO: Move to upstream

@@ -9,7 +9,6 @@
 #define GXRDEVICE_MANAGER_H_
 
 #include <glib-object.h>
-
 #include <gulkan.h>
 
 #include "gxr-action-set.h"

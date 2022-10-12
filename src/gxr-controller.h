@@ -9,10 +9,9 @@
 #define GXR_CONTROLLER_H_
 
 #include <glib-object.h>
+#include <graphene.h>
 
 #include "gxr-device.h"
-
-#include <graphene.h>
 
 G_BEGIN_DECLS
 

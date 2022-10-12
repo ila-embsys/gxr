@@ -7,9 +7,6 @@
 
 #include "gxr-controller.h"
 
-#include "graphene-ext.h"
-#include "gxr-device.h"
-
 struct _GxrController
 {
   GxrDevice parent;

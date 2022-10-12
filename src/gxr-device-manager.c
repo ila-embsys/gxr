@@ -7,11 +7,6 @@
 
 #include "gxr-device-manager.h"
 
-#include "gxr-context.h"
-#include "gxr-controller.h"
-#include "gxr-device.h"
-#include <gxr.h>
-
 struct _GxrDeviceManager
 {
   GObject parent;
