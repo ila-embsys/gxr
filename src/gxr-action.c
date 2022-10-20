@@ -746,3 +746,9 @@ gxr_action_get_handle (GxrAction *self)
 {
   return self->handle;
 }
+
+GxrAction *
+gxr_action_get_haptic_action (GxrAction *self)
+{
+  return self->haptic_action;
+}

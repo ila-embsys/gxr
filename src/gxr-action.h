@@ -125,6 +125,9 @@ gxr_action_set_bindings (GxrAction *self, XrActionSuggestedBinding *bindings);
 XrAction
 gxr_action_get_handle (GxrAction *self);
 
+GxrAction *
+gxr_action_get_haptic_action (GxrAction *self);
+
 G_END_DECLS
 
 #endif /* GXR_ACTION_H_ */
