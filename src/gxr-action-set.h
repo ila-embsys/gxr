@@ -64,6 +64,9 @@ gxr_action_set_get_handle (GxrActionSet *self);
 GxrManifest *
 gxr_action_set_get_manifest (GxrActionSet *self);
 
+void
+gxr_action_set_append_action (GxrActionSet *self, GxrAction *action);
+
 G_END_DECLS
 
 #endif /* GXR_ACTION_SET_H_ */

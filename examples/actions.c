@@ -131,6 +131,8 @@ main ()
                                               GXR_ACTION_HAPTIC,
                                               "/actions/wm/out/haptic");
 
+  gxr_action_set_append_action (self.action_sets[WM_ACTIONSET], self.haptic);
+
   gxr_action_set_connect (self.action_sets[WM_ACTIONSET], GXR_ACTION_POSE,
                           "/actions/wm/in/hand_pose", (GCallback) _hand_pose_cb,
                           &self);

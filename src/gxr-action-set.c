@@ -265,6 +265,12 @@ gxr_action_set_connect (GxrActionSet *self,
   return TRUE;
 }
 
+void
+gxr_action_set_append_action (GxrActionSet *self, GxrAction *action)
+{
+  self->actions = g_slist_append (self->actions, g_object_ref (action));
+}
+
 GSList *
 gxr_action_set_get_actions (GxrActionSet *self)
 {
