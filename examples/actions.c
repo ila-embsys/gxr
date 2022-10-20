@@ -6,8 +6,7 @@
  */
 
 #include <glib-unix.h>
-
-#include "gxr.h"
+#include <gxr.h>
 
 enum
 {
@@ -40,6 +39,12 @@ _poll_events_cb (gpointer _self)
 {
   Example *self = (Example *) _self;
 
+  if (!gxr_context_begin_frame (self->context))
+    return FALSE;
+
+  gxr_context_end_frame (self->context);
+  gxr_context_poll_events (self->context);
+
   if (!gxr_action_sets_poll (self->action_sets, 2))
     {
       g_print ("Failed to poll events\n");
@@ -65,10 +70,8 @@ _digital_cb (GxrAction *action, GxrDigitalEvent *event, Example *self)
         self->haptic, 0.0f, .2f, 160.f, 1.0f,
         gxr_device_get_handle (GXR_DEVICE (event->controller)));
     }
-
-  g_free (event);
 }
-#include <stdio.h>
+
 static void
 _hand_pose_cb (GxrAction *action, GxrPoseEvent *event, Example *self)
 {
@@ -85,8 +88,6 @@ _hand_pose_cb (GxrAction *action, GxrPoseEvent *event, Example *self)
            graphene_vec3_get_z (&event->angular_velocity));
 
   graphene_matrix_print (&event->pose);
-
-  g_free (event);
 }
 
 static void
@@ -137,6 +138,8 @@ main ()
   gxr_action_set_connect (self.action_sets[SYNTH_ACTIONSET], GXR_ACTION_DIGITAL,
                           "/actions/mouse_synth/in/left_click",
                           (GCallback) _digital_cb, &self);
+
+  gxr_context_attach_action_sets (self.context, self.action_sets, 2);
 
   g_timeout_add (20, _poll_events_cb, &self);
 
