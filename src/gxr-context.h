@@ -136,6 +136,9 @@ void
 gxr_context_get_eye_position (GxrContext *self, GxrEye eye, graphene_vec3_t *v);
 
 gboolean
+gxr_context_wait_frame (GxrContext *self);
+
+gboolean
 gxr_context_begin_frame (GxrContext *self);
 
 gboolean

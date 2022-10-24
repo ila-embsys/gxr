@@ -79,6 +79,8 @@ struct _GxrContext
   int64_t swapchain_format;
 
   XrVersion desired_vk_version;
+
+  GMutex wait_frame_mutex;
 };
 
 G_DEFINE_TYPE (GxrContext, gxr_context, G_TYPE_OBJECT)
@@ -1226,6 +1228,7 @@ _new (GSList  *instance_ext_list,
       return NULL;
     }
 
+  g_mutex_init (&self->wait_frame_mutex);
   return self;
 }
 
@@ -1772,15 +1775,9 @@ gxr_context_get_eye_position (GxrContext *self, GxrEye eye, graphene_vec3_t *v)
                       self->views[eye].pose.position.z);
 }
 
-static gboolean
-_begin_frame (GxrContext *self)
+gboolean
+gxr_context_wait_frame (GxrContext *self)
 {
-  if (!self->session_running)
-    {
-      g_printerr ("Can't begin frame with no session running\n");
-      return FALSE;
-    }
-
   XrResult result;
 
   XrFrameState frame_state = {
@@ -1793,6 +1790,29 @@ _begin_frame (GxrContext *self)
   if (!_check_xr_result (result,
                          "xrWaitFrame() was not successful, exiting..."))
     return FALSE;
+
+  uint32_t buffer_index = 0;
+
+  XrSwapchainImageAcquireInfo swapchainImageAcquireInfo = {
+    .type = XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO,
+  };
+
+  result = xrAcquireSwapchainImage (self->swapchain, &swapchainImageAcquireInfo,
+                                    &buffer_index);
+  if (!_check_xr_result (result, "failed to acquire swapchain image!"))
+    return FALSE;
+
+  XrSwapchainImageWaitInfo swapchainImageWaitInfo = {
+    .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
+    .timeout = INT64_MAX,
+  };
+  result = xrWaitSwapchainImage (self->swapchain, &swapchainImageWaitInfo);
+  if (!_check_xr_result (result, "failed to wait for swapchain image!"))
+    return FALSE;
+
+  g_mutex_lock (&self->wait_frame_mutex);
+
+  self->buffer_index = buffer_index;
 
   if (!self->should_render && frame_state.shouldRender)
     {
@@ -1818,15 +1838,35 @@ _begin_frame (GxrContext *self)
   self->predicted_display_time = frame_state.predictedDisplayTime;
   self->predicted_display_period = frame_state.predictedDisplayPeriod;
 
+  g_mutex_unlock (&self->wait_frame_mutex);
+
+  return TRUE;
+}
+
+static gboolean
+_begin_frame (GxrContext *self)
+{
+  if (!self->session_running)
+    {
+      g_printerr ("Can't begin frame with no session running\n");
+      return FALSE;
+    }
+
   if (self->session_state == XR_SESSION_STATE_EXITING
       || self->session_state == XR_SESSION_STATE_LOSS_PENDING
       || self->session_state == XR_SESSION_STATE_STOPPING)
     return FALSE;
 
+  XrResult result;
+
+  g_mutex_lock (&self->wait_frame_mutex);
+  XrTime predicted_display_time = self->predicted_display_time;
+  g_mutex_unlock (&self->wait_frame_mutex);
+
   // --- Create projection matrices and view matrices for each eye
   XrViewLocateInfo viewLocateInfo = {
     .type = XR_TYPE_VIEW_LOCATE_INFO,
-    .displayTime = frame_state.predictedDisplayTime,
+    .displayTime = predicted_display_time,
     .space = self->play_space,
     .viewConfigurationType = self->view_config_type,
   };
@@ -1870,23 +1910,6 @@ gxr_context_begin_frame (GxrContext *self)
 
   XrResult result;
 
-  XrSwapchainImageAcquireInfo swapchainImageAcquireInfo = {
-    .type = XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO,
-  };
-
-  result = xrAcquireSwapchainImage (self->swapchain, &swapchainImageAcquireInfo,
-                                    &self->buffer_index);
-  if (!_check_xr_result (result, "failed to acquire swapchain image!"))
-    return FALSE;
-
-  XrSwapchainImageWaitInfo swapchainImageWaitInfo = {
-    .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
-    .timeout = INT64_MAX,
-  };
-  result = xrWaitSwapchainImage (self->swapchain, &swapchainImageWaitInfo);
-  if (!_check_xr_result (result, "failed to wait for swapchain image!"))
-    return FALSE;
-
   for (uint32_t i = 0; i < 2; i++)
     {
       self->projection_views[i].pose = self->views[i].pose;
@@ -1925,6 +1948,8 @@ _end_frame (GxrContext *self)
   const XrCompositionLayerBaseHeader *layers[1];
   uint32_t                            layer_count = 0;
 
+  g_mutex_lock (&self->wait_frame_mutex);
+
   // if we end up here but shouldn't render, the app probably hasn't rendered
   if (self->should_render)
     {
@@ -1946,6 +1971,8 @@ _end_frame (GxrContext *self)
   result = xrEndFrame (self->session, &frame_end_info);
   if (!_check_xr_result (result, "failed to end frame!"))
     return FALSE;
+
+  g_mutex_unlock (&self->wait_frame_mutex);
 
   return TRUE;
 }
@@ -2087,8 +2114,10 @@ gxr_context_get_swapchain_length (GxrContext *self)
 GulkanFrameBuffer *
 gxr_context_get_acquired_framebuffer (GxrContext *self)
 {
+  g_mutex_lock (&self->wait_frame_mutex);
   GulkanFrameBuffer *fb = GULKAN_FRAME_BUFFER (self->framebuffers
                                                  [self->buffer_index]);
+  g_mutex_unlock (&self->wait_frame_mutex);
   return fb;
 }
 
@@ -2102,7 +2131,10 @@ gxr_context_get_framebuffer_at (GxrContext *self, uint32_t i)
 uint32_t
 gxr_context_get_buffer_index (GxrContext *self)
 {
-  return self->buffer_index;
+  g_mutex_lock (&self->wait_frame_mutex);
+  uint32_t buffer_index = self->buffer_index;
+  g_mutex_unlock (&self->wait_frame_mutex);
+  return buffer_index;
 }
 
 XrSessionState
@@ -2114,7 +2146,10 @@ gxr_context_get_session_state (GxrContext *self)
 XrTime
 gxr_context_get_predicted_display_time (GxrContext *self)
 {
-  return self->predicted_display_time;
+  g_mutex_lock (&self->wait_frame_mutex);
+  XrTime time = self->predicted_display_time;
+  g_mutex_unlock (&self->wait_frame_mutex);
+  return time;
 }
 
 XrInstance
