@@ -1908,8 +1908,6 @@ gxr_context_begin_frame (GxrContext *self)
       return FALSE;
     }
 
-  XrResult result;
-
   for (uint32_t i = 0; i < 2; i++)
     {
       self->projection_views[i].pose = self->views[i].pose;
