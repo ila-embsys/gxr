@@ -37,5 +37,5 @@ gnome.gtkdoc('gxr',
   c_args: '-w',
   # html_assets: html_images,
   install: true,
-  check: true,
+  check: false,
 )
