@@ -1,4 +1,4 @@
-.templates_sha: &templates_sha e9a461877f8c7f9fed9fff5491067ec3c3472559
+.templates_sha: &templates_sha ffe4d1b10aab7534489f0c4bbc4c5899df17d3f2
 
 include:
   - project: 'freedesktop/ci-templates'
@@ -14,17 +14,14 @@ include:
 variables:
   FDO_UPSTREAM_REPO: xrdesktop/gxr
   GULKAN_COMMIT: "9e52e7ce0d50d86c4810af586dcdf4868b30e7f5"
-  OPENXR_SDK_TAG: "release-1.0.24"
-  # increment to easily rebuild all images
-  GLOBAL_TAG_SUFFIX: 1
-  FDO_DISTRIBUTION_DATE: "2022-10-13"
+  OPENXR_SDK_TAG: "release-1.0.26"
+  FDO_DISTRIBUTION_DATE: "2023-01-11"
 
 stages:
   - container_prep
   - build_and_test
   - package
   - reprepro
-  - pages
 
 # "Base" job for installing Gulkan, OpenXR SDK
 # Variables are already substituted when running script, so pass as args
@@ -47,32 +44,32 @@ stages:
 # variables shared by container_prep and build jobs
 .xrdesktop.variables.arch:rolling:
   variables:
-    FDO_DISTRIBUTION_TAG: "${FDO_DISTRIBUTION_DATE}.${GLOBAL_TAG_SUFFIX}.0"
+    FDO_DISTRIBUTION_TAG: "${FDO_DISTRIBUTION_DATE}.0"
 
 .xrdesktop.variables.ubuntu:focal:
   variables:
     FDO_DISTRIBUTION_VERSION: "20.04"
-    FDO_DISTRIBUTION_TAG: "${FDO_DISTRIBUTION_DATE}.${GLOBAL_TAG_SUFFIX}.0"
+    FDO_DISTRIBUTION_TAG: "${FDO_DISTRIBUTION_DATE}.0"
 
 .xrdesktop.variables.ubuntu:jammy:
   variables:
     FDO_DISTRIBUTION_VERSION: "22.04"
-    FDO_DISTRIBUTION_TAG: "${FDO_DISTRIBUTION_DATE}.${GLOBAL_TAG_SUFFIX}.0"
+    FDO_DISTRIBUTION_TAG: "${FDO_DISTRIBUTION_DATE}.0"
 
 .xrdesktop.variables.debian:bookworm:
   variables:
     FDO_DISTRIBUTION_VERSION: "bookworm"
-    FDO_DISTRIBUTION_TAG: "${FDO_DISTRIBUTION_DATE}.${GLOBAL_TAG_SUFFIX}.0"
+    FDO_DISTRIBUTION_TAG: "${FDO_DISTRIBUTION_DATE}.0"
 
 .xrdesktop.variables.debian:bullseye:
   variables:
     FDO_DISTRIBUTION_VERSION: "bullseye"
-    FDO_DISTRIBUTION_TAG: "${FDO_DISTRIBUTION_DATE}.${GLOBAL_TAG_SUFFIX}.0"
+    FDO_DISTRIBUTION_TAG: "${FDO_DISTRIBUTION_DATE}.0"
 
 .xrdesktop.variables.debian:sid:
   variables:
     FDO_DISTRIBUTION_VERSION: "sid"
-    FDO_DISTRIBUTION_TAG: "${FDO_DISTRIBUTION_DATE}.${GLOBAL_TAG_SUFFIX}.0"
+    FDO_DISTRIBUTION_TAG: "${FDO_DISTRIBUTION_DATE}.0"
 
 .xrdesktop.variables.debian-based-packages:
   variables:
@@ -229,7 +226,7 @@ debian:sid:gcc:
 .xrdesktop.packaging.conditions:
   rules:
     # Only the default branch of the "upstream" repo.
-    - if: '$CI_PROJECT_PATH == $FDO_UPSTREAM_REPO && $CI_COMMIT_REF_NAME == "next"'
+    - if: $CI_PROJECT_PATH =~ /(xrdesktop\/.*|haagch\/.*)/ && $CI_COMMIT_REF_NAME =~ /(main|legacy|release-.*)/
       when: on_success
     # Otherwise, don't build packages.
     - when: never
@@ -370,21 +367,3 @@ reprepro:package:
     paths:
       - "repo/"
     expire_in: 2 days
-
-
-###
-# Pages
-###
-pages:
-  stage: pages
-  extends:
-    - .xrdesktop.packaging.conditions
-  dependencies:
-    - reprepro:package
-  script:
-    - mkdir -p public
-    # - mv build/doc/html/* public/
-    - mv repo public/apt
-  artifacts:
-    paths:
-      - public
