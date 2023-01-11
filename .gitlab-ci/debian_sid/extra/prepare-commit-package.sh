@@ -27,6 +27,6 @@ set -e
     fi
 
     UPSTREAM_VER=$(git describe --abbrev=0 --tags $COMMIT_TO_PACKAGE | sed -E -e 's/^v//' -e 's/-([0-9]+)-g([0-9a-f])/+git\1.\2/')
-    git archive -o "../gxr_${UPSTREAM_VER}.orig.tar.gz" ${COMMIT_TO_PACKAGE}
+    git archive --format=tar ${COMMIT_TO_PACKAGE} | gzip -n > "../gxr_${UPSTREAM_VER}.orig.tar.gz"
     dch -b --newversion "${UPSTREAM_VER}-${PKG_REVISION}" --preserve "Automated CI build of commit ${COMMIT_TO_PACKAGE}"
 )
