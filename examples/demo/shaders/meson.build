@@ -13,15 +13,18 @@ else
   endif
 endif
 
+shader_targets = []
 foreach s : shaders
-  r = run_command(cmd + ['-o', s + '.spv', s], check: true)
-  if r.returncode() != 0
-    message('Could not compile shaders:')
-    message(r.stderr().strip())
-    message(r.stdout().strip())
-  endif
+  shader_targets += custom_target(
+    'shader @0@'.format(s),
+    command : cmd + ['@INPUT@', '-o', '@OUTPUT@'],
+    input : s,
+    output : s + '.spv',
+  )
 endforeach
 
 demo_shader_resources = gnome.compile_resources(
   'demo_shader_resources', 'shaders.gresource.xml',
-  source_dir : '.')
+  source_dir : '.',
+  dependencies: shader_targets
+)
