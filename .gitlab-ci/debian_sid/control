@@ -10,7 +10,7 @@ Build-Depends:
  gobject-introspection,
  gtk-doc-tools,
  libgtk-3-dev (>= 3.22),
- libgulkan-dev (>= 0.15.0),
+ libgulkan-dev (>= 0.16.0),
  libjson-glib-dev,
  libopenxr-dev,
  mesa-common-dev,
@@ -21,7 +21,7 @@ Homepage: https://gitlab.freedesktop.org/xrdesktop/gxr
 Vcs-Browser: https://salsa.debian.org/xrdesktop-team/gxr
 Vcs-Git: https://salsa.debian.org/xrdesktop-team/gxr.git
 
-Package: libgxr-0.15-0
+Package: libgxr-0.16-0
 Section: libs
 Architecture: linux-any
 Depends:
@@ -46,7 +46,7 @@ Depends:
  libgtk-3-dev,
  libgulkan-dev,
  libopenxr-dev,
- libgxr-0.15-0 (= ${binary:Version}),
+ libgxr-0.16-0 (= ${binary:Version}),
  libvulkan-dev,
  mesa-common-dev,
 Description: glib wrapper for the OpenXR API - development headers

@@ -1,3 +1,9 @@
+gxr (0.16.0-1) UNRELEASED; urgency=medium
+
+  * Version bump
+
+ -- Christoph Haag <christoph.haag@collabora.com>  Mon, 16 Jan 2023 21:37:57 +0000
+
 gxr (0.15.1-2) unstable; urgency=medium
 
   * Source only upload.
