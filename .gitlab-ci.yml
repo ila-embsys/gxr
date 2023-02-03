@@ -22,6 +22,7 @@ stages:
   - build_and_test
   - package
   - reprepro
+  - trigger_packaging
 
 # "Base" job for installing Gulkan, OpenXR SDK
 # Variables are already substituted when running script, so pass as args
@@ -367,3 +368,10 @@ reprepro:package:
     paths:
       - "repo/"
     expire_in: 2 days
+
+packaging:
+  extends:
+    - .xrdesktop.packaging.conditions
+  stage: trigger_packaging
+  trigger:
+    project: xrdesktop/packaging
