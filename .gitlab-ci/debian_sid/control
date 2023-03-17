@@ -28,6 +28,7 @@ Depends:
  ${misc:Depends},
  ${shlibs:Depends},
  libgulkan-0.16-0,
+ libopenxr-loader1,
  libsdl2-2.0-0,
 Description: glib wrapper for OpenXR API
  A glib wrapper and utilities for the OpenXR API.
