@@ -2384,3 +2384,9 @@ gxr_context_attach_action_sets (GxrContext    *self,
 
   return TRUE;
 }
+
+gboolean
+gxr_context_is_environment_opaque (GxrContext *self)
+{
+  return self->blend_mode == XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
+}

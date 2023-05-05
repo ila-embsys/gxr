@@ -180,6 +180,9 @@ gxr_context_attach_action_sets (GxrContext    *self,
                                 GxrActionSet **sets,
                                 uint32_t       count);
 
+gboolean
+gxr_context_is_environment_opaque (GxrContext *self);
+
 G_END_DECLS
 
 #endif /* GXR_CONTEXT_H_ */
