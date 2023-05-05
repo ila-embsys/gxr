@@ -239,21 +239,14 @@ _check_blend_mode (GxrContext *self)
       return FALSE;
     }
 
+  g_debug ("Supported environment blend modes");
   for (uint32_t i = 0; i < blend_modes_count; i++)
     {
-      if (blend_modes[i] == XR_ENVIRONMENT_BLEND_MODE_OPAQUE)
-        {
-          self->blend_mode = blend_modes[i];
-          break;
-        }
+      g_debug ("\t%d", blend_modes[i]);
     }
 
-  if (self->blend_mode == 0)
-    {
-      g_warning ("XR_ENVIRONMENT_BLEND_MODE_OPAQUE not supported, fallback: %d",
-                 blend_modes[0]);
-      self->blend_mode = blend_modes[0];
-    }
+  g_info ("Using environment blend mode  %d", blend_modes[0]);
+  self->blend_mode = blend_modes[0];
 
   g_free (blend_modes);
 
