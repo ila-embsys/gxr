@@ -326,6 +326,12 @@ _iterate_cb (gpointer _self)
   if (!self->framecycle)
     return TRUE;
 
+  if (!gxr_context_wait_frame (self->context))
+    {
+      g_printerr ("Failed to wait frame\n");
+      return FALSE;
+    }
+
   if (!gxr_context_begin_frame (self->context))
     return FALSE;
 

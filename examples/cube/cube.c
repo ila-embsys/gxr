@@ -422,6 +422,12 @@ _iterate_cb (gpointer _self)
 
   gxr_context_poll_events (self->context);
 
+  if (!gxr_context_wait_frame (self->context))
+    {
+      g_printerr ("Failed to wait frame\n");
+      return FALSE;
+    }
+
   if (!gxr_context_begin_frame (self->context))
     return FALSE;
 
