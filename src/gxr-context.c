@@ -19,6 +19,25 @@
 // TODO: Do not hardcode this
 #define NUM_CONTROLLERS 2
 
+enum GxrSwapchainType
+{
+  GxrSwapchainTypeColor = 0,
+  GxrSwapchainTypeLast,
+};
+
+struct GxrSwapchain
+{
+  /* One array layer per view */
+  uint32_t                   array_size;
+  XrSwapchain                handle;
+  XrSwapchainImageVulkanKHR *images;
+  /* last acquired swapchain image index per swapchain */
+  uint32_t buffer_index;
+  /* for each view */
+  uint32_t length;
+  VkFormat format;
+};
+
 struct _GxrContext
 {
   GObject        parent;
@@ -41,13 +60,8 @@ struct _GxrContext
   XrSystemId              system_id;
   XrViewConfigurationType view_config_type;
 
-  /* One array per eye */
-  XrSwapchain                swapchain;
-  XrSwapchainImageVulkanKHR *images;
-  /* last acquired swapchain image index per swapchain */
-  uint32_t buffer_index;
-  /* for each view */
-  uint32_t swapchain_length;
+  // We use one swapchain per type, use GxrSwapchainType as index
+  struct GxrSwapchain swapchain[GxrSwapchainTypeLast];
 
   /* 1 framebuffer for each swapchain image, for each swapchain (1 per view) */
   GulkanFrameBuffer   **framebuffers;
@@ -75,8 +89,6 @@ struct _GxrContext
   volatile XrDuration predicted_display_period;
 
   XrView *views;
-
-  int64_t swapchain_format;
 
   XrVersion desired_vk_version;
 
@@ -621,7 +633,7 @@ _destroy_session (GxrContext *self)
 }
 
 static gboolean
-_create_swapchains (GxrContext *self)
+_create_swapchain (GxrContext *self, struct GxrSwapchain *swapchain)
 {
   XrResult result;
   uint32_t swapchainFormatCount;
@@ -646,10 +658,10 @@ _create_swapchains (GxrContext *self)
   for (uint32_t i = 0; i < swapchainFormatCount; i++)
     g_debug ("%s", vk_format_string ((VkFormat) swapchainFormats[i]));
 
-  self->swapchain_format = VK_FORMAT_R8G8B8A8_SRGB;
+  swapchain->format = VK_FORMAT_R8G8B8A8_SRGB;
   gboolean format_found = FALSE;
   for (uint32_t i = 0; i < swapchainFormatCount; i++)
-    if (swapchainFormats[i] == self->swapchain_format)
+    if (swapchainFormats[i] == swapchain->format)
       {
         format_found = TRUE;
         break;
@@ -658,14 +670,14 @@ _create_swapchains (GxrContext *self)
   if (!format_found)
     {
       g_warning ("Requested %s, but runtime doesn't support it.",
-                 vk_format_string ((VkFormat) self->swapchain_format));
+                 vk_format_string ((VkFormat) swapchain->format));
       g_warning ("Using %s instead.",
                  vk_format_string ((VkFormat) swapchainFormats[0]));
-      self->swapchain_format = swapchainFormats[0];
+      swapchain->format = (VkFormat) swapchainFormats[0];
     }
 
   /* make sure we don't clean up uninitialized pointer on failure */
-  self->images = NULL;
+  swapchain->images = NULL;
 
   XrSwapchainCreateInfo swapchainCreateInfo = {
     .type = XR_TYPE_SWAPCHAIN_CREATE_INFO,
@@ -673,7 +685,7 @@ _create_swapchains (GxrContext *self)
                   | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT,
     .createFlags = 0,
     // just use the first enumerated format
-    .format = self->swapchain_format,
+    .format = swapchain->format,
     .sampleCount = 1,
     .width = self->configuration_views[0].recommendedImageRectWidth,
     .height = self->configuration_views[0].recommendedImageRectHeight,
@@ -687,35 +699,35 @@ _create_swapchains (GxrContext *self)
            self->configuration_views[0].recommendedImageRectHeight);
 
   result = xrCreateSwapchain (self->session, &swapchainCreateInfo,
-                              &self->swapchain);
+                              &swapchain->handle);
   if (!_check_xr_result (result, "Failed to create swapchain %d!", 0))
     {
       g_free (swapchainFormats);
       return FALSE;
     }
 
-  result = xrEnumerateSwapchainImages (self->swapchain, 0,
-                                       &self->swapchain_length, NULL);
+  result = xrEnumerateSwapchainImages (swapchain->handle, 0, &swapchain->length,
+                                       NULL);
   if (!_check_xr_result (result, "Failed to enumerate swapchains"))
     {
       g_free (swapchainFormats);
       return FALSE;
     }
 
-  self->images = g_malloc (sizeof (XrSwapchainImageVulkanKHR)
-                           * self->swapchain_length);
+  swapchain->images = g_malloc (sizeof (XrSwapchainImageVulkanKHR)
+                                * swapchain->length);
 
-  for (uint32_t j = 0; j < self->swapchain_length; j++)
+  for (uint32_t j = 0; j < swapchain->length; j++)
     {
       // ...IMAGE_VULKAN2_KHR = ...IMAGE_VULKAN_KHR
-      self->images[j].type = XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR;
-      self->images[j].next = NULL;
+      swapchain->images[j].type = XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR;
+      swapchain->images[j].next = NULL;
     }
 
-  result = xrEnumerateSwapchainImages (self->swapchain, self->swapchain_length,
-                                       &self->swapchain_length,
+  result = xrEnumerateSwapchainImages (swapchain->handle, swapchain->length,
+                                       &swapchain->length,
                                        (XrSwapchainImageBaseHeader *)
-                                         self->images);
+                                         swapchain->images);
   if (!_check_xr_result (result, "Failed to enumerate swapchain images"))
     {
       g_free (swapchainFormats);
@@ -723,6 +735,18 @@ _create_swapchains (GxrContext *self)
     }
 
   g_free (swapchainFormats);
+
+  return TRUE;
+}
+
+static gboolean
+_create_swapchains (GxrContext *self)
+{
+  if (!_create_swapchain (self, &self->swapchain[GxrSwapchainTypeColor]))
+    {
+      g_printerr ("Failed to create color swapchain");
+      return FALSE;
+    }
 
   return TRUE;
 }
@@ -737,7 +761,7 @@ _create_projection_views (GxrContext *self)
     self->projection_views[i] = (XrCompositionLayerProjectionView) {
       .type = XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW,
       .subImage = {
-        .swapchain = self->swapchain,
+        .swapchain = self->swapchain[GxrSwapchainTypeColor].handle,
         .imageRect = {
           .extent = {
               .width = (int32_t) self->configuration_views[i].recommendedImageRectWidth,
@@ -783,7 +807,7 @@ _init_session (GxrContext *self)
 
   _create_projection_views (self);
 
-  self->buffer_index = 0;
+  self->swapchain[GxrSwapchainTypeColor].buffer_index = 0;
 
   self->session_state = XR_SESSION_STATE_UNKNOWN;
   self->should_render = FALSE;
@@ -1251,15 +1275,26 @@ gxr_context_init (GxrContext *self)
   self->predicted_display_time = 0;
   self->predicted_display_period = 0;
   self->framebuffers = NULL;
-  self->images = NULL;
+
+  self->swapchain[GxrSwapchainTypeColor].array_size = 2;
+  self->swapchain[GxrSwapchainTypeColor].images = NULL;
   self->desired_vk_version = XR_MAKE_VERSION (1, 2, 0);
+}
+
+static void
+_cleanup_swapchain (GxrContext *self, struct GxrSwapchain *swapchain)
+{
+  (void) self;
+  if (swapchain->handle != XR_NULL_HANDLE)
+    xrDestroySwapchain (swapchain->handle);
+
+  if (swapchain->images)
+    g_free (swapchain->images);
 }
 
 static void
 _cleanup (GxrContext *self)
 {
-  if (self->swapchain != XR_NULL_HANDLE)
-    xrDestroySwapchain (self->swapchain);
 
   if (self->play_space)
     xrDestroySpace (self->play_space);
@@ -1275,7 +1310,8 @@ _cleanup (GxrContext *self)
 
   if (self->framebuffers)
     {
-      for (uint32_t i = 0; i < self->swapchain_length; i++)
+      for (uint32_t i = 0; i < self->swapchain[GxrSwapchainTypeColor].length;
+           i++)
         {
           if (GULKAN_IS_FRAME_BUFFER (self->framebuffers[i]))
             g_object_unref (self->framebuffers[i]);
@@ -1285,8 +1321,7 @@ _cleanup (GxrContext *self)
       g_free (self->framebuffers);
     }
 
-  if (self->images)
-    g_free (self->images);
+  _cleanup_swapchain (self, &self->swapchain[GxrSwapchainTypeColor]);
 }
 
 static void
@@ -1639,7 +1674,7 @@ gxr_context_init_framebuffers (GxrContext           *self,
   self->framebuffer_extent = extent;
   self->framebuffer_sample_count = sample_count;
 
-  VkFormat format = (VkFormat) self->swapchain_format;
+  VkFormat format = (VkFormat) self->swapchain[GxrSwapchainTypeColor].format;
   *render_pass
     = gulkan_render_pass_new_multiview (device, sample_count, format,
                                         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -1650,19 +1685,19 @@ gxr_context_init_framebuffers (GxrContext           *self,
       return FALSE;
     }
 
-  g_debug ("Creating %d framebuffers", self->swapchain_length);
+  g_debug ("Creating %d framebuffers",
+           self->swapchain[GxrSwapchainTypeColor].length);
 
   self->framebuffers = g_malloc (sizeof (GulkanFrameBuffer *)
-                                 * self->swapchain_length);
-  for (uint32_t i = 0; i < self->swapchain_length; i++)
+                                 * self->swapchain[GxrSwapchainTypeColor]
+                                     .length);
+  for (uint32_t i = 0; i < self->swapchain[GxrSwapchainTypeColor].length; i++)
     {
 
-      self->framebuffers[i]
-        = gulkan_frame_buffer_new_from_image_with_depth (device, *render_pass,
-                                                         self->images[i].image,
-                                                         extent, sample_count,
-                                                         format,
-                                                         self->view_count);
+      self->framebuffers[i] = gulkan_frame_buffer_new_from_image_with_depth (
+        device, *render_pass,
+        self->swapchain[GxrSwapchainTypeColor].images[i].image, extent,
+        sample_count, format, self->view_count);
 
       if (!GULKAN_IS_FRAME_BUFFER (self->framebuffers[i]))
         {
@@ -1790,8 +1825,9 @@ gxr_context_wait_frame (GxrContext *self)
     .type = XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO,
   };
 
-  result = xrAcquireSwapchainImage (self->swapchain, &swapchainImageAcquireInfo,
-                                    &buffer_index);
+  result = xrAcquireSwapchainImage (self->swapchain[GxrSwapchainTypeColor]
+                                      .handle,
+                                    &swapchainImageAcquireInfo, &buffer_index);
   if (!_check_xr_result (result, "failed to acquire swapchain image!"))
     return FALSE;
 
@@ -1799,13 +1835,14 @@ gxr_context_wait_frame (GxrContext *self)
     .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
     .timeout = INT64_MAX,
   };
-  result = xrWaitSwapchainImage (self->swapchain, &swapchainImageWaitInfo);
+  result = xrWaitSwapchainImage (self->swapchain[GxrSwapchainTypeColor].handle,
+                                 &swapchainImageWaitInfo);
   if (!_check_xr_result (result, "failed to wait for swapchain image!"))
     return FALSE;
 
   g_mutex_lock (&self->wait_frame_mutex);
 
-  self->buffer_index = buffer_index;
+  self->swapchain[GxrSwapchainTypeColor].buffer_index = buffer_index;
 
   if (!self->should_render && frame_state.shouldRender)
     {
@@ -1974,7 +2011,10 @@ _release_swapchain (GxrContext *self)
   XrSwapchainImageReleaseInfo swapchainImageReleaseInfo = {
     .type = XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO,
   };
-  XrResult result = xrReleaseSwapchainImage (self->swapchain,
+  XrResult result = xrReleaseSwapchainImage (self
+                                               ->swapchain
+                                                 [GxrSwapchainTypeColor]
+                                               .handle,
                                              &swapchainImageReleaseInfo);
   if (!_check_xr_result (result, "failed to release swapchain image!"))
     return FALSE;
@@ -2099,7 +2139,7 @@ gxr_context_get_device_manager (GxrContext *self)
 uint32_t
 gxr_context_get_swapchain_length (GxrContext *self)
 {
-  return self->swapchain_length;
+  return self->swapchain[GxrSwapchainTypeColor].length;
 }
 
 GulkanFrameBuffer *
@@ -2107,7 +2147,10 @@ gxr_context_get_acquired_framebuffer (GxrContext *self)
 {
   g_mutex_lock (&self->wait_frame_mutex);
   GulkanFrameBuffer *fb = GULKAN_FRAME_BUFFER (self->framebuffers
-                                                 [self->buffer_index]);
+                                                 [self
+                                                    ->swapchain
+                                                      [GxrSwapchainTypeColor]
+                                                    .buffer_index]);
   g_mutex_unlock (&self->wait_frame_mutex);
   return fb;
 }
@@ -2123,7 +2166,7 @@ uint32_t
 gxr_context_get_buffer_index (GxrContext *self)
 {
   g_mutex_lock (&self->wait_frame_mutex);
-  uint32_t buffer_index = self->buffer_index;
+  uint32_t buffer_index = self->swapchain[GxrSwapchainTypeColor].buffer_index;
   g_mutex_unlock (&self->wait_frame_mutex);
   return buffer_index;
 }
