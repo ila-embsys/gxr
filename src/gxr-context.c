@@ -22,6 +22,7 @@
 enum GxrSwapchainType
 {
   GxrSwapchainTypeColor = 0,
+  GxrSwapchainTypeDepth = 1,
   GxrSwapchainTypeLast,
 };
 
@@ -36,6 +37,8 @@ struct GxrSwapchain
   /* for each view */
   uint32_t length;
   VkFormat format;
+
+  enum GxrSwapchainType swapchain_type;
 };
 
 struct _GxrContext
@@ -633,7 +636,9 @@ _destroy_session (GxrContext *self)
 }
 
 static gboolean
-_create_swapchain (GxrContext *self, struct GxrSwapchain *swapchain)
+_create_swapchain (GxrContext           *self,
+                   struct GxrSwapchain  *swapchain,
+                   enum GxrSwapchainType swapchain_type)
 {
   XrResult result;
   uint32_t swapchainFormatCount;
@@ -658,22 +663,67 @@ _create_swapchain (GxrContext *self, struct GxrSwapchain *swapchain)
   for (uint32_t i = 0; i < swapchainFormatCount; i++)
     g_debug ("%s", vk_format_string ((VkFormat) swapchainFormats[i]));
 
-  swapchain->format = VK_FORMAT_R8G8B8A8_SRGB;
-  gboolean format_found = FALSE;
-  for (uint32_t i = 0; i < swapchainFormatCount; i++)
-    if (swapchainFormats[i] == swapchain->format)
-      {
-        format_found = TRUE;
-        break;
-      }
+  VkFormat preferred_format[2];
+  uint32_t preferred_format_count = 0;
 
-  if (!format_found)
+  XrSwapchainUsageFlags usage_flags = 0;
+
+  switch (swapchain_type)
     {
-      g_warning ("Requested %s, but runtime doesn't support it.",
-                 vk_format_string ((VkFormat) swapchain->format));
+      case GxrSwapchainTypeColor:
+        preferred_format[0] = VK_FORMAT_R8G8B8A8_SRGB;
+        preferred_format_count = 1;
+        usage_flags |= XR_SWAPCHAIN_USAGE_SAMPLED_BIT
+                       | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
+        break;
+      case GxrSwapchainTypeDepth:
+        preferred_format[0] = VK_FORMAT_D32_SFLOAT;
+        preferred_format[1] = VK_FORMAT_D16_UNORM;
+        preferred_format_count = 2;
+        usage_flags |= XR_SWAPCHAIN_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+        break;
+      case GxrSwapchainTypeLast:
+        break;
+    }
+
+  swapchain->format = VK_FORMAT_UNDEFINED;
+
+  for (uint32_t i = 0; i < preferred_format_count; i++)
+    {
+      for (uint32_t j = 0; j < swapchainFormatCount; j++)
+        {
+          if (preferred_format[i] == swapchainFormats[j])
+            {
+              swapchain->format = (VkFormat) swapchainFormats[j];
+              break;
+            }
+        }
+      if (swapchain->format != VK_FORMAT_UNDEFINED)
+        break;
+    }
+
+  if (swapchain->format == VK_FORMAT_UNDEFINED
+      && swapchain_type == GxrSwapchainTypeColor)
+    {
+      for (uint32_t i = 0; i < preferred_format_count; i++)
+        {
+          g_warning ("Requested %s, but runtime doesn't support it.",
+                     vk_format_string ((VkFormat) preferred_format[i]));
+        }
       g_warning ("Using %s instead.",
                  vk_format_string ((VkFormat) swapchainFormats[0]));
       swapchain->format = (VkFormat) swapchainFormats[0];
+    }
+
+  if (swapchain->format == VK_FORMAT_UNDEFINED
+      && swapchain_type == GxrSwapchainTypeDepth)
+    {
+      for (uint32_t i = 0; i < preferred_format_count; i++)
+        {
+          g_warning ("Requested %s, but runtime doesn't support it.",
+                     vk_format_string ((VkFormat) preferred_format[i]));
+        }
+      return FALSE;
     }
 
   /* make sure we don't clean up uninitialized pointer on failure */
@@ -681,10 +731,8 @@ _create_swapchain (GxrContext *self, struct GxrSwapchain *swapchain)
 
   XrSwapchainCreateInfo swapchainCreateInfo = {
     .type = XR_TYPE_SWAPCHAIN_CREATE_INFO,
-    .usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT
-                  | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT,
+    .usageFlags = usage_flags,
     .createFlags = 0,
-    // just use the first enumerated format
     .format = swapchain->format,
     .sampleCount = 1,
     .width = self->configuration_views[0].recommendedImageRectWidth,
@@ -736,15 +784,25 @@ _create_swapchain (GxrContext *self, struct GxrSwapchain *swapchain)
 
   g_free (swapchainFormats);
 
+  swapchain->swapchain_type = swapchain_type;
+
   return TRUE;
 }
 
 static gboolean
 _create_swapchains (GxrContext *self)
 {
-  if (!_create_swapchain (self, &self->swapchain[GxrSwapchainTypeColor]))
+  if (!_create_swapchain (self, &self->swapchain[GxrSwapchainTypeColor],
+                          GxrSwapchainTypeColor))
     {
       g_printerr ("Failed to create color swapchain");
+      return FALSE;
+    }
+
+  if (!_create_swapchain (self, &self->swapchain[GxrSwapchainTypeDepth],
+                          GxrSwapchainTypeDepth))
+    {
+      g_printerr ("Failed to create depth swapchain");
       return FALSE;
     }
 
@@ -1278,6 +1336,10 @@ gxr_context_init (GxrContext *self)
 
   self->swapchain[GxrSwapchainTypeColor].array_size = 2;
   self->swapchain[GxrSwapchainTypeColor].images = NULL;
+
+  self->swapchain[GxrSwapchainTypeDepth].array_size = 2;
+  self->swapchain[GxrSwapchainTypeDepth].images = NULL;
+
   self->desired_vk_version = XR_MAKE_VERSION (1, 2, 0);
 }
 
@@ -1322,6 +1384,7 @@ _cleanup (GxrContext *self)
     }
 
   _cleanup_swapchain (self, &self->swapchain[GxrSwapchainTypeColor]);
+  _cleanup_swapchain (self, &self->swapchain[GxrSwapchainTypeDepth]);
 }
 
 static void
