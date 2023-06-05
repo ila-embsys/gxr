@@ -50,6 +50,7 @@ struct _GxrContext
   {
     gboolean vulkan_enable2;
     gboolean overlay;
+    gboolean depth;
   } extensions;
   XrEnvironmentBlendMode blend_mode;
 
@@ -71,10 +72,13 @@ struct _GxrContext
   VkExtent2D            framebuffer_extent;
   VkSampleCountFlagBits framebuffer_sample_count;
 
+  XrCompositionLayerDepthInfoKHR   *depth_infos;
   XrCompositionLayerProjectionView *projection_views;
   XrViewConfigurationView          *configuration_views;
 
   XrGraphicsBindingVulkanKHR graphics_binding;
+
+  XrSessionCreateInfoOverlayEXTX overlay_info;
 
   uint32_t view_count;
 
@@ -211,6 +215,14 @@ _check_extensions (GxrContext *self)
                                instanceExtensionProperties,
                                instanceExtensionCount);
 
+  self->extensions.depth
+    = _is_extension_supported (XR_KHR_COMPOSITION_LAYER_DEPTH_EXTENSION_NAME,
+                               instanceExtensionProperties,
+                               instanceExtensionCount);
+  g_debug ("%s extension supported: %d",
+           XR_KHR_COMPOSITION_LAYER_DEPTH_EXTENSION_NAME,
+           self->extensions.depth);
+
   self->extensions.overlay
     = _is_extension_supported (XR_EXTX_OVERLAY_EXTENSION_NAME,
                                instanceExtensionProperties,
@@ -271,17 +283,29 @@ _check_blend_mode (GxrContext *self)
 static gboolean
 _create_instance (GxrContext *self, char *app_name, uint32_t app_version)
 {
-  // vulkan_enable2 is required. overlay is optional.
-  // list will need to be dynamic when more optional extensions are used.
-  const char *const enabled_extensions[] = {
+
+  const char *enabled_extensions[10] = {
     XR_KHR_VULKAN_ENABLE2_EXTENSION_NAME,
-    XR_EXTX_OVERLAY_EXTENSION_NAME,
   };
+  // vulkan_enable2 is required
+  uint32_t enabled_extension_count = 1;
+
+  if (self->extensions.overlay)
+    {
+      enabled_extensions[enabled_extension_count++]
+        = XR_EXTX_OVERLAY_EXTENSION_NAME;
+    }
+
+  if (self->extensions.depth)
+    {
+      enabled_extensions[enabled_extension_count++]
+        = XR_KHR_COMPOSITION_LAYER_DEPTH_EXTENSION_NAME;
+    }
 
   XrInstanceCreateInfo instanceCreateInfo = {
     .type = XR_TYPE_INSTANCE_CREATE_INFO,
     .createFlags = 0,
-    .enabledExtensionCount = self->extensions.overlay ? 2 : 1,
+    .enabledExtensionCount = enabled_extension_count,
     .enabledExtensionNames = enabled_extensions,
     .enabledApiLayerCount = 0,
     .applicationInfo = {
@@ -492,17 +516,9 @@ _init_runtime (GxrContext *self, char *app_name, uint32_t app_version)
 static gboolean
 _create_session (GxrContext *self)
 {
-  // TODO: session layer placement should be configurable
-  XrSessionCreateInfoOverlayEXTX overlay_info = {
-    .type = XR_TYPE_SESSION_CREATE_INFO_OVERLAY_EXTX,
-    .next = &self->graphics_binding,
-    .sessionLayersPlacement = 1,
-  };
-
   XrSessionCreateInfo session_create_info = {
     .type = XR_TYPE_SESSION_CREATE_INFO,
-    .next = self->extensions.overlay ? (void *) &overlay_info
-                                     : (void *) &self->graphics_binding,
+    .next = &self->graphics_binding,
     .systemId = self->system_id,
   };
 
@@ -829,6 +845,32 @@ _create_projection_views (GxrContext *self)
         .imageArrayIndex = i,
       },
     };
+
+  if (self->extensions.depth)
+    {
+      self->depth_infos = g_malloc (sizeof (XrCompositionLayerDepthInfoKHR)
+                                    * self->view_count);
+
+      for (uint32_t i = 0; i < self->view_count; i++)
+        {
+          self->depth_infos[i] = (XrCompositionLayerDepthInfoKHR)
+          {
+            .type = XR_TYPE_COMPOSITION_LAYER_DEPTH_INFO_KHR,
+          .subImage = {
+            .swapchain = self->swapchain[GxrSwapchainTypeDepth].handle,
+            .imageRect = {
+              .extent = {
+                .width = (int32_t) self->configuration_views[i].recommendedImageRectWidth,
+                .height = (int32_t) self->configuration_views[i].recommendedImageRectHeight,
+              },
+            },
+            .imageArrayIndex = i,
+          },
+          };
+
+          self->projection_views[i].next = &self->depth_infos[i];
+        }
+    }
 }
 
 static gboolean
@@ -849,6 +891,18 @@ _init_session (GxrContext *self)
     .queueIndex = 0,
   };
 
+  // TODO: session layer placement should be configurable
+  self->overlay_info = (XrSessionCreateInfoOverlayEXTX){
+    .type = XR_TYPE_SESSION_CREATE_INFO_OVERLAY_EXTX,
+    .next = NULL,
+    .sessionLayersPlacement = 1,
+  };
+
+  if (self->extensions.overlay)
+    {
+      self->graphics_binding.next = &self->overlay_info;
+    }
+
   if (!_create_session (self))
     return FALSE;
 
@@ -866,6 +920,7 @@ _init_session (GxrContext *self)
   _create_projection_views (self);
 
   self->swapchain[GxrSwapchainTypeColor].buffer_index = 0;
+  self->swapchain[GxrSwapchainTypeDepth].buffer_index = 0;
 
   self->session_state = XR_SESSION_STATE_UNKNOWN;
   self->should_render = FALSE;
@@ -1737,11 +1792,12 @@ gxr_context_init_framebuffers (GxrContext           *self,
   self->framebuffer_extent = extent;
   self->framebuffer_sample_count = sample_count;
 
-  VkFormat format = (VkFormat) self->swapchain[GxrSwapchainTypeColor].format;
+  VkFormat format = self->swapchain[GxrSwapchainTypeColor].format;
+  VkFormat depth_format = self->swapchain[GxrSwapchainTypeDepth].format;
   *render_pass
     = gulkan_render_pass_new_multiview (device, sample_count, format,
                                         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                                        TRUE);
+                                        TRUE, depth_format);
   if (!*render_pass)
     {
       g_printerr ("Could not init render pass.\n");
@@ -1756,11 +1812,20 @@ gxr_context_init_framebuffers (GxrContext           *self,
                                      .length);
   for (uint32_t i = 0; i < self->swapchain[GxrSwapchainTypeColor].length; i++)
     {
+      VkImage color_image = self->swapchain[GxrSwapchainTypeColor]
+                              .images[i]
+                              .image;
+      VkImage depth_image = self->swapchain[GxrSwapchainTypeDepth]
+                              .images[i]
+                              .image;
 
-      self->framebuffers[i] = gulkan_frame_buffer_new_from_image_with_depth (
-        device, *render_pass,
-        self->swapchain[GxrSwapchainTypeColor].images[i].image, extent,
-        sample_count, format, self->view_count);
+      self->framebuffers[i]
+        = gulkan_frame_buffer_new_from_image_with_depth (device, *render_pass,
+                                                         color_image, extent,
+                                                         sample_count, format,
+                                                         self->view_count,
+                                                         depth_image,
+                                                         depth_format);
 
       if (!GULKAN_IS_FRAME_BUFFER (self->framebuffers[i]))
         {
@@ -1866,6 +1931,40 @@ gxr_context_get_eye_position (GxrContext *self, GxrEye eye, graphene_vec3_t *v)
                       self->views[eye].pose.position.z);
 }
 
+static gboolean
+_acquire_and_wait (GxrContext *self, struct GxrSwapchain *swapchain)
+{
+  (void) self;
+  XrResult                    result;
+  XrSwapchainImageAcquireInfo swapchainImageAcquireInfo = {
+    .type = XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO,
+  };
+
+  result = xrAcquireSwapchainImage (swapchain->handle,
+                                    &swapchainImageAcquireInfo,
+                                    &swapchain->buffer_index);
+  if (!_check_xr_result (result, "failed to acquire swapchain image!"))
+    return FALSE;
+
+#define NANO_TO_MILLI 1000000
+
+  XrSwapchainImageWaitInfo swapchainImageWaitInfo = {
+    .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
+    .timeout = 100 * NANO_TO_MILLI,
+  };
+  while ((result = xrWaitSwapchainImage (swapchain->handle,
+                                         &swapchainImageWaitInfo))
+         == XR_TIMEOUT_EXPIRED)
+    {
+      g_warning ("Waiting for swapchain timed out after 100 ms...");
+    }
+
+  if (!_check_xr_result (result, "failed to wait for swapchain image!"))
+    return FALSE;
+
+  return TRUE;
+}
+
 gboolean
 gxr_context_wait_frame (GxrContext *self)
 {
@@ -1882,30 +1981,19 @@ gxr_context_wait_frame (GxrContext *self)
                          "xrWaitFrame() was not successful, exiting..."))
     return FALSE;
 
-  uint32_t buffer_index = 0;
+  if (!_acquire_and_wait (self, &self->swapchain[GxrSwapchainTypeColor]))
+    {
+      g_printerr ("Failed to acquire color image");
+      return FALSE;
+    }
 
-  XrSwapchainImageAcquireInfo swapchainImageAcquireInfo = {
-    .type = XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO,
-  };
-
-  result = xrAcquireSwapchainImage (self->swapchain[GxrSwapchainTypeColor]
-                                      .handle,
-                                    &swapchainImageAcquireInfo, &buffer_index);
-  if (!_check_xr_result (result, "failed to acquire swapchain image!"))
-    return FALSE;
-
-  XrSwapchainImageWaitInfo swapchainImageWaitInfo = {
-    .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
-    .timeout = INT64_MAX,
-  };
-  result = xrWaitSwapchainImage (self->swapchain[GxrSwapchainTypeColor].handle,
-                                 &swapchainImageWaitInfo);
-  if (!_check_xr_result (result, "failed to wait for swapchain image!"))
-    return FALSE;
+  if (!_acquire_and_wait (self, &self->swapchain[GxrSwapchainTypeDepth]))
+    {
+      g_printerr ("Failed to acquire depth image");
+      return FALSE;
+    }
 
   g_mutex_lock (&self->wait_frame_mutex);
-
-  self->swapchain[GxrSwapchainTypeColor].buffer_index = buffer_index;
 
   if (!self->should_render && frame_state.shouldRender)
     {
@@ -2069,15 +2157,13 @@ _end_frame (GxrContext *self)
 }
 
 static gboolean
-_release_swapchain (GxrContext *self)
+_release_swapchain (GxrContext *self, struct GxrSwapchain *swapchain)
 {
+  (void) self;
   XrSwapchainImageReleaseInfo swapchainImageReleaseInfo = {
     .type = XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO,
   };
-  XrResult result = xrReleaseSwapchainImage (self
-                                               ->swapchain
-                                                 [GxrSwapchainTypeColor]
-                                               .handle,
+  XrResult result = xrReleaseSwapchainImage (swapchain->handle,
                                              &swapchainImageReleaseInfo);
   if (!_check_xr_result (result, "failed to release swapchain image!"))
     return FALSE;
@@ -2086,12 +2172,33 @@ _release_swapchain (GxrContext *self)
 }
 
 gboolean
-gxr_context_end_frame (GxrContext *self)
+gxr_context_end_frame (GxrContext *self,
+                       float       near_z,
+                       float       far_z,
+                       float       min_depth,
+                       float       max_depth)
 {
-  if (!_release_swapchain (self))
+  if (!_release_swapchain (self, &self->swapchain[GxrSwapchainTypeColor]))
     {
       g_printerr ("Could not release xr swapchain\n");
       return FALSE;
+    }
+
+  if (!_release_swapchain (self, &self->swapchain[GxrSwapchainTypeDepth]))
+    {
+      g_printerr ("Could not release xr swapchain\n");
+      return FALSE;
+    }
+
+  if (self->extensions.depth)
+    {
+      for (uint32_t i = 0; i < self->view_count; i++)
+        {
+          self->depth_infos[i].nearZ = near_z;
+          self->depth_infos[i].farZ = far_z;
+          self->depth_infos[i].minDepth = min_depth;
+          self->depth_infos[i].maxDepth = max_depth;
+        }
     }
 
   if (!_end_frame (self))

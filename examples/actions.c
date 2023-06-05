@@ -42,7 +42,8 @@ _poll_events_cb (gpointer _self)
   if (!gxr_context_begin_frame (self->context))
     return FALSE;
 
-  gxr_context_end_frame (self->context);
+  // nothing rendered, depth values are irrelevant
+  gxr_context_end_frame (self->context, 0.1f, 1.0f, 0.0f, 1.0f);
   gxr_context_poll_events (self->context);
 
   if (!gxr_action_sets_poll (self->action_sets, 2))

@@ -142,7 +142,11 @@ gboolean
 gxr_context_begin_frame (GxrContext *self);
 
 gboolean
-gxr_context_end_frame (GxrContext *self);
+gxr_context_end_frame (GxrContext *self,
+                       float       near_z,
+                       float       far_z,
+                       float       min_depth,
+                       float       max_depth);
 
 void
 gxr_context_request_quit (GxrContext *self);

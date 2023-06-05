@@ -345,7 +345,7 @@ _iterate_cb (gpointer _self)
   if (self->rendering)
     _draw (self);
 
-  gxr_context_end_frame (self->context);
+  gxr_context_end_frame (self->context, self->near, self->far, 0.0f, 1.0f);
 
   return TRUE;
 }

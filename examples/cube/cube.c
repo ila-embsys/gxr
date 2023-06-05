@@ -437,7 +437,8 @@ _iterate_cb (gpointer _self)
 
   gulkan_queue_submit (queue, self->cmd_buffers[i]);
 
-  gxr_context_end_frame (self->context);
+  // depth values hardcoded in call to gxr_context_get_projection
+  gxr_context_end_frame (self->context, 0.05f, 100.0f, 0.0f, 1.0f);
 
   return TRUE;
 }
