@@ -13,9 +13,9 @@ include:
 
 variables:
   FDO_UPSTREAM_REPO: xrdesktop/gxr
-  GULKAN_COMMIT: "9e52e7ce0d50d86c4810af586dcdf4868b30e7f5"
-  OPENXR_SDK_TAG: "release-1.0.26"
-  FDO_DISTRIBUTION_DATE: "2023-01-11"
+  GULKAN_COMMIT: "590c0e1dac38302ea2ae385271f389b96267ccc6"
+  OPENXR_SDK_TAG: "release-1.0.27"
+  FDO_DISTRIBUTION_DATE: "2023-06-07"
 
 stages:
   - container_prep
