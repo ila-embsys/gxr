@@ -88,22 +88,64 @@ typedef struct {
 } GxrPoseEvent;
 // clang-format on
 
+/**
+ * gxr_controller_new:
+ * @controller_handle: The handle of the controller.
+ * @returns: A newly allocated #GxrController.
+ *
+ * Creates a new controller.
+ */
 GxrController *
 gxr_controller_new (guint64 controller_handle);
 
+/**
+ * gxr_controller_get_hand_grip_pose:
+ * @self: A #GxrController.
+ * @pose: (out): A pointer to store the hand grip pose.
+ *
+ * Gets the hand grip pose of the controller.
+ */
 void
 gxr_controller_get_hand_grip_pose (GxrController     *self,
                                    graphene_matrix_t *pose);
 
+/**
+ * gxr_controller_update_pointer_pose:
+ * @self: A #GxrController.
+ * @event: The pose event.
+ *
+ * Updates the pointer pose of the controller.
+ */
 void
 gxr_controller_update_pointer_pose (GxrController *self, GxrPoseEvent *event);
 
+/**
+ * gxr_controller_update_hand_grip_pose:
+ * @self: A #GxrController.
+ * @event: The pose event.
+ *
+ * Updates the hand grip pose of the controller.
+ */
 void
 gxr_controller_update_hand_grip_pose (GxrController *self, GxrPoseEvent *event);
 
+/**
+ * gxr_controller_is_pointer_pose_valid:
+ * @self: A #GxrController.
+ * @returns: `TRUE` if the pointer pose is valid, `FALSE` otherwise.
+ *
+ * Checks if the pointer pose of the controller is valid.
+ */
 gboolean
 gxr_controller_is_pointer_pose_valid (GxrController *self);
 
+/**
+ * gxr_controller_get_pointer_pose:
+ * @self: A #GxrController.
+ * @pose: (out): A pointer to store the pointer pose.
+ *
+ * Gets the pointer pose of the controller.
+ */
 gboolean
 gxr_controller_get_pointer_pose (GxrController *self, graphene_matrix_t *pose);
 

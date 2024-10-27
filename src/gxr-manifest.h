@@ -112,19 +112,56 @@ G_BEGIN_DECLS
 #define GXR_TYPE_MANIFEST gxr_manifest_get_type ()
 G_DECLARE_FINAL_TYPE (GxrManifest, gxr_manifest, GXR, MANIFEST, GObject)
 
+/**
+ * gxr_manifest_new:
+ * @resource_path: The base path of the resources.
+ * @manifest_name: The name of the manifest file.
+ * @returns: A newly allocated #GxrManifest.
+ *
+ * Creates a new manifest from a resource path and manifest name.
+ */
 GxrManifest *
 gxr_manifest_new (const char *resource_path, const char *manifest_name);
 
+/**
+ * gxr_manifest_load_actions:
+ * @self: A #GxrManifest.
+ * @action_stream: The action stream.
+ * @returns: `TRUE` if the actions were loaded successfully, `FALSE` otherwise.
+ *
+ * Loads the actions from the given stream.
+ */
 gboolean
 gxr_manifest_load_actions (GxrManifest *self, GInputStream *action_stream);
 
+/**
+ * gxr_manifest_load_bindings:
+ * @self: A #GxrManifest.
+ * @resource_path: The base path of the resources.
+ * @returns: `TRUE` if the bindings were loaded successfully, `FALSE` otherwise.
+ *
+ * Loads the bindings from the given resource path.
+ */
 gboolean
 gxr_manifest_load_bindings (GxrManifest *self, const char *resource_path);
 
+/**
+ * gxr_manifest_get_binding_filenames:
+ * @self: A #GxrManifest.
+ * @returns: (element-type GString) (transfer container): A newly allocated #GSList containing the binding filenames.
+ *
+ * Gets the binding filenames.
+ */
 GSList *
 gxr_manifest_get_binding_filenames (GxrManifest *self);
 
-/* GxrBindingManifest */
+/**
+ * gxr_manifest_get_binding_manifests:
+ * @manifest: A #GxrManifest.
+ * @returns: (element-type GxrBindingManifest) (transfer container): A newly allocated #GSList containing the binding manifests.
+ *
+ * Gets the binding manifests.
+ */
 GSList *
 gxr_manifest_get_binding_manifests (GxrManifest *manifest);
 
