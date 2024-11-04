@@ -8,7 +8,12 @@ const Context = Gxr.Context
 const ctx = Context.new("Pose Test", 1);
 
 let i = 0
-while (i < 100) {
+while (i < 500) {
+    // Calling begin/end frame allows to set `predicted_display_time` internally
+    // Without that `get_head_pose()` returns delayed data
+    ctx.begin_frame();
+    ctx.end_frame();
+
     let [ret, pose] = ctx.get_head_pose();
     if (ret) {
         pose.print()
@@ -16,6 +21,8 @@ while (i < 100) {
         console.log('no pose received')
     }
 
-    GLib.usleep(50_000)
+    // Needed to follow correct call order with begin/end frame.
+    // It also controls loop rate
+    ctx.wait_frame();
     i++
 }
