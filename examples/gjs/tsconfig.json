@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+      "module": "ES2022",
+      "moduleResolution": "bundler",
+      "sourceMap": false,
+      "strict": true,
+      "target": "ES2022",
+      "lib": [
+        "ES2022"
+      ],
+      "typeRoots": ["."],
+    },
+    "include": [
+      "gxr-0.16.d.ts",
+    ],
+    "files": [
+      "main.ts"
+    ],
+}
